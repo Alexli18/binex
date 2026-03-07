@@ -1,0 +1,55 @@
+name: research-pipeline
+description: "Multi-agent research pipeline with 5 nodes"
+
+nodes:
+  planner:
+    agent: "local://planner"
+    skill: planning.research
+    inputs:
+      query: "${user.query}"
+    outputs: [execution_plan]
+
+  researcher_1:
+    agent: "local://researcher"
+    skill: research.search
+    inputs:
+      plan: "${planner.execution_plan}"
+      source: arxiv
+    outputs: [search_results]
+    depends_on: [planner]
+
+  researcher_2:
+    agent: "local://researcher"
+    skill: research.search
+    inputs:
+      plan: "${planner.execution_plan}"
+      source: google_scholar
+    outputs: [search_results]
+    depends_on: [planner]
+
+  validator:
+    agent: "local://validator"
+    skill: analysis.validate
+    inputs:
+      results_1: "${researcher_1.search_results}"
+      results_2: "${researcher_2.search_results}"
+    outputs: [validated_results]
+    depends_on: [researcher_1, researcher_2]
+    retry_policy:
+      max_retries: 2
+      backoff: exponential
+
+  summarizer:
+    agent: "local://summarizer"
+    skill: analysis.summarize
+    inputs:
+      validated: "${validator.validated_results}"
+    outputs: [summary_report]
+    depends_on: [validator]
+    deadline_ms: 60000
+
+defaults:
+  deadline_ms: 120000
+  retry_policy:
+    max_retries: 1
+    backoff: exponential

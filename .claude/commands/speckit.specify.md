@@ -24,6 +24,9 @@ The text the user typed after `/speckit.specify` in the triggering message **is*
 
 Given that feature description, do this:
 
+> **Optional: Brainstorming for ambiguous or novel features**
+> If the feature is complex, novel, or has unclear requirements, invoke `superpowers:brainstorming` to explore the problem space before proceeding. Skip this if the feature is straightforward and well-understood. **Important**: When using brainstorming, return to this speckit flow after exploration — do not follow brainstorming's terminal "invoke writing-plans" step, as speckit has its own planning pipeline.
+
 1. **Generate a concise short name** (2-4 words) for the branch:
    - Analyze the feature description and extract the most meaningful keywords
    - Create a 2-4 word short name that captures the essence of the feature

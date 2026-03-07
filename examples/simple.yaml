@@ -1,0 +1,24 @@
+name: simple-pipeline
+description: "Simple 2-node pipeline with local adapters"
+
+nodes:
+  producer:
+    agent: "local://echo"
+    skill: produce
+    inputs:
+      data: "${user.input}"
+    outputs: [result]
+
+  consumer:
+    agent: "local://echo"
+    skill: consume
+    inputs:
+      data: "${producer.result}"
+    outputs: [final]
+    depends_on: [producer]
+
+defaults:
+  deadline_ms: 30000
+  retry_policy:
+    max_retries: 1
+    backoff: exponential
