@@ -1,0 +1,121 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  litellm-proxy:
+    image: ghcr.io/berriai/litellm:main-latest
+    ports:
+      - "4000:4000"
+    environment:
+      - OLLAMA_API_BASE=http://ollama:11434
+    command: ["--model", "ollama/llama3.2", "--port", "4000"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  registry:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - BINEX_AGENT_TYPE=registry
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  planner:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - BINEX_AGENT_TYPE=planner
+      - BINEX_LLM_MODEL=llama3.2
+      - BINEX_LLM_API_BASE=http://litellm-proxy:4000
+    depends_on:
+      litellm-proxy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  researcher:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8002:8000"
+    environment:
+      - BINEX_AGENT_TYPE=researcher
+      - BINEX_LLM_MODEL=llama3.2
+      - BINEX_LLM_API_BASE=http://litellm-proxy:4000
+    depends_on:
+      litellm-proxy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  validator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8003:8000"
+    environment:
+      - BINEX_AGENT_TYPE=validator
+      - BINEX_LLM_MODEL=llama3.2
+      - BINEX_LLM_API_BASE=http://litellm-proxy:4000
+    depends_on:
+      litellm-proxy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  summarizer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8004:8000"
+    environment:
+      - BINEX_AGENT_TYPE=summarizer
+      - BINEX_LLM_MODEL=llama3.2
+      - BINEX_LLM_API_BASE=http://litellm-proxy:4000
+    depends_on:
+      litellm-proxy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  ollama_data:

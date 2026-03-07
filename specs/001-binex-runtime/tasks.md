@@ -114,13 +114,13 @@
 
 ### Trace Engine
 
-- [ ] T035 [P] [US2] Implement timeline trace generation in src/binex/trace/tracer.py (load ExecutionRecords for a run, format as human-readable timeline with agent, status, latency, artifact refs; support --json output)
-- [ ] T036 [P] [US2] Implement artifact lineage traversal in src/binex/trace/lineage.py (given an artifact ID, walk derived_from chain recursively, build provenance tree with produced_by info)
+- [x] T035 [P] [US2] Implement timeline trace generation in src/binex/trace/tracer.py (load ExecutionRecords for a run, format as human-readable timeline with agent, status, latency, artifact refs; support --json output)
+- [x] T036 [P] [US2] Implement artifact lineage traversal in src/binex/trace/lineage.py (given an artifact ID, walk derived_from chain recursively, build provenance tree with produced_by info)
 
 ### CLI
 
-- [ ] T037 [US2] Implement `binex trace` command in src/binex/cli/trace.py (subcommands: default timeline, `graph` for ASCII DAG viz, `node` for single step detail per cli.md contract)
-- [ ] T038 [US2] Implement `binex artifacts` command in src/binex/cli/artifacts.py (subcommands: list, show, lineage per cli.md contract; lineage renders tree view)
+- [x] T037 [US2] Implement `binex trace` command in src/binex/cli/trace.py (subcommands: default timeline, `graph` for ASCII DAG viz, `node` for single step detail per cli.md contract)
+- [x] T038 [US2] Implement `binex artifacts` command in src/binex/cli/artifacts.py (subcommands: list, show, lineage per cli.md contract; lineage renders tree view)
 
 **Checkpoint**: Full trace and inspection workflow operational. `binex trace <run_id>` shows timeline, `binex artifacts lineage <id>` shows provenance chain.
 
@@ -136,16 +136,16 @@
 
 ### Replay Engine
 
-- [ ] T039 [US3] Implement replay logic in src/binex/runtime/replay.py (create new run from existing run, mark steps before --from as cached with linked artifacts, re-execute from --from step onward, support --agent node=agent swap per research.md R-009 immutable strategy)
+- [x] T039 [US3] Implement replay logic in src/binex/runtime/replay.py (create new run from existing run, mark steps before --from as cached with linked artifacts, re-execute from --from step onward, support --agent node=agent swap per research.md R-009 immutable strategy)
 
 ### Diff Engine
 
-- [ ] T040 [US3] Implement run diff comparison in src/binex/trace/diff.py (compare two runs step-by-step: artifact differences, execution metadata differences, status changes; support --json output)
+- [x] T040 [US3] Implement run diff comparison in src/binex/trace/diff.py (compare two runs step-by-step: artifact differences, execution metadata differences, status changes; support --json output)
 
 ### CLI
 
-- [ ] T041 [US3] Implement `binex replay` command in src/binex/cli/replay.py (accept run-id, --from step, --agent node=agent per cli.md contract; output new run ID and cached/re-executed status per step)
-- [ ] T042 [US3] Implement `binex diff` command in src/binex/cli/diff.py (accept two run IDs, display side-by-side comparison per cli.md contract)
+- [x] T041 [US3] Implement `binex replay` command in src/binex/cli/replay.py (accept run-id, --from step, --agent node=agent per cli.md contract; output new run ID and cached/re-executed status per step)
+- [x] T042 [US3] Implement `binex diff` command in src/binex/cli/diff.py (accept two run IDs, display side-by-side comparison per cli.md contract)
 
 **Checkpoint**: Replay and diff fully operational. `binex replay` creates new run with cached artifacts, `binex diff` compares runs.
 
@@ -159,11 +159,11 @@
 
 ### Registry Service
 
-- [ ] T043 [P] [US4] Implement FastAPI app with REST endpoints in src/binex/registry/app.py (POST/GET/DELETE /agents, GET /agents/search, GET /health per agent-adapter.md contract)
-- [ ] T044 [P] [US4] Implement agent discovery/crawling in src/binex/registry/discovery.py (fetch A2A agent card from endpoint, parse capabilities, periodic refresh)
-- [ ] T045 [US4] Implement capability index and search in src/binex/registry/index.py (index agent capabilities, search by capability with ranking by health/latency)
-- [ ] T046 [US4] Implement health checker in src/binex/registry/health.py (periodic health checks, transition health status: alive -> slow -> degraded -> down based on consecutive failures and latency thresholds)
-- [ ] T047 [US4] Create registry entry point in src/binex/registry/__main__.py (uvicorn launch with configurable host/port)
+- [x] T043 [P] [US4] Implement FastAPI app with REST endpoints in src/binex/registry/app.py (POST/GET/DELETE /agents, GET /agents/search, GET /health per agent-adapter.md contract)
+- [x] T044 [P] [US4] Implement agent discovery/crawling in src/binex/registry/discovery.py (fetch A2A agent card from endpoint, parse capabilities, periodic refresh)
+- [x] T045 [US4] Implement capability index and search in src/binex/registry/index.py (index agent capabilities, search by capability with ranking by health/latency)
+- [x] T046 [US4] Implement health checker in src/binex/registry/health.py (periodic health checks, transition health status: alive -> slow -> degraded -> down based on consecutive failures and latency thresholds)
+- [x] T047 [US4] Create registry entry point in src/binex/registry/__main__.py (uvicorn launch with configurable host/port)
 
 **Checkpoint**: Registry service runs standalone, agents can be registered, discovered, and searched by capability.
 
@@ -177,21 +177,21 @@
 
 ### Reference Agents
 
-- [ ] T048 [P] [US5] Implement shared LLM config and client in src/binex/agents/common/llm_config.py and src/binex/agents/common/llm_client.py (LiteLLM wrapper with Ollama/cloud provider support)
-- [ ] T049 [P] [US5] Implement planner reference agent in src/binex/agents/planner/ (A2A-compatible agent that decomposes research query into subtasks)
-- [ ] T050 [P] [US5] Implement researcher reference agent in src/binex/agents/researcher/ (A2A-compatible agent that searches sources)
-- [ ] T051 [P] [US5] Implement validator reference agent in src/binex/agents/validator/ (A2A-compatible agent that deduplicates and validates results)
-- [ ] T052 [P] [US5] Implement summarizer reference agent in src/binex/agents/summarizer/ (A2A-compatible agent that produces structured report)
+- [x] T048 [P] [US5] Implement shared LLM config and client in src/binex/agents/common/llm_config.py and src/binex/agents/common/llm_client.py (LiteLLM wrapper with Ollama/cloud provider support)
+- [x] T049 [P] [US5] Implement planner reference agent in src/binex/agents/planner/ (A2A-compatible agent that decomposes research query into subtasks)
+- [x] T050 [P] [US5] Implement researcher reference agent in src/binex/agents/researcher/ (A2A-compatible agent that searches sources)
+- [x] T051 [P] [US5] Implement validator reference agent in src/binex/agents/validator/ (A2A-compatible agent that deduplicates and validates results)
+- [x] T052 [P] [US5] Implement summarizer reference agent in src/binex/agents/summarizer/ (A2A-compatible agent that produces structured report)
 
 ### Docker Setup
 
-- [ ] T053 [P] [US5] Create Dockerfile in docker/Dockerfile (multi-stage: build binex package, run reference agents)
-- [ ] T054 [US5] Create Docker Compose config in docker/docker-compose.yml (services: ollama, litellm-proxy, 4 reference agents, registry)
+- [x] T053 [P] [US5] Create Dockerfile in docker/Dockerfile (multi-stage: build binex package, run reference agents)
+- [x] T054 [US5] Create Docker Compose config in docker/docker-compose.yml (services: ollama, litellm-proxy, 4 reference agents, registry)
 
 ### CLI
 
-- [ ] T055 [US5] Implement `binex dev` command in src/binex/cli/dev.py (start Docker Compose stack, wait for health, support --detach per cli.md contract)
-- [ ] T056 [US5] Implement `binex doctor` command in src/binex/cli/doctor.py (check Docker, Ollama, agents reachability, registry status, store backends per cli.md contract)
+- [x] T055 [US5] Implement `binex dev` command in src/binex/cli/dev.py (start Docker Compose stack, wait for health, support --detach per cli.md contract)
+- [x] T056 [US5] Implement `binex doctor` command in src/binex/cli/doctor.py (check Docker, Ollama, agents reachability, registry status, store backends per cli.md contract)
 
 **Checkpoint**: `binex dev` starts full local stack, `binex doctor` reports healthy, `binex run examples/research.yaml` completes with local models.
 
@@ -203,8 +203,8 @@
 
 **Independent Test**: Run `binex validate workflow.yaml` on valid and invalid files, verify error/success messages.
 
-- [ ] T057 [US6] Implement `binex validate` command in src/binex/cli/validate.py (load workflow, run validator, report errors or success summary with node/edge/agent counts per cli.md contract)
-- [ ] T058 [US6] Implement `binex scaffold` command in src/binex/cli/scaffold.py (generate template agent project with A2A server setup, agent card, basic handler per cli.md contract)
+- [x] T057 [US6] Implement `binex validate` command in src/binex/cli/validate.py (load workflow, run validator, report errors or success summary with node/edge/agent counts per cli.md contract)
+- [x] T058 [US6] Implement `binex scaffold` command in src/binex/cli/scaffold.py (generate template agent project with A2A server setup, agent card, basic handler per cli.md contract)
 
 **Checkpoint**: `binex validate` catches structural errors, `binex scaffold agent` generates working template.
 
@@ -214,10 +214,10 @@
 
 **Purpose**: Final integration, documentation, cleanup
 
-- [ ] T059 [P] Implement `binex cancel` command in src/binex/cli/run.py (cancel a running workflow by run-id per cli.md contract)
-- [ ] T060 [P] Add --json output flag support across all CLI commands that support it
-- [ ] T061 Run quickstart.md validation (verify all commands from quickstart.md work end-to-end)
-- [ ] T062 Code cleanup: ensure zero circular dependencies per plan.md constraint (models -> stores -> adapters/graph -> trace -> runtime -> cli)
+- [x] T059 [P] Implement `binex cancel` command in src/binex/cli/run.py (cancel a running workflow by run-id per cli.md contract)
+- [x] T060 [P] Add --json output flag support across all CLI commands that support it
+- [x] T061 Run quickstart.md validation (verify all commands from quickstart.md work end-to-end)
+- [x] T062 Code cleanup: ensure zero circular dependencies per plan.md constraint (models -> stores -> adapters/graph -> trace -> runtime -> cli)
 
 ---
 

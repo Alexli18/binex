@@ -1,4 +1,4 @@
-"""CLI `binex run` command — execute a workflow."""
+"""CLI `binex run` and `binex cancel` commands."""
 
 from __future__ import annotations
 
@@ -15,6 +15,11 @@ from binex.runtime.orchestrator import Orchestrator
 from binex.stores import create_artifact_store, create_execution_store
 from binex.workflow_spec.loader import load_workflow
 from binex.workflow_spec.validator import validate_workflow
+
+
+def _get_execution_store():
+    """Create default execution store. Extracted for test patching."""
+    return create_execution_store(backend="memory")
 
 
 @click.command("run")
@@ -90,3 +95,26 @@ def _parse_vars(var_tuples: tuple[str, ...]) -> dict[str, str]:
         key, value = v.split("=", 1)
         result[key] = value
     return result
+
+
+@click.command("cancel")
+@click.argument("run_id")
+def cancel_cmd(run_id: str) -> None:
+    """Cancel a running workflow by run ID."""
+    store = _get_execution_store()
+    run = asyncio.run(store.get_run(run_id))
+
+    if run is None:
+        click.echo(f"Error: Run '{run_id}' not found.", err=True)
+        sys.exit(1)
+
+    if run.status != "running":
+        click.echo(
+            f"Error: Cannot cancel run '{run_id}' — not running (status: {run.status}).",
+            err=True,
+        )
+        sys.exit(1)
+
+    run.status = "cancelled"
+    asyncio.run(store.update_run(run))
+    click.echo(f"Run '{run_id}' cancelled.")
