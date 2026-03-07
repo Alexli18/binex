@@ -9,24 +9,27 @@ import sys
 import click
 
 from binex.adapters.local import LocalPythonAdapter
+from binex.cli import get_stores
 from binex.models.artifact import Artifact, Lineage
 from binex.models.task import TaskNode
 from binex.runtime.orchestrator import Orchestrator
-from binex.stores import create_artifact_store, create_execution_store
 from binex.workflow_spec.loader import load_workflow
 from binex.workflow_spec.validator import validate_workflow
 
 
-def _get_execution_store():
-    """Create default execution store. Extracted for test patching."""
-    return create_execution_store(backend="memory")
+def _get_stores():
+    """Create default stores. Extracted for test patching."""
+    return get_stores()
 
 
 @click.command("run")
 @click.argument("workflow_file", type=click.Path(exists=True))
 @click.option("--var", multiple=True, help="Variable substitution key=value")
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
-def run_cmd(workflow_file: str, var: tuple[str, ...], json_out: bool) -> None:
+@click.option("--verbose", "-v", is_flag=True, help="Show artifact contents after each step")
+def run_cmd(
+    workflow_file: str, var: tuple[str, ...], json_out: bool, verbose: bool,
+) -> None:
     """Execute a workflow definition."""
     user_vars = _parse_vars(var)
     spec = load_workflow(workflow_file, user_vars=user_vars)
@@ -37,10 +40,20 @@ def run_cmd(workflow_file: str, var: tuple[str, ...], json_out: bool) -> None:
             click.echo(f"Error: {err}", err=True)
         sys.exit(2)
 
-    summary = asyncio.run(_run(spec))
+    summary, node_errors, artifacts = asyncio.run(_run(spec, verbose))
+
+    if not json_out:
+        for node_id, err in node_errors:
+            click.echo(f"  [{node_id}] Error: {err}", err=True)
 
     if json_out:
-        click.echo(json.dumps(summary.model_dump(), default=str, indent=2))
+        data = summary.model_dump()
+        if verbose:
+            data["artifacts"] = [
+                {"node": a.lineage.produced_by, "type": a.type, "content": a.content}
+                for a in artifacts
+            ]
+        click.echo(json.dumps(data, default=str, indent=2))
     else:
         click.echo(f"Run ID: {summary.run_id}")
         click.echo(f"Workflow: {summary.workflow_name}")
@@ -52,14 +65,37 @@ def run_cmd(workflow_file: str, var: tuple[str, ...], json_out: bool) -> None:
     sys.exit(0 if summary.status == "completed" else 1)
 
 
-async def _run(spec):
-    artifact_store = create_artifact_store(backend="memory")
-    execution_store = create_execution_store(backend="memory")
+async def _run(spec, verbose: bool = False):
+    execution_store, artifact_store = _get_stores()
 
     orch = Orchestrator(
         artifact_store=artifact_store,
         execution_store=execution_store,
     )
+
+    # Verbose progress callback
+    all_artifacts: list[Artifact] = []
+    if verbose:
+        original_execute = orch._execute_node
+
+        async def _verbose_execute(
+            spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
+        ):
+            click.echo(f"\n  Running: {node_id_} ...", err=True)
+            await original_execute(
+                spec_, dag_, scheduler_, run_id_, trace_id_,
+                node_id_, node_artifacts_,
+            )
+            if node_id_ in node_artifacts_:
+                for art in node_artifacts_[node_id_]:
+                    all_artifacts.append(art)
+                    content = art.content
+                    if isinstance(content, str) and len(content) > 2000:
+                        content = content[:2000] + "..."
+                    click.echo(f"  [{node_id_}] -> {art.type}:", err=True)
+                    click.echo(f"{content}\n", err=True)
+
+        orch._execute_node = _verbose_execute
 
     # Register a default local echo adapter for local:// agents
     async def _default_handler(task: TaskNode, inputs: list[Artifact]) -> list[Artifact]:
@@ -79,12 +115,35 @@ async def _run(spec):
 
     # Auto-register adapters for all agents in the workflow
     for node in spec.nodes.values():
-        if node.agent.startswith("local://"):
+        agent = node.agent
+        if agent in orch.dispatcher._adapters:
+            continue
+        if agent.startswith("local://"):
             orch.dispatcher.register_adapter(
-                node.agent, LocalPythonAdapter(handler=_default_handler),
+                agent, LocalPythonAdapter(handler=_default_handler),
             )
+        elif agent.startswith("llm://"):
+            from binex.adapters.llm import LLMAdapter
+            model = agent.removeprefix("llm://")
+            orch.dispatcher.register_adapter(agent, LLMAdapter(model=model))
 
-    return await orch.run_workflow(spec)
+    try:
+        summary = await orch.run_workflow(spec)
+
+        # Collect errors from execution records
+        errors = []
+        records = await execution_store.list_records(summary.run_id)
+        for rec in records:
+            if rec.error:
+                errors.append((rec.task_id, rec.error))
+
+        # Collect all artifacts if not already done via verbose
+        if not verbose:
+            all_artifacts = await artifact_store.list_by_run(summary.run_id)
+
+        return summary, errors, all_artifacts
+    finally:
+        await execution_store.close()
 
 
 def _parse_vars(var_tuples: tuple[str, ...]) -> dict[str, str]:
@@ -101,20 +160,30 @@ def _parse_vars(var_tuples: tuple[str, ...]) -> dict[str, str]:
 @click.argument("run_id")
 def cancel_cmd(run_id: str) -> None:
     """Cancel a running workflow by run ID."""
-    store = _get_execution_store()
-    run = asyncio.run(store.get_run(run_id))
-
-    if run is None:
+    result = asyncio.run(_cancel(run_id))
+    if result == "not_found":
         click.echo(f"Error: Run '{run_id}' not found.", err=True)
         sys.exit(1)
-
-    if run.status != "running":
+    elif result == "not_running":
         click.echo(
-            f"Error: Cannot cancel run '{run_id}' — not running (status: {run.status}).",
+            f"Error: Cannot cancel run '{run_id}' — not running.",
             err=True,
         )
         sys.exit(1)
+    else:
+        click.echo(f"Run '{run_id}' cancelled.")
 
-    run.status = "cancelled"
-    asyncio.run(store.update_run(run))
-    click.echo(f"Run '{run_id}' cancelled.")
+
+async def _cancel(run_id: str) -> str:
+    store, _ = _get_stores()
+    try:
+        run = await store.get_run(run_id)
+        if run is None:
+            return "not_found"
+        if run.status != "running":
+            return "not_running"
+        run.status = "cancelled"
+        await store.update_run(run)
+        return "ok"
+    finally:
+        await store.close()

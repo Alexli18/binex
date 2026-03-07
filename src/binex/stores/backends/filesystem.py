@@ -26,15 +26,21 @@ class FilesystemArtifactStore:
         self._index[artifact.id] = (artifact.run_id, str(path))
 
     async def get(self, artifact_id: str) -> Artifact | None:
+        # Check in-memory index first
         entry = self._index.get(artifact_id)
-        if entry is None:
-            return None
-        _, path_str = entry
-        path = Path(path_str)
-        if not path.exists():
-            return None
-        data = json.loads(path.read_text())
-        return Artifact.model_validate(data)
+        if entry is not None:
+            path = Path(entry[1])
+            if path.exists():
+                data = json.loads(path.read_text())
+                return Artifact.model_validate(data)
+
+        # Scan filesystem for the artifact
+        if self._base_path.exists():
+            for f in self._base_path.rglob(f"{artifact_id}.json"):
+                data = json.loads(f.read_text())
+                return Artifact.model_validate(data)
+
+        return None
 
     async def list_by_run(self, run_id: str) -> list[Artifact]:
         run_dir = self._base_path / run_id

@@ -46,6 +46,9 @@ class InMemoryExecutionStore:
         self._runs: dict[str, RunSummary] = {}
         self._records: list[ExecutionRecord] = []
 
+    async def close(self) -> None:
+        pass
+
     async def record(self, execution_record: ExecutionRecord) -> None:
         self._records.append(execution_record)
 

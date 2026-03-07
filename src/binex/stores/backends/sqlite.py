@@ -17,8 +17,17 @@ class SqliteExecutionStore:
     def __init__(self, db_path: str) -> None:
         self._db_path = db_path
         self._db: aiosqlite.Connection | None = None
+        self._initialized = False
+
+    async def _ensure_initialized(self) -> aiosqlite.Connection:
+        if not self._initialized:
+            await self.initialize()
+        assert self._db is not None
+        return self._db
 
     async def initialize(self) -> None:
+        import os
+        os.makedirs(os.path.dirname(self._db_path) or ".", exist_ok=True)
         self._db = await aiosqlite.connect(self._db_path)
         await self._db.executescript("""
             CREATE TABLE IF NOT EXISTS runs (
@@ -52,15 +61,17 @@ class SqliteExecutionStore:
             );
         """)
         await self._db.commit()
+        self._initialized = True
 
     async def close(self) -> None:
         if self._db:
             await self._db.close()
             self._db = None
+            self._initialized = False
 
     async def create_run(self, run_summary: RunSummary) -> None:
-        assert self._db is not None
-        await self._db.execute(
+        db = await self._ensure_initialized()
+        await db.execute(
             """INSERT INTO runs (run_id, workflow_name, status, started_at,
                completed_at, total_nodes, completed_nodes, failed_nodes,
                forked_from, forked_at_step)
@@ -78,19 +89,19 @@ class SqliteExecutionStore:
                 run_summary.forked_at_step,
             ),
         )
-        await self._db.commit()
+        await db.commit()
 
     async def get_run(self, run_id: str) -> RunSummary | None:
-        assert self._db is not None
-        cursor = await self._db.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,))
+        db = await self._ensure_initialized()
+        cursor = await db.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,))
         row = await cursor.fetchone()
         if row is None:
             return None
         return self._row_to_run_summary(row)
 
     async def update_run(self, run_summary: RunSummary) -> None:
-        assert self._db is not None
-        await self._db.execute(
+        db = await self._ensure_initialized()
+        await db.execute(
             """UPDATE runs SET workflow_name=?, status=?, started_at=?,
                completed_at=?, total_nodes=?, completed_nodes=?, failed_nodes=?,
                forked_from=?, forked_at_step=? WHERE run_id=?""",
@@ -107,17 +118,17 @@ class SqliteExecutionStore:
                 run_summary.run_id,
             ),
         )
-        await self._db.commit()
+        await db.commit()
 
     async def list_runs(self) -> list[RunSummary]:
-        assert self._db is not None
-        cursor = await self._db.execute("SELECT * FROM runs")
+        db = await self._ensure_initialized()
+        cursor = await db.execute("SELECT * FROM runs")
         rows = await cursor.fetchall()
         return [self._row_to_run_summary(row) for row in rows]
 
     async def record(self, execution_record: ExecutionRecord) -> None:
-        assert self._db is not None
-        await self._db.execute(
+        db = await self._ensure_initialized()
+        await db.execute(
             """INSERT INTO execution_records (id, run_id, task_id, parent_task_id,
                agent_id, status, input_artifact_refs, output_artifact_refs,
                prompt, model, tool_calls, latency_ms, timestamp, trace_id, error)
@@ -140,11 +151,11 @@ class SqliteExecutionStore:
                 execution_record.error,
             ),
         )
-        await self._db.commit()
+        await db.commit()
 
     async def get_step(self, run_id: str, task_id: str) -> ExecutionRecord | None:
-        assert self._db is not None
-        cursor = await self._db.execute(
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
             "SELECT * FROM execution_records WHERE run_id = ? AND task_id = ?",
             (run_id, task_id),
         )
@@ -154,8 +165,8 @@ class SqliteExecutionStore:
         return self._row_to_execution_record(row)
 
     async def list_records(self, run_id: str) -> list[ExecutionRecord]:
-        assert self._db is not None
-        cursor = await self._db.execute(
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
             "SELECT * FROM execution_records WHERE run_id = ?", (run_id,)
         )
         rows = await cursor.fetchall()

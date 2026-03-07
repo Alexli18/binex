@@ -49,7 +49,7 @@ def exec_store_with_running_run():
 class TestCancelCommand:
     def test_cancel_running_run(self, runner, exec_store_with_running_run):
         store = exec_store_with_running_run
-        with patch("binex.cli.run._get_execution_store", return_value=store):
+        with patch("binex.cli.run._get_stores", return_value=(store, None)):
             result = runner.invoke(cli, ["cancel", "run_active"])
         assert result.exit_code == 0
         assert "cancelled" in result.output.lower()
@@ -61,13 +61,13 @@ class TestCancelCommand:
 
     def test_cancel_nonexistent_run(self, runner, exec_store_with_running_run):
         store = exec_store_with_running_run
-        with patch("binex.cli.run._get_execution_store", return_value=store):
+        with patch("binex.cli.run._get_stores", return_value=(store, None)):
             result = runner.invoke(cli, ["cancel", "run_nonexistent"])
         assert result.exit_code != 0
 
     def test_cancel_already_completed_run(self, runner, exec_store_with_running_run):
         store = exec_store_with_running_run
-        with patch("binex.cli.run._get_execution_store", return_value=store):
+        with patch("binex.cli.run._get_stores", return_value=(store, None)):
             result = runner.invoke(cli, ["cancel", "run_done"])
         assert result.exit_code != 0
         assert "not running" in result.output.lower() or "cannot cancel" in result.output.lower()

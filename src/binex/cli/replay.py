@@ -8,8 +8,8 @@ import sys
 
 import click
 
+from binex.cli import get_stores
 from binex.models.execution import RunSummary
-from binex.stores import create_artifact_store, create_execution_store
 
 
 @click.command("replay")
@@ -57,8 +57,7 @@ async def _run_replay(
     from binex.runtime.replay import ReplayEngine
     from binex.workflow_spec.loader import load_workflow
 
-    artifact_store = create_artifact_store(backend="memory")
-    execution_store = create_execution_store(backend="memory")
+    execution_store, artifact_store = get_stores()
 
     spec = load_workflow(workflow_path)
 
@@ -90,12 +89,15 @@ async def _run_replay(
                 agent, LocalPythonAdapter(handler=_default_handler),
             )
 
-    return await engine.replay(
-        original_run_id=run_id,
-        workflow=spec,
-        from_step=from_step,
-        agent_swaps=agent_swaps,
-    )
+    try:
+        return await engine.replay(
+            original_run_id=run_id,
+            workflow=spec,
+            from_step=from_step,
+            agent_swaps=agent_swaps,
+        )
+    finally:
+        await execution_store.close()
 
 
 def _parse_agent_swaps(agent_tuples: tuple[str, ...]) -> dict[str, str]:

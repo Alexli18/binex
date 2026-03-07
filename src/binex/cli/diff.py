@@ -9,7 +9,7 @@ from typing import Any
 
 import click
 
-from binex.stores import create_artifact_store, create_execution_store
+from binex.cli import get_stores
 
 
 @click.command("diff")
@@ -34,7 +34,8 @@ def diff_cmd(run_a: str, run_b: str, json_out: bool) -> None:
 async def _run_diff(run_a: str, run_b: str) -> dict[str, Any]:
     from binex.trace.diff import diff_runs
 
-    exec_store = create_execution_store(backend="memory")
-    art_store = create_artifact_store(backend="memory")
-
-    return await diff_runs(exec_store, art_store, run_a, run_b)
+    exec_store, art_store = get_stores()
+    try:
+        return await diff_runs(exec_store, art_store, run_a, run_b)
+    finally:
+        await exec_store.close()

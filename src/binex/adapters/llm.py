@@ -51,8 +51,14 @@ class LLMAdapter:
         parts: list[str] = []
         if task.skill:
             parts.append(f"Task: {task.skill}")
+        if task.inputs:
+            for key, value in task.inputs.items():
+                # Skip unresolved ${node.output} references
+                if isinstance(value, str) and "${" in value:
+                    continue
+                parts.append(f"{key}: {value}")
         for art in input_artifacts:
-            parts.append(f"Input ({art.type}): {art.content}")
+            parts.append(f"\nInput ({art.type}):\n{art.content}")
         return "\n".join(parts) if parts else "No input provided."
 
     async def cancel(self, task_id: str) -> None:

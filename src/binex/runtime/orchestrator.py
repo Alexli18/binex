@@ -109,6 +109,7 @@ class Orchestrator:
             node_id=node_id,
             agent=node_spec.agent,
             skill=node_spec.skill,
+            inputs=node_spec.inputs,
             retry_policy=node_spec.retry_policy or (
                 spec.defaults.retry_policy if spec.defaults else None
             ),

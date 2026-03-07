@@ -41,11 +41,28 @@ def load_workflow_from_string(
 ) -> WorkflowSpec:
     """Parse a workflow from a YAML or JSON string."""
     data = _parse_raw(content, fmt)
+    if user_vars:
+        _interpolate(data, user_vars)
     try:
         spec = WorkflowSpec(**data)
     except ValidationError as exc:
         raise ValueError(f"Invalid workflow spec: {exc}") from exc
     return spec
+
+
+def _interpolate(obj: Any, user_vars: dict[str, str]) -> Any:
+    """Recursively resolve ${user.key} placeholders in workflow data."""
+    if isinstance(obj, str):
+        for key, value in user_vars.items():
+            obj = obj.replace(f"${{user.{key}}}", value)
+        return obj
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            obj[k] = _interpolate(v, user_vars)
+        return obj
+    if isinstance(obj, list):
+        return [_interpolate(item, user_vars) for item in obj]
+    return obj
 
 
 def _parse_raw(content: str, fmt: str) -> dict[str, Any]:

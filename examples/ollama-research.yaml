@@ -1,0 +1,32 @@
+name: ollama-research
+description: "Research pipeline using local Ollama (gemma3:4b)"
+
+nodes:
+  planner:
+    agent: "llm://ollama/gemma3:4b"
+    skill: "Break down this research topic into 3 specific sub-questions to investigate"
+    inputs:
+      query: "${user.query}"
+    outputs: [plan]
+
+  researcher:
+    agent: "llm://ollama/gemma3:4b"
+    skill: "Answer this research question with specific facts and references"
+    inputs:
+      questions: "${planner.plan}"
+    outputs: [findings]
+    depends_on: [planner]
+
+  summarizer:
+    agent: "llm://ollama/gemma3:4b"
+    skill: "Synthesize these research findings into a concise summary with key takeaways"
+    inputs:
+      research: "${researcher.findings}"
+    outputs: [report]
+    depends_on: [researcher]
+
+defaults:
+  deadline_ms: 120000
+  retry_policy:
+    max_retries: 1
+    backoff: exponential

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import enum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -47,6 +47,7 @@ class TaskNode(BaseModel):
     node_id: str
     agent: str
     skill: str | None = None
+    inputs: dict[str, Any] = Field(default_factory=dict)
     status: TaskStatus = TaskStatus.REQUESTED
     input_artifact_refs: list[str] = Field(default_factory=list)
     output_artifact_refs: list[str] = Field(default_factory=list)
