@@ -37,6 +37,21 @@
 
 ---
 
+## Why Binex?
+
+Building multi-agent systems is hard. Debugging them is harder. **Binex** gives you:
+
+- **YAML-first workflows** &mdash; define agent pipelines as readable DAGs, not tangled code
+- **Full execution tracing** &mdash; every node call, every artifact, every millisecond recorded
+- **Post-mortem debugging** &mdash; inspect any run after the fact with rich, filterable reports
+- **Replay with agent swap** &mdash; re-run a workflow substituting different LLMs or agents
+- **Run diffing** &mdash; compare two executions side-by-side to spot regressions
+- **Human-in-the-loop** &mdash; approval gates and free-text input with conditional branching
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
 ## Demo
 
 A multi-provider research pipeline: **Ollama** runs locally for planning and summarization, **OpenRouter** calls cloud models for parallel research &mdash; all in one YAML file.
@@ -85,21 +100,6 @@ Run it, explore results, debug the execution:
 <div align="center">
   <img src="assets/demo.gif" alt="Binex Demo — multi-provider research pipeline" width="800">
 </div>
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Why Binex?
-
-Building multi-agent systems is hard. Debugging them is harder. **Binex** gives you:
-
-- **YAML-first workflows** &mdash; define agent pipelines as readable DAGs, not tangled code
-- **Full execution tracing** &mdash; every node call, every artifact, every millisecond recorded
-- **Post-mortem debugging** &mdash; inspect any run after the fact with rich, filterable reports
-- **Replay with agent swap** &mdash; re-run a workflow substituting different LLMs or agents
-- **Run diffing** &mdash; compare two executions side-by-side to spot regressions
-- **Human-in-the-loop** &mdash; approval gates and free-text input with conditional branching
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
