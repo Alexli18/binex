@@ -56,6 +56,16 @@ Building multi-agent systems is hard. Debugging them is harder. **Binex** gives 
 
 A multi-provider research pipeline: **Ollama** runs locally for planning and summarization, **OpenRouter** calls cloud models for parallel research &mdash; all in one YAML file.
 
+<details>
+<summary><strong>Requirements to run this demo</strong></summary>
+
+- [Ollama](https://ollama.com/) installed and running locally
+- Model pulled: `ollama pull gemma3:4b`
+- Free [OpenRouter](https://openrouter.ai/) API key (set `OPENROUTER_API_KEY` in `.env`)
+- Binex installed: `pip install -e .`
+
+</details>
+
 ```yaml
 # examples/multi-provider-demo.yaml
 name: multi-provider-research
