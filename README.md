@@ -96,14 +96,9 @@ nodes:
     depends_on: [researcher1, researcher2]
 ```
 
-```mermaid
-graph LR
-    A["user_input<br/><sub>human://input</sub>"] --> B["planner<br/><sub>ollama/gemma3:4b</sub>"]
-    B --> C["researcher1<br/><sub>openrouter/glm-4.5-air</sub>"]
-    B --> D["researcher2<br/><sub>openrouter/step-3.5-flash</sub>"]
-    C --> E["summarizer<br/><sub>ollama/gemma3:4b</sub>"]
-    D --> E
-```
+<div align="center">
+  <img src="https://mermaid.ink/img/Z3JhcGggTFIKICAgIEFbInVzZXJfaW5wdXQ8YnIvPjxzdWI-aHVtYW46Ly9pbnB1dDwvc3ViPiJdIC0tPiBCWyJwbGFubmVyPGJyLz48c3ViPm9sbGFtYS9nZW1tYTM6NGI8L3N1Yj4iXQogICAgQiAtLT4gQ1sicmVzZWFyY2hlcjE8YnIvPjxzdWI-b3BlbnJvdXRlci9nbG0tNC41LWFpcjwvc3ViPiJdCiAgICBCIC0tPiBEWyJyZXNlYXJjaGVyMjxici8-PHN1Yj5vcGVucm91dGVyL3N0ZXAtMy41LWZsYXNoPC9zdWI-Il0KICAgIEMgLS0-IEVbInN1bW1hcml6ZXI8YnIvPjxzdWI-b2xsYW1hL2dlbW1hMzo0Yjwvc3ViPiJdCiAgICBEIC0tPiBF?type=png&bgColor=white" alt="Demo DAG" width="700">
+</div>
 
 Run it, explore results, debug the execution:
 
@@ -268,14 +263,9 @@ nodes:
     when: "${reviewer.decision} == approved"
 ```
 
-```mermaid
-graph TD
-    A[planner] --> B[researcher_1]
-    A --> C[researcher_2]
-    B --> D["reviewer (human approval)"]
-    C --> D
-    D -->|approved| E[summarizer]
-```
+<div align="center">
+  <img src="https://mermaid.ink/img/Z3JhcGggVEQKICAgIEFbcGxhbm5lcl0gLS0-IEJbcmVzZWFyY2hlcl8xXQogICAgQSAtLT4gQ1tyZXNlYXJjaGVyXzJdCiAgICBCIC0tPiBEWyJyZXZpZXdlciAoaHVtYW4gYXBwcm92YWwpIl0KICAgIEMgLS0-IEQKICAgIEQgLS0-fGFwcHJvdmVkfCBFW3N1bW1hcml6ZXJd?type=png&bgColor=white" alt="Workflow DAG" width="300">
+</div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -283,16 +273,9 @@ graph TD
 
 ## Architecture
 
-```mermaid
-block-beta
-    columns 3
-
-    CLI["CLI\nrun · debug · trace · replay · diff · dev"]:3
-    Runtime["Runtime\nOrchestrator + Dispatcher"]:3
-    Adapters["Adapters\nlocal:// · llm:// · a2a:// · human://"] Graph["Graph\nDAG · topo-sort · cycle detect"] Spec["Workflow Spec\nYAML loader · validation"]
-    Stores["Stores\nSQLite executions + FS artifacts"]:3
-    Models["Models\nWorkflow · Node · Artifact · Execution"]:3
-```
+<div align="center">
+  <img src="https://mermaid.ink/img/YmxvY2stYmV0YQogICAgY29sdW1ucyAzCiAgICBDTElbIkNMSQpydW4gwrcgZGVidWcgwrcgdHJhY2UgwrcgcmVwbGF5IMK3IGRpZmYgwrcgZGV2Il06MwogICAgUnVudGltZVsiUnVudGltZQpPcmNoZXN0cmF0b3IgKyBEaXNwYXRjaGVyIl06MwogICAgQWRhcHRlcnNbIkFkYXB0ZXJzCmxvY2FsOi8vIMK3IGxsbTovLyDCtyBhMmE6Ly8gwrcgaHVtYW46Ly8iXSBHcmFwaFsiR3JhcGgKREFHIMK3IHRvcG8tc29ydCDCtyBjeWNsZSBkZXRlY3QiXSBTcGVjWyJXb3JrZmxvdyBTcGVjCllBTUwgbG9hZGVyIMK3IHZhbGlkYXRpb24iXQogICAgU3RvcmVzWyJTdG9yZXMKU1FMaXRlIGV4ZWN1dGlvbnMgKyBGUyBhcnRpZmFjdHMiXTozCiAgICBNb2RlbHNbIk1vZGVscwpXb3JrZmxvdyDCtyBOb2RlIMK3IEFydGlmYWN0IMK3IEV4ZWN1dGlvbiJdOjM=?type=png&bgColor=white" alt="Architecture" width="600">
+</div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
