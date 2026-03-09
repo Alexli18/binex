@@ -32,20 +32,35 @@ def trace_cmd() -> None:
     """Inspect execution trace for a run."""
 
 
+def _has_rich() -> bool:
+    try:
+        import rich  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
 @trace_cmd.command("timeline")
 @click.argument("run_id")
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
-def trace_timeline_cmd(run_id: str, json_out: bool) -> None:
+@click.option("--rich/--no-rich", "rich_out", default=None, help="Rich output (auto-detected)")
+def trace_timeline_cmd(run_id: str, json_out: bool, rich_out: bool | None) -> None:
     """Human-readable timeline of all steps (default)."""
-    asyncio.run(_timeline(run_id, json_out))
+    if rich_out is None:
+        rich_out = _has_rich()
+    asyncio.run(_timeline(run_id, json_out, rich_out))
 
 
-async def _timeline(run_id: str, json_out: bool) -> None:
+async def _timeline(run_id: str, json_out: bool, rich_out: bool = False) -> None:
     exec_store, _ = _get_stores()
     try:
         if json_out:
             data = await generate_timeline_json(exec_store, run_id)
             click.echo(json.dumps(data, indent=2))
+        elif rich_out:
+            from binex.trace.trace_rich import format_trace_rich
+            output = await format_trace_rich(exec_store, run_id)
+            click.echo(output)
         else:
             output = await generate_timeline(exec_store, run_id)
             click.echo(output)
@@ -57,12 +72,15 @@ async def _timeline(run_id: str, json_out: bool) -> None:
 @click.argument("run_id")
 @click.argument("step")
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
-def trace_node_cmd(run_id: str, step: str, json_out: bool) -> None:
+@click.option("--rich/--no-rich", "rich_out", default=None, help="Rich output (auto-detected)")
+def trace_node_cmd(run_id: str, step: str, json_out: bool, rich_out: bool | None) -> None:
     """Show detailed view of a single execution step."""
-    asyncio.run(_node(run_id, step, json_out))
+    if rich_out is None:
+        rich_out = _has_rich()
+    asyncio.run(_node(run_id, step, json_out, rich_out))
 
 
-async def _node(run_id: str, step: str, json_out: bool) -> None:
+async def _node(run_id: str, step: str, json_out: bool, rich_out: bool = False) -> None:
     exec_store, _ = _get_stores()
     try:
         record = await exec_store.get_step(run_id, step)
@@ -72,6 +90,10 @@ async def _node(run_id: str, step: str, json_out: bool) -> None:
 
         if json_out:
             click.echo(json.dumps(record.model_dump(), default=str, indent=2))
+        elif rich_out:
+            from binex.trace.trace_rich import format_trace_node_rich
+            output = await format_trace_node_rich(record)
+            click.echo(output)
         else:
             click.echo(f"Step: {record.task_id}")
             click.echo(f"Agent: {record.agent_id}")
@@ -95,12 +117,15 @@ async def _node(run_id: str, step: str, json_out: bool) -> None:
 @trace_cmd.command("graph")
 @click.argument("run_id")
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
-def trace_graph_cmd(run_id: str, json_out: bool) -> None:
-    """Show ASCII DAG visualization of a run."""
-    asyncio.run(_graph(run_id, json_out))
+@click.option("--rich/--no-rich", "rich_out", default=None, help="Rich output (auto-detected)")
+def trace_graph_cmd(run_id: str, json_out: bool, rich_out: bool | None) -> None:
+    """Show DAG visualization of a run."""
+    if rich_out is None:
+        rich_out = _has_rich()
+    asyncio.run(_graph(run_id, json_out, rich_out))
 
 
-async def _graph(run_id: str, json_out: bool) -> None:
+async def _graph(run_id: str, json_out: bool, rich_out: bool = False) -> None:
     exec_store, _ = _get_stores()
     try:
         records = await exec_store.list_records(run_id)
@@ -134,6 +159,10 @@ async def _graph(run_id: str, json_out: bool) -> None:
                 "edges": [{"from": src, "to": dst} for src, dst in edge_list],
             }
             click.echo(json.dumps(data, indent=2))
+        elif rich_out:
+            from binex.trace.trace_rich import format_trace_graph_rich
+            output = await format_trace_graph_rich(records, nodes, edge_list)
+            click.echo(output)
         else:
             click.echo("DAG:")
             rendered: set[str] = set()
