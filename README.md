@@ -22,11 +22,12 @@
     <img src="https://img.shields.io/badge/tests-870%20passed-brightgreen?style=flat-square" alt="Tests">
     <img src="https://img.shields.io/badge/coverage-96%25-brightgreen?style=flat-square" alt="Coverage">
     <img src="https://img.shields.io/badge/version-0.1.0-orange?style=flat-square" alt="Version">
+    <a href="https://alexli18.github.io/binex/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-blue?style=flat-square&logo=readthedocs&logoColor=white" alt="Docs"></a>
   </p>
 
   <p>
     <a href="#-quickstart">Quickstart</a> &middot;
-    <a href="docs/index.md">Documentation</a> &middot;
+    <a href="https://alexli18.github.io/binex/">Documentation</a> &middot;
     <a href="https://github.com/Alexli18/binex/issues">Report Bug</a> &middot;
     <a href="https://github.com/Alexli18/binex/issues">Request Feature</a>
   </p>
@@ -296,13 +297,13 @@ The [`examples/`](examples/) directory contains 22 ready-to-run workflows:
 
 ## Documentation
 
-Full docs available in [`docs/`](docs/index.md):
+Full docs available at **[alexli18.github.io/binex](https://alexli18.github.io/binex/)**:
 
-- [Quickstart](docs/quickstart.md) &mdash; install and run your first workflow
-- [Concepts](docs/concepts/agents.md) &mdash; agents, workflows, artifacts, execution model
-- [CLI Reference](docs/cli/run.md) &mdash; every command with options and examples
-- [Architecture](docs/architecture/overview.md) &mdash; runtime internals and design decisions
-- [Workflow Format](docs/workflows/format.md) &mdash; complete YAML schema reference
+- [Quickstart](https://alexli18.github.io/binex/quickstart/) &mdash; install and run your first workflow
+- [Concepts](https://alexli18.github.io/binex/concepts/agents/) &mdash; agents, workflows, artifacts, execution model
+- [CLI Reference](https://alexli18.github.io/binex/cli/run/) &mdash; every command with options and examples
+- [Architecture](https://alexli18.github.io/binex/architecture/overview/) &mdash; runtime internals and design decisions
+- [Workflow Format](https://alexli18.github.io/binex/workflows/format/) &mdash; complete YAML schema reference
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

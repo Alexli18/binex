@@ -1,5 +1,8 @@
 site_name: Binex
 site_description: Debuggable runtime for AI agent pipelines
+site_url: https://alexli18.github.io/binex/
+repo_url: https://github.com/Alexli18/binex
+repo_name: Alexli18/binex
 
 theme:
   name: material
