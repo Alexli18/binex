@@ -9,9 +9,23 @@ binex cancel RUN_ID
 
 ## Description
 
-`binex run` executes a workflow definition. It loads the YAML file, validates DAG structure, registers adapters for all referenced agents (`local://`, `llm://`, `a2a://`), and runs nodes in dependency order. Exits `0` on success, `1` on failure.
+`binex run` executes a workflow definition. It:
+
+1. Loads the YAML file (resolving `${user.*}` variable substitutions)
+2. Validates the DAG structure (no cycles, valid dependencies)
+3. Auto-registers adapters for all referenced agents (`local://`, `llm://`, `a2a://`, `human://`)
+4. Executes nodes in dependency order (parallel where possible)
+5. Persists execution records and artifacts to `.binex/`
 
 `binex cancel` marks a running workflow as cancelled.
+
+### Exit Codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Workflow completed successfully |
+| `1` | Workflow failed (one or more nodes errored) or cancel failed |
+| `2` | Workflow validation failed (invalid YAML, DAG cycle, etc.) |
 
 ## Options
 
@@ -20,9 +34,9 @@ binex cancel RUN_ID
 | Option | Type | Description |
 |---|---|---|
 | `WORKFLOW_FILE` | `Path` (must exist) | Workflow YAML file to execute |
-| `--var` | `key=value` (repeatable) | Variable substitution passed to `${user.*}` |
-| `--json-output` / `--json` | flag | Output as JSON |
-| `--verbose` / `-v` | flag | Show `[N/total]` progress, input arrows, and artifact contents after each step |
+| `--var` | `key=value` (repeatable) | Variable substitution for `${user.*}` placeholders. Can be specified multiple times. |
+| `--json-output` / `--json` | flag | Output run summary as JSON |
+| `--verbose` / `-v` | flag | Show step-by-step progress with `[N/total]` counters, input dependency arrows, artifact contents after each step, and skipped node indicators |
 
 ### cancel
 
@@ -30,58 +44,258 @@ binex cancel RUN_ID
 |---|---|---|
 | `RUN_ID` | `string` | ID of the run to cancel |
 
-## Example
+## Successful Run
 
 ```bash
-# Run a workflow with a user variable
-binex run examples/simple.yaml --var input="hello world"
+$ binex run workflows/content-pipeline.yaml --var topic="AI safety"
 
-# Run with JSON output and verbose logging
-binex run examples/simple.yaml --var input="hello" --json -v
-
-# Cancel a running workflow
-binex cancel abc123-run-id
-```
-
-## Output
-
-```
-Run ID: f7a1b2c3-...
-Workflow: simple-pipeline
+Run ID: run_f7a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c
+Workflow: content-pipeline
 Status: completed
-Nodes: 2/2 completed
+Nodes: 4/4 completed
+╭──────────── format_output ────────────╮
+│                                       │
+│ # AI Safety Report                    │
+│                                       │
+│ ## Key Findings                       │
+│ ...                                   │
+│                                       │
+╰───────────────── result ──────────────╯
 ```
 
-When a node fails, errors are printed to stderr:
+When `rich` is installed, terminal nodes display their output in a styled panel. Without `rich`, output is printed as plain text.
 
-```
-  [consumer] Error: connection timeout
+## Failed Run
+
+```bash
+$ binex run workflows/content-pipeline.yaml --var topic="AI safety"
+
+  [summarize] Error: litellm.APIError: Rate limit exceeded
+Run ID: run_d8e9f0a1-2b3c-4d5e-6f7a-8b9c0d1e2f3a
+Workflow: content-pipeline
+Status: failed
+Nodes: 2/4 completed
 Failed: 1
+
+Tip: run 'binex debug run_d8e9f0a1-2b3c-4d5e-6f7a-8b9c0d1e2f3a' for full details
 ```
 
-### Verbose output (`-v`)
+Node errors are printed to stderr. When a run fails, a tip pointing to `binex debug` is shown automatically.
 
-```
-[1/2] producer ...
-  [producer] -> result:
-{'msg': 'no input'}
+## Verbose Output (`-v`)
 
-  [2/2] consumer ...
-        <- producer
-  [consumer] -> result:
-{'art_producer': {'msg': 'no input'}}
+Verbose mode shows real-time progress as each node executes:
 
-Run ID: abc123
-Workflow: simple-pipeline
+```bash
+$ binex run workflows/content-pipeline.yaml --var topic="AI safety" -v
+
+  [1/4] fetch_data ...
+  [fetch_data] -> result:
+{"articles": ["article1.txt", "article2.txt"]}
+
+  [2/4] transform ...
+        <- fetch_data
+  [transform] -> result:
+{"cleaned": "Merged text from 2 articles..."}
+
+  [3/4] summarize ...
+        <- transform
+  [summarize] -> result:
+AI safety is a rapidly growing field focusing on...
+
+  [4/4] format_output ...
+        <- summarize
+  [format_output] -> result:
+# AI Safety Report
+## Key Findings
+...
+
+Run ID: run_f7a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c
+Workflow: content-pipeline
 Status: completed
-Nodes: 2/2 completed
+Nodes: 4/4 completed
 ```
 
-When a run fails, a tip is shown:
+The `<- node_name` arrows show input dependencies for each step.
+
+### Skipped Nodes
+
+Nodes with a `when` condition that evaluates to false are skipped. In verbose mode, they are shown:
 
 ```
-Tip: run 'binex debug abc123' for full details
+  [skipped] optional_review
 ```
+
+Skipped nodes count toward `total_nodes` but not `completed_nodes` or `failed_nodes`.
+
+## JSON Output
+
+```bash
+$ binex run workflows/content-pipeline.yaml --var topic="AI safety" --json
+```
+
+```json
+{
+  "run_id": "run_f7a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+  "workflow_name": "content-pipeline",
+  "status": "completed",
+  "total_nodes": 4,
+  "completed_nodes": 4,
+  "failed_nodes": 0,
+  "started_at": "2026-03-09T14:30:00.123456",
+  "finished_at": "2026-03-09T14:30:12.654321",
+  "output": {
+    "format_output": "# AI Safety Report\n\n## Key Findings\n..."
+  }
+}
+```
+
+The `output` field contains the content of terminal nodes (nodes with no downstream dependents).
+
+With `--json -v`, the output includes all artifacts:
+
+```json
+{
+  "run_id": "run_f7a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+  "workflow_name": "content-pipeline",
+  "status": "completed",
+  "total_nodes": 4,
+  "completed_nodes": 4,
+  "failed_nodes": 0,
+  "output": {
+    "format_output": "# AI Safety Report\n..."
+  },
+  "artifacts": [
+    {
+      "node": "fetch_data",
+      "type": "result",
+      "content": {"articles": ["article1.txt", "article2.txt"]}
+    },
+    {
+      "node": "transform",
+      "type": "result",
+      "content": {"cleaned": "Merged text from 2 articles..."}
+    },
+    {
+      "node": "summarize",
+      "type": "result",
+      "content": "AI safety is a rapidly growing field..."
+    },
+    {
+      "node": "format_output",
+      "type": "result",
+      "content": "# AI Safety Report\n..."
+    }
+  ]
+}
+```
+
+## Validation Errors
+
+If the workflow YAML has structural problems, `binex run` exits with code `2` before executing anything:
+
+```bash
+$ binex run workflows/broken.yaml
+Error: Node 'summarize' depends on unknown node 'nonexistent'
+Error: Cycle detected: transform -> summarize -> transform
+```
+
+## Variable Substitution
+
+Use `--var` to pass values into `${user.*}` placeholders in the workflow YAML:
+
+```yaml
+# workflow.yaml
+name: report-pipeline
+nodes:
+  fetch:
+    agent: local://fetch
+    skill: "Fetch articles about ${user.topic}"
+  summarize:
+    agent: llm://openai/gpt-4o
+    skill: "Summarize in ${user.language}"
+    depends_on: [fetch]
+```
+
+```bash
+binex run workflow.yaml --var topic="quantum computing" --var language="Spanish"
+```
+
+Variables are resolved at load time. If a `${user.*}` placeholder has no matching `--var`, it is left as-is in the string.
+
+### Invalid `--var` Format
+
+```
+$ binex run workflow.yaml --var "topic quantum computing"
+Error: Invalid var format: topic quantum computing (expected key=value)
+```
+
+## Environment Variables
+
+Binex loads `.env` from the current directory at startup (via `python-dotenv`). This is the standard way to configure API keys:
+
+```bash
+# .env
+OPENAI_API_KEY=sk-proj-abc123...
+ANTHROPIC_API_KEY=sk-ant-abc123...
+```
+
+Per-node configuration (api_base, api_key, temperature, max_tokens) can also be set in the workflow YAML `config` block:
+
+```yaml
+nodes:
+  summarize:
+    agent: llm://openai/gpt-4o
+    skill: "Summarize the document"
+    config:
+      temperature: 0.3
+      max_tokens: 2000
+```
+
+## Cancel a Running Workflow
+
+```bash
+$ binex cancel run_f7a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c
+Run 'run_f7a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c' cancelled.
+```
+
+**Error cases:**
+
+```
+$ binex cancel run_nonexistent
+Error: Run 'run_nonexistent' not found.
+
+$ binex cancel run_already_done
+Error: Cannot cancel run 'run_already_done' — not running.
+```
+
+## Agent Registration
+
+`binex run` auto-registers adapters based on the agent URI prefix in each node:
+
+| Prefix | Adapter | Notes |
+|---|---|---|
+| `local://` | `LocalPythonAdapter` | Default echo handler (passes input through) |
+| `llm://` | `LLMAdapter` | Model name extracted from URI; config forwarded to `litellm.acompletion()` |
+| `a2a://` | `A2AAgentAdapter` | Endpoint URL extracted from URI; POSTs to `/execute` |
+| `human://input` | `HumanInputAdapter` | Prompts user for text input via terminal |
+| `human://approve` | `HumanApprovalAdapter` | Prompts user for approval; returns `"approved"` or `"rejected"` |
+
+## Data Storage
+
+All run data is persisted in the `.binex/` directory (gitignored by default):
+
+- `.binex/binex.db` -- SQLite database with execution records (run metadata, node statuses, latency, errors)
+- `.binex/artifacts/` -- JSON files with artifact content and lineage
+
+## Tips
+
+- Use `--json` in scripts and CI pipelines. The `output` field always contains terminal node content.
+- Use `-v` during development to watch the pipeline execute step by step.
+- Long artifact content (over 4000 characters) is truncated in the terminal panel display. Use `binex artifacts show <id>` to see full content.
+- Combine `--json` and `-v` to get both progress logging (on stderr) and structured output (on stdout).
+- If a run fails, the tip message points to `binex debug` -- follow it for full error details and node-level inspection.
+- The `output` field in JSON mode only includes terminal nodes. Use `-v` to include all intermediate artifacts.
 
 ## See Also
 
@@ -89,3 +303,4 @@ Tip: run 'binex debug abc123' for full details
 - [binex debug](debug.md) -- post-mortem inspection of a run
 - [binex trace](trace.md) -- inspect execution after a run
 - [binex replay](replay.md) -- re-run from a specific step
+- [binex artifacts](artifacts.md) -- inspect individual artifacts
