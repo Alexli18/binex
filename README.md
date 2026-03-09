@@ -3,8 +3,6 @@
 <div align="center">
   <h1>
     <br>
-    <img src="https://img.shields.io/badge/binex-000000?style=for-the-badge&logoColor=white" alt="Binex" height="40">
-    <br>
     Binex
     <br>
   </h1>
@@ -16,20 +14,18 @@
   </p>
 
   <p>
+    <a href="https://pypi.org/project/binex/"><img src="https://img.shields.io/pypi/v/binex?style=flat-square&color=orange" alt="PyPI"></a>
+    <a href="https://pypi.org/project/binex/"><img src="https://img.shields.io/pypi/pyversions/binex?style=flat-square" alt="Python"></a>
+    <a href="https://github.com/Alexli18/binex/blob/master/LICENSE"><img src="https://img.shields.io/github/license/Alexli18/binex?style=flat-square" alt="License"></a>
     <a href="https://github.com/Alexli18/binex/actions"><img src="https://img.shields.io/github/actions/workflow/status/Alexli18/binex/ci.yml?style=flat-square&label=CI" alt="CI"></a>
-    <a href="https://github.com/Alexli18/binex/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License"></a>
-    <img src="https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
-    <img src="https://img.shields.io/badge/tests-870%20passed-brightgreen?style=flat-square" alt="Tests">
-    <img src="https://img.shields.io/badge/coverage-96%25-brightgreen?style=flat-square" alt="Coverage">
-    <a href="https://pypi.org/project/binex/"><img src="https://img.shields.io/pypi/v/binex?style=flat-square&label=PyPI&color=orange" alt="PyPI"></a>
-    <a href="https://alexli18.github.io/binex/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-blue?style=flat-square&logo=readthedocs&logoColor=white" alt="Docs"></a>
+    <a href="https://alexli18.github.io/binex/"><img src="https://img.shields.io/badge/docs-online-blue?style=flat-square" alt="Docs"></a>
   </p>
 
   <p>
-    <a href="#-quickstart">Quickstart</a> &middot;
+    <a href="#installation">Installation</a> &middot;
+    <a href="#quickstart">Quickstart</a> &middot;
     <a href="https://alexli18.github.io/binex/">Documentation</a> &middot;
-    <a href="https://github.com/Alexli18/binex/issues">Report Bug</a> &middot;
-    <a href="https://github.com/Alexli18/binex/issues">Request Feature</a>
+    <a href="https://github.com/Alexli18/binex/issues">Issues</a>
   </p>
 </div>
 
@@ -37,74 +33,41 @@
 
 ---
 
-## Why Binex?
+## What is Binex?
 
-Building multi-agent systems is hard. Debugging them is harder. **Binex** gives you:
+Binex is a debuggable runtime for AI agent workflows.
 
-- **YAML-first workflows** &mdash; define agent pipelines as readable DAGs, not tangled code
-- **Full execution tracing** &mdash; every node call, every artifact, every millisecond recorded
-- **Post-mortem debugging** &mdash; inspect any run after the fact with rich, filterable reports
-- **Replay with agent swap** &mdash; re-run a workflow substituting different LLMs or agents
+It executes DAG-based pipelines of agents (LLM, local, remote A2A, or human),
+tracks artifacts between steps, and allows replaying and inspecting runs.
+
+**Key features:**
+
+- **DAG-based execution** &mdash; define agent pipelines as readable YAML, not tangled code
+- **Artifact lineage** &mdash; every input and output tracked across the entire pipeline
+- **Replayable workflows** &mdash; re-run with agent swaps, compare results
+- **Full tracing** &mdash; every node call, every artifact, every millisecond recorded
+- **Post-mortem debugging** &mdash; inspect any run after the fact with rich reports
 - **Run diffing** &mdash; compare two executions side-by-side to spot regressions
 - **Human-in-the-loop** &mdash; approval gates and free-text input with conditional branching
+- **CLI-first DX** &mdash; everything accessible from the terminal
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## Demo
+## Installation
 
-A multi-provider research pipeline: **Ollama** runs locally for planning and summarization, **OpenRouter** calls cloud models for parallel research &mdash; all in one YAML file.
+Install from PyPI:
 
-<details>
-<summary><strong>Requirements to run this demo</strong></summary>
-
-- [Ollama](https://ollama.com/) installed and running locally
-- Model pulled: `ollama pull gemma3:4b`
-- Free [OpenRouter](https://openrouter.ai/) API key (set `OPENROUTER_API_KEY` in `.env`)
-- Binex installed: `pip install -e .`
-
-</details>
-
-```yaml
-# examples/multi-provider-demo.yaml
-name: multi-provider-research
-
-nodes:
-  user_input:
-    agent: "human://input"                          # ask the user for a topic
-
-  planner:
-    agent: "llm://ollama/gemma3:4b"                 # local LLM plans the research
-    system_prompt: "Create a structured research plan with 3 subtopics..."
-    inputs: { topic: "${user_input.result}" }
-    depends_on: [user_input]
-
-  researcher1:
-    agent: "llm://openrouter/z-ai/glm-4.5-air:free"    # cloud model researches subtopic 1
-    inputs: { plan: "${planner.result}" }
-    depends_on: [planner]
-
-  researcher2:
-    agent: "llm://openrouter/stepfun/step-3.5-flash:free"  # cloud model researches subtopic 2
-    inputs: { plan: "${planner.result}" }
-    depends_on: [planner]
-
-  summarizer:
-    agent: "llm://ollama/gemma3:4b"                 # local LLM combines findings
-    inputs: { research1: "${researcher1.result}", research2: "${researcher2.result}" }
-    depends_on: [researcher1, researcher2]
+```bash
+pip install binex
 ```
 
-<div align="center">
-  <img src="https://mermaid.ink/img/Z3JhcGggTFIKICAgIEFbInVzZXJfaW5wdXQ8YnIvPjxzdWI-aHVtYW46Ly9pbnB1dDwvc3ViPiJdIC0tPiBCWyJwbGFubmVyPGJyLz48c3ViPm9sbGFtYS9nZW1tYTM6NGI8L3N1Yj4iXQogICAgQiAtLT4gQ1sicmVzZWFyY2hlcjE8YnIvPjxzdWI-b3BlbnJvdXRlci9nbG0tNC41LWFpcjwvc3ViPiJdCiAgICBCIC0tPiBEWyJyZXNlYXJjaGVyMjxici8-PHN1Yj5vcGVucm91dGVyL3N0ZXAtMy41LWZsYXNoPC9zdWI-Il0KICAgIEMgLS0-IEVbInN1bW1hcml6ZXI8YnIvPjxzdWI-b2xsYW1hL2dlbW1hMzo0Yjwvc3ViPiJdCiAgICBEIC0tPiBF?type=png&bgColor=white" alt="Demo DAG" width="700">
-</div>
+For rich colored output:
 
-Run it, explore results, debug the execution:
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo.gif" alt="Binex Demo — multi-provider research pipeline" width="800">
-</div>
+```bash
+pip install binex[rich]
+```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -112,32 +75,41 @@ Run it, explore results, debug the execution:
 
 ## Quickstart
 
+Run the built-in demo (no config needed):
+
 ```bash
-# Clone
-git clone https://github.com/Alexli18/binex.git
-cd binex
-
-# Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate   # Linux/macOS
-# .venv\Scripts\activate    # Windows
-
-# Install
-pip install -e .
-
-# Run the zero-config demo
 binex hello
+```
 
-# Run a workflow
-binex run examples/simple.yaml --var input="hello world"
+Create a workflow file `workflow.yaml`:
 
-# Debug a completed run
-binex debug <run-id>
-binex debug latest          # shortcut for the most recent run
+```yaml
+name: hello
+nodes:
+  greet:
+    agent: "local://echo"
+    inputs:
+      msg: "hello world"
+    outputs: [response]
 
-# Optional: rich colored output
-pip install -e ".[rich]"
-binex debug latest --rich
+  respond:
+    agent: "local://echo"
+    inputs:
+      greeting: "${greet.response}"
+    depends_on: [greet]
+```
+
+Run it:
+
+```bash
+binex run workflow.yaml
+```
+
+Inspect the run:
+
+```bash
+binex debug latest
+binex trace latest
 ```
 
 <details>
@@ -165,19 +137,63 @@ Next steps:
   binex run examples/simple.yaml — try a workflow file
 ```
 
-```
-$ binex run examples/simple.yaml --var input="hello world"
+</details>
 
-Run ID: run_69651bec
-Workflow: simple-pipeline
-Status: completed
-Nodes: 2/2 completed
-╭──────────────────────── consumer ────────────────────────╮
-│ { "art_producer": { "msg": "hello world" } }             │
-╰──────────────────────── result ──────────────────────────╯
-```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## Demo
+
+A multi-provider research pipeline: **Ollama** runs locally for planning and summarization, **OpenRouter** calls cloud models for parallel research &mdash; all in one YAML file.
+
+<details>
+<summary><strong>Requirements to run this demo</strong></summary>
+
+- [Ollama](https://ollama.com/) installed and running locally
+- Model pulled: `ollama pull gemma3:4b`
+- Free [OpenRouter](https://openrouter.ai/) API key (set `OPENROUTER_API_KEY` in `.env`)
+- Binex installed: `pip install binex`
 
 </details>
+
+```yaml
+# examples/multi-provider-demo.yaml
+name: multi-provider-research
+
+nodes:
+  user_input:
+    agent: "human://input"
+
+  planner:
+    agent: "llm://ollama/gemma3:4b"
+    system_prompt: "Create a structured research plan with 3 subtopics..."
+    inputs: { topic: "${user_input.result}" }
+    depends_on: [user_input]
+
+  researcher1:
+    agent: "llm://openrouter/z-ai/glm-4.5-air:free"
+    inputs: { plan: "${planner.result}" }
+    depends_on: [planner]
+
+  researcher2:
+    agent: "llm://openrouter/stepfun/step-3.5-flash:free"
+    inputs: { plan: "${planner.result}" }
+    depends_on: [planner]
+
+  summarizer:
+    agent: "llm://ollama/gemma3:4b"
+    inputs: { research1: "${researcher1.result}", research2: "${researcher2.result}" }
+    depends_on: [researcher1, researcher2]
+```
+
+<div align="center">
+  <img src="https://mermaid.ink/img/Z3JhcGggTFIKICAgIEFbInVzZXJfaW5wdXQ8YnIvPjxzdWI-aHVtYW46Ly9pbnB1dDwvc3ViPiJdIC0tPiBCWyJwbGFubmVyPGJyLz48c3ViPm9sbGFtYS9nZW1tYTM6NGI8L3N1Yj4iXQogICAgQiAtLT4gQ1sicmVzZWFyY2hlcjE8YnIvPjxzdWI-b3BlbnJvdXRlci9nbG0tNC41LWFpcjwvc3ViPiJdCiAgICBCIC0tPiBEWyJyZXNlYXJjaGVyMjxici8-PHN1Yj5vcGVucm91dGVyL3N0ZXAtMy41LWZsYXNoPC9zdWI-Il0KICAgIEMgLS0-IEVbInN1bW1hcml6ZXI8YnIvPjxzdWI-b2xsYW1hL2dlbW1hMzo0Yjwvc3ViPiJdCiAgICBEIC0tPiBF?type=png&bgColor=white" alt="Demo DAG" width="700">
+</div>
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo.gif" alt="Binex Demo" width="800">
+</div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -195,7 +211,7 @@ binex trace <run-id>
   <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/trace-screenshot.png" alt="binex trace" width="800">
 </div>
 
-Compare two runs side-by-side — spot status changes, latency deltas, and output differences:
+Compare two runs side-by-side:
 
 ```bash
 binex diff <run-a> <run-b>
@@ -205,7 +221,7 @@ binex diff <run-a> <run-b>
   <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/diff-screenshot.png" alt="binex diff" width="800">
 </div>
 
-Post-mortem debug of a failed run — see errors, prompts, and artifacts per node:
+Post-mortem debug:
 
 ```bash
 binex debug <run-id> --errors --rich
@@ -305,28 +321,50 @@ nodes:
 | `binex artifacts list <run-id>` | List artifacts with lineage tracking |
 | `binex validate <workflow.yaml>` | Validate YAML before execution |
 | `binex scaffold workflow "A -> B"` | Generate workflow from DSL shorthand |
-| `binex start` | Interactive wizard to create a workflow step-by-step |
-| `binex init` | Interactive project setup (workflow / agent / full) |
-| `binex dev up` | Start Docker dev stack (Ollama + LiteLLM + Registry) |
+| `binex init` | Interactive project setup |
+| `binex dev up` | Start Docker dev stack |
 | `binex doctor` | Check system health |
 | `binex explore` | Interactive browser for runs and artifacts |
 | `binex hello` | Zero-config demo |
-
-### DSL Shorthand
-
-Generate workflows from simple expressions:
-
-```bash
-binex scaffold workflow "planner -> researcher, analyst -> summarizer"
-```
-
-Nine built-in patterns available: `simple`, `diamond`, `fan-out`, `fan-in`, `map-reduce`, and more.
 
 ### LLM Providers
 
 Out-of-the-box support for 9 providers via LiteLLM:
 
 **OpenAI** &middot; **Anthropic** &middot; **Google Gemini** &middot; **Ollama** &middot; **OpenRouter** &middot; **Groq** &middot; **Mistral** &middot; **DeepSeek** &middot; **Together AI**
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## Examples
+
+Example workflows are available in the [`examples/`](examples/) directory:
+
+| Example | What it demonstrates |
+|---------|---------------------|
+| `simple.yaml` | Minimal two-node pipeline |
+| `diamond.yaml` | Diamond dependency pattern |
+| `fan-out-fan-in.yaml` | Parallel execution with aggregation |
+| `human-in-the-loop.yaml` | Approval gates and conditional branching |
+| `multi-provider-demo.yaml` | Multiple LLM providers in one workflow |
+| `a2a-multi-agent.yaml` | Remote agents via A2A protocol |
+| `conditional-routing.yaml` | Branch based on node output |
+| `map-reduce.yaml` | MapReduce-style aggregation |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## Documentation
+
+Full documentation is available at **[alexli18.github.io/binex](https://alexli18.github.io/binex/)**:
+
+- [Quickstart](https://alexli18.github.io/binex/quickstart/) &mdash; install and run your first workflow
+- [Concepts](https://alexli18.github.io/binex/concepts/agents/) &mdash; agents, workflows, artifacts, execution model
+- [CLI Reference](https://alexli18.github.io/binex/cli/run/) &mdash; every command with options and examples
+- [Architecture](https://alexli18.github.io/binex/architecture/overview/) &mdash; runtime internals and design decisions
+- [Workflow Format](https://alexli18.github.io/binex/workflows/format/) &mdash; complete YAML schema reference
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -353,96 +391,9 @@ src/binex/
 
 ---
 
-## Built With
-
-<p>
-  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/Pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white" alt="Pydantic">
-  <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
-  <img src="https://img.shields.io/badge/LiteLLM-FF6F00?style=for-the-badge" alt="LiteLLM">
-  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
-  <img src="https://img.shields.io/badge/Click-000000?style=for-the-badge" alt="Click">
-  <img src="https://img.shields.io/badge/pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white" alt="pytest">
-</p>
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Examples
-
-The [`examples/`](examples/) directory contains 22 ready-to-run workflows:
-
-| Example | What it demonstrates |
-|---------|---------------------|
-| `hello-world.yaml` | Minimal two-node pipeline |
-| `diamond.yaml` | Diamond dependency pattern |
-| `fan-out-fan-in.yaml` | Parallel research with aggregation |
-| `human-in-the-loop.yaml` | Approval gates and conditional branching |
-| `multi-provider-research.yaml` | Multiple LLM providers in one workflow |
-| `a2a-multi-agent.yaml` | Remote agents via A2A protocol |
-| `conditional-routing.yaml` | Branch based on node output |
-| `map-reduce.yaml` | MapReduce-style aggregation |
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Documentation
-
-Full docs available at **[alexli18.github.io/binex](https://alexli18.github.io/binex/)**:
-
-- [Quickstart](https://alexli18.github.io/binex/quickstart/) &mdash; install and run your first workflow
-- [Concepts](https://alexli18.github.io/binex/concepts/agents/) &mdash; agents, workflows, artifacts, execution model
-- [CLI Reference](https://alexli18.github.io/binex/cli/run/) &mdash; every command with options and examples
-- [Architecture](https://alexli18.github.io/binex/architecture/overview/) &mdash; runtime internals and design decisions
-- [Workflow Format](https://alexli18.github.io/binex/workflows/format/) &mdash; complete YAML schema reference
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Development
-
-```bash
-# Clone
-git clone https://github.com/Alexli18/binex.git
-cd binex
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate
-
-# Install with dev dependencies
-pip install -e ".[dev]"
-
-# Run tests (870 tests, 96% coverage)
-python -m pytest tests/
-
-# Lint
-ruff check src/
-
-# Start dev environment (Ollama + LiteLLM + Registry)
-binex dev up
-```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
 ## Roadmap
 
-See [`ROADMAP.md`](ROADMAP.md) for the full roadmap, or a summary below:
-
-- [ ] Web UI for execution visualization
-- [ ] Plugin system for custom adapters
-- [ ] Framework adapters (LangChain, CrewAI, AutoGen)
-- [ ] Workflow versioning and migration
-- [ ] Distributed execution across multiple runtimes
-- [ ] OpenTelemetry integration for observability
-
-See the [open issues](https://github.com/Alexli18/binex/issues) for a full list of proposed features and known issues.
+See [`ROADMAP.md`](ROADMAP.md) for upcoming features.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -450,13 +401,7 @@ See the [open issues](https://github.com/Alexli18/binex/issues) for a full list 
 
 ## Contributing
 
-Contributions are welcome! Here's how:
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/amazing-feature`)
-3. Commit your Changes (`git commit -m 'Add amazing feature'`)
-4. Push to the Branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Contributions are welcome! See [`CONTRIBUTING.md`](CONTRIBUTING.md) for development setup and guidelines.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
