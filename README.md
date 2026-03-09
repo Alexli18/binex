@@ -197,7 +197,7 @@ binex trace <run-id>
 ```
 
 <div align="center">
-  <img src="assets/trace-screenshot.svg" alt="binex trace" width="800">
+  <img src="assets/trace-screenshot.png" alt="binex trace" width="800">
 </div>
 
 Compare two runs side-by-side — spot status changes, latency deltas, and output differences:
@@ -207,7 +207,7 @@ binex diff <run-a> <run-b>
 ```
 
 <div align="center">
-  <img src="assets/diff-screenshot.svg" alt="binex diff" width="800">
+  <img src="assets/diff-screenshot.png" alt="binex diff" width="800">
 </div>
 
 Post-mortem debug of a failed run — see errors, prompts, and artifacts per node:
@@ -217,7 +217,7 @@ binex debug <run-id> --errors --rich
 ```
 
 <div align="center">
-  <img src="assets/debug-screenshot.svg" alt="binex debug" width="800">
+  <img src="assets/debug-screenshot.png" alt="binex debug" width="800">
 </div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
