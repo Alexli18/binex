@@ -4,9 +4,26 @@ build-backend = "hatchling.build"
 
 [project]
 name = "binex"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 description = "Debuggable runtime for AI agent pipelines"
+readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.11"
+authors = [
+    {name = "Alex Li", email = "alexli18@users.noreply.github.com"},
+]
+keywords = ["ai", "agents", "workflow", "orchestration", "debugging", "llm", "dag", "pipeline"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "a2a-sdk",
     "litellm",
@@ -19,6 +36,12 @@ dependencies = [
     "aiosqlite",
     "python-dotenv",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Alexli18/binex"
+Documentation = "https://alexli18.github.io/binex/"
+Repository = "https://github.com/Alexli18/binex"
+Issues = "https://github.com/Alexli18/binex/issues"
 
 [project.optional-dependencies]
 dev = [
