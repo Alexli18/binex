@@ -21,7 +21,7 @@
     <img src="https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
     <img src="https://img.shields.io/badge/tests-870%20passed-brightgreen?style=flat-square" alt="Tests">
     <img src="https://img.shields.io/badge/coverage-96%25-brightgreen?style=flat-square" alt="Coverage">
-    <img src="https://img.shields.io/badge/version-0.1.0-orange?style=flat-square" alt="Version">
+    <a href="https://pypi.org/project/binex/"><img src="https://img.shields.io/pypi/v/binex?style=flat-square&label=PyPI&color=orange" alt="PyPI"></a>
     <a href="https://alexli18.github.io/binex/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-blue?style=flat-square&logo=readthedocs&logoColor=white" alt="Docs"></a>
   </p>
 
