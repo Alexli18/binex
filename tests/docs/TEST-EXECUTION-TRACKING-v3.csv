@@ -1,0 +1,166 @@
+Test ID,Category,Test Case,Priority,Status,Result,Date,Tester,Bug ID,Notes
+TC-TOOL-001,CAT-1,@tool decorator creates ToolDefinition,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py + test_tools.py
+TC-TOOL-002,CAT-1,build_tool_schema str param,P1,DONE,PASS,2026-03-08,Claude,,test_tools.py
+TC-TOOL-003,CAT-1,build_tool_schema int/float/bool,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-TOOL-004,CAT-1,build_tool_schema list/dict,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-TOOL-005,CAT-1,build_tool_schema no type hint fallback,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-TOOL-006,CAT-1,build_tool_schema no params,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-TOOL-007,CAT-1,load_python_tool valid URI,P0,DONE,PASS,2026-03-08,Claude,,test_tools.py
+TC-TOOL-008,CAT-1,load_python_tool invalid URI,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-TOOL-009,CAT-1,load_python_tool module not found,P1,DONE,PASS,2026-03-08,Claude,,test_tools.py
+TC-TOOL-010,CAT-1,load_python_tool function not found,P1,DONE,PASS,2026-03-08,Claude,,test_tools.py
+TC-TOOL-011,CAT-1,_resolve_inline_tool YAML dict,P1,DONE,PASS,2026-03-08,Claude,,test_tools.py
+TC-TOOL-012,CAT-1,_resolve_inline_tool missing name,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-TOOL-013,CAT-1,resolve_tools mixed specs,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py + test_tools.py
+TC-TOOL-014,CAT-1,resolve_tools empty list,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-TOOL-015,CAT-1,execute_tool_call sync success,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py + test_tools.py
+TC-TOOL-016,CAT-1,execute_tool_call async success,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py + test_tools.py
+TC-TOOL-017,CAT-1,execute_tool_call exception → error,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py + test_tools.py
+TC-TOOL-018,CAT-1,execute_tool_call no handler → error,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py + test_tools.py
+TC-TOOL-019,CAT-1,to_openai_schema valid output,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-TOOL-020,CAT-1,Tool calling loop max_tool_rounds,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py + test_tools.py
+TC-LLM-001,CAT-2,LLMAdapter tools → litellm schema,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-LLM-002,CAT-2,Tool call response loop,P0,DONE,PASS,2026-03-08,Claude,,test_tools.py
+TC-LLM-003,CAT-2,Multi-round tool calling,P1,DONE,PASS,2026-03-08,Claude,,test_tools.py
+TC-LLM-004,CAT-2,max_tool_rounds exceeded → stop,P0,DONE,PASS,2026-03-08,Claude,,test_tools.py + test_qa_v3_phase2.py
+TC-LLM-005,CAT-2,Unknown tool → error message,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-LLM-006,CAT-2,Tool call invalid JSON args,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-LLM-007,CAT-2,No tool_calls → normal output,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-LLM-008,CAT-2,Tools=[] → no tools param,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-LLM-009,CAT-2,Tool result as tool message,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-LLM-010,CAT-2,Async tool in loop,P1,DONE,PASS,2026-03-08,Claude,,test_tools.py
+TC-LLM-011,CAT-2,Tool call with workflow_dir,P2,DONE,PASS,2026-03-08,Claude,,test_tools.py (load_python_tool)
+TC-LLM-012,CAT-2,Tool exception no crash,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-WHEN-001,CAT-3,when == match → execute,P0,DONE,PASS,2026-03-08,Claude,,test_when_conditions.py
+TC-WHEN-002,CAT-3,when == no match → skip,P0,DONE,PASS,2026-03-08,Claude,,test_when_conditions.py
+TC-WHEN-003,CAT-3,when != match → execute,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py + test_when_conditions.py
+TC-WHEN-004,CAT-3,when != no match → skip,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-WHEN-005,CAT-3,Skipped node in summary,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-WHEN-006,CAT-3,Skipped resolves downstream deps,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-WHEN-007,CAT-3,Validator invalid when syntax,P1,DONE,PASS,2026-03-08,Claude,,test_when_conditions.py
+TC-WHEN-008,CAT-3,Validator when refs non-existent node,P1,DONE,PASS,2026-03-08,Claude,,test_when_conditions.py
+TC-WHEN-009,CAT-3,Validator when node not in depends_on,P1,DONE,PASS,2026-03-08,Claude,,test_when_conditions.py
+TC-WHEN-010,CAT-3,Validator valid when → no warning,P2,DONE,PASS,2026-03-08,Claude,,test_when_conditions.py
+TC-WHEN-011,CAT-3,Fan-out both branches execute,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-WHEN-012,CAT-3,Fan-out one branch skipped,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-WHEN-013,CAT-3,when value with spaces,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-WHEN-014,CAT-3,when empty value,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-WHEN-015,CAT-3,Multiple when cascading skips,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py
+TC-HUM-001,CAT-4,Approval adapter approve,P0,DONE,PASS,2026-03-08,Claude,,test_human_adapter.py
+TC-HUM-002,CAT-4,Approval adapter reject,P0,DONE,PASS,2026-03-08,Claude,,test_human_adapter.py
+TC-HUM-003,CAT-4,Approval artifact type=decision,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py + test_human_adapter.py
+TC-HUM-004,CAT-4,Approval input artifacts displayed,P2,DONE,PASS,2026-03-08,Claude,,test_human_adapter.py
+TC-HUM-005,CAT-4,Input adapter free text,P0,DONE,PASS,2026-03-08,Claude,,test_human_adapter.py
+TC-HUM-006,CAT-4,Input artifact type=human_input,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-HUM-007,CAT-4,Input system_prompt as question,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py + test_human_adapter.py
+TC-HUM-008,CAT-4,Input upstream context displayed,P2,DONE,PASS,2026-03-08,Claude,,test_human_adapter.py
+TC-HUM-009,CAT-4,Both adapters health() ALIVE,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-HUM-010,CAT-4,Both adapters cancel() no-op,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-HUM-011,CAT-4,Both adapters lineage derived_from,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-HUM-012,CAT-4,Registration human:// URIs,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-START-001,CAT-5,Template selection 4 templates,P1,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-002,CAT-5,Custom DSL input parsed,P1,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-003,CAT-5,Provider selection top 3,P1,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-004,CAT-5,Provider other shows all 8,P2,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-005,CAT-5,Model name defaults,P1,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-006,CAT-5,API key prompt paid providers,P1,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-007,CAT-5,API key skip ollama,P2,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-008,CAT-5,Project dir files generated,P0,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-009,CAT-5,workflow.yaml nodes match DSL,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-START-010,CAT-5,.env API key written,P1,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-011,CAT-5,.gitignore generated,P2,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-012,CAT-5,build_start_workflow valid spec,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-START-013,CAT-5,Inline execution run now,P1,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-014,CAT-5,Invalid DSL graceful error,P1,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-START-015,CAT-5,Progress callback output,P2,DONE,PASS,2026-03-08,Claude,,test_cli_start.py
+TC-INIT-001,CAT-6,Mode workflow generates files,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py + test_cli_init.py
+TC-INIT-002,CAT-6,Mode agent adds agents/,P1,DONE,PASS,2026-03-08,Claude,,test_cli_init.py
+TC-INIT-003,CAT-6,Mode full adds tests + docker,P1,DONE,PASS,2026-03-08,Claude,,test_cli_init.py
+TC-INIT-004,CAT-6,Provider selection all 8,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-INIT-005,CAT-6,Provider skip no provider,P2,DONE,PASS,2026-03-08,Claude,,test_cli_init.py
+TC-INIT-006,CAT-6,Model override custom name,P1,DONE,PASS,2026-03-08,Claude,,test_cli_init.py
+TC-INIT-007,CAT-6,Non-empty dir confirmation,P1,DONE,PASS,2026-03-08,Claude,,test_cli_init.py
+TC-INIT-008,CAT-6,Template content nodes correct,P1,DONE,PASS,2026-03-08,Claude,,test_cli_init.py
+TC-INIT-009,CAT-6,.env.example API key placeholder,P2,DONE,PASS,2026-03-08,Claude,,test_cli_init.py
+TC-INIT-010,CAT-6,docker-compose Ollama service,P2,DONE,PASS,2026-03-08,Claude,,test_cli_init.py
+TC-INIT-011,CAT-6,agent.py template valid Python,P2,DONE,PASS,2026-03-08,Claude,,test_cli_init.py
+TC-INIT-012,CAT-6,test_workflow.py valid pytest,P2,DONE,PASS,2026-03-08,Claude,,test_cli_init.py
+TC-HELLO-001,CAT-7,Hello 2-node workflow completes,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py + test_cli_hello.py
+TC-HELLO-002,CAT-7,Hello outputs shown,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-HELLO-003,CAT-7,Hello no files created,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-HELLO-004,CAT-7,Echo handler behavior,P1,DONE,PASS,2026-03-08,Claude,,test_cli_hello.py
+TC-HELLO-005,CAT-7,Progress on stderr,P2,DONE,PASS,2026-03-08,Claude,,test_cli_hello.py
+TC-HELLO-006,CAT-7,Store close() called,P1,DONE,PASS,2026-03-08,Claude,,test_cli_hello.py (implicit)
+TC-HELLO-007,CAT-7,Adapter local://echo,P1,DONE,PASS,2026-03-08,Claude,,test_cli_hello.py
+TC-HELLO-008,CAT-7,Next steps message,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-DBG-001,CAT-8,debug plain text output,P0,DONE,PASS,2026-03-08,Claude,,test_cli_debug.py
+TC-DBG-002,CAT-8,debug --json output,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py + test_cli_debug.py
+TC-DBG-003,CAT-8,debug --errors filter,P1,DONE,PASS,2026-03-08,Claude,,test_cli_debug.py
+TC-DBG-004,CAT-8,debug --node filter,P1,DONE,PASS,2026-03-08,Claude,,test_cli_debug.py
+TC-DBG-005,CAT-8,debug --rich colored,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-DBG-006,CAT-8,debug --rich fallback no rich,P2,DONE,PASS,2026-03-08,Claude,,test_cli_debug.py (code review)
+TC-DBG-007,CAT-8,debug missing run exit 1,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py + test_cli_debug.py
+TC-DBG-008,CAT-8,build_debug_report all nodes,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-DBG-009,CAT-8,build_debug_report skipped inference,P1,DONE,PASS,2026-03-08,Claude,,test_debug_report.py + test_qa_v3_phase3.py
+TC-DBG-010,CAT-8,build_debug_report duration,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py + test_debug_report.py
+TC-DBG-011,CAT-8,NodeReport fields,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-DBG-012,CAT-8,format truncation 500 chars,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-DBG-013,CAT-8,format_json complete structure,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-DBG-014,CAT-8,Rich color mapping,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-DBG-015,CAT-8,Combined --errors --json,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-PROV-001,CAT-9,All 8 providers registered,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-PROV-002,CAT-9,Default models per provider,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-PROV-003,CAT-9,Env vars correct,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-PROV-004,CAT-9,Agent prefixes correct,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-PROV-005,CAT-9,get_provider valid name,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-PROV-006,CAT-9,get_provider invalid → None,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-PROV-007,CAT-9,Provider in start/init prefix,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-PROV-008,CAT-9,ProviderConfig fields,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-001,CAT-10,Linear A → B → C,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-002,CAT-10,Fan-out A → B C D,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-003,CAT-10,Fan-in A B C → D,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-004,CAT-10,Fan-out-fan-in,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-005,CAT-10,Diamond pattern,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-006,CAT-10,All 16 patterns valid,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-007,CAT-10,Custom DSL arbitrary,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-008,CAT-10,Empty DSL → error,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-009,CAT-10,Malformed DSL empty nodes,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-010,CAT-10,Node ordering preserved,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-011,CAT-10,Edge deduplication,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-DSL-012,CAT-10,depends_on map correct,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-EX-001,CAT-11,hello-world.yaml loads,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-EX-002,CAT-11,human-in-the-loop.yaml when valid,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-EX-003,CAT-11,multi-provider.yaml 3 providers,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-EX-004,CAT-11,conditional-routing.yaml structure,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-EX-005,CAT-11,error-handling.yaml retry config,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-EX-006,CAT-11,All new examples schema-valid,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-EX-007,CAT-11,diamond.yaml DAG valid,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-EX-008,CAT-11,fan-out-fan-in.yaml structure,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-EX-009,CAT-11,secure-pipeline.yaml loads,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-EX-010,CAT-11,All examples unique node names,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-SEC-001,CAT-12,Tool URI no arbitrary code exec,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-SEC-002,CAT-12,Tool execution exceptions contained,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-SEC-003,CAT-12,Path traversal regression BUG-001,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py (regression)
+TC-SEC-004,CAT-12,Lineage recursion regression BUG-002,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py (regression)
+TC-SEC-005,CAT-12,yaml.safe_load everywhere,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-SEC-006,CAT-12,SQL parameterized queries,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-SEC-007,CAT-12,Tool schema no code eval,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-SEC-008,CAT-12,Human adapter no cmd injection,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-SEC-009,CAT-12,when condition no eval/exec,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-SEC-010,CAT-12,Start wizard writes in project dir only,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-E2E-001,CAT-13,Hello full lifecycle,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-E2E-002,CAT-13,Run + debug inspect,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-E2E-003,CAT-13,Conditional routing skip branch,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-E2E-004,CAT-13,Human approval → conditional,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase2.py (fan-out)
+TC-E2E-005,CAT-13,Tool calling → LLM response,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-E2E-006,CAT-13,Multi-provider workflow mocked,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py (YAML valid)
+TC-E2E-007,CAT-13,Start → init → run pipeline,P2,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase3.py
+TC-E2E-008,CAT-13,Error handling retry/deadline,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-E2E-009,CAT-13,All CLI commands registered,P0,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-E2E-010,CAT-13,Workflow all adapter types,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase4.py
+TC-MOD-001,CAT-14,NodeSpec.tools default empty,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-MOD-002,CAT-14,NodeSpec.tools serializes YAML,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-MOD-003,CAT-14,TaskNode.tools mirrors NodeSpec,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-MOD-004,CAT-14,NodeSpec.when optional string,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-MOD-005,CAT-14,WorkflowSpec tools from YAML,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py
+TC-MOD-006,CAT-14,Validator _check_when_conditions,P1,DONE,PASS,2026-03-08,Claude,,test_qa_v3_phase1.py

@@ -46,6 +46,10 @@ def run_cmd(
         for node_id, err in node_errors:
             click.echo(f"  [{node_id}] Error: {err}", err=True)
 
+    # Identify terminal nodes (no downstream dependents)
+    all_deps = {dep for node in spec.nodes.values() for dep in node.depends_on}
+    terminal_nodes = [nid for nid in spec.nodes if nid not in all_deps]
+
     if json_out:
         data = summary.model_dump()
         if verbose:
@@ -53,6 +57,12 @@ def run_cmd(
                 {"node": a.lineage.produced_by, "type": a.type, "content": a.content}
                 for a in artifacts
             ]
+        # Always include terminal output in JSON
+        data["output"] = {
+            a.lineage.produced_by: a.content
+            for a in artifacts
+            if a.lineage.produced_by in terminal_nodes
+        }
         click.echo(json.dumps(data, default=str, indent=2))
     else:
         click.echo(f"Run ID: {summary.run_id}")
@@ -61,6 +71,45 @@ def run_cmd(
         click.echo(f"Nodes: {summary.completed_nodes}/{summary.total_nodes} completed")
         if summary.failed_nodes:
             click.echo(f"Failed: {summary.failed_nodes}")
+
+        # Show final output from terminal nodes
+        if summary.status == "completed" and artifacts:
+            terminal_arts = [
+                a for a in artifacts if a.lineage.produced_by in terminal_nodes
+            ]
+            if terminal_arts:
+                try:
+                    from rich.console import Console
+                    from rich.markdown import Markdown
+                    from rich.panel import Panel
+
+                    console = Console()
+                    for art in terminal_arts:
+                        content = art.content if art.content is not None else ""
+                        if not isinstance(content, str):
+                            content = json.dumps(content, default=str, indent=2)
+                        if len(content) > 4000:
+                            content = content[:4000] + "..."
+                        console.print(Panel(
+                            Markdown(content),
+                            title=f"[bold]{art.lineage.produced_by}[/bold]",
+                            subtitle=art.type,
+                            border_style="green",
+                        ))
+                except ImportError:
+                    click.echo(f"\n{'── Result ':─<60}")
+                    for art in terminal_arts:
+                        content = art.content
+                        if isinstance(content, str) and len(content) > 2000:
+                            content = content[:2000] + "..."
+                        click.echo(f"[{art.lineage.produced_by}] {art.type}:")
+                        click.echo(f"  {content}")
+
+        if summary.status != "completed":
+            click.echo(
+                f"\nTip: run 'binex debug {summary.run_id}' for full details",
+                err=True,
+            )
 
     sys.exit(0 if summary.status == "completed" else 1)
 
@@ -77,11 +126,21 @@ async def _run(spec, verbose: bool = False):
     all_artifacts: list[Artifact] = []
     if verbose:
         original_execute = orch._execute_node
+        counter = [0]
 
         async def _verbose_execute(
             spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
         ):
-            click.echo(f"\n  Running: {node_id_} ...", err=True)
+            counter[0] += 1
+            total = len(spec_.nodes)
+            click.echo(f"\n  [{counter[0]}/{total}] {node_id_} ...", err=True)
+
+            # Show input refs from depends_on
+            node_spec = spec_.nodes.get(node_id_)
+            if node_spec and node_spec.depends_on:
+                for dep in node_spec.depends_on:
+                    click.echo(f"        <- {dep}", err=True)
+
             await original_execute(
                 spec_, dag_, scheduler_, run_id_, trace_id_,
                 node_id_, node_artifacts_,
@@ -125,7 +184,27 @@ async def _run(spec, verbose: bool = False):
         elif agent.startswith("llm://"):
             from binex.adapters.llm import LLMAdapter
             model = agent.removeprefix("llm://")
-            orch.dispatcher.register_adapter(agent, LLMAdapter(model=model))
+            config = node.config
+            orch.dispatcher.register_adapter(
+                agent,
+                LLMAdapter(
+                    model=model,
+                    api_base=config.get("api_base"),
+                    api_key=config.get("api_key"),
+                    temperature=config.get("temperature"),
+                    max_tokens=config.get("max_tokens"),
+                ),
+            )
+        elif agent == "human://input":
+            from binex.adapters.human import HumanInputAdapter
+            orch.dispatcher.register_adapter(agent, HumanInputAdapter())
+        elif agent.startswith("human://"):
+            from binex.adapters.human import HumanApprovalAdapter
+            orch.dispatcher.register_adapter(agent, HumanApprovalAdapter())
+        elif agent.startswith("a2a://"):
+            from binex.adapters.a2a import A2AAgentAdapter
+            endpoint = agent.removeprefix("a2a://")
+            orch.dispatcher.register_adapter(agent, A2AAgentAdapter(endpoint=endpoint))
 
     try:
         summary = await orch.run_workflow(spec)
@@ -136,6 +215,16 @@ async def _run(spec, verbose: bool = False):
         for rec in records:
             if rec.error:
                 errors.append((rec.task_id, rec.error))
+
+        # Show skipped nodes in verbose mode
+        if verbose:
+            skipped = summary.total_nodes - summary.completed_nodes - summary.failed_nodes
+            if skipped > 0:
+                # Determine which nodes were skipped
+                executed_ids = {rec.task_id for rec in records}
+                for node_id in spec.nodes:
+                    if node_id not in executed_ids:
+                        click.echo(f"  [skipped] {node_id}", err=True)
 
         # Collect all artifacts if not already done via verbose
         if not verbose:

@@ -1,0 +1,79 @@
+# Draft → Review → Revise → Human Approval workflow
+# ===================================================
+# Chain of reasoning with human gate at the end:
+#   1. user_input   — человек задаёт тему
+#   2. draft        — LLM генерирует черновик
+#   3. review       — LLM ревьюит и даёт рекомендации
+#   4. revise       — LLM дорабатывает черновик по рекомендациям
+#   5. human_review — человек смотрит финальный вариант (approve/reject)
+#   6. output       — если approved, выдаёт результат
+#   7. discard      — если rejected, сообщает об отказе
+#
+# Run:  binex run examples/draft-review-approve.yaml
+# Debug: binex debug <run_id>
+
+name: draft-review-approve
+description: "Content pipeline with AI revision and human approval gate"
+
+nodes:
+  user_input:
+    agent: "human://input"
+    system_prompt: "What topic would you like content about?"
+    inputs: {}
+    outputs: [query]
+
+  draft:
+    agent: "llm://ollama/gemma3:4b"
+    system_prompt: "Write a detailed first draft on the given topic. Be thorough and informative."
+    inputs:
+      topic: "${user_input.query}"
+    outputs: [content]
+    depends_on: [user_input]
+
+  review:
+    agent: "llm://ollama/gemma3:4b"
+    system_prompt: >
+      You are an editor. Review this draft critically.
+      List specific strengths and weaknesses.
+      Provide actionable recommendations for improvement.
+    inputs:
+      draft: "${draft.content}"
+    outputs: [feedback]
+    depends_on: [draft]
+
+  revise:
+    agent: "llm://ollama/gemma3:4b"
+    system_prompt: >
+      You are a writer. Take the original draft and the editor's feedback,
+      then produce a polished, improved version that addresses all recommendations.
+      Output only the final revised text.
+    inputs:
+      original_draft: "${draft.content}"
+      editor_feedback: "${review.feedback}"
+    outputs: [revised_content]
+    depends_on: [review]
+
+  human_review:
+    agent: "human://approve"
+    system_prompt: "Review the revised content and approve or reject"
+    inputs:
+      revised: "${revise.revised_content}"
+    outputs: [decision]
+    depends_on: [revise]
+
+  output:
+    agent: "local://echo"
+    system_prompt: "Final approved content"
+    inputs:
+      final: "${revise.revised_content}"
+    outputs: [result]
+    depends_on: [human_review]
+    when: "${human_review.decision} == approved"
+
+  discard:
+    agent: "local://echo"
+    system_prompt: "Content was rejected by reviewer"
+    inputs: {}
+    outputs: [notice]
+    depends_on: [human_review]
+    when: "${human_review.decision} == rejected"

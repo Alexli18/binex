@@ -1,0 +1,57 @@
+# human-in-the-loop.yaml — Pizza order workflow with human approval gate.
+#
+# This workflow demonstrates the human-in-the-loop pattern:
+#   1. An automated node builds the order.
+#   2. A human approval gate pauses execution until a person confirms or rejects.
+#   3. Conditional nodes (pay / cancel) run based on the human's decision.
+#
+# The "human://approve" agent prefix represents a manual approval step.
+# The `when` field on downstream nodes uses the decision artifact to branch:
+#   - "approved"  → proceed to payment
+#   - "rejected"  → cancel the order
+#
+# Workflow structure:
+#   builder  ->  confirm_payment  ->  pay     (when decision == approved)
+#                                 ->  cancel  (when decision == rejected)
+
+name: human-in-the-loop
+description: "Pizza order workflow with human approval gate"
+
+nodes:
+  # Step 1: Build the pizza order automatically.
+  builder:
+    agent: "local://echo"
+    system_prompt: "Build pizza order"
+    inputs: {}
+    outputs: [order]
+
+  # Step 2: Human approval gate.
+  # The "human://approve" agent pauses the workflow and waits for a person
+  # to review the order and make a decision (approved / rejected).
+  confirm_payment:
+    agent: "human://approve"
+    system_prompt: "Review and approve payment"
+    inputs:
+      order: "${builder.order}"
+    outputs: [decision]
+    depends_on: [builder]
+
+  # Step 3a: Process payment — only runs when the human approves.
+  # The `when` condition checks the decision artifact from the approval gate.
+  pay:
+    agent: "local://echo"
+    system_prompt: "Process payment"
+    inputs:
+      order: "${builder.order}"
+    outputs: [receipt]
+    depends_on: [confirm_payment]
+    when: "${confirm_payment.decision} == approved"
+
+  # Step 3b: Cancel order — only runs when the human rejects.
+  cancel:
+    agent: "local://echo"
+    system_prompt: "Cancel order"
+    inputs: {}
+    outputs: [cancellation]
+    depends_on: [confirm_payment]
+    when: "${confirm_payment.decision} == rejected"

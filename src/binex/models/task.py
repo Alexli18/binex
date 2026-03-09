@@ -46,7 +46,7 @@ class TaskNode(BaseModel):
     run_id: str
     node_id: str
     agent: str
-    skill: str | None = None
+    system_prompt: str | None = None
     inputs: dict[str, Any] = Field(default_factory=dict)
     status: TaskStatus = TaskStatus.REQUESTED
     input_artifact_refs: list[str] = Field(default_factory=list)
@@ -54,6 +54,8 @@ class TaskNode(BaseModel):
     attempt: int = 1
     retry_policy: RetryPolicy | None = None
     deadline_ms: int | None = None
+    tools: list[Any] = Field(default_factory=list)
+    config: dict[str, Any] = Field(default_factory=dict)
 
 
 __all__ = ["RetryPolicy", "TaskNode", "TaskStatus"]

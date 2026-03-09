@@ -1,0 +1,59 @@
+# Multi-Provider Research Pipeline
+# ==================================
+# Demonstrates mixing different LLM providers in a single workflow.
+# Each node can use a different provider — Binex routes via litellm.
+#
+# Topology:  planner (GPT-4o) -> researcher (Gemini) -> summarizer (Claude)
+#
+# Prerequisites — set API keys for each provider:
+#   export OPENAI_API_KEY=sk-...
+#   export GEMINI_API_KEY=...
+#   export ANTHROPIC_API_KEY=sk-ant-...
+#
+# Or add them to a .env file in the project root.
+#
+# Model format: llm://<litellm-model-name>
+#   OpenAI:    llm://gpt-4o
+#   Gemini:    llm://gemini/gemini-2.0-flash
+#   Anthropic: llm://claude-sonnet-4-20250514
+#
+# The `config` section on a node passes parameters to litellm
+# (e.g., temperature, max_tokens).
+#
+# Run:  binex run examples/multi-provider-research.yaml query="Future of quantum computing"
+# Debug: binex debug <run_id>
+
+name: multi-provider-research
+description: "Research pipeline mixing OpenAI, Gemini, and Claude"
+
+nodes:
+  # OpenAI GPT-4o for structured planning (low temperature for consistency)
+  planner:
+    agent: "llm://gpt-4o"
+    system_prompt: "Break down this research topic into 3 specific sub-questions to investigate"
+    inputs:
+      query: "${user.query}"
+    outputs: [plan]
+    config:
+      temperature: 0.3              # low temp for focused, structured output
+
+  # Google Gemini for broad research
+  researcher:
+    agent: "llm://gemini/gemini-2.0-flash"
+    system_prompt: "Answer this research question with specific facts and references"
+    inputs:
+      questions: "${planner.plan}"
+    outputs: [findings]
+    depends_on: [planner]
+
+  # Anthropic Claude for synthesis and writing
+  summarizer:
+    agent: "llm://claude-sonnet-4-20250514"
+    system_prompt: "Synthesize these research findings into a concise summary with key takeaways"
+    inputs:
+      research: "${researcher.findings}"
+    outputs: [report]
+    depends_on: [researcher]
+
+defaults:
+  deadline_ms: 300000                # 5-minute deadline for API calls

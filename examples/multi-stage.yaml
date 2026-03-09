@@ -1,0 +1,68 @@
+# Multi-Stage Pipeline Example
+# =============================
+# Three sequential stages, each with a parallel pair of nodes.
+#
+# Topology:  A -> B, C -> D, E -> F
+#
+# Stage 1: A (entry point)
+# Stage 2: B and C run in parallel after A
+# Stage 3: D and E run in parallel after B and C
+# Stage 4: F aggregates results from D and E
+#
+# Run:  binex run examples/multi-stage.yaml
+# Debug: binex debug <run_id>
+
+name: multi-stage-example
+description: "Multi-stage pipeline with parallel processing at each stage"
+
+nodes:
+  A:
+    agent: "local://echo"
+    system_prompt: "Parse and split incoming request"
+    inputs:
+      query: "${user.query}"
+    outputs: [output]
+    depends_on: []
+
+  B:
+    agent: "local://echo"
+    system_prompt: "Process branch 1 of the data"
+    inputs:
+      data: "${A.output}"
+    outputs: [output]
+    depends_on: [A]
+
+  C:
+    agent: "local://echo"
+    system_prompt: "Process branch 2 of the data"
+    inputs:
+      data: "${A.output}"
+    outputs: [output]
+    depends_on: [A]
+
+  D:
+    agent: "local://echo"
+    system_prompt: "Refine branch 1 results"
+    inputs:
+      b_result: "${B.output}"
+      c_result: "${C.output}"
+    outputs: [output]
+    depends_on: [B, C]
+
+  E:
+    agent: "local://echo"
+    system_prompt: "Refine branch 2 results"
+    inputs:
+      b_result: "${B.output}"
+      c_result: "${C.output}"
+    outputs: [output]
+    depends_on: [B, C]
+
+  F:
+    agent: "local://echo"
+    system_prompt: "Aggregate all refined results into final output"
+    inputs:
+      d_result: "${D.output}"
+      e_result: "${E.output}"
+    outputs: [output]
+    depends_on: [D, E]

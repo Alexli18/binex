@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 import uuid
 from datetime import UTC, datetime
@@ -66,6 +67,14 @@ class Orchestrator:
 
             tasks = []
             for node_id in ready:
+                node_spec = spec.nodes[node_id]
+                # Evaluate when condition if present
+                if node_spec.when:
+                    condition_met = evaluate_when(node_spec.when, node_artifacts)
+                    if not condition_met:
+                        scheduler.mark_skipped(node_id)
+                        continue
+
                 scheduler.mark_running(node_id)
                 tasks.append(
                     self._execute_node(
@@ -74,20 +83,19 @@ class Orchestrator:
                     )
                 )
 
-            await asyncio.gather(*tasks)
+            if tasks:
+                await asyncio.gather(*tasks)
 
         summary.completed_at = datetime.now(UTC)
-        if scheduler.is_complete():
+        summary.completed_nodes = len(scheduler._completed)
+        summary.failed_nodes = len(scheduler._failed)
+        summary.skipped_nodes = len(scheduler._skipped)
+        if scheduler._failed:
+            summary.status = "failed"
+        elif scheduler.is_complete():
             summary.status = "completed"
-            summary.completed_nodes = len(spec.nodes)
         else:
             summary.status = "failed"
-            summary.completed_nodes = len(
-                [n for n in spec.nodes if n in scheduler._completed]
-            )
-            summary.failed_nodes = len(
-                [n for n in spec.nodes if n in scheduler._failed]
-            )
 
         await self.execution_store.update_run(summary)
         return summary
@@ -108,7 +116,8 @@ class Orchestrator:
             run_id=run_id,
             node_id=node_id,
             agent=node_spec.agent,
-            skill=node_spec.skill,
+            system_prompt=node_spec.system_prompt,
+            tools=node_spec.tools,
             inputs=node_spec.inputs,
             retry_policy=node_spec.retry_policy or (
                 spec.defaults.retry_policy if spec.defaults else None
@@ -116,6 +125,7 @@ class Orchestrator:
             deadline_ms=node_spec.deadline_ms or (
                 spec.defaults.deadline_ms if spec.defaults else None
             ),
+            config=node_spec.config,
         )
 
         # Gather input artifacts from upstream nodes
@@ -155,6 +165,35 @@ class Orchestrator:
             error=error_msg,
         )
         await self.execution_store.record(record)
+
+
+_WHEN_RE = re.compile(r"^\$\{(\w+)\.(\w+)\}\s*(==|!=)\s*(.+)$")
+
+
+def evaluate_when(when_str: str, node_artifacts: dict[str, list[Artifact]]) -> bool:
+    """Evaluate a when-condition string against collected node artifacts.
+
+    Returns True if the condition is satisfied, False otherwise.
+    Raises ValueError for malformed when strings.
+    """
+    m = _WHEN_RE.match(when_str.strip())
+    if not m:
+        raise ValueError(f"Invalid when condition syntax: {when_str!r}")
+
+    node_id, output_name, operator, value = m.group(1), m.group(2), m.group(3), m.group(4).strip()
+
+    artifacts = node_artifacts.get(node_id)
+    if not artifacts:
+        return False
+
+    # Match artifact by type (output_name), fall back to first artifact
+    matching = [a for a in artifacts if a.type == output_name]
+    actual = str(matching[0].content) if matching else str(artifacts[0].content)
+
+    if operator == "==":
+        return actual == value
+    else:  # !=
+        return actual != value
 
 
 def _now_ms() -> int:

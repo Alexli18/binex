@@ -1,0 +1,58 @@
+# conditional-routing.yaml — Route requests to different handlers based on category.
+#
+# This workflow demonstrates conditional routing using `when` conditions:
+#   - The `==` operator routes to a node when the condition matches.
+#   - The `!=` operator routes to a node when the condition does NOT match.
+#
+# A classifier node inspects the input and produces a category artifact.
+# Downstream handler nodes use `when` to decide which branch executes:
+#   - "premium"     → premium_handler
+#   - anything else → standard_handler
+# Both branches feed into a single reporter node for final output.
+#
+# Workflow structure:
+#   classifier  ->  premium_handler   (when category == premium)  ->  reporter
+#               ->  standard_handler  (when category != premium)  ->  reporter
+
+name: conditional-routing
+description: "Route requests to different handlers based on classification"
+
+nodes:
+  # Step 1: Classify the incoming request.
+  # Produces a "category" artifact (e.g. "premium" or "standard").
+  classifier:
+    agent: "local://echo"
+    system_prompt: "Classify request"
+    inputs: {}
+    outputs: [category]
+
+  # Step 2a: Handle premium requests.
+  # The `==` operator means this node runs ONLY when category equals "premium".
+  premium_handler:
+    agent: "local://echo"
+    system_prompt: "Handle premium request"
+    inputs:
+      category: "${classifier.category}"
+    outputs: [result]
+    depends_on: [classifier]
+    when: "${classifier.category} == premium"
+
+  # Step 2b: Handle standard (non-premium) requests.
+  # The `!=` operator means this node runs when category is anything OTHER than "premium".
+  standard_handler:
+    agent: "local://echo"
+    system_prompt: "Handle standard request"
+    inputs:
+      category: "${classifier.category}"
+    outputs: [result]
+    depends_on: [classifier]
+    when: "${classifier.category} != premium"
+
+  # Step 3: Aggregate results from whichever handler ran.
+  # Depends on both handlers; at runtime only one will have produced output.
+  reporter:
+    agent: "local://echo"
+    system_prompt: "Generate final report"
+    inputs: {}
+    outputs: [report]
+    depends_on: [premium_handler, standard_handler]

@@ -15,8 +15,19 @@ class FilesystemArtifactStore:
         self._base_path = Path(base_path)
         self._index: dict[str, tuple[str, str]] = {}  # artifact_id -> (run_id, path)
 
+    @staticmethod
+    def _sanitize_component(name: str) -> str:
+        """Reject path components containing traversal sequences."""
+        if ".." in name or "/" in name or "\\" in name:
+            raise ValueError(
+                f"Invalid path component: {name!r} (must not contain '..', '/' or '\\\\')"
+            )
+        return name
+
     def _artifact_path(self, run_id: str, artifact_id: str) -> Path:
-        return self._base_path / run_id / f"{artifact_id}.json"
+        safe_run = self._sanitize_component(run_id)
+        safe_art = self._sanitize_component(artifact_id)
+        return self._base_path / safe_run / f"{safe_art}.json"
 
     async def store(self, artifact: Artifact) -> None:
         path = self._artifact_path(artifact.run_id, artifact.id)
@@ -26,6 +37,7 @@ class FilesystemArtifactStore:
         self._index[artifact.id] = (artifact.run_id, str(path))
 
     async def get(self, artifact_id: str) -> Artifact | None:
+        self._sanitize_component(artifact_id)
         # Check in-memory index first
         entry = self._index.get(artifact_id)
         if entry is not None:
@@ -43,6 +55,7 @@ class FilesystemArtifactStore:
         return None
 
     async def list_by_run(self, run_id: str) -> list[Artifact]:
+        self._sanitize_component(run_id)
         run_dir = self._base_path / run_id
         if not run_dir.exists():
             return []

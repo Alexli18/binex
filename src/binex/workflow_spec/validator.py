@@ -10,6 +10,9 @@ from binex.models.workflow import WorkflowSpec
 _INTERPOLATION_RE = re.compile(r"\$\{(\w+)\.(\w+)\}")
 
 
+_WHEN_RE = re.compile(r"^\$\{(\w+)\.(\w+)\}\s*(==|!=)\s*(.+)$")
+
+
 def validate_workflow(spec: WorkflowSpec) -> list[str]:
     """Validate workflow structure. Returns a list of error messages (empty = valid)."""
     errors: list[str] = []
@@ -19,6 +22,7 @@ def validate_workflow(spec: WorkflowSpec) -> list[str]:
     _check_interpolation_targets(spec, node_ids, errors)
     _check_cycles(spec, node_ids, errors)
     _check_entry_nodes(spec, node_ids, errors)
+    _check_when_conditions(spec, node_ids, errors)
 
     return errors
 
@@ -114,3 +118,28 @@ def _check_entry_nodes(
     has_entry = any(len(node.depends_on) == 0 for node in spec.nodes.values())
     if not has_entry:
         errors.append("Workflow has no entry nodes (all nodes have dependencies)")
+
+
+def _check_when_conditions(
+    spec: WorkflowSpec, node_ids: set[str], errors: list[str],
+) -> None:
+    """Validate when-condition syntax and references."""
+    for node_id, node in spec.nodes.items():
+        if node.when is None:
+            continue
+        m = _WHEN_RE.match(node.when.strip())
+        if not m:
+            errors.append(
+                f"Node '{node_id}': when condition has invalid syntax: {node.when!r}"
+            )
+            continue
+        ref_node = m.group(1)
+        if ref_node not in node_ids:
+            errors.append(
+                f"Node '{node_id}': when condition references unknown node '{ref_node}'"
+            )
+        elif ref_node not in node.depends_on:
+            errors.append(
+                f"Node '{node_id}': when condition references node '{ref_node}' "
+                f"which is not in depends_on"
+            )

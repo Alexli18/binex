@@ -181,13 +181,16 @@ class ReplayEngine:
             run_id=run_id,
             node_id=node_id,
             agent=agent,
-            skill=node_spec.skill,
+            system_prompt=node_spec.system_prompt,
+            tools=node_spec.tools,
+            inputs=node_spec.inputs,
             retry_policy=node_spec.retry_policy or (
                 spec.defaults.retry_policy if spec.defaults else None
             ),
             deadline_ms=node_spec.deadline_ms or (
                 spec.defaults.deadline_ms if spec.defaults else None
             ),
+            config=node_spec.config,
         )
 
         input_artifacts: list[Artifact] = []

@@ -1,0 +1,48 @@
+# Chain with Review Pattern Example
+# ===================================
+# A linear pipeline where content is drafted, reviewed, revised, and finalized.
+#
+# Topology:  draft -> review -> revise -> final
+#
+# This pattern is useful for content generation workflows where quality
+# requires an iterative review cycle.
+#
+# Run:  binex run examples/chain-with-review.yaml
+# Debug: binex debug <run_id>
+
+name: chain-with-review-example
+description: "Content pipeline: draft -> review -> revise -> final"
+
+nodes:
+  draft:
+    agent: "local://echo"
+    system_prompt: "Generate initial draft from the given topic"
+    inputs:
+      query: "${user.query}"
+    outputs: [output]
+    depends_on: []
+
+  review:
+    agent: "local://echo"
+    system_prompt: "Review the draft and provide detailed feedback"
+    inputs:
+      draft: "${draft.output}"
+    outputs: [output]
+    depends_on: [draft]
+
+  revise:
+    agent: "local://echo"
+    system_prompt: "Revise the draft incorporating review feedback"
+    inputs:
+      draft: "${draft.output}"
+      feedback: "${review.output}"
+    outputs: [output]
+    depends_on: [review]
+
+  final:
+    agent: "local://echo"
+    system_prompt: "Polish and finalize the revised content"
+    inputs:
+      revised: "${revise.output}"
+    outputs: [output]
+    depends_on: [revise]

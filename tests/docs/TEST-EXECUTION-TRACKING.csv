@@ -1,0 +1,67 @@
+Test ID,Category,Priority,Status,Date Executed,Result,Bug ID,Notes
+TC-MOD-001,Models,P1,DONE,2026-03-08,PASS,,Agent accepts any string (no protocol validation at model layer)
+TC-MOD-002,Models,P2,DONE,2026-03-08,PASS,,YAML/dict last-wins behavior for duplicate keys
+TC-MOD-003,Models,P1,DONE,2026-03-08,PASS,,max_retries=-1 and 0 accepted (no gt constraint)
+TC-MOD-004,Models,P1,DONE,2026-03-08,PASS,,Pydantic Literal rejects invalid status values
+TC-MOD-005,Models,P2,DONE,2026-03-08,PASS,,JSON roundtrip preserves all fields
+TC-MOD-006,Models,P2,DONE,2026-03-08,PASS,,Pydantic accepts completed_nodes > total_nodes
+TC-MOD-007,Models,P1,DONE,2026-03-08,PASS,,deadline_ms=0 and -1 accepted (no validation)
+TC-DAG-001,DAG,P0,DONE,2026-03-08,PASS,,Self-reference detected as cycle
+TC-DAG-002,DAG,P1,DONE,2026-03-08,PASS,,All isolated nodes are entry_nodes
+TC-DAG-003,DAG,P0,DONE,2026-03-08,PASS,,Diamond dependency verified
+TC-DAG-004,DAG,P0,DONE,2026-03-08,PASS,,Extended: deep chain + diamond blocking
+TC-DAG-005,DAG,P2,DONE,2026-03-08,PASS,,50+ nodes: linear chain + fan-out + multi-layer diamond
+TC-DAG-006,DAG,P0,DONE,2026-03-08,PASS,,Non-existent dep raises ValueError
+TC-ADP-001,Adapters,P0,DONE,2026-03-08,PASS,,Invalid model raises litellm error
+TC-ADP-002,Adapters,P1,DONE,2026-03-08,PASS,,Config params forwarded to litellm; None params omitted
+TC-ADP-003,Adapters,P0,DONE,2026-03-08,PASS,,Unreachable endpoint + HTTP 500 + health=DOWN
+TC-ADP-004,Adapters,P1,DONE,2026-03-08,PASS,,Timeout enforced by dispatcher (covered in TC-RUN-004)
+TC-ADP-005,Adapters,P0,DONE,2026-03-08,PASS,,ValueError/RuntimeError/KeyboardInterrupt propagate
+TC-ADP-006,Adapters,P2,DONE,2026-03-08,PASS,,Cancel on completed task is no-op
+TC-STO-001,Stores,P0,DONE,2026-03-08,PASS,,Duplicate run_id raises IntegrityError
+TC-STO-002,Stores,P1,DONE,2026-03-08,PASS,,Empty list for non-existent run
+TC-STO-003,Stores,P0,DONE,2026-03-08,PASS,,Corrupted JSON raises JSONDecodeError
+TC-STO-004,Stores,P1,DONE,2026-03-08,PASS,,Concurrent store overwrites (last write wins)
+TC-STO-005,Stores,P0,DONE,2026-03-08,PASS,,close() resets state + idempotent
+TC-STO-006,Stores,P1,DONE,2026-03-08,PASS,,Unknown backend raises ValueError
+TC-RUN-001,Runtime,P0,DONE,,PASS,,Existing test
+TC-RUN-002,Runtime,P0,DONE,,PASS,,Existing test
+TC-RUN-003,Runtime,P1,DONE,2026-03-08,PASS,,Exponential backoff: attempt count + delay pattern verified
+TC-RUN-004,Runtime,P0,DONE,2026-03-08,PASS,,Timeout enforced + not retried
+TC-RUN-005,Runtime,P0,DONE,2026-03-08,PASS,,Validator catches missing refs; LLM skips unresolved
+TC-RUN-006,Runtime,P0,DONE,,PASS,,Existing test
+TC-REP-001,Replay,P1,DONE,2026-03-08,PASS,,ValueError for missing from_step
+TC-REP-002,Replay,P1,DONE,2026-03-08,PASS,,Non-existent swap key silently ignored
+TC-REP-003,Replay,P1,DONE,2026-03-08,PASS,,Cached artifacts content matches original
+TC-REP-004,Replay,P1,DONE,2026-03-08,PASS,,forked_from + forked_at_step set correctly
+TC-REP-005,Replay,P0,DONE,2026-03-08,PASS,,ValueError for missing run_id
+TC-CLI-001,CLI,P1,DONE,2026-03-08,PASS,,Non-existent file exits non-zero
+TC-CLI-002,CLI,P1,DONE,2026-03-08,PASS,,Invalid --var format raises BadParameter
+TC-CLI-003,CLI,P1,DONE,,PASS,,Existing test
+TC-CLI-004,CLI,P1,DONE,,PASS,,Existing test
+TC-CLI-005,CLI,P2,DONE,2026-03-08,PASS,,ImportError for rich gives non-zero exit
+TC-CLI-006,CLI,P1,DONE,2026-03-08,PASS,,Agent swap parsing + multiple --agent flags
+TC-CLI-007,CLI,P0,DONE,,PASS,,Existing test
+TC-CLI-008,CLI,P1,DONE,,PASS,,Existing test
+TC-CLI-009,CLI,P1,DONE,,PASS,,Existing test
+TC-CLI-010,CLI,P2,DONE,,PASS,,Existing test
+TC-TRC-001,Trace,P2,DONE,2026-03-08,PASS,,Empty run: text says no records; JSON returns []
+TC-TRC-002,Trace,P1,DONE,2026-03-08,PASS,BUG-002,Cycle protection fixed — _ancestors frozenset added
+TC-TRC-003,Trace,P2,DONE,2026-03-08,PASS,,Diff with different node counts handles None values
+TC-TRC-004,Trace,P2,DONE,,PASS,,Existing test
+TC-TRC-005,Trace,P2,DONE,2026-03-08,PASS,,Unicode/emoji/null-byte/newline in errors — no crash
+TC-REG-001,Registry,P2,DONE,2026-03-08,PASS,,Missing endpoint/name returns 422
+TC-REG-002,Registry,P2,DONE,,PASS,,Existing test
+TC-REG-003,Registry,P2,DONE,,PASS,,Existing test
+TC-REG-004,Registry,P2,DONE,2026-03-08,PASS,,DiscoveryError for 404/500/timeout/invalid JSON
+TC-WFS-001,Workflow,P2,DONE,2026-03-08,PASS,,Extra fields ignored (Pydantic lenient by default)
+TC-WFS-002,Workflow,P1,DONE,2026-03-08,PASS,,Unresolved ${user.*} stays as literal string
+TC-WFS-003,Workflow,P1,DONE,2026-03-08,PASS,,Empty nodes accepted by Pydantic; validator flags no entry
+TC-WFS-004,Workflow,P2,DONE,2026-03-08,PASS,,Nested refs preserved literally; user vars resolved separately
+TC-WFS-005,Workflow,P3,DONE,2026-03-08,PASS,,50+ nodes loads fine (covered in TC-DAG-005)
+TC-SEC-001,Security,P0,DONE,2026-03-08,PASS,,AST scan confirms yaml.safe_load only
+TC-SEC-002,Security,P0,DONE,2026-03-08,PASS,,Shell metacharacters preserved literally
+TC-SEC-003,Security,P0,DONE,2026-03-08,PASS,BUG-001,Path traversal fixed — _sanitize_component() added
+TC-SEC-004,Security,P0,DONE,2026-03-08,PASS,,Parameterized queries protect against SQLi
+TC-SEC-005,Security,P1,DONE,2026-03-08,PASS,,No SSRF protection — any endpoint accepted (documented)
+TC-SEC-006,Security,P2,DONE,2026-03-08,PASS,,Error messages don't leak internal file paths

@@ -40,7 +40,7 @@ def _wait_for_health(url: str, label: str, timeout: int = 60) -> bool:
             if resp.status_code == 200:
                 click.echo(f"  ✓ {label} is healthy")
                 return True
-        except (httpx.ConnectError, httpx.TimeoutException):
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.ReadError):
             pass
         time.sleep(2)
     click.echo(f"  ✗ {label} failed to start within {timeout}s")

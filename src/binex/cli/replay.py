@@ -88,6 +88,32 @@ async def _run_replay(
             engine.dispatcher.register_adapter(
                 agent, LocalPythonAdapter(handler=_default_handler),
             )
+        elif agent.startswith("llm://"):
+            from binex.adapters.llm import LLMAdapter
+
+            model = agent.removeprefix("llm://")
+            config = node.config
+            engine.dispatcher.register_adapter(
+                agent,
+                LLMAdapter(
+                    model=model,
+                    api_base=config.get("api_base"),
+                    api_key=config.get("api_key"),
+                    temperature=config.get("temperature"),
+                    max_tokens=config.get("max_tokens"),
+                ),
+            )
+        elif agent == "human://input":
+            from binex.adapters.human import HumanInputAdapter
+            engine.dispatcher.register_adapter(agent, HumanInputAdapter())
+        elif agent.startswith("human://"):
+            from binex.adapters.human import HumanApprovalAdapter
+            engine.dispatcher.register_adapter(agent, HumanApprovalAdapter())
+        elif agent.startswith("a2a://"):
+            from binex.adapters.a2a import A2AAgentAdapter
+
+            endpoint = agent.removeprefix("a2a://")
+            engine.dispatcher.register_adapter(agent, A2AAgentAdapter(endpoint=endpoint))
 
     try:
         return await engine.replay(

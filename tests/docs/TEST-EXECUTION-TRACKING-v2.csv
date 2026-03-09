@@ -1,0 +1,126 @@
+Test ID,Category,Test Case,Priority,Status,Result,Date,Tester,Bug ID,Notes
+TC-AGT-001,CAT-1,PlannerAgent happy path,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_planner_agent.py
+TC-AGT-002,CAT-1,PlannerAgent empty prompt,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_planner_agent.py
+TC-AGT-003,CAT-1,PlannerAgent LLM timeout,P1,DONE,PASS,2026-03-08,Claude,,NEW: test_qa_phase2.py (2 tests)
+TC-AGT-004,CAT-1,ResearcherAgent valid query,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_researcher_agent.py
+TC-AGT-005,CAT-1,ResearcherAgent LLM failure,P1,DONE,PASS,2026-03-08,Claude,,NEW: test_qa_phase2.py (2 tests)
+TC-AGT-006,CAT-1,ValidatorAgent valid input,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_validator_agent.py
+TC-AGT-007,CAT-1,ValidatorAgent invalid input,P2,DONE,PASS,2026-03-08,Claude,,Covered by test_validator_agent.py
+TC-AGT-008,CAT-1,SummarizerAgent long text,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_summarizer_agent.py
+TC-AGT-009,CAT-1,SummarizerAgent empty text,P2,DONE,PASS,2026-03-08,Claude,,NEW: test_qa_phase2.py (3 tests)
+TC-AGT-010,CAT-1,Agent apps /execute contract,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_agent_apps.py
+TC-AGT-011,CAT-1,Agent apps /health endpoint,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_agent_apps.py
+TC-AGT-012,CAT-1,LLMClient config validation,P1,DONE,PASS,2026-03-08,Claude,,NEW: test_qa_phase2.py (3 tests)
+TC-AGT-013,CAT-1,LLMConfig serialization,P2,DONE,PASS,2026-03-08,Claude,,NEW: test_qa_phase2.py (3 tests)
+TC-AGT-014,CAT-1,Agent apps malformed payload,P1,DONE,PASS,2026-03-08,Claude,,NEW: test_qa_phase2.py (5 tests),
+TC-REG-001,CAT-2,POST /agents register,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_registry_app.py
+TC-REG-002,CAT-2,POST /agents duplicate,P1,DONE,PASS,2026-03-08,Claude,,NEW: 3 tests (phase5b)
+TC-REG-003,CAT-2,GET /agents/search filter,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_registry_app.py
+TC-REG-004,CAT-2,GET /agents/search no match,P2,DONE,PASS,2026-03-08,Claude,,Covered by test_registry_app.py
+TC-REG-005,CAT-2,Discovery well-known,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_registry_discovery.py
+TC-REG-006,CAT-2,Discovery unreachable,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_registry_discovery.py
+TC-REG-007,CAT-2,Health check healthy,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_registry_health.py
+TC-REG-008,CAT-2,Health check unhealthy,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_registry_health.py
+TC-REG-009,CAT-2,Index add/remove/search,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_registry_index.py
+TC-REG-010,CAT-2,Registry __main__,P2,DONE,PASS,2026-03-08,Claude,,Covered by test_registry_main.py,
+TC-CLI-001,CAT-3,binex hello,P0,DONE,PASS,2026-03-08,Claude,,Covered + 2 new supplement tests
+TC-CLI-002,CAT-3,binex init workflow,P1,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (agent refs)
+TC-CLI-003,CAT-3,binex init agent,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_cli_init.py
+TC-CLI-004,CAT-3,binex init full,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_cli_init.py
+TC-CLI-005,CAT-3,binex scaffold DSL,P0,DONE,PASS,2026-03-08,Claude,,Covered + 2 new structure tests
+TC-CLI-006,CAT-3,binex scaffold invalid,P1,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (empty string)
+TC-CLI-007,CAT-3,binex doctor pass,P1,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (JSON healthy)
+TC-CLI-008,CAT-3,binex doctor missing dep,P1,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (exit code 1)
+TC-CLI-009,CAT-3,binex validate valid,P0,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (JSON agents)
+TC-CLI-010,CAT-3,binex validate cyclic,P1,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (cycle JSON)
+TC-CLI-011,CAT-3,binex providers list,P2,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (all 8 names)
+TC-CLI-012,CAT-3,binex dev up,P2,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (stderr)
+TC-CLI-013,CAT-3,binex dev down,P2,DONE,PASS,2026-03-08,Claude,,NEW: KeyboardInterrupt triggers down
+TC-CLI-014,CAT-3,binex run --var,P1,DONE,PASS,2026-03-08,Claude,,NEW: 2 tests (single + multiple vars)
+TC-CLI-015,CAT-3,binex run --provider,P1,DONE,PASS,2026-03-08,Claude,,NEW: LLM adapter registration
+TC-CLI-016,CAT-3,binex run -v verbose,P1,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (dep arrows)
+TC-CLI-017,CAT-3,binex debug plain,P0,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (workflow name)
+TC-CLI-018,CAT-3,binex debug --json,P1,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (structure)
+TC-CLI-019,CAT-3,binex debug --errors,P1,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (no-failure)
+TC-CLI-020,CAT-3,binex debug --node,P1,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (nonexistent)
+TC-CLI-021,CAT-3,binex debug --rich,P2,DONE,PASS,2026-03-08,Claude,,Covered by test_cli_debug_doctor_extended.py
+TC-CLI-022,CAT-3,binex cancel,P1,DONE,PASS,2026-03-08,Claude,,Covered + 1 new (store state),
+TC-DSL-001,CAT-4,Linear chain A->B->C,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_dsl_parser.py
+TC-DSL-002,CAT-4,Fan-out A->B C,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_dsl_parser.py
+TC-DSL-003,CAT-4,Diamond A->B C->D,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_dsl_parser.py
+TC-DSL-004,CAT-4,Predefined patterns,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_dsl_parser.py
+TC-DSL-005,CAT-4,Empty input,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_dsl_parser.py
+TC-DSL-006,CAT-4,Single node,P2,DONE,PASS,2026-03-08,Claude,,Covered by test_dsl_parser.py
+TC-DSL-007,CAT-4,Duplicate nodes,P2,DONE,PASS,2026-03-08,Claude,,Covered by test_dsl_parser.py,
+TC-RUN-001,CAT-5,Two-node linear,P0,DONE,PASS,2026-03-08,Claude,,NEW: 3 tests (phase4)
+TC-RUN-002,CAT-5,Five-node pipeline,P0,DONE,PASS,2026-03-08,Claude,,NEW: 2 tests (phase4)
+TC-RUN-003,CAT-5,Failing node,P0,DONE,PASS,2026-03-08,Claude,,NEW: 3 tests (phase4)
+TC-RUN-004,CAT-5,Diamond DAG parallel,P0,DONE,PASS,2026-03-08,Claude,,NEW: 3 tests (phase4)
+TC-RUN-005,CAT-5,Retry policy,P1,DONE,PASS,2026-03-08,Claude,,NEW: 3 tests (phase4)
+TC-RUN-006,CAT-5,Timeout enforcement,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_adapters_runtime
+TC-RUN-007,CAT-5,node.* interpolation,P1,DONE,PASS,2026-03-08,Claude,,NEW: 2 tests (phase4)
+TC-RUN-008,CAT-5,user.* interpolation,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_adapters_runtime
+TC-RUN-009,CAT-5,Conditional when skip,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_when_conditions
+TC-RUN-010,CAT-5,Skipped node dependents,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_when_conditions
+TC-RPL-001,CAT-6,Fork run,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_replay
+TC-RPL-002,CAT-6,Agent swap,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_replay
+TC-RPL-003,CAT-6,Cached artifacts,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_replay
+TC-RPL-004,CAT-6,--from-step,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_replay
+TC-RPL-005,CAT-6,Invalid run_id,P2,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_replay
+TC-STR-001,CAT-7,Sqlite record roundtrip,P0,DONE,PASS,2026-03-08,Claude,,NEW: 3 tests (phase4)
+TC-STR-002,CAT-7,Sqlite list with filters,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_stores
+TC-STR-003,CAT-7,Sqlite close() cleanup,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_stores
+TC-STR-004,CAT-7,Filesystem store roundtrip,P0,DONE,PASS,2026-03-08,Claude,,NEW: 2 tests (phase4)
+TC-STR-005,CAT-7,Filesystem path traversal,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_stores
+TC-STR-006,CAT-7,Filesystem rglob scan,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_filesystem_store_extended
+TC-STR-007,CAT-7,Store factories,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_store_factories
+TC-STR-008,CAT-7,InMemory concurrent ops,P2,DONE,PASS,2026-03-08,Claude,,NEW: 3 tests (phase4)
+TC-ADP-001,CAT-8,LLMAdapter success,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_adapters
+TC-ADP-002,CAT-8,LLMAdapter per-node config,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_adapters
+TC-ADP-003,CAT-8,LLMAdapter None kwargs,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_adapters
+TC-ADP-004,CAT-8,A2A POST /execute,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_adapters
+TC-ADP-005,CAT-8,A2A unreachable,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_adapters_runtime
+TC-ADP-006,CAT-8,Human approved,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_human_adapter
+TC-ADP-007,CAT-8,Human rejected,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_human_adapter
+TC-ADP-008,CAT-8,Local sync callable,P1,DONE,PASS,2026-03-08,Claude,,NEW: 3 tests (phase4)
+TC-ADP-009,CAT-8,Local async callable,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_adapters
+TC-ADP-010,CAT-8,Multi-provider 8 providers,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_providers,
+TC-TRC-001,CAT-9,Timeline text format,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_tracer.py
+TC-TRC-002,CAT-9,Timeline JSON format,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_tracer.py
+TC-TRC-003,CAT-9,Lineage no circular refs,P0,DONE,PASS,2026-03-08,Claude,,NEW: 4 tests (phase5b) BUG-002 regression
+TC-TRC-004,CAT-9,Diff two runs,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_diff.py
+TC-TRC-005,CAT-9,DebugReport summary,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_debug_report.py
+TC-TRC-006,CAT-9,Rich output tables,P2,DONE,PASS,2026-03-08,Claude,,Covered by test_debug_rich.py
+TC-WFS-001,CAT-10,Load valid YAML,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_workflow_loader.py
+TC-WFS-002,CAT-10,Load valid JSON,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_workflow_loader.py
+TC-WFS-003,CAT-10,user.* interpolation,P0,DONE,PASS,2026-03-08,Claude,,NEW: 4 tests (phase5b)
+TC-WFS-004,CAT-10,env.* interpolation,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_workflow_loader.py
+TC-WFS-005,CAT-10,Cyclic validation error,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_workflow_validator.py
+TC-WFS-006,CAT-10,No entry node error,P1,DONE,PASS,2026-03-08,Claude,,NEW: 2 tests (phase5b)
+TC-WFS-007,CAT-10,Unknown node ref error,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_workflow_validator.py
+TC-MDL-001,CAT-11,WorkflowSpec valid YAML,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_models_workflow.py
+TC-MDL-002,CAT-11,NodeSpec when field,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_models_workflow.py
+TC-MDL-003,CAT-11,NodeSpec config dict,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_models_workflow.py
+TC-MDL-004,CAT-11,ExecutionRecord roundtrip,P1,DONE,PASS,2026-03-08,Claude,,NEW: 3 tests (phase5b)
+TC-MDL-005,CAT-11,TaskNode RetryPolicy,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_models_task.py
+TC-MDL-006,CAT-11,Artifact status enum,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_models.py
+TC-MDL-007,CAT-11,AgentInfo required fields,P1,DONE,PASS,2026-03-08,Claude,,NEW: 5 tests (phase5b)
+TC-MDL-008,CAT-11,Boundary values,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_models_boundary.py
+TC-CFG-001,CAT-12,BINEX_* env vars,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_settings.py
+TC-CFG-002,CAT-12,Default values,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_settings.py
+TC-CFG-003,CAT-12,.env file loaded,P1,DONE,PASS,2026-03-08,Claude,,NEW: test_qa_phase2.py (2 tests)
+TC-CFG-004,CAT-12,.env file missing,P2,DONE,PASS,2026-03-08,Claude,,NEW: test_qa_phase2.py (2 tests)
+TC-SEC-001,CAT-13,YAML safe_load,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_adapters_runtime.py
+TC-SEC-002,CAT-13,SQL injection,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_stores.py
+TC-SEC-003,CAT-13,Path traversal ../,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_stores.py (BUG-001)
+TC-SEC-004,CAT-13,Path traversal /,P0,DONE,PASS,2026-03-08,Claude,,NEW: 5 tests (phase5a)
+TC-SEC-005,CAT-13,Path traversal backslash,P1,DONE,PASS,2026-03-08,Claude,,NEW: 4 tests (phase5a)
+TC-SEC-006,CAT-13,Lineage circular,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_cli_workflow.py (BUG-002)
+TC-SEC-007,CAT-13,Error message leaks,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_qa_remaining.py
+TC-SEC-008,CAT-13,A2A response schema,P1,DONE,PASS,2026-03-08,Claude,,NEW: 5 tests (phase5a)
+TC-E2E-001,CAT-14,Two-node e2e,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_orchestrator.py
+TC-E2E-002,CAT-14,Five-node e2e,P0,DONE,PASS,2026-03-08,Claude,,Covered by test_orchestrator.py
+TC-E2E-003,CAT-14,Diamond e2e,P0,DONE,PASS,2026-03-08,Claude,,NEW: 2 tests (phase5a)
+TC-E2E-004,CAT-14,All 14 examples parse,P0,DONE,PASS,2026-03-08,Claude,,NEW: 3 tests (phase5a)
+TC-E2E-005,CAT-14,Conditional routing e2e,P1,DONE,PASS,2026-03-08,Claude,,Covered by test_when_conditions.py
+TC-E2E-006,CAT-14,Error handling e2e,P1,DONE,PASS,2026-03-08,Claude,,NEW: 3 tests (phase5a)

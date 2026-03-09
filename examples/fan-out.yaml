@@ -1,0 +1,51 @@
+# Fan-Out Pattern Example
+# ========================
+# Demonstrates one node feeding multiple parallel downstream nodes.
+#
+# Topology:  planner -> researcher1
+#                    -> researcher2
+#                    -> researcher3
+#
+# All three researchers run in parallel after the planner completes.
+# Each receives the same plan artifact but investigates a different topic.
+#
+# Run:  binex run examples/fan-out.yaml
+# Debug: binex debug <run_id>
+
+name: fan-out-example
+description: "Demonstrates fan-out pattern: one node feeding multiple parallel nodes"
+
+nodes:
+  # The planner runs first and produces a research plan
+  planner:
+    agent: "local://echo"
+    system_prompt: "Create research plan"
+    inputs: {}
+    outputs: [plan]
+    depends_on: []
+
+  # All three researchers depend on the planner and run in parallel.
+  # Each consumes the same "plan" artifact from the planner node.
+  researcher1:
+    agent: "local://echo"
+    system_prompt: "Research topic A"
+    inputs:
+      plan: "${planner.plan}"     # runtime artifact reference
+    outputs: [findings]
+    depends_on: [planner]
+
+  researcher2:
+    agent: "local://echo"
+    system_prompt: "Research topic B"
+    inputs:
+      plan: "${planner.plan}"
+    outputs: [findings]
+    depends_on: [planner]
+
+  researcher3:
+    agent: "local://echo"
+    system_prompt: "Research topic C"
+    inputs:
+      plan: "${planner.plan}"
+    outputs: [findings]
+    depends_on: [planner]

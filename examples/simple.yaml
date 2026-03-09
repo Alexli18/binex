@@ -1,24 +1,42 @@
+# Simple Pipeline Example
+# ========================
+# The most basic Binex workflow: a 2-node linear pipeline.
+#
+# Topology:  producer -> consumer
+#
+# Uses local://echo agents, which simply echo inputs as outputs.
+# No API keys or external services required.
+#
+# The ${user.input} variable is resolved at load time from user-provided data.
+# The ${producer.result} reference is resolved at runtime from the producer's output.
+#
+# Run:  binex run examples/simple.yaml
+# Debug: binex debug <run_id>
+
 name: simple-pipeline
 description: "Simple 2-node pipeline with local adapters"
 
 nodes:
+  # First node: produces data from user input
   producer:
     agent: "local://echo"
-    skill: produce
+    system_prompt: produce
     inputs:
-      data: "${user.input}"
+      data: "${user.input}"       # resolved at load time from user variables
     outputs: [result]
 
+  # Second node: consumes the producer's output
   consumer:
     agent: "local://echo"
-    skill: consume
+    system_prompt: consume
     inputs:
-      data: "${producer.result}"
+      data: "${producer.result}"  # runtime artifact reference to producer's output
     outputs: [final]
     depends_on: [producer]
 
+# Global defaults applied to all nodes
 defaults:
-  deadline_ms: 30000
+  deadline_ms: 30000              # 30-second timeout per node
   retry_policy:
     max_retries: 1
     backoff: exponential

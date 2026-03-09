@@ -1,0 +1,31 @@
+# hello-world.yaml — minimal Binex workflow for learning the basics.
+#
+# This is the same workflow that `binex hello` runs in-memory.
+# You can also run it directly:  binex run examples/hello-world.yaml
+#
+# Workflow structure:
+#   greeter  ->  responder
+#   (no deps)    (depends on greeter)
+
+name: hello-world
+description: "Built-in demo workflow — two local nodes saying hello"
+
+nodes:
+  # First node: produces a greeting message.
+  # "local://echo" is a built-in adapter that echoes inputs as artifacts.
+  greeter:
+    agent: "local://echo"
+    system_prompt: greet
+    inputs: {}
+    outputs: [result]
+
+  # Second node: receives the greeting and responds.
+  # "${greeter.result}" is a runtime artifact reference — Binex resolves it
+  # to the actual output artifact produced by the "greeter" node.
+  responder:
+    agent: "local://echo"
+    system_prompt: respond
+    inputs:
+      greeter: "${greeter.result}"
+    outputs: [result]
+    depends_on: [greeter]

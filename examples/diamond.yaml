@@ -1,0 +1,55 @@
+# Diamond Pattern Example
+# ========================
+# Classic diamond-shaped DAG: A splits into B and C, which merge at D.
+#
+# Topology:   A
+#            / \
+#           B   C
+#            \ /
+#             D
+#
+# B and C run in parallel after A completes.
+# D waits for both B and C before running.
+#
+# Run:  binex run examples/diamond.yaml
+# Debug: binex debug <run_id>
+
+name: diamond-example
+description: "Diamond DAG pattern: A -> (B, C) -> D"
+
+nodes:
+  # Node A: the starting point
+  node_a:
+    agent: "local://echo"
+    system_prompt: "Generate initial data"
+    inputs: {}
+    outputs: [data]
+    depends_on: []
+
+  # Node B: left branch (runs in parallel with C)
+  node_b:
+    agent: "local://echo"
+    system_prompt: "Process data path B"
+    inputs:
+      source: "${node_a.data}"
+    outputs: [result]
+    depends_on: [node_a]
+
+  # Node C: right branch (runs in parallel with B)
+  node_c:
+    agent: "local://echo"
+    system_prompt: "Process data path C"
+    inputs:
+      source: "${node_a.data}"
+    outputs: [result]
+    depends_on: [node_a]
+
+  # Node D: merges both branches
+  node_d:
+    agent: "local://echo"
+    system_prompt: "Merge results from both paths"
+    inputs:
+      from_b: "${node_b.result}"
+      from_c: "${node_c.result}"
+    outputs: [final]
+    depends_on: [node_b, node_c]

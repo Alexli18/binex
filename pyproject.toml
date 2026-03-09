@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "binex"
 version = "0.1.0"
-description = "Debuggable runtime for A2A agents"
+description = "Debuggable runtime for AI agent pipelines"
 requires-python = ">=3.11"
 dependencies = [
     "a2a-sdk",
@@ -17,6 +17,7 @@ dependencies = [
     "pyyaml",
     "click",
     "aiosqlite",
+    "python-dotenv",
 ]
 
 [project.optional-dependencies]
@@ -25,13 +26,15 @@ dev = [
     "pytest-asyncio",
     "ruff",
     "mypy",
+    "mkdocs-material",
 ]
+rich = ["rich"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/binex"]
 
 [project.scripts]
-binex = "binex.cli.main:cli"
+binex = "binex.cli.main:main"
 
 [tool.ruff]
 target-version = "py311"

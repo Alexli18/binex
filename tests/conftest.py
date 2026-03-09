@@ -14,13 +14,13 @@ def sample_workflow_dict() -> dict:
         "nodes": {
             "producer": {
                 "agent": "local://echo",
-                "skill": "produce",
+                "system_prompt": "produce",
                 "inputs": {"data": "${user.input}"},
                 "outputs": ["result"],
             },
             "consumer": {
                 "agent": "local://echo",
-                "skill": "consume",
+                "system_prompt": "consume",
                 "inputs": {"data": "${producer.result}"},
                 "outputs": ["final"],
                 "depends_on": ["producer"],
@@ -42,13 +42,13 @@ def sample_research_workflow_dict() -> dict:
         "nodes": {
             "planner": {
                 "agent": "local://planner",
-                "skill": "planning.research",
+                "system_prompt": "planning.research",
                 "inputs": {"query": "${user.query}"},
                 "outputs": ["execution_plan"],
             },
             "researcher_1": {
                 "agent": "local://researcher",
-                "skill": "research.search",
+                "system_prompt": "research.search",
                 "inputs": {
                     "plan": "${planner.execution_plan}",
                     "source": "arxiv",
@@ -58,7 +58,7 @@ def sample_research_workflow_dict() -> dict:
             },
             "researcher_2": {
                 "agent": "local://researcher",
-                "skill": "research.search",
+                "system_prompt": "research.search",
                 "inputs": {
                     "plan": "${planner.execution_plan}",
                     "source": "google_scholar",
@@ -68,7 +68,7 @@ def sample_research_workflow_dict() -> dict:
             },
             "validator": {
                 "agent": "local://validator",
-                "skill": "analysis.validate",
+                "system_prompt": "analysis.validate",
                 "inputs": {
                     "results_1": "${researcher_1.search_results}",
                     "results_2": "${researcher_2.search_results}",
@@ -79,7 +79,7 @@ def sample_research_workflow_dict() -> dict:
             },
             "summarizer": {
                 "agent": "local://summarizer",
-                "skill": "analysis.summarize",
+                "system_prompt": "analysis.summarize",
                 "inputs": {"validated": "${validator.validated_results}"},
                 "outputs": ["summary_report"],
                 "depends_on": ["validator"],

@@ -14,12 +14,15 @@ class NodeSpec(BaseModel):
 
     id: str = ""
     agent: str
-    skill: str | None = None
+    system_prompt: str | None = None
     inputs: dict[str, Any] = Field(default_factory=dict)
     outputs: list[str]
     depends_on: list[str] = Field(default_factory=list)
+    config: dict[str, Any] = Field(default_factory=dict)
     retry_policy: RetryPolicy | None = None
     deadline_ms: int | None = None
+    when: str | None = None
+    tools: list[Any] = Field(default_factory=list)
 
 
 class DefaultsSpec(BaseModel):

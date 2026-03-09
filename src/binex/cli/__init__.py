@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Callable, Coroutine
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 from binex.settings import Settings
 from binex.stores import create_artifact_store, create_execution_store

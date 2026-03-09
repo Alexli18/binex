@@ -100,7 +100,7 @@ async def test_llm_adapter_execute() -> None:
     mock_response.choices[0].message.content = "LLM response text"
 
     adapter = LLMAdapter(model="gpt-4")
-    task = _make_task(skill="summarize")
+    task = _make_task(system_prompt="summarize")
     inputs = [_make_artifact(content="input data")]
 
     with patch("binex.adapters.llm.litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
@@ -109,6 +109,54 @@ async def test_llm_adapter_execute() -> None:
     assert len(results) == 1
     assert results[0].content == "LLM response text"
     assert results[0].type == "llm_response"
+
+
+@pytest.mark.asyncio
+async def test_llm_adapter_with_config_params() -> None:
+    """LLMAdapter forwards optional config params to litellm.acompletion."""
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "response"
+
+    adapter = LLMAdapter(
+        model="gpt-4o",
+        api_base="http://proxy:4000",
+        api_key="sk-test",
+        temperature=0.3,
+        max_tokens=1024,
+    )
+    task = _make_task(system_prompt="plan")
+
+    with patch("binex.adapters.llm.litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock_llm:
+        await adapter.execute(task, [], "trace-1")
+
+    call_kwargs = mock_llm.call_args[1]
+    assert call_kwargs["model"] == "gpt-4o"
+    assert call_kwargs["api_base"] == "http://proxy:4000"
+    assert call_kwargs["api_key"] == "sk-test"
+    assert call_kwargs["temperature"] == 0.3
+    assert call_kwargs["max_tokens"] == 1024
+
+
+@pytest.mark.asyncio
+async def test_llm_adapter_without_optional_params() -> None:
+    """LLMAdapter omits None params from litellm.acompletion call."""
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "response"
+
+    adapter = LLMAdapter(model="gpt-4")
+    task = _make_task(system_prompt="test")
+
+    with patch("binex.adapters.llm.litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock_llm:
+        await adapter.execute(task, [], "trace-1")
+
+    call_kwargs = mock_llm.call_args[1]
+    assert call_kwargs["model"] == "gpt-4"
+    assert "api_base" not in call_kwargs
+    assert "api_key" not in call_kwargs
+    assert "temperature" not in call_kwargs
+    assert "max_tokens" not in call_kwargs
 
 
 @pytest.mark.asyncio
@@ -123,7 +171,7 @@ async def test_llm_adapter_health() -> None:
 @pytest.mark.asyncio
 async def test_a2a_adapter_execute() -> None:
     adapter = A2AAgentAdapter(endpoint="http://localhost:9001")
-    task = _make_task(skill="research")
+    task = _make_task(system_prompt="research")
     inputs = [_make_artifact(content="query data")]
 
     mock_response = MagicMock()

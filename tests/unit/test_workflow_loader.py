@@ -92,3 +92,30 @@ def test_load_with_user_vars(sample_workflow_dict: dict) -> None:
     yaml_str = yaml.dump(sample_workflow_dict)
     spec = load_workflow_from_string(yaml_str, fmt="yaml", user_vars={"input": "hello"})
     assert spec.name == "test-workflow"
+
+
+def test_env_var_resolution(sample_workflow_dict: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TEST_API_KEY", "sk-secret-123")
+    sample_workflow_dict["nodes"]["producer"]["config"] = {"api_key": "${env.TEST_API_KEY}"}
+    yaml_str = yaml.dump(sample_workflow_dict)
+    spec = load_workflow_from_string(yaml_str, fmt="yaml")
+    assert spec.nodes["producer"].config["api_key"] == "sk-secret-123"
+
+
+def test_env_var_missing_raises(sample_workflow_dict: dict) -> None:
+    sample_workflow_dict["nodes"]["producer"]["config"] = {"api_key": "${env.NONEXISTENT_VAR_XYZ}"}
+    yaml_str = yaml.dump(sample_workflow_dict)
+    with pytest.raises(ValueError, match="NONEXISTENT_VAR_XYZ.*is not set"):
+        load_workflow_from_string(yaml_str, fmt="yaml")
+
+
+def test_env_var_mixed_with_user_vars(
+    sample_workflow_dict: dict, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MY_KEY", "secret")
+    sample_workflow_dict["nodes"]["producer"]["config"] = {"api_key": "${env.MY_KEY}"}
+    sample_workflow_dict["nodes"]["producer"]["inputs"] = {"topic": "${user.topic}"}
+    yaml_str = yaml.dump(sample_workflow_dict)
+    spec = load_workflow_from_string(yaml_str, fmt="yaml", user_vars={"topic": "AI"})
+    assert spec.nodes["producer"].config["api_key"] == "secret"
+    assert spec.nodes["producer"].inputs["topic"] == "AI"

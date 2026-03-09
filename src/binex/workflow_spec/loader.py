@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -41,6 +43,7 @@ def load_workflow_from_string(
 ) -> WorkflowSpec:
     """Parse a workflow from a YAML or JSON string."""
     data = _parse_raw(content, fmt)
+    _resolve_env_vars(data)
     if user_vars:
         _interpolate(data, user_vars)
     try:
@@ -48,6 +51,28 @@ def load_workflow_from_string(
     except ValidationError as exc:
         raise ValueError(f"Invalid workflow spec: {exc}") from exc
     return spec
+
+
+def _resolve_env_vars(obj: Any) -> Any:
+    """Recursively resolve ${env.VAR} placeholders from environment variables."""
+    if isinstance(obj, str):
+        def _replace_env(match: re.Match) -> str:
+            var_name = match.group(1)
+            value = os.environ.get(var_name)
+            if value is None:
+                raise ValueError(
+                    f"Environment variable '{var_name}' referenced in workflow "
+                    f"via ${{env.{var_name}}} is not set"
+                )
+            return value
+        return re.sub(r"\$\{env\.([^}]+)\}", _replace_env, obj)
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            obj[k] = _resolve_env_vars(v)
+        return obj
+    if isinstance(obj, list):
+        return [_resolve_env_vars(item) for item in obj]
+    return obj
 
 
 def _interpolate(obj: Any, user_vars: dict[str, str]) -> Any:

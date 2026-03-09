@@ -25,7 +25,7 @@ class A2AAgentAdapter:
     ) -> list[Artifact]:
         payload = {
             "task_id": task.id,
-            "skill": task.skill,
+            "system_prompt": task.system_prompt,
             "trace_id": trace_id,
             "artifacts": [
                 {"id": a.id, "type": a.type, "content": a.content}

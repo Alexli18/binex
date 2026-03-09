@@ -8,21 +8,33 @@ from binex.stores.artifact_store import ArtifactStore
 
 
 async def build_lineage_tree(
-    store: ArtifactStore, artifact_id: str
+    store: ArtifactStore,
+    artifact_id: str,
+    _ancestors: frozenset[str] | None = None,
 ) -> dict[str, Any] | None:
     """Build a recursive provenance tree for an artifact.
 
     Returns a dict with keys: artifact_id, type, produced_by, parents.
     Each parent is itself a tree node (recursive).
-    Returns None if the artifact doesn't exist.
+    Returns None if the artifact doesn't exist or creates a cycle.
+
+    ``_ancestors`` tracks the current path to detect cycles while still
+    allowing the same node to appear in independent branches (diamond pattern).
     """
+    if _ancestors is None:
+        _ancestors = frozenset()
+
+    if artifact_id in _ancestors:
+        return None
+    _ancestors = _ancestors | {artifact_id}
+
     artifact = await store.get(artifact_id)
     if artifact is None:
         return None
 
     parents: list[dict[str, Any]] = []
     for parent_id in artifact.lineage.derived_from:
-        parent_tree = await build_lineage_tree(store, parent_id)
+        parent_tree = await build_lineage_tree(store, parent_id, _ancestors)
         if parent_tree is not None:
             parents.append(parent_tree)
 

@@ -53,20 +53,20 @@ def sample_workflow_dict() -> dict:
         "nodes": {
             "a": {
                 "agent": "local://echo",
-                "skill": "produce",
+                "system_prompt": "produce",
                 "inputs": {},
                 "outputs": ["result_a"],
             },
             "b": {
                 "agent": "local://echo",
-                "skill": "transform",
+                "system_prompt": "transform",
                 "inputs": {"data": "${a.result_a}"},
                 "outputs": ["result_b"],
                 "depends_on": ["a"],
             },
             "c": {
                 "agent": "local://echo",
-                "skill": "consume",
+                "system_prompt": "consume",
                 "inputs": {"data": "${b.result_b}"},
                 "outputs": ["result_c"],
                 "depends_on": ["b"],

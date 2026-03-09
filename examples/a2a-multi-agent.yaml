@@ -1,0 +1,57 @@
+# A2A Multi-Agent Example
+# ========================
+# Demonstrates using remote A2A (Agent-to-Agent) protocol agents.
+#
+# IMPORTANT: A2A agents must be running before you execute this workflow.
+# Each agent exposes two endpoints:
+#   POST /execute  — receives {task_id, skill, trace_id, artifacts}, returns {artifacts}
+#   GET  /health   — health check
+#
+# To start an A2A agent, run it as a FastAPI service on the specified port.
+# See the Binex documentation for details on implementing A2A agents.
+#
+# Agent prefix:  a2a://<host>:<port>
+# Example:       a2a://localhost:8001
+#
+# NOTE: This example will fail unless the agents are actually running.
+#       For a self-contained demo, use local://echo agents instead (see simple.yaml).
+#
+# Run:  binex run examples/a2a-multi-agent.yaml
+# Debug: binex debug <run_id>
+
+name: a2a-multi-agent-example
+description: "Multi-agent workflow using remote A2A protocol agents"
+
+nodes:
+  # Coordinator agent running on port 8001
+  coordinator:
+    agent: "a2a://localhost:8001"
+    system_prompt: "Plan and coordinate the research task"
+    inputs:
+      query: "${user.query}"
+    outputs: [plan]
+    depends_on: []
+
+  # Researcher agent running on port 8002
+  researcher:
+    agent: "a2a://localhost:8002"
+    system_prompt: "Investigate the research questions"
+    inputs:
+      plan: "${coordinator.plan}"
+    outputs: [findings]
+    depends_on: [coordinator]
+
+  # Reviewer agent running on port 8003
+  reviewer:
+    agent: "a2a://localhost:8003"
+    system_prompt: "Review and validate research findings"
+    inputs:
+      findings: "${researcher.findings}"
+    outputs: [review]
+    depends_on: [researcher]
+
+defaults:
+  deadline_ms: 120000        # 2-minute deadline (remote agents may be slow)
+  retry_policy:
+    max_retries: 1
+    backoff: exponential

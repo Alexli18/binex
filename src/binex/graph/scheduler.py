@@ -13,15 +13,21 @@ class Scheduler:
         self._completed: set[str] = set()
         self._failed: set[str] = set()
         self._running: set[str] = set()
+        self._skipped: set[str] = set()
 
     def ready_nodes(self) -> list[str]:
-        """Return node IDs whose dependencies are all completed and not already running/done."""
+        """Return node IDs whose dependencies are all completed/skipped
+        and not already running/done."""
         ready = []
+        satisfied = self._completed | self._skipped
+        already_handled = (
+            self._completed | self._failed | self._running | self._skipped
+        )
         for node_id in sorted(self._dag.nodes):
-            if node_id in self._completed or node_id in self._failed or node_id in self._running:
+            if node_id in already_handled:
                 continue
             deps = self._dag.dependencies(node_id)
-            if deps <= self._completed:
+            if deps <= satisfied:
                 ready.append(node_id)
         return ready
 
@@ -36,8 +42,11 @@ class Scheduler:
         self._running.discard(node_id)
         self._failed.add(node_id)
 
+    def mark_skipped(self, node_id: str) -> None:
+        self._skipped.add(node_id)
+
     def is_complete(self) -> bool:
-        return self._completed == self._dag.nodes
+        return self._dag.nodes <= (self._completed | self._failed | self._skipped)
 
     def is_blocked(self) -> bool:
         """True if no more progress can be made (failed nodes block remaining)."""

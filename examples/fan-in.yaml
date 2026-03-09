@@ -1,0 +1,51 @@
+# Fan-In Pattern Example
+# =======================
+# Multiple independent sources feed into a single aggregator.
+#
+# Topology:  source1 \
+#            source2  -> aggregator
+#            source3 /
+#
+# All three sources run in parallel with no dependencies;
+# the aggregator waits for all of them before processing.
+#
+# Run:  binex run examples/fan-in.yaml
+# Debug: binex debug <run_id>
+
+name: fan-in-example
+description: "Fan-in: three independent sources -> single aggregator"
+
+nodes:
+  source1:
+    agent: "local://echo"
+    system_prompt: "Gather data from source A"
+    inputs:
+      query: "${user.query}"
+    outputs: [data]
+    depends_on: []
+
+  source2:
+    agent: "local://echo"
+    system_prompt: "Gather data from source B"
+    inputs:
+      query: "${user.query}"
+    outputs: [data]
+    depends_on: []
+
+  source3:
+    agent: "local://echo"
+    system_prompt: "Gather data from source C"
+    inputs:
+      query: "${user.query}"
+    outputs: [data]
+    depends_on: []
+
+  aggregator:
+    agent: "local://echo"
+    system_prompt: "Merge and deduplicate all source data"
+    inputs:
+      data_a: "${source1.data}"
+      data_b: "${source2.data}"
+      data_c: "${source3.data}"
+    outputs: [merged]
+    depends_on: [source1, source2, source3]

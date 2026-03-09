@@ -8,17 +8,27 @@ class TestNodeSpec:
     def test_create_minimal(self) -> None:
         ns = NodeSpec(agent="local://echo", outputs=["result"])
         assert ns.id == ""
-        assert ns.skill is None
+        assert ns.system_prompt is None
         assert ns.inputs == {}
         assert ns.depends_on == []
+        assert ns.config == {}
         assert ns.retry_policy is None
         assert ns.deadline_ms is None
+
+    def test_config_field(self) -> None:
+        ns = NodeSpec(
+            agent="llm://gpt-4o",
+            outputs=["plan"],
+            config={"temperature": 0.3, "api_base": "http://proxy:4000"},
+        )
+        assert ns.config["temperature"] == 0.3
+        assert ns.config["api_base"] == "http://proxy:4000"
 
     def test_create_full(self) -> None:
         ns = NodeSpec(
             id="planner",
             agent="http://localhost:9001",
-            skill="planning.research",
+            system_prompt="planning.research",
             inputs={"query": "${user.query}"},
             outputs=["execution_plan"],
             depends_on=["setup"],
@@ -26,7 +36,32 @@ class TestNodeSpec:
             deadline_ms=60000,
         )
         assert ns.id == "planner"
-        assert ns.skill == "planning.research"
+        assert ns.system_prompt == "planning.research"
+
+    def test_node_spec_when_default_none(self) -> None:
+        ns = NodeSpec(agent="local://echo", outputs=["result"])
+        assert ns.when is None
+
+    def test_node_spec_when_with_value(self) -> None:
+        ns = NodeSpec(
+            agent="llm://gpt-4o",
+            outputs=["review"],
+            when="${nodeA.output} == approved",
+        )
+        assert ns.when == "${nodeA.output} == approved"
+
+    def test_node_spec_when_serialization(self) -> None:
+        ns_without = NodeSpec(agent="local://echo", outputs=["out"])
+        dump_without = ns_without.model_dump()
+        assert dump_without["when"] is None
+
+        ns_with = NodeSpec(
+            agent="local://echo",
+            outputs=["out"],
+            when="${check.status} == ok",
+        )
+        dump_with = ns_with.model_dump()
+        assert dump_with["when"] == "${check.status} == ok"
 
 
 class TestDefaultsSpec:

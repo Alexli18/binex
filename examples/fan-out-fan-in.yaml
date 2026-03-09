@@ -1,0 +1,61 @@
+# Fan-Out / Fan-In Pattern Example
+# ==================================
+# Combines fan-out (one-to-many) with fan-in (many-to-one).
+#
+# Topology:  planner -> researcher1 \
+#                    -> researcher2  -> summarizer
+#                    -> researcher3 /
+#
+# The planner produces a plan; three researchers run in parallel;
+# then the summarizer waits for all three before synthesizing results.
+#
+# Run:  binex run examples/fan-out-fan-in.yaml
+# Debug: binex debug <run_id>
+
+name: fan-out-fan-in-example
+description: "Fan-out then fan-in: planner -> 3 parallel researchers -> summarizer"
+
+nodes:
+  # Step 1: Create a research plan
+  planner:
+    agent: "local://echo"
+    system_prompt: "Create research plan with three topics"
+    inputs: {}
+    outputs: [plan]
+    depends_on: []
+
+  # Step 2: Three parallel researchers (fan-out from planner)
+  researcher1:
+    agent: "local://echo"
+    system_prompt: "Research topic A in depth"
+    inputs:
+      plan: "${planner.plan}"
+    outputs: [findings]
+    depends_on: [planner]
+
+  researcher2:
+    agent: "local://echo"
+    system_prompt: "Research topic B in depth"
+    inputs:
+      plan: "${planner.plan}"
+    outputs: [findings]
+    depends_on: [planner]
+
+  researcher3:
+    agent: "local://echo"
+    system_prompt: "Research topic C in depth"
+    inputs:
+      plan: "${planner.plan}"
+    outputs: [findings]
+    depends_on: [planner]
+
+  # Step 3: Summarizer waits for ALL researchers (fan-in)
+  summarizer:
+    agent: "local://echo"
+    system_prompt: "Synthesize all research findings into a final report"
+    inputs:
+      findings_a: "${researcher1.findings}"
+      findings_b: "${researcher2.findings}"
+      findings_c: "${researcher3.findings}"
+    outputs: [report]
+    depends_on: [researcher1, researcher2, researcher3]

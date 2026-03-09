@@ -1,0 +1,64 @@
+# Secure Pipeline Example
+# ========================
+# Demonstrates using environment variables for sensitive data.
+#
+# Instead of hardcoding API keys in the workflow file, reference them
+# with ${env.VAR_NAME} syntax. Binex resolves these from your environment
+# (or from a .env file in the project root).
+#
+# Setup:
+#   1. Create a .env file (never commit it to git!):
+#        API_KEY=sk-your-secret-key
+#        API_ENDPOINT=https://api.example.com
+#
+#   2. Or export variables directly:
+#        export API_KEY=sk-your-secret-key
+#        export API_ENDPOINT=https://api.example.com
+#
+# Security notes:
+#   - .env is listed in .gitignore — secrets stay local
+#   - Environment variables are resolved at load time
+#   - Artifacts stored in .binex/ may contain processed data, not raw keys
+#
+# Run:  binex run examples/secure-pipeline.yaml
+# Debug: binex debug <run_id>
+
+name: secure-pipeline-example
+description: "Workflow using environment variables for sensitive configuration"
+
+nodes:
+  # This node shows how to pass an API key via environment variable.
+  # The ${env.API_KEY} reference is resolved from your environment at load time.
+  fetcher:
+    agent: "local://echo"
+    system_prompt: "Fetch data from external API"
+    inputs:
+      api_key: "${env.API_KEY}"              # resolved from environment
+      endpoint: "${env.API_ENDPOINT}"        # resolved from environment
+    outputs: [raw_data]
+    depends_on: []
+
+  # Process the fetched data (no secrets needed here)
+  processor:
+    agent: "local://echo"
+    system_prompt: "Transform and validate the fetched data"
+    inputs:
+      data: "${fetcher.raw_data}"
+    outputs: [processed]
+    depends_on: [fetcher]
+
+  # Store results (might use a different secret for storage)
+  writer:
+    agent: "local://echo"
+    system_prompt: "Write processed data to storage"
+    inputs:
+      data: "${processor.processed}"
+      storage_key: "${env.STORAGE_KEY}"      # another secret from environment
+    outputs: [confirmation]
+    depends_on: [processor]
+
+defaults:
+  deadline_ms: 30000
+  retry_policy:
+    max_retries: 1
+    backoff: exponential

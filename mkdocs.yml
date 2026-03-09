@@ -1,0 +1,64 @@
+site_name: Binex
+site_description: Debuggable runtime for AI agent pipelines
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  icon:
+    logo: material/bug-check
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - navigation.top
+    - header.autohide
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - admonition
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Concepts:
+    - Agents: concepts/agents.md
+    - Workflows: concepts/workflows.md
+    - Artifacts: concepts/artifacts.md
+    - Execution: concepts/execution.md
+    - Lineage: concepts/lineage.md
+  - CLI Reference:
+    - run: cli/run.md
+    - debug: cli/debug.md
+    - trace: cli/trace.md
+    - replay: cli/replay.md
+    - diff: cli/diff.md
+    - artifacts: cli/artifacts.md
+    - dev: cli/dev.md
+    - doctor: cli/doctor.md
+    - validate: cli/validate.md
+    - scaffold: cli/scaffold.md
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Runtime: architecture/runtime.md
+    - Stores: architecture/stores.md
+    - Adapters: architecture/adapters.md
+  - Workflows:
+    - Format: workflows/format.md
+    - Examples: workflows/examples.md
+    - Multi-Provider: multi-provider.md
+  - Contributing:
+    - Development: contributing/development.md
+    - Testing: contributing/testing.md

@@ -1,0 +1,59 @@
+# Map-Reduce Pattern Example
+# ============================
+# A splitter fans out work to parallel workers, then a reducer merges results.
+#
+# Topology:  split -> worker1 \
+#                  -> worker2  -> reduce
+#                  -> worker3 /
+#
+# The split node partitions the task; workers process chunks in parallel;
+# reduce combines all partial results.
+#
+# Run:  binex run examples/map-reduce.yaml
+# Debug: binex debug <run_id>
+
+name: map-reduce-example
+description: "Map-reduce: split -> 3 parallel workers -> reduce"
+
+nodes:
+  split:
+    agent: "local://echo"
+    system_prompt: "Split the input data into three chunks"
+    inputs:
+      query: "${user.query}"
+    outputs: [chunks]
+    depends_on: []
+
+  worker1:
+    agent: "local://echo"
+    system_prompt: "Process chunk 1"
+    inputs:
+      chunk: "${split.chunks}"
+    outputs: [result]
+    depends_on: [split]
+
+  worker2:
+    agent: "local://echo"
+    system_prompt: "Process chunk 2"
+    inputs:
+      chunk: "${split.chunks}"
+    outputs: [result]
+    depends_on: [split]
+
+  worker3:
+    agent: "local://echo"
+    system_prompt: "Process chunk 3"
+    inputs:
+      chunk: "${split.chunks}"
+    outputs: [result]
+    depends_on: [split]
+
+  reduce:
+    agent: "local://echo"
+    system_prompt: "Merge and aggregate all worker results"
+    inputs:
+      result1: "${worker1.result}"
+      result2: "${worker2.result}"
+      result3: "${worker3.result}"
+    outputs: [output]
+    depends_on: [worker1, worker2, worker3]

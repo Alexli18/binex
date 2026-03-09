@@ -46,7 +46,7 @@ class TestTaskNode:
         assert tn.attempt == 1
         assert tn.input_artifact_refs == []
         assert tn.output_artifact_refs == []
-        assert tn.skill is None
+        assert tn.system_prompt is None
         assert tn.retry_policy is None
         assert tn.deadline_ms is None
 
@@ -56,7 +56,7 @@ class TestTaskNode:
             run_id="r1",
             node_id="validator",
             agent="http://localhost:9004",
-            skill="analysis.validate",
+            system_prompt="analysis.validate",
             status=TaskStatus.RUNNING,
             input_artifact_refs=["art_01"],
             output_artifact_refs=["art_02"],

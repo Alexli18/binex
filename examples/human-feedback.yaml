@@ -1,0 +1,48 @@
+# Human Feedback Loop Example
+# =============================
+# A generation step followed by human review, revision, and final output.
+#
+# Topology:  generate -> human-review -> revise -> output
+#
+# The human-review node uses the human://input adapter, which prompts the
+# user for free-text feedback. The revise node then incorporates that feedback.
+#
+# Run:  binex run examples/human-feedback.yaml
+# Debug: binex debug <run_id>
+
+name: human-feedback-example
+description: "Human-in-the-loop feedback: generate -> human review -> revise -> output"
+
+nodes:
+  generate:
+    agent: "local://echo"
+    system_prompt: "Generate initial content from the query"
+    inputs:
+      query: "${user.query}"
+    outputs: [output]
+    depends_on: []
+
+  human-review:
+    agent: "human://input"
+    system_prompt: "Review the generated content and provide feedback"
+    inputs:
+      content: "${generate.output}"
+    outputs: [output]
+    depends_on: [generate]
+
+  revise:
+    agent: "local://echo"
+    system_prompt: "Revise the content based on human feedback"
+    inputs:
+      original: "${generate.output}"
+      feedback: "${human-review.output}"
+    outputs: [output]
+    depends_on: [human-review]
+
+  output:
+    agent: "local://echo"
+    system_prompt: "Finalize and format the revised content"
+    inputs:
+      revised: "${revise.output}"
+    outputs: [output]
+    depends_on: [revise]

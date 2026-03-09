@@ -1,32 +1,53 @@
-name: ollama-research
+# Ollama Research Pipeline
+# =========================
+# A 3-node research pipeline using a local Ollama LLM (llama3.2).
+#
+# Topology:  planner -> researcher -> summarizer
+#
+# Prerequisites:
+#   1. Install Ollama: https://ollama.ai
+#   2. Pull the model:  ollama pull llama3.2
+#   3. Ollama runs on localhost:11434 by default
+#
+# The llm:// prefix tells Binex to use the LLM adapter with litellm.
+# Model format: llm://ollama/<model-name>
+#
+# Run:  binex run examples/ollama-research.yaml query="Impact of AI on healthcare"
+# Debug: binex debug <run_id>
+
+name: ollama-research (local)
 description: "Research pipeline using local Ollama (gemma3:4b)"
 
 nodes:
+  # Step 1: Break the user's query into sub-questions
   planner:
-    agent: "llm://ollama/gemma3:4b"
-    skill: "Break down this research topic into 3 specific sub-questions to investigate"
+    agent: "llm://ollama/llama3.2"
+    system_prompt: "Break down this research topic into 3 specific sub-questions to investigate"
     inputs:
-      query: "${user.query}"
+      query: "${user.query}"        # user provides the research topic
     outputs: [plan]
 
+  # Step 2: Answer the sub-questions with facts
   researcher:
-    agent: "llm://ollama/gemma3:4b"
-    skill: "Answer this research question with specific facts and references"
+    agent: "llm://ollama/llama3.2"
+    system_prompt: "Answer this research question with specific facts and references"
     inputs:
-      questions: "${planner.plan}"
+      questions: "${planner.plan}"  # runtime reference to planner's output
     outputs: [findings]
     depends_on: [planner]
 
+  # Step 3: Synthesize findings into a report
   summarizer:
-    agent: "llm://ollama/gemma3:4b"
-    skill: "Synthesize these research findings into a concise summary with key takeaways"
+    agent: "llm://ollama/llama3.2"
+    system_prompt: "Synthesize these research findings into a concise summary with key takeaways"
     inputs:
       research: "${researcher.findings}"
     outputs: [report]
     depends_on: [researcher]
 
+# Longer deadline for local LLM inference (can be slow on CPU)
 defaults:
-  deadline_ms: 120000
+  deadline_ms: 300000               # 5-minute deadline
   retry_policy:
     max_retries: 1
     backoff: exponential

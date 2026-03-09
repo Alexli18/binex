@@ -1,0 +1,63 @@
+# Error Handling & Retry Example
+# ================================
+# Demonstrates retry_policy and deadline_ms configuration.
+#
+# The `defaults` section sets global retry/deadline settings for all nodes.
+# Individual nodes can override these defaults via their own `config` section.
+#
+# Retry policies:
+#   max_retries  — how many times to retry a failed node (0 = no retries)
+#   backoff      — "exponential" or "fixed" wait between retries
+#
+# deadline_ms:
+#   Maximum wall-clock time (in milliseconds) for each node execution.
+#   If a node exceeds this, it is marked as failed.
+#
+# After a run, inspect errors with:
+#   binex debug <run_id>              # full run overview
+#   binex debug <run_id> --errors     # show only failed nodes
+#   binex debug <run_id> --node risky # inspect a specific node
+#   binex debug <run_id> --json       # machine-readable output
+#
+# Run:  binex run examples/error-handling.yaml
+# Debug: binex debug <run_id>
+
+name: error-handling-example
+description: "Demonstrates retry policies and deadline configuration"
+
+# Global defaults applied to every node unless overridden
+defaults:
+  retry_policy:
+    max_retries: 2           # retry up to 2 times on failure
+    backoff: exponential     # wait 1s, 2s, 4s, ... between retries
+  deadline_ms: 30000         # 30-second deadline per node
+
+nodes:
+  # This node uses the global defaults (2 retries, 30s deadline)
+  setup:
+    agent: "local://echo"
+    system_prompt: "Initialize pipeline data"
+    inputs: {}
+    outputs: [config]
+    depends_on: []
+
+  # This node overrides defaults with more aggressive retries
+  risky:
+    agent: "local://echo"
+    system_prompt: "Perform risky operation that might fail"
+    inputs:
+      config: "${setup.config}"
+    outputs: [result]
+    depends_on: [setup]
+    config:
+      max_retries: 5         # more retries for this flaky step
+      deadline_ms: 60000     # longer deadline (60 seconds)
+
+  # Final step uses global defaults
+  cleanup:
+    agent: "local://echo"
+    system_prompt: "Finalize and clean up"
+    inputs:
+      data: "${risky.result}"
+    outputs: [final]
+    depends_on: [risky]

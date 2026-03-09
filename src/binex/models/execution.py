@@ -41,6 +41,7 @@ class RunSummary(BaseModel):
     total_nodes: int
     completed_nodes: int = 0
     failed_nodes: int = 0
+    skipped_nodes: int = 0
     forked_from: str | None = None
     forked_at_step: str | None = None
 

@@ -73,7 +73,22 @@ async def _show(artifact_id: str, json_out: bool) -> None:
             click.echo(f"Produced by: {artifact.lineage.produced_by}")
             if artifact.lineage.derived_from:
                 click.echo(f"Derived from: {', '.join(artifact.lineage.derived_from)}")
-            click.echo(f"Content: {json.dumps(artifact.content, default=str)}")
+            content_str = artifact.content if artifact.content is not None else ""
+            if not isinstance(content_str, str):
+                content_str = json.dumps(content_str, default=str, indent=2)
+            try:
+                from rich.console import Console
+                from rich.markdown import Markdown
+                from rich.panel import Panel
+
+                console = Console()
+                console.print(Panel(
+                    Markdown(content_str),
+                    title="Content",
+                    border_style="blue",
+                ))
+            except ImportError:
+                click.echo(f"Content: {json.dumps(artifact.content, default=str)}")
     finally:
         await exec_store.close()
 
