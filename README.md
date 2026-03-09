@@ -190,13 +190,21 @@ Nodes: 2/2 completed
 
 ## Trace & Debug
 
-Every run is fully recorded. Inspect the timeline, visualize the DAG, or diff two runs:
+Every run is fully recorded. Inspect the execution timeline and DAG:
+
+```bash
+binex trace <run-id>
+```
 
 <div align="center">
   <img src="assets/trace-screenshot.svg" alt="binex trace" width="800">
 </div>
 
-Compare a successful run against a failed one — spot status changes, latency deltas, and output differences:
+Compare two runs side-by-side — spot status changes, latency deltas, and output differences:
+
+```bash
+binex diff <run-a> <run-b>
+```
 
 <div align="center">
   <img src="assets/diff-screenshot.svg" alt="binex diff" width="800">
