@@ -77,17 +77,40 @@ binex debug <run-id> --rich
 ```
 
 <details>
-<summary><strong>Example output</strong></summary>
+<summary><strong>See it in action</strong></summary>
 
 ```
-Run: a1b2c3d4
+$ binex hello
+
+Running built-in hello-world workflow...
+
+  [1/2] greeter ...
+  [greeter] -> result:
+Hello from Binex!
+
+  [2/2] responder ...
+  [responder] -> result:
+{"greeter": "Hello from Binex!"}
+
+Run completed (2/2 nodes)
+Run ID: run_d71c9a50
+
+Next steps:
+  binex debug run_d71c9a50    — inspect the run
+  binex init                  — create your own project
+  binex run examples/simple.yaml — try a workflow file
+```
+
+```
+$ binex run examples/simple.yaml --var input="hello world"
+
+Run ID: run_69651bec
+Workflow: simple-pipeline
 Status: completed
-
-Timeline:
-  producer  ██████████  completed  1.2s
-  consumer  ██████████  completed  0.8s
-
-Artifacts: 2 produced
+Nodes: 2/2 completed
+╭──────────────────────── consumer ────────────────────────╮
+│ { "art_producer": { "msg": "hello world" } }             │
+╰──────────────────────── result ──────────────────────────╯
 ```
 
 </details>
@@ -320,13 +343,14 @@ binex dev up
 
 ## Roadmap
 
+See [`ROADMAP.md`](ROADMAP.md) for the full roadmap, or a summary below:
+
 - [ ] Web UI for execution visualization
 - [ ] Plugin system for custom adapters
+- [ ] Framework adapters (LangChain, CrewAI, AutoGen)
 - [ ] Workflow versioning and migration
 - [ ] Distributed execution across multiple runtimes
 - [ ] OpenTelemetry integration for observability
-- [ ] Streaming output for long-running LLM nodes
-- [ ] Workflow templates marketplace
 
 See the [open issues](https://github.com/Alexli18/binex/issues) for a full list of proposed features and known issues.
 
