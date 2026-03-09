@@ -164,15 +164,6 @@ block-beta
     Adapters["Adapters\nlocal:// · llm:// · a2a:// · human://"] Graph["Graph\nDAG · topo-sort · cycle detect"] Spec["Workflow Spec\nYAML loader · validation"]
     Stores["Stores\nSQLite executions + FS artifacts"]:3
     Models["Models\nWorkflow · Node · Artifact · Execution"]:3
-
-    CLI --> Runtime
-    Runtime --> Adapters
-    Runtime --> Graph
-    Runtime --> Spec
-    Adapters --> Stores
-    Graph --> Stores
-    Spec --> Stores
-    Stores --> Models
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
