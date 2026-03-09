@@ -3,18 +3,20 @@
 ## Synopsis
 
 ```
-binex debug RUN_ID [OPTIONS]
+binex debug <RUN_ID | latest> [OPTIONS]
 ```
 
 ## Description
 
 Post-mortem inspection of a workflow run. Displays a complete debug report including workflow summary, per-node details (agent, prompt, inputs, outputs, errors), skipped nodes with blocking reasons, and timing information.
 
+Use `latest` instead of a run ID to automatically select the most recent run.
+
 ## Arguments
 
 | Argument | Required | Description |
 |---|---|---|
-| `RUN_ID` | Yes | Workflow run identifier |
+| `RUN_ID` | Yes | Workflow run identifier, or `latest` for the most recent run |
 
 ## Options
 
@@ -35,6 +37,9 @@ Post-mortem inspection of a workflow run. Displays a complete debug report inclu
 ## Examples
 
 ```bash
+# Debug the most recent run
+binex debug latest
+
 # Full post-mortem report
 binex debug abc123
 
