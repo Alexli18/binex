@@ -55,6 +55,10 @@ Building multi-agent systems is hard. Debugging them is harder. **Binex** gives 
 ## Quickstart
 
 ```bash
+# Clone
+git clone https://github.com/Alexli18/binex.git
+cd binex
+
 # Install
 pip install -e .
 
