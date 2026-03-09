@@ -307,11 +307,28 @@ async def _show_artifact(exec_store, art_store, artifact) -> None:
                 if _has_rich():
                     from rich.console import Console
                     from rich.panel import Panel
+                    from rich.tree import Tree as RichTree
 
                     console = Console()
+
+                    def _build_rich_tree(node, parent=None):
+                        label = (
+                            f"[magenta bold]{node['produced_by']}[/] "
+                            f"[dim]({node['artifact_id']})[/] "
+                            f"[yellow]{node['type']}[/]"
+                        )
+                        if parent is None:
+                            branch = RichTree(label, guide_style="cyan")
+                        else:
+                            branch = parent.add(label)
+                        for p in node["parents"]:
+                            _build_rich_tree(p, branch)
+                        return branch
+
+                    rich_tree = _build_rich_tree(tree)
                     console.print(Panel(
-                        format_lineage_tree(tree),
-                        title="Lineage",
+                        rich_tree,
+                        title="Artifact Lineage",
                         border_style="green",
                         padding=(1, 2),
                     ))
