@@ -16,6 +16,14 @@ def _get_stores():
     return get_stores()
 
 
+def _has_rich() -> bool:
+    try:
+        import rich  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
 def _short_id(run_id: str) -> str:
     """Shorten run ID for display."""
     return run_id[:16] if len(run_id) > 16 else run_id
@@ -54,12 +62,15 @@ def _preview(content, max_len: int = 50) -> str:
     return text
 
 
-def _status_marker(status: str) -> str:
+def _status_style(status: str) -> tuple[str, str]:
+    """Return (display_text, rich_style) for a status."""
     if status == "completed":
-        return "completed"
+        return "completed", "green"
     if status == "failed":
-        return "FAILED"
-    return status
+        return "FAILED", "bold red"
+    if status == "running":
+        return "running", "yellow"
+    return status, "dim"
 
 
 @click.command("explore")
@@ -89,18 +100,55 @@ async def _browse_runs(exec_store, art_store) -> None:
         return
 
     runs.sort(key=lambda r: r.started_at, reverse=True)
-    runs = runs[:20]  # Show last 20
+    runs = runs[:20]
 
     click.echo()
-    click.echo("  Recent runs:")
-    click.echo()
-    for i, run in enumerate(runs, 1):
-        status = _status_marker(run.status)
-        ago = _time_ago(run.started_at)
-        click.echo(
-            f"  {i:>3})  {_short_id(run.run_id):<18} "
-            f"{run.workflow_name:<25} {status:<12} {ago}"
+
+    if _has_rich():
+        from rich.console import Console
+        from rich.table import Table
+        from rich.text import Text
+
+        console = Console()
+        table = Table(
+            title="Recent Runs",
+            title_style="bold cyan",
+            show_header=True,
+            header_style="bold",
+            border_style="dim",
+            pad_edge=False,
+            show_edge=True,
         )
+        table.add_column("#", style="dim", width=4, justify="right")
+        table.add_column("Run ID", style="cyan", min_width=16)
+        table.add_column("Workflow", min_width=20)
+        table.add_column("Status", min_width=10)
+        table.add_column("Nodes", justify="center", min_width=6)
+        table.add_column("When", style="dim", min_width=8)
+
+        for i, run in enumerate(runs, 1):
+            status_text, status_style = _status_style(run.status)
+            nodes = f"{run.completed_nodes}/{run.total_nodes}"
+            table.add_row(
+                str(i),
+                _short_id(run.run_id),
+                run.workflow_name,
+                Text(status_text, style=status_style),
+                nodes,
+                _time_ago(run.started_at),
+            )
+        console.print(table)
+    else:
+        click.echo("  Recent runs:")
+        click.echo()
+        for i, run in enumerate(runs, 1):
+            status_text, _ = _status_style(run.status)
+            ago = _time_ago(run.started_at)
+            click.echo(
+                f"  {i:>3})  {_short_id(run.run_id):<18} "
+                f"{run.workflow_name:<25} {status_text:<12} {ago}"
+            )
+
     click.echo()
 
     while True:
@@ -128,14 +176,44 @@ async def _browse_artifacts(exec_store, art_store, run_id: str) -> None:
 
     while True:
         click.echo()
-        click.echo(f"  Artifacts for {_short_id(run_id)}:")
-        click.echo()
-        for i, art in enumerate(artifacts, 1):
-            node = art.lineage.produced_by if art.lineage else "?"
-            preview = _preview(art.content)
-            click.echo(
-                f"  {i:>3})  {node:<20} {art.type:<12} {preview}"
+
+        if _has_rich():
+            from rich.console import Console
+            from rich.table import Table
+
+            console = Console()
+            table = Table(
+                title=f"Artifacts — {_short_id(run_id)}",
+                title_style="bold cyan",
+                show_header=True,
+                header_style="bold",
+                border_style="dim",
+                show_edge=True,
             )
+            table.add_column("#", style="dim", width=4, justify="right")
+            table.add_column("Node", style="magenta", min_width=16)
+            table.add_column("Type", style="yellow", min_width=10)
+            table.add_column("Preview", min_width=30)
+
+            for i, art in enumerate(artifacts, 1):
+                node = art.lineage.produced_by if art.lineage else "?"
+                table.add_row(
+                    str(i),
+                    node,
+                    art.type,
+                    _preview(art.content, max_len=60),
+                )
+            console.print(table)
+        else:
+            click.echo(f"  Artifacts for {_short_id(run_id)}:")
+            click.echo()
+            for i, art in enumerate(artifacts, 1):
+                node = art.lineage.produced_by if art.lineage else "?"
+                preview = _preview(art.content)
+                click.echo(
+                    f"  {i:>3})  {node:<20} {art.type:<12} {preview}"
+                )
+
         click.echo()
 
         choice = click.prompt(
@@ -165,27 +243,57 @@ async def _show_artifact(exec_store, art_store, artifact) -> None:
     node = artifact.lineage.produced_by if artifact.lineage else "?"
     click.echo()
 
-    try:
+    if _has_rich():
         from rich.console import Console
         from rich.markdown import Markdown
         from rich.panel import Panel
+        from rich.text import Text
 
         console = Console()
+
+        # Metadata line
+        meta = Text()
+        meta.append("Node: ", style="dim")
+        meta.append(node, style="magenta bold")
+        meta.append("  Type: ", style="dim")
+        meta.append(artifact.type, style="yellow")
+        meta.append("  Status: ", style="dim")
+        _, style = _status_style(artifact.status)
+        meta.append(artifact.status, style=style)
+        console.print(meta)
+        console.print()
+
         console.print(Panel(
             Markdown(content_str),
             title=f"{node} / {artifact.type}",
             subtitle=f"id: {artifact.id}",
             border_style="blue",
+            padding=(1, 2),
         ))
-    except ImportError:
+    else:
         click.echo(f"  ── {node} / {artifact.type} ──")
         click.echo(f"  {content_str}")
         click.echo(f"  id: {artifact.id}")
         click.echo()
 
     while True:
+        if _has_rich():
+            from rich.console import Console
+            from rich.text import Text
+
+            console = Console()
+            hint = Text()
+            hint.append("  [", style="dim")
+            hint.append("l", style="cyan bold")
+            hint.append("] lineage  [", style="dim")
+            hint.append("b", style="cyan bold")
+            hint.append("] back  [", style="dim")
+            hint.append("q", style="cyan bold")
+            hint.append("] quit", style="dim")
+            console.print(hint)
+
         choice = click.prompt(
-            "  [l] lineage  [b] back  [q] quit",
+            "  Action" if _has_rich() else "  [l] lineage  [b] back  [q] quit",
             default="b",
         )
         if choice.lower() == "b":
@@ -196,7 +304,19 @@ async def _show_artifact(exec_store, art_store, artifact) -> None:
             tree = await build_lineage_tree(art_store, artifact.id)
             if tree:
                 click.echo()
-                click.echo(format_lineage_tree(tree))
+                if _has_rich():
+                    from rich.console import Console
+                    from rich.panel import Panel
+
+                    console = Console()
+                    console.print(Panel(
+                        format_lineage_tree(tree),
+                        title="Lineage",
+                        border_style="green",
+                        padding=(1, 2),
+                    ))
+                else:
+                    click.echo(format_lineage_tree(tree))
             else:
                 click.echo("  No lineage data available.")
             continue
