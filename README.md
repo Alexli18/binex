@@ -59,6 +59,11 @@ Building multi-agent systems is hard. Debugging them is harder. **Binex** gives 
 git clone https://github.com/Alexli18/binex.git
 cd binex
 
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate   # Linux/macOS
+# .venv\Scripts\activate    # Windows
+
 # Install
 pip install -e .
 
@@ -220,6 +225,7 @@ block-beta
 | `binex init` | Interactive project setup (workflow / agent / full) |
 | `binex dev up` | Start Docker dev stack (Ollama + LiteLLM + Registry) |
 | `binex doctor` | Check system health |
+| `binex explore` | Interactive browser for runs and artifacts |
 | `binex hello` | Zero-config demo |
 
 ### DSL Shorthand
