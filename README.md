@@ -56,12 +56,12 @@ nodes:
     depends_on: [user_input]
 
   researcher1:
-    agent: "llm://openrouter/openai/gpt-oss-20b:free"  # cloud model researches subtopic 1
+    agent: "llm://openrouter/z-ai/glm-4.5-air:free"    # cloud model researches subtopic 1
     inputs: { plan: "${planner.result}" }
     depends_on: [planner]
 
   researcher2:
-    agent: "llm://openrouter/openai/gpt-oss-20b:free"  # cloud model researches subtopic 2
+    agent: "llm://openrouter/stepfun/step-3.5-flash:free"  # cloud model researches subtopic 2
     inputs: { plan: "${planner.result}" }
     depends_on: [planner]
 
@@ -74,8 +74,8 @@ nodes:
 ```mermaid
 graph LR
     A["user_input<br/><sub>human://input</sub>"] --> B["planner<br/><sub>ollama/gemma3:4b</sub>"]
-    B --> C["researcher1<br/><sub>openrouter/gpt-oss-20b</sub>"]
-    B --> D["researcher2<br/><sub>openrouter/gpt-oss-20b</sub>"]
+    B --> C["researcher1<br/><sub>openrouter/glm-4.5-air</sub>"]
+    B --> D["researcher2<br/><sub>openrouter/step-3.5-flash</sub>"]
     C --> E["summarizer<br/><sub>ollama/gemma3:4b</sub>"]
     D --> E
 ```
