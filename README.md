@@ -188,6 +188,24 @@ Nodes: 2/2 completed
 
 ---
 
+## Trace & Debug
+
+Every run is fully recorded. Inspect the timeline, visualize the DAG, or diff two runs:
+
+<div align="center">
+  <img src="assets/trace-screenshot.svg" alt="binex trace" width="800">
+</div>
+
+Compare a successful run against a failed one — spot status changes, latency deltas, and output differences:
+
+<div align="center">
+  <img src="assets/diff-screenshot.svg" alt="binex diff" width="800">
+</div>
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
 ## How It Works
 
 Define a workflow in YAML. Binex builds a DAG, schedules nodes respecting dependencies, dispatches each to the right agent adapter, and records everything.
