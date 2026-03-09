@@ -155,27 +155,24 @@ graph TD
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────┐
-│                    CLI                       │
-│  run · debug · trace · replay · diff · dev  │
-├─────────────────────────────────────────────┤
-│                 Runtime                      │
-│          Orchestrator + Dispatcher           │
-├───────────┬───────────┬─────────────────────┤
-│  Adapters │   Graph   │   Workflow Spec      │
-│  local:// │   DAG     │   YAML loader        │
-│  llm://   │   topo-   │   variable           │
-│  a2a://   │   sort    │   resolution         │
-│  human:// │   cycle   │   validation         │
-│           │   detect  │                      │
-├───────────┴───────────┴─────────────────────┤
-│                  Stores                      │
-│      SQLite executions + FS artifacts        │
-├─────────────────────────────────────────────┤
-│                  Models                      │
-│   Workflow · Node · Artifact · Execution     │
-└─────────────────────────────────────────────┘
+```mermaid
+block-beta
+    columns 3
+
+    CLI["CLI\nrun · debug · trace · replay · diff · dev"]:3
+    Runtime["Runtime\nOrchestrator + Dispatcher"]:3
+    Adapters["Adapters\nlocal:// · llm:// · a2a:// · human://"] Graph["Graph\nDAG · topo-sort · cycle detect"] Spec["Workflow Spec\nYAML loader · validation"]
+    Stores["Stores\nSQLite executions + FS artifacts"]:3
+    Models["Models\nWorkflow · Node · Artifact · Execution"]:3
+
+    CLI --> Runtime
+    Runtime --> Adapters
+    Runtime --> Graph
+    Runtime --> Spec
+    Adapters --> Stores
+    Graph --> Stores
+    Spec --> Stores
+    Stores --> Models
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
