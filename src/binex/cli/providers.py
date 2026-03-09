@@ -62,6 +62,12 @@ PROVIDERS: dict[str, ProviderConfig] = {
         env_var="TOGETHER_API_KEY",
         agent_prefix="llm://together_ai/",
     ),
+    "openrouter": ProviderConfig(
+        name="openrouter",
+        default_model="openrouter/google/gemini-2.5-flash",
+        env_var="OPENROUTER_API_KEY",
+        agent_prefix="llm://openrouter/",
+    ),
 }
 
 

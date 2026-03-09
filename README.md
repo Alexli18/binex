@@ -37,6 +37,59 @@
 
 ---
 
+## Demo
+
+A multi-provider research pipeline: **Ollama** runs locally for planning and summarization, **OpenRouter** calls cloud models for parallel research &mdash; all in one YAML file.
+
+```yaml
+# examples/multi-provider-demo.yaml
+name: multi-provider-research
+
+nodes:
+  user_input:
+    agent: "human://input"                          # ask the user for a topic
+
+  planner:
+    agent: "llm://ollama/gemma3:4b"                 # local LLM plans the research
+    system_prompt: "Create a structured research plan with 3 subtopics..."
+    inputs: { topic: "${user_input.result}" }
+    depends_on: [user_input]
+
+  researcher1:
+    agent: "llm://openrouter/openai/gpt-oss-20b:free"  # cloud model researches subtopic 1
+    inputs: { plan: "${planner.result}" }
+    depends_on: [planner]
+
+  researcher2:
+    agent: "llm://openrouter/openai/gpt-oss-20b:free"  # cloud model researches subtopic 2
+    inputs: { plan: "${planner.result}" }
+    depends_on: [planner]
+
+  summarizer:
+    agent: "llm://ollama/gemma3:4b"                 # local LLM combines findings
+    inputs: { research1: "${researcher1.result}", research2: "${researcher2.result}" }
+    depends_on: [researcher1, researcher2]
+```
+
+```mermaid
+graph LR
+    A["user_input<br/><sub>human://input</sub>"] --> B["planner<br/><sub>ollama/gemma3:4b</sub>"]
+    B --> C["researcher1<br/><sub>openrouter/gpt-oss-20b</sub>"]
+    B --> D["researcher2<br/><sub>openrouter/gpt-oss-20b</sub>"]
+    C --> E["summarizer<br/><sub>ollama/gemma3:4b</sub>"]
+    D --> E
+```
+
+Run it, explore results, debug the execution:
+
+<div align="center">
+  <img src="assets/demo.gif" alt="Binex Demo — multi-provider research pipeline" width="800">
+</div>
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
 ## Why Binex?
 
 Building multi-agent systems is hard. Debugging them is harder. **Binex** gives you:
@@ -241,9 +294,9 @@ Nine built-in patterns available: `simple`, `diamond`, `fan-out`, `fan-in`, `map
 
 ### LLM Providers
 
-Out-of-the-box support for 8 providers via LiteLLM:
+Out-of-the-box support for 9 providers via LiteLLM:
 
-**OpenAI** &middot; **Anthropic** &middot; **Google Gemini** &middot; **Ollama** &middot; **Groq** &middot; **Mistral** &middot; **DeepSeek** &middot; **Together AI**
+**OpenAI** &middot; **Anthropic** &middot; **Google Gemini** &middot; **Ollama** &middot; **OpenRouter** &middot; **Groq** &middot; **Mistral** &middot; **DeepSeek** &middot; **Together AI**
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

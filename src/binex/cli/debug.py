@@ -62,6 +62,17 @@ def debug_cmd(
     click.echo(result)
 
 
+async def _resolve_run_id(run_id: str, exec_store) -> str | None:
+    """Resolve 'latest' to the most recent run ID."""
+    if run_id != "latest":
+        return run_id
+    runs = await exec_store.list_runs()
+    if not runs:
+        return None
+    runs.sort(key=lambda r: r.started_at, reverse=True)
+    return runs[0].run_id
+
+
 async def _debug_async(
     run_id: str,
     *,
@@ -74,6 +85,9 @@ async def _debug_async(
 
     exec_store, art_store = _get_stores()
     try:
+        run_id = await _resolve_run_id(run_id, exec_store)
+        if run_id is None:
+            return None
         report = await build_debug_report(exec_store, art_store, run_id)
         if report is None:
             return None

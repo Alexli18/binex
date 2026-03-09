@@ -1,0 +1,53 @@
+name: multi-provider-research
+description: "Research pipeline: Ollama plans & summarizes, Gemini researches"
+
+nodes:
+  user_input:
+    agent: "human://input"
+    system_prompt: "What would you like to research?"
+    outputs: [result]
+
+  planner:
+    agent: "llm://ollama/gemma3:4b"
+    system_prompt: >
+      You are a research planner. Given a topic, create a structured
+      research plan with 3 specific subtopics to investigate.
+      Output a numbered list of research tasks. Be concise.
+    inputs:
+      topic: "${user_input.result}"
+    outputs: [result]
+    depends_on: [user_input]
+
+  researcher1:
+    agent: "llm://openrouter/z-ai/glm-4.5-air:free"
+    system_prompt: >
+      You are a thorough researcher. Investigate the first subtopic
+      from the research plan. Provide findings with specific facts.
+      Keep response under 200 words.
+    inputs:
+      plan: "${planner.result}"
+    outputs: [result]
+    depends_on: [planner]
+
+  researcher2:
+    agent: "llm://openrouter/stepfun/step-3.5-flash:free"
+    system_prompt: >
+      You are a thorough researcher. Investigate the second subtopic
+      from the research plan. Provide findings with specific facts.
+      Keep response under 200 words.
+    inputs:
+      plan: "${planner.result}"
+    outputs: [result]
+    depends_on: [planner]
+
+  summarizer:
+    agent: "llm://ollama/gemma3:4b"
+    system_prompt: >
+      You are a summarizer. Combine the research findings into a clear,
+      well-structured final summary. Include key findings and conclusions.
+      Keep response under 300 words.
+    inputs:
+      research1: "${researcher1.result}"
+      research2: "${researcher2.result}"
+    outputs: [result]
+    depends_on: [researcher1, researcher2]

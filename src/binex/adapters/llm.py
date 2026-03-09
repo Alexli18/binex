@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
 import uuid
 from typing import Any
 
+import click
 import litellm
+
+logger = logging.getLogger(__name__)
+
+MAX_RETRIES = 3
+RETRY_BACKOFF = 2  # seconds, doubles each attempt
 
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
@@ -70,7 +78,7 @@ class LLMAdapter:
             resolved_tools = resolve_tools(task.tools, workflow_dir=self._workflow_dir)
             kwargs["tools"] = [t.to_openai_schema() for t in resolved_tools]
 
-        response = await litellm.acompletion(**kwargs)
+        response = await self._completion_with_retry(**kwargs)
         message = response.choices[0].message
 
         # Tool calling loop
@@ -108,7 +116,7 @@ class LLMAdapter:
 
             # Re-call with updated messages
             kwargs["messages"] = messages
-            response = await litellm.acompletion(**kwargs)
+            response = await self._completion_with_retry(**kwargs)
             message = response.choices[0].message
 
         content = message.content
@@ -125,6 +133,24 @@ class LLMAdapter:
                 ),
             )
         ]
+
+    @staticmethod
+    async def _completion_with_retry(**kwargs: Any) -> Any:
+        """Call litellm.acompletion with exponential backoff retry."""
+        for attempt in range(MAX_RETRIES):
+            try:
+                return await litellm.acompletion(**kwargs)
+            except Exception as exc:
+                is_last = attempt == MAX_RETRIES - 1
+                if is_last:
+                    raise
+                wait = RETRY_BACKOFF * (2 ** attempt)
+                msg = f"LLM call failed (attempt {attempt + 1}/{MAX_RETRIES}): {exc}. Retrying in {wait}s..."
+                logger.warning(msg)
+                click.echo(click.style(f"  ⚠ {msg}", fg="yellow"))
+                await asyncio.sleep(wait)
+        # unreachable, but satisfies type checker
+        raise RuntimeError("Retry loop exited unexpectedly")
 
     def _build_prompt(self, task: TaskNode, input_artifacts: list[Artifact]) -> str:
         if self._prompt_template:
