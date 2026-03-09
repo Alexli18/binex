@@ -210,6 +210,16 @@ binex diff <run-a> <run-b>
   <img src="assets/diff-screenshot.svg" alt="binex diff" width="800">
 </div>
 
+Post-mortem debug of a failed run — see errors, prompts, and artifacts per node:
+
+```bash
+binex debug <run-id> --errors --rich
+```
+
+<div align="center">
+  <img src="assets/debug-screenshot.svg" alt="binex debug" width="800">
+</div>
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
