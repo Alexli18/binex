@@ -128,10 +128,11 @@ binex run examples/simple.yaml --var input="hello world"
 
 # Debug a completed run
 binex debug <run-id>
+binex debug latest          # shortcut for the most recent run
 
 # Optional: rich colored output
 pip install -e ".[rich]"
-binex debug <run-id> --rich
+binex debug latest --rich
 ```
 
 <details>
@@ -268,7 +269,7 @@ block-beta
 | Command | Description |
 |---------|-------------|
 | `binex run <workflow.yaml>` | Execute a workflow |
-| `binex debug <run-id>` | Post-mortem inspection (`--json`, `--errors`, `--node`, `--rich`) |
+| `binex debug <run-id\|latest>` | Post-mortem inspection (`--json`, `--errors`, `--node`, `--rich`) |
 | `binex trace <run-id>` | Execution timeline, node details, or DAG graph |
 | `binex replay <run-id>` | Re-run with optional agent swaps |
 | `binex diff <run1> <run2>` | Compare two runs side-by-side |
