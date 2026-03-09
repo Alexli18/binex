@@ -222,6 +222,7 @@ block-beta
 | `binex artifacts list <run-id>` | List artifacts with lineage tracking |
 | `binex validate <workflow.yaml>` | Validate YAML before execution |
 | `binex scaffold workflow "A -> B"` | Generate workflow from DSL shorthand |
+| `binex start` | Interactive wizard to create a workflow step-by-step |
 | `binex init` | Interactive project setup (workflow / agent / full) |
 | `binex dev up` | Start Docker dev stack (Ollama + LiteLLM + Registry) |
 | `binex doctor` | Check system health |
