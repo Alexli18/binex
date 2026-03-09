@@ -448,5 +448,5 @@ class TestInitCommandGaps:
     # TC-INIT-004: Provider selection
     def test_init_004_provider_selection(self):
         from binex.cli.providers import PROVIDERS
-        # All 8 providers available for selection
-        assert len(PROVIDERS) == 8
+        # All 9 providers available for selection
+        assert len(PROVIDERS) == 9

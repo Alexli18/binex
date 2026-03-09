@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 from binex.cli.artifacts import artifacts_cmd
 from binex.cli.debug import debug_cmd
 from binex.cli.dev import dev_cmd
-from binex.cli.explore import explore_cmd
 from binex.cli.diff import diff_cmd
 from binex.cli.doctor import doctor_cmd
+from binex.cli.explore import explore_cmd
 from binex.cli.hello import hello_cmd
 from binex.cli.init_cmd import init_cmd
 from binex.cli.replay import replay_cmd

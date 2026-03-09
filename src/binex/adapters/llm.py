@@ -11,15 +11,15 @@ from typing import Any
 import click
 import litellm
 
-logger = logging.getLogger(__name__)
-
-MAX_RETRIES = 3
-RETRY_BACKOFF = 2  # seconds, doubles each attempt
-
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
 from binex.models.task import TaskNode
 from binex.tools import execute_tool_call, resolve_tools
+
+logger = logging.getLogger(__name__)
+
+MAX_RETRIES = 3
+RETRY_BACKOFF = 2  # seconds, doubles each attempt
 
 
 class LLMAdapter:
@@ -145,7 +145,10 @@ class LLMAdapter:
                 if is_last:
                     raise
                 wait = RETRY_BACKOFF * (2 ** attempt)
-                msg = f"LLM call failed (attempt {attempt + 1}/{MAX_RETRIES}): {exc}. Retrying in {wait}s..."
+                msg = (
+                    f"LLM call failed (attempt {attempt + 1}/{MAX_RETRIES}): "
+                    f"{exc}. Retrying in {wait}s..."
+                )
                 logger.warning(msg)
                 click.echo(click.style(f"  ⚠ {msg}", fg="yellow"))
                 await asyncio.sleep(wait)

@@ -35,8 +35,7 @@ def _time_ago(dt) -> str:
 
     now = datetime.now(UTC)
     if dt.tzinfo is None:
-        from datetime import timezone
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     delta = now - dt
     seconds = int(delta.total_seconds())
     if seconds < 60:

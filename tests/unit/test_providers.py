@@ -6,8 +6,8 @@ from binex.cli.providers import PROVIDERS, ProviderConfig, get_provider
 class TestProvidersRegistry:
     """Tests for the PROVIDERS registry."""
 
-    def test_providers_has_exactly_8_entries(self):
-        assert len(PROVIDERS) == 8
+    def test_providers_has_exactly_9_entries(self):
+        assert len(PROVIDERS) == 9
 
     def test_all_providers_have_required_fields(self):
         for name, config in PROVIDERS.items():

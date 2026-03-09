@@ -33,11 +33,11 @@ def _load_yaml(name: str) -> dict:
 class TestProviderRegistryQA:
     """TC-PROV-001..008: Provider registry audit."""
 
-    def test_prov_001_all_8_providers_registered(self):
-        assert len(PROVIDERS) == 8
+    def test_prov_001_all_9_providers_registered(self):
+        assert len(PROVIDERS) == 9
         expected = {
             "ollama", "openai", "anthropic", "gemini",
-            "groq", "mistral", "deepseek", "together",
+            "groq", "mistral", "deepseek", "together", "openrouter",
         }
         assert set(PROVIDERS.keys()) == expected
 

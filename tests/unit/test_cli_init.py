@@ -105,8 +105,8 @@ def test_init_skip_provider(tmp_path: Path) -> None:
     """Provider=9 (skip) means no env var in .env.example."""
     runner = CliRunner()
     with runner.isolated_filesystem(temp_dir=tmp_path) as td:
-        # mode=1, provider=9 (skip)
-        result = runner.invoke(cli, ["init"], input="\n1\n9\n")
+        # mode=1, provider=10 (skip)
+        result = runner.invoke(cli, ["init"], input="\n1\n10\n")
         assert result.exit_code == 0, result.output
 
         td_path = Path(td)

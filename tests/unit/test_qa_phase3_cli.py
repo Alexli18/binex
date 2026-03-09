@@ -181,10 +181,13 @@ class TestDoctorMissingBinary:
 class TestProvidersAllEight:
     """TC-CLI-011 supplement: all 8 provider names present in registry."""
 
-    def test_all_eight_provider_names(self):
+    def test_all_nine_provider_names(self):
         from binex.cli.providers import PROVIDERS
 
-        expected = {"ollama", "openai", "anthropic", "gemini", "groq", "mistral", "deepseek", "together"}
+        expected = {
+            "ollama", "openai", "anthropic", "gemini", "groq",
+            "mistral", "deepseek", "together", "openrouter",
+        }
         assert set(PROVIDERS.keys()) == expected
 
 
