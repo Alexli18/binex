@@ -17,12 +17,32 @@ from binex.graph.scheduler import Scheduler
 from binex.models.artifact import Artifact
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskNode
-from binex.models.workflow import WorkflowSpec
+from binex.models.workflow import NodeSpec, WorkflowSpec
 from binex.runtime.dispatcher import Dispatcher
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
 
 logger = logging.getLogger(__name__)
+
+
+def get_effective_policy(spec: WorkflowSpec) -> str:
+    """Return the effective budget policy — from workflow or default 'stop'."""
+    if spec.budget:
+        return spec.budget.policy
+    return "stop"
+
+
+def get_node_max_cost(
+    node: NodeSpec, spec: WorkflowSpec, accumulated_workflow_cost: float
+) -> float | None:
+    """Return effective max_cost for a node, considering workflow budget."""
+    if node.budget is None:
+        return None
+    node_max = node.budget.max_cost
+    if spec.budget:
+        remaining = spec.budget.max_cost - accumulated_workflow_cost
+        return min(node_max, remaining)
+    return node_max
 
 
 class Orchestrator:

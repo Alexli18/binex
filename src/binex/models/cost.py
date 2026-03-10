@@ -68,6 +68,19 @@ class NodeCostHint(BaseModel):
         return v
 
 
+class NodeBudget(BaseModel):
+    """Per-node budget constraint. Policy inherited from workflow."""
+
+    max_cost: float
+
+    @field_validator("max_cost")
+    @classmethod
+    def max_cost_positive(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("max_cost must be > 0")
+        return v
+
+
 class RunCostSummary(BaseModel):
     """Computed cost summary for a run (not persisted separately)."""
 
@@ -91,6 +104,7 @@ __all__ = [
     "CostRecord",
     "CostSource",
     "ExecutionResult",
+    "NodeBudget",
     "NodeCostHint",
     "RunCostSummary",
 ]

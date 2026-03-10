@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
-from binex.models.cost import BudgetConfig, NodeCostHint
+from binex.models.cost import BudgetConfig, NodeBudget, NodeCostHint
 from binex.models.task import RetryPolicy
 
 
@@ -25,6 +25,14 @@ class NodeSpec(BaseModel):
     when: str | None = None
     tools: list[Any] = Field(default_factory=list)
     cost: NodeCostHint | None = None
+    budget: float | NodeBudget | None = None
+
+    @model_validator(mode="after")
+    def _normalize_budget(self) -> NodeSpec:
+        """Convert float/int shorthand to NodeBudget."""
+        if isinstance(self.budget, (int, float)):
+            self.budget = NodeBudget(max_cost=float(self.budget))
+        return self
 
 
 class DefaultsSpec(BaseModel):

@@ -10,6 +10,7 @@ from binex.models.cost import (
     BudgetConfig,
     CostRecord,
     ExecutionResult,
+    NodeBudget,
     NodeCostHint,
     RunCostSummary,
 )
@@ -306,3 +307,71 @@ class TestNodeSpecCostHint:
     def test_cost_hint_from_dict(self):
         node = NodeSpec(agent="llm://gpt-4", outputs=["out"], cost={"estimate": 0.1})
         assert node.cost.estimate == 0.1
+
+
+# ---------------------------------------------------------------------------
+# NodeBudget
+# ---------------------------------------------------------------------------
+
+class TestNodeBudget:
+    def test_valid_node_budget(self):
+        nb = NodeBudget(max_cost=1.50)
+        assert nb.max_cost == 1.50
+
+    def test_node_budget_rejects_zero(self):
+        with pytest.raises(ValidationError):
+            NodeBudget(max_cost=0)
+
+    def test_node_budget_rejects_negative(self):
+        with pytest.raises(ValidationError):
+            NodeBudget(max_cost=-1.0)
+
+    def test_node_budget_accepts_small_float(self):
+        nb = NodeBudget(max_cost=0.01)
+        assert nb.max_cost == 0.01
+
+
+# ---------------------------------------------------------------------------
+# NodeSpec — budget field
+# ---------------------------------------------------------------------------
+
+class TestNodeSpecBudget:
+    def test_node_budget_none_by_default(self):
+        ns = NodeSpec(agent="local://echo", outputs=["r"])
+        assert ns.budget is None
+
+    def test_node_budget_shorthand_float(self):
+        ns = NodeSpec(agent="local://echo", outputs=["r"], budget=0.50)
+        assert isinstance(ns.budget, NodeBudget)
+        assert ns.budget.max_cost == 0.50
+
+    def test_node_budget_shorthand_int(self):
+        ns = NodeSpec(agent="local://echo", outputs=["r"], budget=2)
+        assert isinstance(ns.budget, NodeBudget)
+        assert ns.budget.max_cost == 2.0
+
+    def test_node_budget_full_form(self):
+        ns = NodeSpec(agent="local://echo", outputs=["r"], budget={"max_cost": 3.00})
+        assert isinstance(ns.budget, NodeBudget)
+        assert ns.budget.max_cost == 3.00
+
+    def test_node_budget_in_workflow_yaml(self):
+        spec = WorkflowSpec(
+            name="test",
+            nodes={
+                "a": NodeSpec(agent="local://echo", outputs=["r"], budget=1.00),
+                "b": NodeSpec(agent="local://echo", outputs=["r"], budget={"max_cost": 2.00}),
+                "c": NodeSpec(agent="local://echo", outputs=["r"]),
+            },
+        )
+        assert spec.nodes["a"].budget.max_cost == 1.00
+        assert spec.nodes["b"].budget.max_cost == 2.00
+        assert spec.nodes["c"].budget is None
+
+    def test_node_budget_rejects_zero_shorthand(self):
+        with pytest.raises(ValidationError):
+            NodeSpec(agent="local://echo", outputs=["r"], budget=0)
+
+    def test_node_budget_rejects_negative_shorthand(self):
+        with pytest.raises(ValidationError):
+            NodeSpec(agent="local://echo", outputs=["r"], budget=-1.0)
