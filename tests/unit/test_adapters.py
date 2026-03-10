@@ -60,9 +60,10 @@ async def test_local_adapter_execute() -> None:
     adapter = LocalPythonAdapter(handler=handler)
     task = _make_task()
     inputs = [_make_artifact()]
-    results = await adapter.execute(task, inputs, "trace-1")
-    assert len(results) == 1
-    assert results[0].content == "processed-hello"
+    result = await adapter.execute(task, inputs, "trace-1")
+    arts = result.artifacts
+    assert len(arts) == 1
+    assert arts[0].content == "processed-hello"
 
 
 @pytest.mark.asyncio
@@ -74,8 +75,8 @@ async def test_local_adapter_multiple_outputs() -> None:
         ]
 
     adapter = LocalPythonAdapter(handler=handler)
-    results = await adapter.execute(_make_task(), [], "trace-1")
-    assert len(results) == 2
+    result = await adapter.execute(_make_task(), [], "trace-1")
+    assert len(result.artifacts) == 2
 
 
 @pytest.mark.asyncio
@@ -104,11 +105,12 @@ async def test_llm_adapter_execute() -> None:
     inputs = [_make_artifact(content="input data")]
 
     with patch("binex.adapters.llm.litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
-        results = await adapter.execute(task, inputs, "trace-1")
+        result = await adapter.execute(task, inputs, "trace-1")
 
-    assert len(results) == 1
-    assert results[0].content == "LLM response text"
-    assert results[0].type == "llm_response"
+    arts = result.artifacts
+    assert len(arts) == 1
+    assert arts[0].content == "LLM response text"
+    assert arts[0].type == "llm_response"
 
 
 @pytest.mark.asyncio
@@ -189,10 +191,11 @@ async def test_a2a_adapter_execute() -> None:
         mock_client.post = AsyncMock(return_value=mock_response)
         mock_client_cls.return_value = mock_client
 
-        results = await adapter.execute(task, inputs, "trace-1")
+        result = await adapter.execute(task, inputs, "trace-1")
 
-    assert len(results) == 1
-    assert results[0].content == "agent output"
+    arts = result.artifacts
+    assert len(arts) == 1
+    assert arts[0].content == "agent output"
 
 
 @pytest.mark.asyncio

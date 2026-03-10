@@ -8,6 +8,7 @@ import httpx
 
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
+from binex.models.cost import CostRecord, ExecutionResult
 from binex.models.task import TaskNode
 
 
@@ -22,7 +23,7 @@ class A2AAgentAdapter:
         task: TaskNode,
         input_artifacts: list[Artifact],
         trace_id: str,
-    ) -> list[Artifact]:
+    ) -> ExecutionResult:
         payload = {
             "task_id": task.id,
             "system_prompt": task.system_prompt,
@@ -42,7 +43,7 @@ class A2AAgentAdapter:
             response.raise_for_status()
             data = response.json()
 
-        return [
+        artifacts = [
             Artifact(
                 id=f"art_{uuid.uuid4().hex[:12]}",
                 run_id=task.run_id,
@@ -55,6 +56,25 @@ class A2AAgentAdapter:
             )
             for art_data in data.get("artifacts", [])
         ]
+
+        # Extract optional cost from response
+        reported_cost = data.get("cost")
+        if reported_cost is not None:
+            source = "agent_report"
+            cost_amount = float(reported_cost)
+        else:
+            source = "unknown"
+            cost_amount = 0.0
+
+        cost_record = CostRecord(
+            id=f"cost_{uuid.uuid4().hex[:12]}",
+            run_id=task.run_id,
+            task_id=task.node_id,
+            cost=cost_amount,
+            source=source,
+        )
+
+        return ExecutionResult(artifacts=artifacts, cost=cost_record)
 
     async def cancel(self, task_id: str) -> None:
         async with httpx.AsyncClient() as client:

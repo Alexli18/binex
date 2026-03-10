@@ -6,6 +6,7 @@ import asyncio
 
 from binex.adapters.base import AgentAdapter
 from binex.models.artifact import Artifact
+from binex.models.cost import ExecutionResult
 from binex.models.task import TaskNode
 
 
@@ -28,7 +29,7 @@ class Dispatcher:
         task: TaskNode,
         input_artifacts: list[Artifact],
         trace_id: str,
-    ) -> list[Artifact]:
+    ) -> ExecutionResult:
         adapter = self.get_adapter(task.agent)
         max_retries = task.retry_policy.max_retries if task.retry_policy else 1
         backoff = task.retry_policy.backoff if task.retry_policy else "exponential"
@@ -38,12 +39,17 @@ class Dispatcher:
             try:
                 if task.deadline_ms:
                     timeout = task.deadline_ms / 1000.0
-                    return await asyncio.wait_for(
+                    result = await asyncio.wait_for(
                         adapter.execute(task, input_artifacts, trace_id),
                         timeout=timeout,
                     )
                 else:
-                    return await adapter.execute(task, input_artifacts, trace_id)
+                    result = await adapter.execute(task, input_artifacts, trace_id)
+
+                # Handle both ExecutionResult and legacy list[Artifact] returns
+                if isinstance(result, ExecutionResult):
+                    return result
+                return ExecutionResult(artifacts=result)
             except TimeoutError:
                 raise
             except Exception as exc:

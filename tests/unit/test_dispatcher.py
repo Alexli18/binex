@@ -45,7 +45,7 @@ async def test_dispatch_success() -> None:
 
     task = _make_task()
     result = await dispatcher.dispatch(task, [_make_artifact()], "trace-1")
-    assert result == output
+    assert result.artifacts == output
 
 
 @pytest.mark.asyncio
@@ -65,7 +65,7 @@ async def test_dispatch_retry_on_failure() -> None:
 
     task = _make_task(retry_policy=RetryPolicy(max_retries=2, backoff="fixed"))
     result = await dispatcher.dispatch(task, [], "trace-1")
-    assert len(result) == 1
+    assert len(result.artifacts) == 1
     assert call_count == 2
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from binex.models.artifact import Artifact
+from binex.models.cost import CostRecord, RunCostSummary
 from binex.models.execution import ExecutionRecord, RunSummary
 
 
@@ -45,6 +46,7 @@ class InMemoryExecutionStore:
     def __init__(self) -> None:
         self._runs: dict[str, RunSummary] = {}
         self._records: list[ExecutionRecord] = []
+        self._cost_records: list[CostRecord] = []
 
     async def close(self) -> None:
         pass
@@ -72,6 +74,24 @@ class InMemoryExecutionStore:
 
     async def list_records(self, run_id: str) -> list[ExecutionRecord]:
         return [r for r in self._records if r.run_id == run_id]
+
+    async def record_cost(self, cost_record: CostRecord) -> None:
+        self._cost_records.append(cost_record)
+
+    async def list_costs(self, run_id: str) -> list[CostRecord]:
+        return [r for r in self._cost_records if r.run_id == run_id]
+
+    async def get_run_cost_summary(self, run_id: str) -> RunCostSummary:
+        records = await self.list_costs(run_id)
+        total_cost = sum(r.cost for r in records)
+        node_costs: dict[str, float] = {}
+        for r in records:
+            node_costs[r.task_id] = node_costs.get(r.task_id, 0.0) + r.cost
+        return RunCostSummary(
+            run_id=run_id,
+            total_cost=total_cost,
+            node_costs=node_costs,
+        )
 
 
 __all__ = [

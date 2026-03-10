@@ -277,7 +277,7 @@ class TestDispatcherTimeoutEnforcement:
 
         task = _make_task(agent="local://quick", deadline_ms=None)
         result = await dispatcher.dispatch(task, [], "trace_1")
-        assert len(result) == 1
+        assert len(result.artifacts) == 1
 
 
 # ---------------------------------------------------------------------------

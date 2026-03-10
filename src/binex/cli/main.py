@@ -6,6 +6,7 @@ import click
 from dotenv import load_dotenv
 
 from binex.cli.artifacts import artifacts_cmd
+from binex.cli.cost import cost_group
 from binex.cli.debug import debug_cmd
 from binex.cli.dev import dev_cmd
 from binex.cli.diff import diff_cmd
@@ -42,6 +43,7 @@ cli.add_command(scaffold_group, "scaffold")
 cli.add_command(init_cmd, "init")
 cli.add_command(start_cmd, "start")
 cli.add_command(explore_cmd, "explore")
+cli.add_command(cost_group, "cost")
 
 
 def main() -> None:

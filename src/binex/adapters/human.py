@@ -8,6 +8,7 @@ import click
 
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
+from binex.models.cost import CostRecord, ExecutionResult
 from binex.models.task import TaskNode
 
 
@@ -19,7 +20,7 @@ class HumanApprovalAdapter:
         task: TaskNode,
         input_artifacts: list[Artifact],
         trace_id: str,
-    ) -> list[Artifact]:
+    ) -> ExecutionResult:
         # Display input artifacts on stderr
         click.echo(
             f"\n--- Human approval required for node '{task.node_id}' ---",
@@ -36,7 +37,7 @@ class HumanApprovalAdapter:
 
         content = "approved" if answer == "y" else "rejected"
 
-        return [
+        artifacts = [
             Artifact(
                 id=f"art_{uuid4().hex[:12]}",
                 run_id=task.run_id,
@@ -48,6 +49,14 @@ class HumanApprovalAdapter:
                 ),
             )
         ]
+        cost_record = CostRecord(
+            id=f"cost_{uuid4().hex[:12]}",
+            run_id=task.run_id,
+            task_id=task.node_id,
+            cost=0.0,
+            source="local",
+        )
+        return ExecutionResult(artifacts=artifacts, cost=cost_record)
 
     async def cancel(self, task_id: str) -> None:
         pass
@@ -68,7 +77,7 @@ class HumanInputAdapter:
         task: TaskNode,
         input_artifacts: list[Artifact],
         trace_id: str,
-    ) -> list[Artifact]:
+    ) -> ExecutionResult:
         # Show context from upstream artifacts
         click.echo(
             f"\n--- Human input required for node '{task.node_id}' ---",
@@ -86,7 +95,7 @@ class HumanInputAdapter:
         prompt_text = task.system_prompt or "Enter your input"
         text = click.prompt(prompt_text)
 
-        return [
+        artifacts = [
             Artifact(
                 id=f"art_{uuid4().hex[:12]}",
                 run_id=task.run_id,
@@ -98,6 +107,14 @@ class HumanInputAdapter:
                 ),
             )
         ]
+        cost_record = CostRecord(
+            id=f"cost_{uuid4().hex[:12]}",
+            run_id=task.run_id,
+            task_id=task.node_id,
+            cost=0.0,
+            source="local",
+        )
+        return ExecutionResult(artifacts=artifacts, cost=cost_record)
 
     async def cancel(self, task_id: str) -> None:
         pass

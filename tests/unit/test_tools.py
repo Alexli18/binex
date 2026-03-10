@@ -237,8 +237,9 @@ class TestToolCallLoop:
             mock_litellm.acompletion = AsyncMock(side_effect=[resp1, resp2])
 
             task = self._make_task(tools=["python://mytools.calc"], system_prompt="You are a calculator")
-            arts = await adapter.execute(task, [], "trace1")
+            result = await adapter.execute(task, [], "trace1")
 
+        arts = result.artifacts
         assert len(arts) == 1
         assert arts[0].content == "The answer is 4"
         assert mock_litellm.acompletion.call_count == 2
@@ -285,9 +286,9 @@ class TestToolCallLoop:
             ])
 
             task = self._make_task(tools=["python://mytools.calc"])
-            arts = await adapter.execute(task, [], "trace1")
+            result = await adapter.execute(task, [], "trace1")
 
-        assert arts[0].content == "Done"
+        assert result.artifacts[0].content == "Done"
         assert mock_litellm.acompletion.call_count == 3
 
     @pytest.mark.asyncio
@@ -328,9 +329,9 @@ class TestToolCallLoop:
             mock_litellm.acompletion = AsyncMock(side_effect=[resp1, resp2])
 
             task = self._make_task(tools=["python://mytools.async_calc"])
-            arts = await adapter.execute(task, [], "trace1")
+            result = await adapter.execute(task, [], "trace1")
 
-        assert arts[0].content == "9"
+        assert result.artifacts[0].content == "9"
 
 
 # ---------------------------------------------------------------------------
@@ -500,9 +501,9 @@ class TestMaxToolRounds:
                 tools=["python://m.func"],
                 config={"max_tool_rounds": 0},
             )
-            arts = await adapter.execute(task, [], "trace1")
+            result = await adapter.execute(task, [], "trace1")
 
-        assert arts[0].content == "Direct response"
+        assert result.artifacts[0].content == "Direct response"
         # resolve_tools should not even be called when max_tool_rounds=0
         # But even if it is, tools should NOT be in litellm kwargs
 

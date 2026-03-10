@@ -44,8 +44,9 @@ class TestHumanApprovalAdapter:
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, inputs, "trace_1"))
 
-        assert len(result) == 1
-        assert result[0].content == "approved"
+        arts = result.artifacts
+        assert len(arts) == 1
+        assert arts[0].content == "approved"
 
     def test_human_adapter_reject(self) -> None:
         adapter = HumanApprovalAdapter()
@@ -56,8 +57,9 @@ class TestHumanApprovalAdapter:
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, inputs, "trace_1"))
 
-        assert len(result) == 1
-        assert result[0].content == "rejected"
+        arts = result.artifacts
+        assert len(arts) == 1
+        assert arts[0].content == "rejected"
 
     def test_human_adapter_artifact_type(self) -> None:
         adapter = HumanApprovalAdapter()
@@ -68,7 +70,7 @@ class TestHumanApprovalAdapter:
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, inputs, "trace_1"))
 
-        assert result[0].type == "decision"
+        assert result.artifacts[0].type == "decision"
 
     def test_human_adapter_lineage(self) -> None:
         adapter = HumanApprovalAdapter()
@@ -80,8 +82,8 @@ class TestHumanApprovalAdapter:
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [art1, art2], "trace_1"))
 
-        assert result[0].lineage.produced_by == "review_step"
-        assert result[0].lineage.derived_from == ["art_a", "art_b"]
+        assert result.artifacts[0].lineage.produced_by == "review_step"
+        assert result.artifacts[0].lineage.derived_from == ["art_a", "art_b"]
 
     def test_human_adapter_health(self) -> None:
         adapter = HumanApprovalAdapter()
@@ -117,7 +119,7 @@ class TestHumanApprovalAdapter:
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, inputs, "trace_1"))
 
-        assert result[0].run_id == "run_xyz"
+        assert result.artifacts[0].run_id == "run_xyz"
 
     def test_human_adapter_artifact_id_format(self) -> None:
         adapter = HumanApprovalAdapter()
@@ -128,8 +130,8 @@ class TestHumanApprovalAdapter:
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, inputs, "trace_1"))
 
-        assert result[0].id.startswith("art_")
-        assert len(result[0].id) == 16  # "art_" + 12 hex chars
+        assert result.artifacts[0].id.startswith("art_")
+        assert len(result.artifacts[0].id) == 16  # "art_" + 12 hex chars
 
 
 class TestHumanInputAdapter:
@@ -154,8 +156,9 @@ class TestHumanInputAdapter:
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [], "trace_1"))
 
-        assert len(result) == 1
-        assert result[0].content == "AI agents"
+        arts = result.artifacts
+        assert len(arts) == 1
+        assert arts[0].content == "AI agents"
 
     def test_input_artifact_type_is_human_input(self) -> None:
         adapter = HumanInputAdapter()
@@ -165,7 +168,7 @@ class TestHumanInputAdapter:
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [], "trace_1"))
 
-        assert result[0].type == "human_input"
+        assert result.artifacts[0].type == "human_input"
 
     def test_input_uses_system_prompt_as_prompt(self) -> None:
         adapter = HumanInputAdapter()
@@ -201,8 +204,8 @@ class TestHumanInputAdapter:
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [art], "trace_1"))
 
-        assert result[0].lineage.produced_by == "feedback"
-        assert result[0].lineage.derived_from == ["art_upstream"]
+        assert result.artifacts[0].lineage.produced_by == "feedback"
+        assert result.artifacts[0].lineage.derived_from == ["art_upstream"]
 
     def test_input_health(self) -> None:
         adapter = HumanInputAdapter()

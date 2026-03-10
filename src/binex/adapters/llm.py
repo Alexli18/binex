@@ -13,6 +13,7 @@ import litellm
 
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
+from binex.models.cost import CostRecord, ExecutionResult
 from binex.models.task import TaskNode
 from binex.tools import execute_tool_call, resolve_tools
 
@@ -49,7 +50,7 @@ class LLMAdapter:
         task: TaskNode,
         input_artifacts: list[Artifact],
         trace_id: str,
-    ) -> list[Artifact]:
+    ) -> ExecutionResult:
         prompt = self._build_prompt(task, input_artifacts)
 
         messages: list[dict[str, Any]] = []
@@ -80,6 +81,9 @@ class LLMAdapter:
 
         response = await self._completion_with_retry(**kwargs)
         message = response.choices[0].message
+
+        # Track cost across all LLM calls (including tool-calling loop)
+        all_responses = [response]
 
         # Tool calling loop
         rounds = 0
@@ -118,10 +122,11 @@ class LLMAdapter:
             kwargs["messages"] = messages
             response = await self._completion_with_retry(**kwargs)
             message = response.choices[0].message
+            all_responses.append(response)
 
         content = message.content
 
-        return [
+        artifacts = [
             Artifact(
                 id=f"art_{uuid.uuid4().hex[:12]}",
                 run_id=task.run_id,
@@ -133,6 +138,44 @@ class LLMAdapter:
                 ),
             )
         ]
+
+        # Accumulate cost across all LLM calls
+        total_cost = 0.0
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+        source = "llm_tokens"
+        has_usage = False
+
+        for resp in all_responses:
+            usage = getattr(resp, "usage", None)
+            if usage:
+                has_usage = True
+                pt = getattr(usage, "prompt_tokens", None) or 0
+                ct = getattr(usage, "completion_tokens", None) or 0
+                total_prompt_tokens += pt
+                total_completion_tokens += ct
+                try:
+                    total_cost += litellm.completion_cost(
+                        completion_response=resp
+                    )
+                except Exception:
+                    source = "llm_tokens_unavailable"
+
+        if not has_usage:
+            source = "llm_tokens_unavailable"
+
+        cost_record = CostRecord(
+            id=f"cost_{uuid.uuid4().hex[:12]}",
+            run_id=task.run_id,
+            task_id=task.node_id,
+            cost=total_cost,
+            source=source,
+            prompt_tokens=total_prompt_tokens if has_usage else None,
+            completion_tokens=total_completion_tokens if has_usage else None,
+            model=self._model,
+        )
+
+        return ExecutionResult(artifacts=artifacts, cost=cost_record)
 
     @staticmethod
     async def _completion_with_retry(**kwargs: Any) -> Any:

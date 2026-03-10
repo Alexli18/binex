@@ -125,7 +125,7 @@ class TestHumanAdaptersGaps:
         with patch("binex.adapters.human.click.prompt", return_value="y"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [_make_input_artifact()], "t1"))
-        assert result[0].type == "decision"
+        assert result.artifacts[0].type == "decision"
 
     # TC-HUM-006: artifact type=human_input
     def test_hum_006_human_input_type(self):
@@ -137,7 +137,7 @@ class TestHumanAdaptersGaps:
         with patch("binex.adapters.human.click.prompt", return_value="answer"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [], "t1"))
-        assert result[0].type == "human_input"
+        assert result.artifacts[0].type == "human_input"
 
     # TC-HUM-007: system_prompt as question
     def test_hum_007_system_prompt_as_question(self):
@@ -166,8 +166,8 @@ class TestHumanAdaptersGaps:
         with patch("binex.adapters.human.click.prompt", return_value="y"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [art1, art2], "t1"))
-        assert result[0].lineage.derived_from == ["a1", "a2"]
-        assert result[0].lineage.produced_by == "approver"
+        assert result.artifacts[0].lineage.derived_from == ["a1", "a2"]
+        assert result.artifacts[0].lineage.produced_by == "approver"
 
 
 # ===========================================================================

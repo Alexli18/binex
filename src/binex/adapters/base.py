@@ -6,6 +6,7 @@ from typing import Protocol
 
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact
+from binex.models.cost import ExecutionResult
 from binex.models.task import TaskNode
 
 
@@ -17,8 +18,8 @@ class AgentAdapter(Protocol):
         task: TaskNode,
         input_artifacts: list[Artifact],
         trace_id: str,
-    ) -> list[Artifact]:
-        """Dispatch a task to an agent and return output artifacts."""
+    ) -> list[Artifact] | ExecutionResult:
+        """Dispatch a task to an agent and return output artifacts or ExecutionResult."""
         ...
 
     async def cancel(self, task_id: str) -> None:
