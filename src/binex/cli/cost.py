@@ -58,6 +58,7 @@ async def _cost_show(run_id: str, json_out: bool) -> None:
                         "prompt_tokens": r.prompt_tokens,
                         "completion_tokens": r.completion_tokens,
                         "model": r.model,
+                        "node_budget": r.node_budget,
                     }.items() if v is not None
                 }
                 for r in cost_records
@@ -73,7 +74,20 @@ async def _cost_show(run_id: str, json_out: bool) -> None:
             click.echo("\nNode breakdown:")
             for task_id, cost in cost_summary.node_costs.items():
                 if cost > 0:
-                    click.echo(f"{task_id:<20} ${cost:.2f}")
+                    # Find node_budget from cost records
+                    node_budget = None
+                    for r in cost_records:
+                        if r.task_id == task_id and r.node_budget is not None:
+                            node_budget = r.node_budget
+                            break
+                    if node_budget is not None:
+                        remaining = node_budget - cost
+                        click.echo(
+                            f"{task_id:<20} ${cost:.2f}  "
+                            f"(budget: ${node_budget:.2f}, remaining: ${remaining:.2f})"
+                        )
+                    else:
+                        click.echo(f"{task_id:<20} ${cost:.2f}")
     finally:
         await execution_store.close()
 

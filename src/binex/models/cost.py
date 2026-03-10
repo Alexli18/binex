@@ -30,6 +30,7 @@ class CostRecord(BaseModel):
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     model: str | None = None
+    node_budget: float | None = None  # per-node budget limit (if set)
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @field_validator("cost")

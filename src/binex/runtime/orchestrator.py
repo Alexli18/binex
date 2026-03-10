@@ -246,6 +246,8 @@ class Orchestrator:
 
                 # Record cost if present
                 if result.cost:
+                    if node_max is not None:
+                        result.cost.node_budget = node_max
                     await self.execution_store.record_cost(result.cost)
 
                 # --- Per-node budget post-check ---

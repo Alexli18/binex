@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from binex.models.artifact import Artifact, Lineage
 from binex.models.cost import BudgetConfig, CostRecord, ExecutionResult
+from binex.models.execution import RunSummary
 from binex.models.task import RetryPolicy
 from binex.models.workflow import NodeSpec, WorkflowSpec
 from binex.runtime.orchestrator import Orchestrator, get_effective_policy, get_node_max_cost
@@ -390,3 +391,147 @@ class TestPreCheckNodeBudget:
         assert captured_task.retry_policy is not None
         assert captured_task.retry_policy.max_retries == 2
         assert summary.status == "completed"
+
+
+class TestOrchestratorSetsNodeBudget:
+    def test_cost_record_gets_node_budget(self):
+        """Orchestrator should set node_budget on CostRecord when node has budget."""
+        exec_store = InMemoryExecutionStore()
+        art_store = InMemoryArtifactStore()
+        orch = Orchestrator(art_store, exec_store)
+
+        spec = WorkflowSpec(
+            name="t",
+            nodes={
+                "budgeted": NodeSpec(
+                    agent="local://echo",
+                    outputs=["r"],
+                    budget=5.00,
+                ),
+            },
+        )
+
+        async def mock_dispatch(task, inputs, trace_id):
+            return ExecutionResult(
+                artifacts=[Artifact(id="a1", run_id=task.run_id,
+                                    type="r", content="data",
+                                    lineage=Lineage(produced_by="budgeted"))],
+                cost=_make_cost_record(task.run_id, "budgeted", 1.00),
+            )
+
+        with patch.object(orch.dispatcher, "dispatch", side_effect=mock_dispatch):
+            summary = asyncio.run(orch.run_workflow(spec))
+
+        costs = asyncio.run(exec_store.list_costs(summary.run_id))
+        assert len(costs) == 1
+        assert costs[0].node_budget == 5.00
+
+    def test_cost_record_no_node_budget_when_not_set(self):
+        """CostRecord should have node_budget=None when node has no budget."""
+        exec_store = InMemoryExecutionStore()
+        art_store = InMemoryArtifactStore()
+        orch = Orchestrator(art_store, exec_store)
+
+        spec = WorkflowSpec(
+            name="t",
+            nodes={
+                "unbounded": NodeSpec(
+                    agent="local://echo",
+                    outputs=["r"],
+                ),
+            },
+        )
+
+        async def mock_dispatch(task, inputs, trace_id):
+            return ExecutionResult(
+                artifacts=[Artifact(id="a1", run_id=task.run_id,
+                                    type="r", content="data",
+                                    lineage=Lineage(produced_by="unbounded"))],
+                cost=_make_cost_record(task.run_id, "unbounded", 1.00),
+            )
+
+        with patch.object(orch.dispatcher, "dispatch", side_effect=mock_dispatch):
+            summary = asyncio.run(orch.run_workflow(spec))
+
+        costs = asyncio.run(exec_store.list_costs(summary.run_id))
+        assert len(costs) == 1
+        assert costs[0].node_budget is None
+
+
+class TestCostShowNodeBudget:
+    def test_text_output_shows_node_budget(self):
+        """cost show should display per-node budget info."""
+        import json as json_mod
+        from unittest.mock import AsyncMock
+
+        from binex.cli.cost import cost_show_cmd
+        from binex.models.cost import RunCostSummary
+        from click.testing import CliRunner
+
+        mock_summary = RunCostSummary(
+            run_id="run_1",
+            total_cost=3.00,
+            node_costs={"cheap": 0.30, "expensive": 2.70},
+        )
+        mock_run = RunSummary(
+            run_id="run_1", workflow_name="t", status="completed", total_nodes=2,
+        )
+        mock_costs = [
+            CostRecord(id="c1", run_id="run_1", task_id="cheap",
+                       cost=0.30, source="llm_tokens", node_budget=0.50),
+            CostRecord(id="c2", run_id="run_1", task_id="expensive",
+                       cost=2.70, source="llm_tokens"),
+        ]
+
+        store = AsyncMock()
+        store.get_run = AsyncMock(return_value=mock_run)
+        store.get_run_cost_summary = AsyncMock(return_value=mock_summary)
+        store.list_costs = AsyncMock(return_value=mock_costs)
+        store.close = AsyncMock()
+
+        runner = CliRunner()
+        with patch("binex.cli.cost._get_stores", return_value=(store, AsyncMock())):
+            result = runner.invoke(cost_show_cmd, ["run_1"])
+
+        assert result.exit_code == 0
+        assert "cheap" in result.output
+        assert "budget: $0.50" in result.output
+        assert "remaining: $0.20" in result.output
+        # expensive has no node_budget, should not show budget info
+        assert "expensive" in result.output
+
+    def test_json_output_includes_node_budget(self):
+        """cost show --json should include node_budget field."""
+        import json as json_mod
+        from unittest.mock import AsyncMock
+
+        from binex.cli.cost import cost_show_cmd
+        from binex.models.cost import RunCostSummary
+        from click.testing import CliRunner
+
+        mock_summary = RunCostSummary(
+            run_id="run_1",
+            total_cost=1.00,
+            node_costs={"cheap": 1.00},
+        )
+        mock_run = RunSummary(
+            run_id="run_1", workflow_name="t", status="completed", total_nodes=1,
+        )
+        mock_costs = [
+            CostRecord(id="c1", run_id="run_1", task_id="cheap",
+                       cost=1.00, source="llm_tokens", node_budget=2.00),
+        ]
+
+        store = AsyncMock()
+        store.get_run = AsyncMock(return_value=mock_run)
+        store.get_run_cost_summary = AsyncMock(return_value=mock_summary)
+        store.list_costs = AsyncMock(return_value=mock_costs)
+        store.close = AsyncMock()
+
+        runner = CliRunner()
+        with patch("binex.cli.cost._get_stores", return_value=(store, AsyncMock())):
+            result = runner.invoke(cost_show_cmd, ["run_1", "--json"])
+
+        assert result.exit_code == 0
+        data = json_mod.loads(result.output)
+        assert data["nodes"][0]["node_budget"] == 2.00
