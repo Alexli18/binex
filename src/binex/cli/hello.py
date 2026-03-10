@@ -82,6 +82,7 @@ async def _run_hello():
 
     async def _verbose_execute(
         spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
+        accumulated_cost_=0.0,
     ):
         counter[0] += 1
         total = len(spec_.nodes)
@@ -89,7 +90,7 @@ async def _run_hello():
 
         await original_execute(
             spec_, dag_, scheduler_, run_id_, trace_id_,
-            node_id_, node_artifacts_,
+            node_id_, node_artifacts_, accumulated_cost_,
         )
 
         if node_id_ in node_artifacts_:

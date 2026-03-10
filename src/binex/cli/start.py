@@ -223,12 +223,13 @@ async def _execute(workflow_path: str) -> tuple:
 
     async def _progress_execute(
         spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
+        accumulated_cost_=0.0,
     ):
         counter[0] += 1
         click.echo(f"  [{counter[0]}/{total}] {node_id_} ...", err=True)
         await original_execute(
             spec_, dag_, scheduler_, run_id_, trace_id_,
-            node_id_, node_artifacts_,
+            node_id_, node_artifacts_, accumulated_cost_,
         )
 
     orch._execute_node = _progress_execute

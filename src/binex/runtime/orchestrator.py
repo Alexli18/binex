@@ -129,7 +129,7 @@ class Orchestrator:
                 tasks.append(
                     self._execute_node(
                         spec, dag, scheduler, run_id, trace_id,
-                        node_id, node_artifacts,
+                        node_id, node_artifacts, accumulated_cost,
                     )
                 )
 
@@ -166,6 +166,7 @@ class Orchestrator:
         trace_id: str,
         node_id: str,
         node_artifacts: dict[str, list[Artifact]],
+        accumulated_cost: float = 0.0,
     ) -> None:
         node_spec = spec.nodes[node_id]
         task = TaskNode(
@@ -208,6 +209,30 @@ class Orchestrator:
             # Record cost if present
             if result.cost:
                 await self.execution_store.record_cost(result.cost)
+
+            # --- Per-node budget post-check ---
+            node_max = get_node_max_cost(node_spec, spec, accumulated_cost)
+            if node_max is not None and result.cost:
+                all_costs = await self.execution_store.list_costs(run_id)
+                node_cost = sum(r.cost for r in all_costs if r.task_id == node_id)
+                if node_cost > node_max:
+                    policy = get_effective_policy(spec)
+                    if policy == "stop":
+                        msg = (
+                            f"Node '{node_id}': exceeded budget "
+                            f"${node_cost:.2f} / ${node_max:.2f}"
+                        )
+                        logger.warning(msg)
+                        click.echo(f"\u26a0 {msg}", err=True)
+                        raise RuntimeError(msg)
+                    else:  # warn
+                        msg = (
+                            f"Node '{node_id}': exceeded budget "
+                            f"${node_cost:.2f} / ${node_max:.2f} "
+                            f"(policy: warn, keeping result)"
+                        )
+                        logger.warning(msg)
+                        click.echo(f"\u26a0 {msg}", err=True)
         except Exception as exc:
             error_msg = str(exc)
             scheduler.mark_failed(node_id)
