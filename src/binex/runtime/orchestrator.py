@@ -18,7 +18,7 @@ from binex.models.artifact import Artifact
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskNode
 from binex.models.workflow import NodeSpec, WorkflowSpec
-from binex.runtime.dispatcher import Dispatcher
+from binex.runtime.dispatcher import Dispatcher, _backoff_delay
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
 
@@ -169,6 +169,21 @@ class Orchestrator:
         accumulated_cost: float = 0.0,
     ) -> None:
         node_spec = spec.nodes[node_id]
+        retry_policy = node_spec.retry_policy or (
+            spec.defaults.retry_policy if spec.defaults else None
+        )
+        has_node_budget = node_spec.budget is not None
+        node_max = get_node_max_cost(node_spec, spec, accumulated_cost)
+
+        # When node has a budget, orchestrator handles retry (for pre-check).
+        # Otherwise, dispatcher handles retry as before.
+        if has_node_budget:
+            max_retries = retry_policy.max_retries if retry_policy else 1
+            task_retry_policy = None  # orchestrator handles retry
+        else:
+            max_retries = 1  # single attempt here, dispatcher handles retry
+            task_retry_policy = retry_policy
+
         task = TaskNode(
             id=f"{run_id}_{node_id}",
             run_id=run_id,
@@ -177,16 +192,13 @@ class Orchestrator:
             system_prompt=node_spec.system_prompt,
             tools=node_spec.tools,
             inputs=node_spec.inputs,
-            retry_policy=node_spec.retry_policy or (
-                spec.defaults.retry_policy if spec.defaults else None
-            ),
+            retry_policy=task_retry_policy,
             deadline_ms=node_spec.deadline_ms or (
                 spec.defaults.deadline_ms if spec.defaults else None
             ),
             config=node_spec.config,
         )
 
-        # Gather input artifacts from upstream nodes
         input_artifacts: list[Artifact] = []
         for dep_id in dag.dependencies(node_id):
             input_artifacts.extend(node_artifacts.get(dep_id, []))
@@ -194,47 +206,94 @@ class Orchestrator:
         start_ms = _now_ms()
         error_msg: str | None = None
         output_artifacts: list[Artifact] = []
+        succeeded = False
 
-        try:
-            result = await self.dispatcher.dispatch(
-                task, input_artifacts, trace_id,
-            )
-            output_artifacts = result.artifacts
-            for art in output_artifacts:
-                await self.artifact_store.store(art)
-            node_artifacts[node_id] = output_artifacts
-            scheduler.mark_completed(node_id)
-            status = task.status.__class__("completed")
-
-            # Record cost if present
-            if result.cost:
-                await self.execution_store.record_cost(result.cost)
-
-            # --- Per-node budget post-check ---
-            node_max = get_node_max_cost(node_spec, spec, accumulated_cost)
-            if node_max is not None and result.cost:
+        for attempt in range(1, max_retries + 1):
+            # --- Per-node budget pre-check (before retry, not first attempt) ---
+            if attempt > 1 and node_max is not None:
                 all_costs = await self.execution_store.list_costs(run_id)
                 node_cost = sum(r.cost for r in all_costs if r.task_id == node_id)
-                if node_cost > node_max:
+                remaining = node_max - node_cost
+
+                if remaining <= 0:
                     policy = get_effective_policy(spec)
                     if policy == "stop":
-                        msg = (
-                            f"Node '{node_id}': exceeded budget "
-                            f"${node_cost:.2f} / ${node_max:.2f}"
+                        error_msg = (
+                            f"Node '{node_id}': budget exhausted "
+                            f"(${node_cost:.2f}/${node_max:.2f}), skipping retry"
                         )
-                        logger.warning(msg)
-                        click.echo(f"\u26a0 {msg}", err=True)
-                        raise RuntimeError(msg)
-                    else:  # warn
-                        msg = (
-                            f"Node '{node_id}': exceeded budget "
-                            f"${node_cost:.2f} / ${node_max:.2f} "
-                            f"(policy: warn, keeping result)"
+                        logger.warning(error_msg)
+                        click.echo(f"\u26a0 {error_msg}", err=True)
+                        break
+                    else:  # warn — interactive prompt
+                        proceed = click.confirm(
+                            f"\u26a0 Node '{node_id}' retry will likely exceed budget "
+                            f"(${remaining:.2f} remaining of ${node_max:.2f}). "
+                            f"Continue?",
+                            default=False,
                         )
-                        logger.warning(msg)
-                        click.echo(f"\u26a0 {msg}", err=True)
-        except Exception as exc:
-            error_msg = str(exc)
+                        if not proceed:
+                            error_msg = (
+                                f"Node '{node_id}': retry cancelled by user (budget)"
+                            )
+                            break
+
+            try:
+                result = await self.dispatcher.dispatch(
+                    task, input_artifacts, trace_id,
+                )
+                output_artifacts = result.artifacts
+
+                # Record cost if present
+                if result.cost:
+                    await self.execution_store.record_cost(result.cost)
+
+                # --- Per-node budget post-check ---
+                if node_max is not None and result.cost:
+                    all_costs = await self.execution_store.list_costs(run_id)
+                    node_cost = sum(
+                        r.cost for r in all_costs if r.task_id == node_id
+                    )
+                    if node_cost > node_max:
+                        policy = get_effective_policy(spec)
+                        if policy == "stop":
+                            error_msg = (
+                                f"Node '{node_id}': exceeded budget "
+                                f"${node_cost:.2f} / ${node_max:.2f}"
+                            )
+                            logger.warning(error_msg)
+                            click.echo(f"\u26a0 {error_msg}", err=True)
+                            break  # don't store artifacts
+                        else:  # warn
+                            msg = (
+                                f"Node '{node_id}': exceeded budget "
+                                f"${node_cost:.2f} / ${node_max:.2f} "
+                                f"(policy: warn, keeping result)"
+                            )
+                            logger.warning(msg)
+                            click.echo(f"\u26a0 {msg}", err=True)
+
+                # Success — store artifacts
+                for art in output_artifacts:
+                    await self.artifact_store.store(art)
+                node_artifacts[node_id] = output_artifacts
+                succeeded = True
+                error_msg = None
+                break  # exit retry loop on success
+
+            except Exception as exc:
+                error_msg = str(exc)
+                if attempt < max_retries:
+                    backoff = (
+                        retry_policy.backoff if retry_policy else "exponential"
+                    )
+                    delay = _backoff_delay(attempt, backoff)
+                    await asyncio.sleep(delay)
+
+        if succeeded:
+            scheduler.mark_completed(node_id)
+            status = task.status.__class__("completed")
+        else:
             scheduler.mark_failed(node_id)
             status = task.status.__class__("failed")
 
