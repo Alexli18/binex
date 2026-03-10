@@ -27,6 +27,7 @@ Complete schema reference for Binex workflow files.
 | `deadline_ms` | `int` | no | Override the default deadline for this node |
 | `when` | `str` | no | Conditional execution expression (see below) |
 | `cost` | `NodeCostHint` | no | Optional cost estimate for planning (see below) |
+| `budget` | `float` or `NodeBudget` | no | Per-node budget limit (shorthand: `budget: 0.50`, full: `budget: { max_cost: 0.50 }`) |
 
 ### `config` keys (LLM adapter)
 
@@ -128,6 +129,8 @@ nodes:
 
 If the accumulated cost exceeds $5.00 after the researcher node, the summarizer is skipped and the run status is `"over_budget"`.
 
+See the [Budget & Cost Tracking Guide](../cli/budget-guide.md) for more examples and patterns.
+
 With `--json`, the run output includes budget information:
 
 ```json
@@ -155,6 +158,52 @@ nodes:
     cost:
       estimate: 2.50
 ```
+
+## Per-Node Budget — `NodeBudget`
+
+Individual nodes can have their own budget limits. The policy is inherited from the workflow-level `budget.policy` (default: `stop`).
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `max_cost` | `float` | — | Maximum allowed cost for this node (must be > 0) |
+
+**Shorthand:** `budget: 0.50` is equivalent to `budget: { max_cost: 0.50 }`.
+
+When both workflow and node budgets are defined, the effective limit is `min(node_budget, remaining_workflow_budget)`.
+
+**Pre-check before retry:** If a node has a budget and fails, the orchestrator checks remaining budget before each retry attempt. With `policy: stop`, the retry is skipped if budget is exhausted. With `policy: warn`, the user is prompted via `click.confirm()`.
+
+**Post-check after execution:** After each execution, if the node's accumulated cost exceeds its budget, the policy determines behavior: `stop` discards the result and marks the node failed; `warn` keeps the result and logs a warning.
+
+**Example:**
+
+```yaml
+name: per-node-budget
+budget:
+  max_cost: 10.00
+  policy: stop
+
+nodes:
+  planner:
+    agent: "llm://gpt-4o-mini"
+    outputs: [plan]
+    budget: 0.50           # shorthand
+
+  researcher:
+    agent: "llm://gpt-4o"
+    outputs: [findings]
+    depends_on: [planner]
+    budget:
+      max_cost: 3.00       # full form
+
+  summarizer:
+    agent: "llm://gpt-4o"
+    outputs: [summary]
+    depends_on: [researcher]
+    budget: 2.00
+```
+
+If the planner costs $0.60 (exceeding its $0.50 limit), it is marked as failed and dependent nodes do not run.
 
 ## Variable Interpolation
 
