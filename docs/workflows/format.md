@@ -10,6 +10,7 @@ Complete schema reference for Binex workflow files.
 | `description` | `str` | no | Workflow description (default: `""`) |
 | `nodes` | `dict[str, NodeSpec]` | yes | Map of node\_id to node definition |
 | `defaults` | `DefaultsSpec` | no | Default settings applied to all nodes |
+| `budget` | `BudgetConfig` | no | Budget constraints for the run (see below) |
 
 ## Node — `NodeSpec`
 
@@ -25,6 +26,7 @@ Complete schema reference for Binex workflow files.
 | `retry_policy` | `RetryPolicy` | no | Override the default retry settings |
 | `deadline_ms` | `int` | no | Override the default deadline for this node |
 | `when` | `str` | no | Conditional execution expression (see below) |
+| `cost` | `NodeCostHint` | no | Optional cost estimate for planning (see below) |
 
 ### `config` keys (LLM adapter)
 
@@ -84,6 +86,75 @@ The `when` field is commonly used with `human://approve` nodes but works with an
 |-------|------|---------|-------------|
 | `max_retries` | `int` | `1` | Maximum retry attempts |
 | `backoff` | `"fixed"` or `"exponential"` | `"exponential"` | Backoff strategy between retries |
+
+## Budget — `BudgetConfig`
+
+Budget constraints limit the total cost of a workflow run. The orchestrator checks accumulated cost after each batch of nodes.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `max_cost` | `float` | — | Maximum allowed cost in the specified currency (must be > 0) |
+| `currency` | `str` | `"USD"` | Currency code |
+| `policy` | `"stop"` or `"warn"` | `"warn"` | What to do when budget is exceeded |
+
+### Budget Policies
+
+| Policy | Behavior |
+|--------|----------|
+| `stop` | Skip all remaining nodes, set run status to `"over_budget"` |
+| `warn` | Log a warning to stderr, continue execution |
+
+**Example:**
+
+```yaml
+name: budgeted-pipeline
+budget:
+  max_cost: 5.0
+  policy: stop
+
+nodes:
+  planner:
+    agent: "llm://gpt-4o"
+    outputs: [plan]
+  researcher:
+    agent: "llm://claude-sonnet-4-20250514"
+    outputs: [findings]
+    depends_on: [planner]
+  summarizer:
+    agent: "llm://gpt-4o"
+    outputs: [summary]
+    depends_on: [researcher]
+```
+
+If the accumulated cost exceeds $5.00 after the researcher node, the summarizer is skipped and the run status is `"over_budget"`.
+
+With `--json`, the run output includes budget information:
+
+```json
+{
+  "status": "over_budget",
+  "total_cost": 5.23,
+  "budget": 5.0,
+  "remaining_budget": -0.23
+}
+```
+
+## Node Cost Hint — `NodeCostHint`
+
+Optional cost estimate for planning purposes. Does not affect execution — purely informational.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `estimate` | `float` | `0.0` | Estimated cost for this node (must be >= 0) |
+
+```yaml
+nodes:
+  expensive_node:
+    agent: "llm://gpt-4o"
+    outputs: [result]
+    cost:
+      estimate: 2.50
+```
 
 ## Variable Interpolation
 

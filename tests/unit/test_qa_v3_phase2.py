@@ -296,10 +296,10 @@ class TestLLMAdapterToolGaps:
                 self._final_response("result"),
             ])
             task = self._make_task(tools=["python://m.calc"])
-            arts = await adapter.execute(task, [], "trace1")
+            result = await adapter.execute(task, [], "trace1")
 
         # Should still complete (unknown tool returns error string)
-        assert arts[0].content == "result"
+        assert result.artifacts[0].content == "result"
 
     # TC-LLM-006: Invalid JSON args in tool_calls
     @pytest.mark.asyncio
@@ -330,9 +330,9 @@ class TestLLMAdapterToolGaps:
              patch("binex.adapters.llm.resolve_tools", return_value=[calc]):
             mock_litellm.acompletion = AsyncMock(side_effect=[resp1, self._final_response()])
             task = self._make_task(tools=["python://m.calc"])
-            arts = await adapter.execute(task, [], "trace1")
+            result = await adapter.execute(task, [], "trace1")
 
-        assert arts[0].content == "Done"
+        assert result.artifacts[0].content == "Done"
 
     # TC-LLM-007: No tool_calls → normal output
     @pytest.mark.asyncio
@@ -344,9 +344,9 @@ class TestLLMAdapterToolGaps:
         with patch("binex.adapters.llm.litellm") as mock_litellm:
             mock_litellm.acompletion = AsyncMock(return_value=self._final_response("Hello"))
             task = self._make_task()  # no tools
-            arts = await adapter.execute(task, [], "trace1")
+            result = await adapter.execute(task, [], "trace1")
 
-        assert arts[0].content == "Hello"
+        assert result.artifacts[0].content == "Hello"
         assert mock_litellm.acompletion.call_count == 1
 
     # TC-LLM-008: Tools=[] → no tools param sent
@@ -418,10 +418,10 @@ class TestLLMAdapterToolGaps:
                 self._final_response("Error handled"),
             ])
             task = self._make_task(tools=["python://m.calc"])
-            arts = await adapter.execute(task, [], "trace1")
+            result = await adapter.execute(task, [], "trace1")
 
         # Adapter should continue and return response
-        assert arts[0].content == "Error handled"
+        assert result.artifacts[0].content == "Error handled"
 
     # TC-LLM-001: Tools schema sent to litellm
     @pytest.mark.asyncio

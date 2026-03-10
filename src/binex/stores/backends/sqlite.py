@@ -7,6 +7,7 @@ from datetime import datetime
 
 import aiosqlite
 
+from binex.models.cost import CostRecord, RunCostSummary
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
 
@@ -40,7 +41,8 @@ class SqliteExecutionStore:
                 completed_nodes INTEGER DEFAULT 0,
                 failed_nodes INTEGER DEFAULT 0,
                 forked_from TEXT,
-                forked_at_step TEXT
+                forked_at_step TEXT,
+                total_cost REAL DEFAULT 0.0
             );
             CREATE TABLE IF NOT EXISTS execution_records (
                 id TEXT PRIMARY KEY,
@@ -59,7 +61,25 @@ class SqliteExecutionStore:
                 trace_id TEXT NOT NULL,
                 error TEXT
             );
+            CREATE TABLE IF NOT EXISTS cost_records (
+                id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL,
+                task_id TEXT NOT NULL,
+                cost REAL NOT NULL DEFAULT 0.0,
+                currency TEXT NOT NULL DEFAULT 'USD',
+                source TEXT NOT NULL,
+                prompt_tokens INTEGER,
+                completion_tokens INTEGER,
+                model TEXT,
+                timestamp TEXT NOT NULL
+            );
         """)
+        # Migration: add total_cost column to existing runs table
+        try:
+            await self._db.execute("ALTER TABLE runs ADD COLUMN total_cost REAL DEFAULT 0.0")
+            await self._db.commit()
+        except Exception:
+            pass  # Column already exists
         await self._db.commit()
         self._initialized = True
 
@@ -74,8 +94,8 @@ class SqliteExecutionStore:
         await db.execute(
             """INSERT INTO runs (run_id, workflow_name, status, started_at,
                completed_at, total_nodes, completed_nodes, failed_nodes,
-               forked_from, forked_at_step)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               forked_from, forked_at_step, total_cost)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 run_summary.run_id,
                 run_summary.workflow_name,
@@ -87,6 +107,7 @@ class SqliteExecutionStore:
                 run_summary.failed_nodes,
                 run_summary.forked_from,
                 run_summary.forked_at_step,
+                run_summary.total_cost,
             ),
         )
         await db.commit()
@@ -104,7 +125,7 @@ class SqliteExecutionStore:
         await db.execute(
             """UPDATE runs SET workflow_name=?, status=?, started_at=?,
                completed_at=?, total_nodes=?, completed_nodes=?, failed_nodes=?,
-               forked_from=?, forked_at_step=? WHERE run_id=?""",
+               forked_from=?, forked_at_step=?, total_cost=? WHERE run_id=?""",
             (
                 run_summary.workflow_name,
                 run_summary.status,
@@ -115,6 +136,7 @@ class SqliteExecutionStore:
                 run_summary.failed_nodes,
                 run_summary.forked_from,
                 run_summary.forked_at_step,
+                run_summary.total_cost,
                 run_summary.run_id,
             ),
         )
@@ -185,6 +207,64 @@ class SqliteExecutionStore:
             failed_nodes=row[7],
             forked_from=row[8],
             forked_at_step=row[9],
+            total_cost=row[10] if len(row) > 10 else 0.0,
+        )
+
+    async def record_cost(self, cost_record: CostRecord) -> None:
+        db = await self._ensure_initialized()
+        await db.execute(
+            """INSERT INTO cost_records (id, run_id, task_id, cost, currency,
+               source, prompt_tokens, completion_tokens, model, timestamp)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                cost_record.id,
+                cost_record.run_id,
+                cost_record.task_id,
+                cost_record.cost,
+                cost_record.currency,
+                cost_record.source,
+                cost_record.prompt_tokens,
+                cost_record.completion_tokens,
+                cost_record.model,
+                cost_record.timestamp.isoformat(),
+            ),
+        )
+        await db.commit()
+
+    async def list_costs(self, run_id: str) -> list[CostRecord]:
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
+            "SELECT * FROM cost_records WHERE run_id = ? ORDER BY timestamp",
+            (run_id,),
+        )
+        rows = await cursor.fetchall()
+        return [self._row_to_cost_record(row) for row in rows]
+
+    async def get_run_cost_summary(self, run_id: str) -> RunCostSummary:
+        records = await self.list_costs(run_id)
+        total_cost = sum(r.cost for r in records)
+        node_costs: dict[str, float] = {}
+        for r in records:
+            node_costs[r.task_id] = node_costs.get(r.task_id, 0.0) + r.cost
+        return RunCostSummary(
+            run_id=run_id,
+            total_cost=total_cost,
+            node_costs=node_costs,
+        )
+
+    @staticmethod
+    def _row_to_cost_record(row: tuple) -> CostRecord:  # type: ignore[type-arg]
+        return CostRecord(
+            id=row[0],
+            run_id=row[1],
+            task_id=row[2],
+            cost=row[3],
+            currency=row[4],
+            source=row[5],
+            prompt_tokens=row[6],
+            completion_tokens=row[7],
+            model=row[8],
+            timestamp=datetime.fromisoformat(row[9]),
         )
 
     @staticmethod

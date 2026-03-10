@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 import time
 import uuid
 from datetime import UTC, datetime
 from typing import Any
+
+import click
 
 from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
@@ -18,6 +21,8 @@ from binex.models.workflow import WorkflowSpec
 from binex.runtime.dispatcher import Dispatcher
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
+
+logger = logging.getLogger(__name__)
 
 
 class Orchestrator:
@@ -58,12 +63,37 @@ class Orchestrator:
 
         # node_id -> list of output artifacts
         node_artifacts: dict[str, list[Artifact]] = {}
+        accumulated_cost = 0.0
+        budget_exceeded = False
 
         while not scheduler.is_complete() and not scheduler.is_blocked():
             ready = scheduler.ready_nodes()
             if not ready:
                 await asyncio.sleep(0.01)
                 continue
+
+            # Budget check before scheduling next batch
+            if spec.budget and spec.budget.max_cost > 0:
+                if accumulated_cost > spec.budget.max_cost:
+                    if spec.budget.policy == "stop":
+                        budget_exceeded = True
+                        for node_id in ready:
+                            scheduler.mark_skipped(node_id)
+                        # Skip all remaining ready nodes
+                        while not scheduler.is_complete() and not scheduler.is_blocked():
+                            remaining = scheduler.ready_nodes()
+                            if not remaining:
+                                break
+                            for node_id in remaining:
+                                scheduler.mark_skipped(node_id)
+                        break
+                    else:  # policy == "warn"
+                        msg = (
+                            f"Budget exceeded: ${accumulated_cost:.2f} / "
+                            f"${spec.budget.max_cost:.2f} (policy: warn, continuing)"
+                        )
+                        logger.warning(msg)
+                        click.echo(f"\u26a0 {msg}", err=True)
 
             tasks = []
             for node_id in ready:
@@ -86,11 +116,18 @@ class Orchestrator:
             if tasks:
                 await asyncio.gather(*tasks)
 
+            # Update accumulated cost from store
+            cost_summary = await self.execution_store.get_run_cost_summary(run_id)
+            accumulated_cost = cost_summary.total_cost
+
         summary.completed_at = datetime.now(UTC)
         summary.completed_nodes = len(scheduler._completed)
         summary.failed_nodes = len(scheduler._failed)
         summary.skipped_nodes = len(scheduler._skipped)
-        if scheduler._failed:
+        summary.total_cost = accumulated_cost
+        if budget_exceeded:
+            summary.status = "over_budget"
+        elif scheduler._failed:
             summary.status = "failed"
         elif scheduler.is_complete():
             summary.status = "completed"
@@ -138,14 +175,19 @@ class Orchestrator:
         output_artifacts: list[Artifact] = []
 
         try:
-            output_artifacts = await self.dispatcher.dispatch(
+            result = await self.dispatcher.dispatch(
                 task, input_artifacts, trace_id,
             )
+            output_artifacts = result.artifacts
             for art in output_artifacts:
                 await self.artifact_store.store(art)
             node_artifacts[node_id] = output_artifacts
             scheduler.mark_completed(node_id)
             status = task.status.__class__("completed")
+
+            # Record cost if present
+            if result.cost:
+                await self.execution_store.record_cost(result.cost)
         except Exception as exc:
             error_msg = str(exc)
             scheduler.mark_failed(node_id)

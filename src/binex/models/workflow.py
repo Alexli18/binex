@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
+from binex.models.cost import BudgetConfig, NodeCostHint
 from binex.models.task import RetryPolicy
 
 
@@ -23,6 +24,7 @@ class NodeSpec(BaseModel):
     deadline_ms: int | None = None
     when: str | None = None
     tools: list[Any] = Field(default_factory=list)
+    cost: NodeCostHint | None = None
 
 
 class DefaultsSpec(BaseModel):
@@ -39,6 +41,7 @@ class WorkflowSpec(BaseModel):
     description: str = ""
     nodes: dict[str, NodeSpec]
     defaults: DefaultsSpec | None = None
+    budget: BudgetConfig | None = None
 
     @model_validator(mode="after")
     def _set_node_ids(self) -> WorkflowSpec:

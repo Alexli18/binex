@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import Callable, Coroutine
 from typing import Any
 
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact
+from binex.models.cost import CostRecord, ExecutionResult
 from binex.models.task import TaskNode
 
 HandlerType = Callable[
@@ -26,8 +28,16 @@ class LocalPythonAdapter:
         task: TaskNode,
         input_artifacts: list[Artifact],
         trace_id: str,
-    ) -> list[Artifact]:
-        return await self._handler(task, input_artifacts)
+    ) -> ExecutionResult:
+        artifacts = await self._handler(task, input_artifacts)
+        cost_record = CostRecord(
+            id=f"cost_{uuid.uuid4().hex[:12]}",
+            run_id=task.run_id,
+            task_id=task.node_id,
+            cost=0.0,
+            source="local",
+        )
+        return ExecutionResult(artifacts=artifacts, cost=cost_record)
 
     async def cancel(self, task_id: str) -> None:
         pass

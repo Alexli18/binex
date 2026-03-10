@@ -202,14 +202,19 @@ class ReplayEngine:
         output_artifacts: list[Artifact] = []
 
         try:
-            output_artifacts = await self.dispatcher.dispatch(
+            result = await self.dispatcher.dispatch(
                 task, input_artifacts, trace_id,
             )
+            output_artifacts = result.artifacts
             for art in output_artifacts:
                 await self.artifact_store.store(art)
             node_artifacts[node_id] = output_artifacts
             scheduler.mark_completed(node_id)
             status = TaskStatus.COMPLETED
+
+            # Record cost if present
+            if result.cost:
+                await self.execution_store.record_cost(result.cost)
         except Exception as exc:
             error_msg = str(exc)
             scheduler.mark_failed(node_id)

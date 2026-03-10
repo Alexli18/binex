@@ -402,8 +402,8 @@ class TestRetryPolicy:
 
         result = await dispatcher.dispatch(task, [], "trace_1")
 
-        assert len(result) == 1
-        assert "success" in result[0].content
+        assert len(result.artifacts) == 1
+        assert "success" in result.artifacts[0].content
         assert adapter.call_count == 2  # 1 fail + 1 success
 
     @pytest.mark.asyncio
@@ -720,11 +720,12 @@ class TestLocalPythonAdapterSyncCallable:
             agent="local://sync",
         )
 
-        results = await adapter.execute(task, [], "trace_1")
+        result = await adapter.execute(task, [], "trace_1")
+        arts = result.artifacts
 
-        assert len(results) == 1
-        assert results[0].content == "computed_sync_node"
-        assert results[0].type == "result"
+        assert len(arts) == 1
+        assert arts[0].content == "computed_sync_node"
+        assert arts[0].type == "result"
 
     @pytest.mark.asyncio
     async def test_handler_receives_input_artifacts(self) -> None:
@@ -757,11 +758,12 @@ class TestLocalPythonAdapterSyncCallable:
             content="input_data", lineage=Lineage(produced_by="prev"),
         )
 
-        results = await adapter.execute(task, [input_art], "trace_1")
+        result = await adapter.execute(task, [input_art], "trace_1")
+        arts = result.artifacts
 
         assert len(received_inputs) == 1
         assert received_inputs[0].id == "art_in"
-        assert results[0].lineage.derived_from == ["art_in"]
+        assert arts[0].lineage.derived_from == ["art_in"]
 
     @pytest.mark.asyncio
     async def test_handler_returning_empty_list(self) -> None:
@@ -776,5 +778,5 @@ class TestLocalPythonAdapterSyncCallable:
             agent="local://empty",
         )
 
-        results = await adapter.execute(task, [], "trace_1")
-        assert results == []
+        result = await adapter.execute(task, [], "trace_1")
+        assert result.artifacts == []

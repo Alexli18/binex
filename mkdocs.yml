@@ -53,6 +53,7 @@ nav:
     - doctor: cli/doctor.md
     - validate: cli/validate.md
     - scaffold: cli/scaffold.md
+    - cost: cli/cost.md
     - start: cli/start.md
     - explore: cli/explore.md
   - Architecture:

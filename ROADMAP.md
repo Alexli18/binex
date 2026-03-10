@@ -6,6 +6,7 @@
 - [ ] `binex bisect <run-id>` — binary search for the node that introduced a regression
 - [ ] Streaming output for long-running LLM nodes
 - [ ] Improved `binex diff` with side-by-side artifact comparison
+- [ ] Node output schema validation (`output_schema` in YAML) — fail fast on malformed data
 
 ## v0.3 — Framework Adapters
 

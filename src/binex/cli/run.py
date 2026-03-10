@@ -63,6 +63,11 @@ def run_cmd(
             for a in artifacts
             if a.lineage.produced_by in terminal_nodes
         }
+        # Add budget info to JSON if budget defined
+        if spec.budget:
+            data["budget"] = spec.budget.max_cost
+            remaining = spec.budget.max_cost - summary.total_cost
+            data["remaining_budget"] = remaining
         click.echo(json.dumps(data, default=str, indent=2))
     else:
         click.echo(f"Run ID: {summary.run_id}")
@@ -71,6 +76,18 @@ def run_cmd(
         click.echo(f"Nodes: {summary.completed_nodes}/{summary.total_nodes} completed")
         if summary.failed_nodes:
             click.echo(f"Failed: {summary.failed_nodes}")
+
+        # Cost summary
+        if summary.total_cost > 0:
+            click.echo(f"Cost: ${summary.total_cost:.2f}")
+        if spec.budget:
+            remaining = spec.budget.max_cost - summary.total_cost
+            click.echo(f"Budget: ${spec.budget.max_cost:.2f} (remaining: ${remaining:.2f})")
+        if summary.status == "over_budget" and spec.budget:
+            click.echo("Budget exceeded \u2014 run stopped")
+            click.echo(
+                f"Spent: ${summary.total_cost:.2f} / Budget: ${spec.budget.max_cost:.2f}"
+            )
 
         # Show final output from terminal nodes
         if summary.status == "completed" and artifacts:

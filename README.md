@@ -49,6 +49,7 @@ tracks artifacts between steps, and allows replaying and inspecting runs.
 - **Post-mortem debugging** &mdash; inspect any run after the fact with rich reports
 - **Run diffing** &mdash; compare two executions side-by-side to spot regressions
 - **Human-in-the-loop** &mdash; approval gates and free-text input with conditional branching
+- **Budget & cost tracking** &mdash; per-node cost records, budget enforcement (stop/warn), CLI cost inspection
 - **CLI-first DX** &mdash; everything accessible from the terminal
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -324,6 +325,8 @@ nodes:
 | `binex init` | Interactive project setup |
 | `binex dev up` | Start Docker dev stack |
 | `binex doctor` | Check system health |
+| `binex cost show <run-id>` | Cost breakdown per node (`--json`) |
+| `binex cost history <run-id>` | Chronological cost events (`--json`) |
 | `binex explore` | Interactive browser for runs and artifacts |
 | `binex hello` | Zero-config demo |
 

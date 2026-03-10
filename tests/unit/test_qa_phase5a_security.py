@@ -185,7 +185,7 @@ class TestA2AResponseSchemaValidation:
 
             result = await adapter.execute(task, [], "trace_1")
 
-        assert result == []
+        assert result.artifacts == []
 
     @pytest.mark.asyncio
     async def test_response_with_artifacts_missing_type_uses_unknown(self) -> None:
@@ -209,9 +209,10 @@ class TestA2AResponseSchemaValidation:
 
             result = await adapter.execute(task, [], "trace_1")
 
-        assert len(result) == 1
-        assert result[0].type == "unknown"
-        assert result[0].content == "some text"
+        arts = result.artifacts
+        assert len(arts) == 1
+        assert arts[0].type == "unknown"
+        assert arts[0].content == "some text"
 
     @pytest.mark.asyncio
     async def test_response_with_non_json_body_raises(self) -> None:
@@ -256,8 +257,9 @@ class TestA2AResponseSchemaValidation:
 
             result = await adapter.execute(task, [], "trace_1")
 
-        assert len(result) == 1
-        assert result[0].content is None
+        arts = result.artifacts
+        assert len(arts) == 1
+        assert arts[0].content is None
 
     @pytest.mark.asyncio
     async def test_response_lineage_tracks_input_artifacts(self) -> None:
@@ -282,9 +284,10 @@ class TestA2AResponseSchemaValidation:
 
             result = await adapter.execute(task, [input_art], "trace_1")
 
-        assert len(result) == 1
-        assert result[0].lineage.derived_from == ["input_art_1"]
-        assert result[0].lineage.produced_by == "node_1"
+        arts = result.artifacts
+        assert len(arts) == 1
+        assert arts[0].lineage.derived_from == ["input_art_1"]
+        assert arts[0].lineage.produced_by == "node_1"
 
 
 # ===========================================================================

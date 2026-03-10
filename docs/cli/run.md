@@ -190,6 +190,47 @@ With `--json -v`, the output includes all artifacts:
 }
 ```
 
+## Budget & Cost Output
+
+When a workflow defines a `budget` section, the run output includes budget information:
+
+```bash
+$ binex run workflow.yaml
+
+Run ID: run_f7a1b2c3
+Workflow: research-pipeline
+Status: completed
+Nodes: 3/3 completed
+Cost: $2.50
+Budget: $5.00 (remaining: $2.50)
+```
+
+With `--json`:
+
+```json
+{
+  "status": "completed",
+  "total_cost": 2.5,
+  "budget": 5.0,
+  "remaining_budget": 2.5
+}
+```
+
+When budget is exceeded with policy `"stop"`:
+
+```bash
+$ binex run workflow.yaml
+
+Run ID: run_d8e9f0a1
+Workflow: research-pipeline
+Status: over_budget
+Nodes: 2/3 completed
+Budget exceeded — run stopped
+Spent: $5.23 / Budget: $5.00
+```
+
+Use `binex cost show <run-id>` for a detailed per-node cost breakdown.
+
 ## Validation Errors
 
 If the workflow YAML has structural problems, `binex run` exits with code `2` before executing anything:
@@ -303,4 +344,5 @@ All run data is persisted in the `.binex/` directory (gitignored by default):
 - [binex debug](debug.md) -- post-mortem inspection of a run
 - [binex trace](trace.md) -- inspect execution after a run
 - [binex replay](replay.md) -- re-run from a specific step
+- [binex cost](cost.md) -- inspect cost data for a run
 - [binex artifacts](artifacts.md) -- inspect individual artifacts

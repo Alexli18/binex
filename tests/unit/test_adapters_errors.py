@@ -155,7 +155,7 @@ class TestDispatcherDispatch:
         )
         with patch("binex.runtime.dispatcher.asyncio.sleep", new_callable=AsyncMock):
             result = await d.dispatch(task, [], "trace")
-        assert len(result) == 1
+        assert len(result.artifacts) == 1
         assert adapter.execute.call_count == 2
 
     @pytest.mark.asyncio

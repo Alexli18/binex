@@ -609,7 +609,7 @@ class TestDispatcherRetryExponentialBackoff:
         ):
             result = await dispatcher.dispatch(task, [], "trace_1")
 
-        assert len(result) == 1
+        assert len(result.artifacts) == 1
         assert attempt == 3
 
     def test_backoff_delay_exponential_values(self) -> None:

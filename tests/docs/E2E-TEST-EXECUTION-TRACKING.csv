@@ -1,0 +1,32 @@
+Test ID,Title,Priority,Status,Result,Bug ID,Notes
+TC-E2E-001,Simple pipeline full cycle: run -> debug -> cost -> artifacts,P0,DONE,PASS,,Real SQLite + filesystem verified
+TC-E2E-002,5-node fan-out/fan-in pipeline,P0,DONE,PASS,,5 nodes completed
+TC-E2E-003,Diamond DAG (A -> B C -> D),P1,DONE,PASS,,4 nodes completed
+TC-E2E-004,Workflow with failing node (a2a unreachable),P0,DONE,PASS,,Failed status + error in debug
+TC-E2E-007,Replay from mid-pipeline step,P1,DONE,PASS,,forked_from + forked_at_step verified
+TC-E2E-008,Replay with agent swap,P1,DONE,PASS,,Agent swap mechanism verified
+TC-E2E-009,Cost records created for all nodes,P0,DONE,PASS,,3 cost records source=local
+TC-E2E-010,Budget in JSON output,P0,DONE,PASS,,budget + remaining_budget fields
+TC-E2E-011,Budget text output,P1,DONE,PASS,,Budget info in text output
+TC-E2E-012,Cost show text output,P1,DONE,PASS,,Run ID + Total cost displayed
+TC-E2E-013,Cost history text output,P1,DONE,PASS,,Chronological format verified
+TC-E2E-014,Cost for nonexistent run,P1,DONE,PASS,,Graceful error both show and history
+TC-E2E-015,Multiple runs isolated costs,P2,DONE,PASS,,3 runs x 2 records each in same DB
+TC-E2E-016,binex hello full cycle,P0,DONE,PASS,,Run ID extractable + debuggable
+TC-E2E-017,binex run --json output,P0,DONE,PASS,,All expected fields present
+TC-E2E-018,binex run --var substitution,P1,DONE,PASS,,Variables resolved at load time
+TC-E2E-019,binex run --verbose,P2,DONE,PASS,,Step counters in output
+TC-E2E-020,binex validate valid workflow,P1,DONE,PASS,,Exit code 0
+TC-E2E-021,binex validate invalid workflow (cycle),P1,DONE,PASS,,Exit code != 0
+TC-E2E-022,binex debug --errors filter,P1,DONE,PASS,,Only failed nodes in output
+TC-E2E-023,Invalid YAML file error,P1,DONE,PASS,,Non-zero exit code
+TC-E2E-024,Nonexistent workflow file error,P1,DONE,PASS,,Non-zero exit code
+TC-E2E-025,Debug nonexistent run error,P1,DONE,PASS,,"not found" in stderr
+TC-E2E-026,Debug latest resolves correctly,P2,DONE,PASS,,Matches most recent run_id
+TC-E2E-027,Validate --json output,P2,DONE,PASS,,Structured JSON output
+TC-E2E-028,Cancel nonexistent run error,P2,DONE,PASS,,"not found" in stderr
+TC-E2E-029,SQLite schema has all tables,P0,DONE,PASS,,runs + execution_records + cost_records
+TC-E2E-030,Run data persists in SQLite,P0,DONE,PASS,,Direct SQL query verified all fields
+TC-E2E-031,Execution records match nodes,P1,DONE,PASS,,3 records for 3 nodes all completed
+TC-E2E-032,Cost records in SQLite with all fields,P1,DONE,PASS,,task_id cost source currency verified
+TC-E2E-033,Artifact files on disk as JSON,P0,DONE,PASS,,Valid JSON with id run_id type content lineage
