@@ -611,7 +611,7 @@ class TestEdgeCasesAdditional:
                 input="n\n1\n\nq\n",
             )
         assert "node output result" in result.output
-        assert "Artifacts: 1" in result.output
+        assert "Artifacts" in result.output
 
     def test_cost_action_no_cost_shows_zero(self):
         """Cost action with no cost data should still render without error."""

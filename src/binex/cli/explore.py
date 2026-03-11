@@ -534,39 +534,103 @@ async def _action_node(exec_store, art_store, run_id: str, records) -> None:
         idx = int(choice) - 1
         if 0 <= idx < len(records):
             rec = records[idx]
-            click.echo()
-            click.echo(f"  Node: {rec.task_id}")
-            click.echo(f"  Agent: {rec.agent_id}")
-            click.echo(f"  Status: {rec.status.value}")
-            click.echo(f"  Latency: {rec.latency_ms}ms" if rec.latency_ms else "  Latency: -")
-            if rec.error:
-                click.echo(f"  Error: {rec.error}")
-            if rec.prompt:
-                click.echo(f"  Prompt: {rec.prompt}")
-            if rec.model:
-                click.echo(f"  Model: {rec.model}")
 
-            # Show artifacts for this node
+            # Gather node data
             artifacts = await art_store.list_by_run(run_id)
             node_arts = [
                 a for a in artifacts
                 if a.lineage and a.lineage.produced_by == rec.task_id
             ]
-            if node_arts:
-                click.echo(f"  Artifacts: {len(node_arts)}")
-                for art in node_arts:
-                    click.echo(f"    - {art.id} ({art.type}): {_preview(art.content)}")
-
-            # Show cost for this node
             costs = await exec_store.list_costs(run_id)
             node_costs = [c for c in costs if c.task_id == rec.task_id]
-            if node_costs:
-                total = sum(c.cost for c in node_costs)
-                click.echo(f"  Cost: ${total:.4f}")
+            node_total_cost = sum(c.cost for c in node_costs)
+
+            click.echo()
+            if has_rich():
+                _render_node_rich(rec, node_arts, node_total_cost)
+            else:
+                _render_node_plain(rec, node_arts, node_total_cost)
         else:
             click.echo(f"  Invalid choice. Enter 1-{len(records)} or b.")
     except ValueError:
         click.echo(f"  Invalid choice. Enter 1-{len(records)} or b.")
+
+
+def _render_node_rich(rec, node_arts, node_total_cost: float) -> None:
+    """Render node detail as a Rich panel."""
+    from rich.console import Group
+    from rich.text import Text
+
+    from binex.cli.ui import STATUS_CONFIG, get_console, make_panel, make_table
+
+    console = get_console()
+
+    _, style = STATUS_CONFIG.get(rec.status.value, (rec.status.value, "dim"))
+
+    # Info lines
+    info = Text()
+    info.append("Agent: ", style="dim")
+    info.append(rec.agent_id, style="bold")
+    info.append("  ·  Status: ", style="dim")
+    info.append(rec.status.value, style=style)
+    latency = f"{rec.latency_ms}ms" if rec.latency_ms else "-"
+    info.append(f"  ·  Latency: {latency}", style="dim")
+    if node_total_cost > 0:
+        info.append(f"  ·  Cost: ${node_total_cost:.4f}", style="cyan")
+
+    parts = [info]
+
+    if rec.model:
+        model_line = Text()
+        model_line.append("Model: ", style="dim")
+        model_line.append(rec.model)
+        parts.append(model_line)
+
+    if rec.error:
+        err_line = Text()
+        err_line.append("Error: ", style="red bold")
+        err_line.append(rec.error, style="red")
+        parts.append(err_line)
+
+    # Artifacts table
+    if node_arts:
+        parts.append(Text())
+        art_table = make_table(
+            ("ID", {"style": "dim", "min_width": 16}),
+            ("Type", {"style": "yellow", "min_width": 10}),
+            ("Preview", {"min_width": 30}),
+            title=f"Artifacts ({len(node_arts)})",
+        )
+        for art in node_arts:
+            art_table.add_row(
+                art.id[:16], art.type, _preview(art.content, max_len=60),
+            )
+        parts.append(art_table)
+
+    panel = make_panel(
+        Group(*parts),
+        title=f"[bold]{rec.task_id}[/bold]",
+        subtitle=f"run: {rec.run_id}" if hasattr(rec, "run_id") else None,
+    )
+    console.print(panel)
+
+
+def _render_node_plain(rec, node_arts, node_total_cost: float) -> None:
+    """Render node detail in plain text."""
+    click.echo(f"  Node: {rec.task_id}")
+    click.echo(f"  Agent: {rec.agent_id}")
+    click.echo(f"  Status: {rec.status.value}")
+    click.echo(f"  Latency: {rec.latency_ms}ms" if rec.latency_ms else "  Latency: -")
+    if rec.model:
+        click.echo(f"  Model: {rec.model}")
+    if rec.error:
+        click.echo(f"  Error: {rec.error}")
+    if node_arts:
+        click.echo(f"  Artifacts: {len(node_arts)}")
+        for art in node_arts:
+            click.echo(f"    - {art.id} ({art.type}): {_preview(art.content)}")
+    if node_total_cost > 0:
+        click.echo(f"  Cost: ${node_total_cost:.4f}")
 
 
 async def _action_replay(exec_store, art_store, run_id: str, run, records) -> None:
