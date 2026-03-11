@@ -16,6 +16,16 @@ def _get_stores():
     return get_stores()
 
 
+async def build_cost_data(exec_store, run_id: str):
+    """Fetch cost summary and records for reuse by explore dashboard."""
+    run = await exec_store.get_run(run_id)
+    if run is None:
+        return None, None, []
+    cost_summary = await exec_store.get_run_cost_summary(run_id)
+    cost_records = await exec_store.list_costs(run_id)
+    return run, cost_summary, cost_records
+
+
 @click.group("cost", epilog="""\b
 Examples:
   binex cost show <run_id>           Cost breakdown by node

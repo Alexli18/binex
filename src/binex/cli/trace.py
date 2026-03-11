@@ -17,6 +17,24 @@ def _get_stores():
     return get_stores()
 
 
+async def build_timeline_data(exec_store, run_id: str):
+    """Fetch and sort timeline records for reuse by explore dashboard."""
+    run = await exec_store.get_run(run_id)
+    records = await exec_store.list_records(run_id)
+    if records:
+        records.sort(key=lambda r: r.timestamp)
+    return run, records
+
+
+async def build_graph_data(exec_store, run_id: str):
+    """Fetch records and build graph structure for reuse by explore dashboard."""
+    records = await exec_store.list_records(run_id)
+    if not records:
+        return [], {}, []
+    nodes, edges = _build_graph_from_records(records)
+    return records, nodes, edges
+
+
 class TraceGroup(click.Group):
     """Custom group that treats unknown subcommands as run_id for default timeline."""
 
