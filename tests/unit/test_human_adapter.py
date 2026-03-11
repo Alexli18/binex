@@ -40,7 +40,7 @@ class TestHumanApprovalAdapter:
         task = _make_task()
         inputs = [_make_artifact()]
 
-        with patch("binex.adapters.human.click.prompt", return_value="y"), \
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, inputs, "trace_1"))
 
@@ -53,20 +53,22 @@ class TestHumanApprovalAdapter:
         task = _make_task()
         inputs = [_make_artifact()]
 
-        with patch("binex.adapters.human.click.prompt", return_value="n"), \
+        with patch("binex.adapters.human.click.prompt", side_effect=["r", "needs work"]), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, inputs, "trace_1"))
 
-        arts = result.artifacts
-        assert len(arts) == 1
-        assert arts[0].content == "rejected"
+        decisions = [a for a in result.artifacts if a.type == "decision"]
+        assert len(decisions) == 1
+        assert decisions[0].content == "rejected"
+        feedbacks = [a for a in result.artifacts if a.type == "feedback"]
+        assert len(feedbacks) == 1
 
     def test_human_adapter_artifact_type(self) -> None:
         adapter = HumanApprovalAdapter()
         task = _make_task()
         inputs = [_make_artifact()]
 
-        with patch("binex.adapters.human.click.prompt", return_value="y"), \
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, inputs, "trace_1"))
 
@@ -78,7 +80,7 @@ class TestHumanApprovalAdapter:
         art1 = _make_artifact(art_id="art_a")
         art2 = _make_artifact(art_id="art_b")
 
-        with patch("binex.adapters.human.click.prompt", return_value="y"), \
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [art1, art2], "trace_1"))
 
@@ -100,22 +102,19 @@ class TestHumanApprovalAdapter:
         task = _make_task()
         art = _make_artifact()
 
-        with patch("binex.adapters.human.click.prompt", return_value="y") as mock_prompt, \
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
              patch("binex.adapters.human.click.echo") as mock_echo:
             asyncio.run(adapter.execute(task, [art], "trace_1"))
 
-        # Verify that click.echo was called with err=True to display input artifacts
+        # Verify that click.echo was called (at least the blank line)
         assert mock_echo.call_count >= 1
-        # At least one call should include artifact info on stderr
-        stderr_calls = [c for c in mock_echo.call_args_list if c.kwargs.get("err") is True]
-        assert len(stderr_calls) >= 1
 
     def test_human_adapter_artifact_run_id(self) -> None:
         adapter = HumanApprovalAdapter()
         task = _make_task(run_id="run_xyz")
         inputs = [_make_artifact(run_id="run_xyz")]
 
-        with patch("binex.adapters.human.click.prompt", return_value="y"), \
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, inputs, "trace_1"))
 
@@ -126,7 +125,7 @@ class TestHumanApprovalAdapter:
         task = _make_task()
         inputs = [_make_artifact()]
 
-        with patch("binex.adapters.human.click.prompt", return_value="y"), \
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, inputs, "trace_1"))
 

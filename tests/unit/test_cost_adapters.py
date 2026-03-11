@@ -250,7 +250,8 @@ class TestHumanApprovalAdapterCost:
 
         task = _make_task(agent="human://approval")
 
-        with patch("binex.adapters.human.click.prompt", return_value="y"):
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
+             patch("binex.adapters.human.click.echo"):
             adapter = HumanApprovalAdapter()
             result = await adapter.execute(task, [_make_input_artifact()], "trace_7")
 

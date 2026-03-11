@@ -125,7 +125,7 @@ class TestHumanAdaptersGaps:
     def test_hum_003_decision_type(self):
         adapter = HumanApprovalAdapter()
         task = _make_task()
-        with patch("binex.adapters.human.click.prompt", return_value="y"), \
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [_make_input_artifact()], "t1"))
         assert result.artifacts[0].type == "decision"
@@ -166,7 +166,7 @@ class TestHumanAdaptersGaps:
             id="a2", run_id="run_1", type="text",
             content="y", lineage=Lineage(produced_by="prev"),
         )
-        with patch("binex.adapters.human.click.prompt", return_value="y"), \
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [art1, art2], "t1"))
         assert result.artifacts[0].lineage.derived_from == ["a1", "a2"]
