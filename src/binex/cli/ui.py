@@ -6,6 +6,7 @@ panels, tables, summary lines, and plain-text fallbacks.
 
 from __future__ import annotations
 
+import time as _time
 from io import StringIO
 from typing import Any
 
@@ -236,3 +237,115 @@ def render_to_string(renderable: Any, *, width: int = 120) -> str:
     console = Console(file=buf, width=width, no_color=False)
     console.print(renderable)
     return buf.getvalue()
+
+
+# ---------------------------------------------------------------------------
+# Live run table
+# ---------------------------------------------------------------------------
+
+class LiveRunTable:
+    """Stateful table for live-updating binex run progress.
+
+    Usage with rich.live.Live::
+
+        table = LiveRunTable(nodes)
+        with Live(table.build(), console=get_console(stderr=True)) as live:
+            table.update_node("research", "running")
+            live.update(table.build())
+            table.update_node("research", "completed", latency="1.23s")
+            live.update(table.build())
+    """
+
+    _SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+    def __init__(self, nodes: list[dict]) -> None:
+        """Initialise from a list of node descriptors.
+
+        Parameters
+        ----------
+        nodes:
+            Each dict must have ``"id"`` (str), ``"agent"`` (str), and
+            ``"depends_on"`` (list[str]).
+        """
+        self._nodes = nodes
+        self._statuses: dict[str, str] = {n["id"]: "pending" for n in nodes}
+        self._latencies: dict[str, str] = {}
+        self._errors: dict[str, str] = {}
+        self._costs: dict[str, str] = {}
+        self._start_time = _time.monotonic()
+        self._frame = 0
+
+    def update_node(
+        self,
+        node_id: str,
+        status: str,
+        *,
+        latency: str | None = None,
+        error: str | None = None,
+        cost: str | None = None,
+    ) -> None:
+        """Update the status (and optional metadata) for a single node."""
+        self._statuses[node_id] = status
+        if latency is not None:
+            self._latencies[node_id] = latency
+        if error is not None:
+            self._errors[node_id] = error
+        if cost is not None:
+            self._costs[node_id] = cost
+
+    def build(self) -> Panel:
+        """Build the current state as a :class:`~rich.panel.Panel`."""
+        self._frame += 1
+        from rich.console import Group as RichGroup
+
+        table = make_table(
+            ("", {"width": 3, "justify": "center"}),
+            ("Node", {"style": "bold", "min_width": 14}),
+            ("Agent", {"style": "dim"}),
+            ("Status", {"min_width": 12}),
+            ("Latency", {"justify": "right"}),
+            ("Cost", {"justify": "right", "style": "dim"}),
+        )
+
+        completed = 0
+        failed = 0
+
+        for node in self._nodes:
+            nid = node["id"]
+            status = self._statuses[nid]
+            latency = self._latencies.get(nid, "")
+            cost = self._costs.get(nid, "")
+
+            if status == "running":
+                spinner = self._SPINNER_FRAMES[
+                    self._frame % len(self._SPINNER_FRAMES)
+                ]
+                icon = f"[yellow]{spinner}[/yellow]"
+                st = Text("running", style="yellow")
+            elif status == "pending":
+                icon = "[dim]○[/dim]"
+                st = Text("pending", style="dim")
+            else:
+                icon = status_icon(status)
+                st = status_text(status)
+                if status == "completed":
+                    completed += 1
+                elif status == "failed":
+                    failed += 1
+
+            error = self._errors.get(nid)
+            if error:
+                st = Text(f"FAILED: {error[:30]}", style="red bold")
+
+            table.add_row(icon, nid, node["agent"], st, latency, cost)
+
+        elapsed = _time.monotonic() - self._start_time
+        total = len(self._nodes)
+        done = completed + failed
+        summary = make_summary(completed=completed, failed=failed, time=elapsed)
+        progress_text = Text(f"  {done}/{total} nodes", style="dim")
+
+        return make_panel(
+            RichGroup(table, Text(), summary, progress_text),
+            title="binex run",
+        )

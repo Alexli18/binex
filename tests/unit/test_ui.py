@@ -353,3 +353,74 @@ class TestRenderToString:
     def test_custom_width(self):
         result_narrow = render_to_string(Text("x"), width=40)
         assert isinstance(result_narrow, str)
+
+
+# ── LiveRunTable ────────────────────────────────────────────────────────────
+
+class TestLiveRunTable:
+    def test_creation(self):
+        from binex.cli.ui import LiveRunTable
+
+        nodes = [
+            {"id": "research", "agent": "llm://gpt-4o", "depends_on": []},
+            {"id": "analyze", "agent": "llm://claude", "depends_on": ["research"]},
+        ]
+        live = LiveRunTable(nodes)
+        assert live._statuses["research"] == "pending"
+        assert live._statuses["analyze"] == "pending"
+
+    def test_update_node(self):
+        from binex.cli.ui import LiveRunTable
+
+        nodes = [{"id": "n1", "agent": "llm://test", "depends_on": []}]
+        live = LiveRunTable(nodes)
+        live.update_node("n1", "running")
+        assert live._statuses["n1"] == "running"
+        live.update_node("n1", "completed", latency="1.23s", cost="$0.005")
+        assert live._statuses["n1"] == "completed"
+        assert live._latencies["n1"] == "1.23s"
+        assert live._costs["n1"] == "$0.005"
+
+    def test_build_returns_panel(self):
+        from binex.cli.ui import LiveRunTable
+
+        nodes = [{"id": "n1", "agent": "llm://test", "depends_on": []}]
+        live = LiveRunTable(nodes)
+        result = live.build()
+        assert isinstance(result, Panel)
+
+    def test_build_with_running_node(self):
+        from binex.cli.ui import LiveRunTable
+
+        nodes = [{"id": "n1", "agent": "llm://test", "depends_on": []}]
+        live = LiveRunTable(nodes)
+        live.update_node("n1", "running")
+        result = render_to_string(live.build())
+        assert "running" in result
+        assert "n1" in result
+
+    def test_build_with_error(self):
+        from binex.cli.ui import LiveRunTable
+
+        nodes = [{"id": "n1", "agent": "llm://test", "depends_on": []}]
+        live = LiveRunTable(nodes)
+        live.update_node("n1", "failed", error="connection timeout")
+        result = render_to_string(live.build())
+        assert "FAILED" in result
+        assert "connection timeout" in result
+
+    def test_build_summary_counts(self):
+        from binex.cli.ui import LiveRunTable
+
+        nodes = [
+            {"id": "n1", "agent": "a", "depends_on": []},
+            {"id": "n2", "agent": "b", "depends_on": []},
+            {"id": "n3", "agent": "c", "depends_on": []},
+        ]
+        live = LiveRunTable(nodes)
+        live.update_node("n1", "completed")
+        live.update_node("n2", "completed")
+        live.update_node("n3", "failed")
+        result = render_to_string(live.build())
+        assert "2 completed" in result
+        assert "1 failed" in result
