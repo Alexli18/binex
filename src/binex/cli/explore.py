@@ -519,11 +519,32 @@ async def _action_node(exec_store, art_store, run_id: str, records) -> None:
         return
 
     click.echo()
-    for i, rec in enumerate(records, 1):
-        latency = f"{rec.latency_ms}ms" if rec.latency_ms else ""
-        click.echo(
-            f"  {i:>3})  {rec.task_id:<20} {rec.status.value:<12} {latency}"
+    if has_rich():
+        from binex.cli.ui import get_console, make_table, status_text
+
+        table = make_table(
+            ("#", {"style": "dim", "width": 4, "justify": "right"}),
+            ("Node", {"style": "bold", "min_width": 14}),
+            ("Status", {"min_width": 10}),
+            ("Agent", {"style": "dim"}),
+            ("Latency", {"justify": "right"}),
+            title="Select Node",
         )
+        for i, rec in enumerate(records, 1):
+            table.add_row(
+                str(i),
+                rec.task_id,
+                status_text(rec.status.value),
+                rec.agent_id,
+                f"{rec.latency_ms}ms" if rec.latency_ms else "-",
+            )
+        get_console().print(table)
+    else:
+        for i, rec in enumerate(records, 1):
+            latency = f"{rec.latency_ms}ms" if rec.latency_ms else ""
+            click.echo(
+                f"  {i:>3})  {rec.task_id:<20} {rec.status.value:<12} {latency}"
+            )
     click.echo()
 
     choice = click.prompt("  Select node (or b=back)", default="b")
