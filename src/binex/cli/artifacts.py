@@ -17,7 +17,12 @@ def _get_stores():
     return get_stores()
 
 
-@click.group("artifacts")
+@click.group("artifacts", epilog="""\b
+Examples:
+  binex artifacts list <run_id>           List all artifacts
+  binex artifacts show <artifact_id>      Display artifact content
+  binex artifacts lineage <artifact_id>   Show provenance chain
+""")
 def artifacts_cmd() -> None:
     """Manage and inspect artifacts."""
 
@@ -61,6 +66,10 @@ async def _show(artifact_id: str, json_out: bool) -> None:
         artifact = await art_store.get(artifact_id)
         if artifact is None:
             click.echo(f"Error: Artifact '{artifact_id}' not found.", err=True)
+            click.echo(
+                "Tip: use 'binex artifacts list <run_id>' to see available artifacts.",
+                err=True,
+            )
             sys.exit(1)
 
         if json_out:
@@ -77,15 +86,13 @@ async def _show(artifact_id: str, json_out: bool) -> None:
             if not isinstance(content_str, str):
                 content_str = json.dumps(content_str, default=str, indent=2)
             try:
-                from rich.console import Console
                 from rich.markdown import Markdown
-                from rich.panel import Panel
 
-                console = Console()
-                console.print(Panel(
+                from binex.cli.ui import get_console, make_panel
+
+                get_console().print(make_panel(
                     Markdown(content_str),
                     title="Content",
-                    border_style="blue",
                 ))
             except ImportError:
                 click.echo(f"Content: {json.dumps(artifact.content, default=str)}")
