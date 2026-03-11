@@ -16,7 +16,7 @@ nodes:
     depends_on: [user_input]
 
   researcher1:
-    agent: "llm://openrouter/z-ai/glm-4.5-air:free"
+    agent: "llm://openrouter/nvidia/nemotron-3-super-120b-a12b:free"
     system_prompt: "file://prompts/gen-researcher.md"
     inputs:
       plan: "${planner.result}"
@@ -24,7 +24,7 @@ nodes:
     depends_on: [planner]
 
   researcher2:
-    agent: "llm://openrouter/stepfun/step-3.5-flash:free"
+    agent: "llm://openrouter/nvidia/nemotron-3-super-120b-a12b:free"
     system_prompt: "file://prompts/gen-researcher.md"
     inputs:
       plan: "${planner.result}"

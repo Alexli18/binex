@@ -35,11 +35,11 @@ Sleep 90s
 Show
 
 # =============================================
-# PART 3 (visible): Results + explore
+# PART 3 (visible): Explore dashboard
 # =============================================
 Sleep 3s
 
-# Explore results
+# Launch explore
 Type "binex explore"
 Sleep 300ms
 Enter
@@ -51,17 +51,30 @@ Sleep 200ms
 Enter
 Sleep 2s
 
+# Dashboard is shown with [t]race [g]raph [d]ebug [c]ost [a]rtifacts [n]ode [r]eplay [q]uit
+# Open artifacts browser
+Type "a"
+Sleep 200ms
+Enter
+Sleep 2s
+
 # Select last artifact (summarizer)
 Type "5"
 Sleep 200ms
 Enter
 Sleep 3s
 
-# Show lineage
+# Show lineage for the artifact
 Type "l"
 Sleep 200ms
 Enter
 Sleep 3s
+
+# Back from artifact list
+Type "b"
+Sleep 200ms
+Enter
+Sleep 1s
 
 # Quit explore
 Type "q"

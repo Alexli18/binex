@@ -24,6 +24,7 @@
   <p>
     <a href="#installation">Installation</a> &middot;
     <a href="#quickstart">Quickstart</a> &middot;
+    <a href="#demo">Demo</a> &middot;
     <a href="https://alexli18.github.io/binex/">Documentation</a> &middot;
     <a href="https://github.com/Alexli18/binex/issues">Issues</a>
   </p>
@@ -173,12 +174,12 @@ nodes:
     depends_on: [user_input]
 
   researcher1:
-    agent: "llm://openrouter/z-ai/glm-4.5-air:free"
+    agent: "llm://openrouter/nvidia/nemotron-3-super-120b-a12b:free"
     inputs: { plan: "${planner.result}" }
     depends_on: [planner]
 
   researcher2:
-    agent: "llm://openrouter/stepfun/step-3.5-flash:free"
+    agent: "llm://openrouter/nvidia/nemotron-3-super-120b-a12b:free"
     inputs: { plan: "${planner.result}" }
     depends_on: [planner]
 
@@ -189,47 +190,31 @@ nodes:
 ```
 
 <div align="center">
-  <img src="https://mermaid.ink/img/Z3JhcGggTFIKICAgIEFbInVzZXJfaW5wdXQ8YnIvPjxzdWI-aHVtYW46Ly9pbnB1dDwvc3ViPiJdIC0tPiBCWyJwbGFubmVyPGJyLz48c3ViPm9sbGFtYS9nZW1tYTM6NGI8L3N1Yj4iXQogICAgQiAtLT4gQ1sicmVzZWFyY2hlcjE8YnIvPjxzdWI-b3BlbnJvdXRlci9nbG0tNC41LWFpcjwvc3ViPiJdCiAgICBCIC0tPiBEWyJyZXNlYXJjaGVyMjxici8-PHN1Yj5vcGVucm91dGVyL3N0ZXAtMy41LWZsYXNoPC9zdWI-Il0KICAgIEMgLS0-IEVbInN1bW1hcml6ZXI8YnIvPjxzdWI-b2xsYW1hL2dlbW1hMzo0Yjwvc3ViPiJdCiAgICBEIC0tPiBF?type=png&bgColor=white" alt="Demo DAG" width="700">
-</div>
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo.gif" alt="Binex Demo" width="800">
+  <img src="https://mermaid.ink/img/Z3JhcGggTFIKICAgIEFbInVzZXJfaW5wdXQ8YnIvPjxzdWI+aHVtYW46Ly9pbnB1dDwvc3ViPiJdIC0tPiBCWyJwbGFubmVyPGJyLz48c3ViPm9sbGFtYS9nZW1tYTM6NGI8L3N1Yj4iXQogICAgQiAtLT4gQ1sicmVzZWFyY2hlcjE8YnIvPjxzdWI+b3BlbnJvdXRlci9uZW1vdHJvbi0zLXN1cGVyPC9zdWI+Il0KICAgIEIgLS0+IERbInJlc2VhcmNoZXIyPGJyLz48c3ViPm9wZW5yb3V0ZXIvbmVtb3Ryb24tMy1zdXBlcjwvc3ViPiJdCiAgICBDIC0tPiBFWyJzdW1tYXJpemVyPGJyLz48c3ViPm9sbGFtYS9nZW1tYTM6NGI8L3N1Yj4iXQogICAgRCAtLT4gRQ==?type=png&bgColor=white" alt="Demo DAG" width="700">
 </div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## Trace & Debug
+## Start Wizard
 
-Every run is fully recorded. Inspect the execution timeline and DAG:
-
-```bash
-binex trace <run-id>
-```
+Create a full research pipeline from a template in seconds:
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/trace-screenshot.png" alt="binex trace" width="800">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-start.gif" alt="binex start" width="800">
 </div>
 
-Compare two runs side-by-side:
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-```bash
-binex diff <run-a> <run-b>
-```
+---
 
-<div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/diff-screenshot.png" alt="binex diff" width="800">
-</div>
+## Explore Dashboard
 
-Post-mortem debug:
-
-```bash
-binex debug <run-id> --errors --rich
-```
+Interactive run inspector &mdash; trace, graph, cost, artifacts, node detail, debug &mdash; all in one place:
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/debug-screenshot.png" alt="binex debug" width="800">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-explore.gif" alt="binex explore" width="800">
 </div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
