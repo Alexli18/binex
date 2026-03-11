@@ -493,12 +493,10 @@ def _custom_interactive_wizard(dsl: str) -> None:
     """
     parsed = parse_dsl([dsl])
 
-    # Phase 1 — per-node configuration
+    # Phase 1 — per-node configuration (with 'back' support)
     nodes_config: dict[str, dict] = {}
-    for node_id in parsed.nodes:
-        deps = parsed.depends_on.get(node_id, [])
-        cfg = _configure_node(node_id=node_id, dependencies=deps)
-        nodes_config[node_id] = cfg
+    node_list = list(parsed.nodes)
+    nodes_config = _configure_all_nodes(node_list, parsed.depends_on)
 
     # Phase 2 — build YAML and preview
     yaml_content, needed_prompts = build_custom_workflow(
@@ -517,12 +515,8 @@ def _custom_interactive_wizard(dsl: str) -> None:
         if action == "2":
             click.echo("Cancelled.")
             return
-        # action == "1": re-configure (simple restart of node loop)
-        nodes_config = {}
-        for node_id in parsed.nodes:
-            deps = parsed.depends_on.get(node_id, [])
-            cfg = _configure_node(node_id=node_id, dependencies=deps)
-            nodes_config[node_id] = cfg
+        # action == "1": re-configure
+        nodes_config = _configure_all_nodes(node_list, parsed.depends_on)
         yaml_content, needed_prompts = build_custom_workflow(
             name="custom-workflow", nodes_config=nodes_config,
         )
@@ -805,16 +799,50 @@ def _select_provider(*, input_fn=None) -> tuple:
     return provider, model
 
 
-def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> dict:
-    """Interactively configure a single node. Returns dict for YAML generation."""
+_BACK = object()  # sentinel for "go back to previous node"
+
+
+def _configure_all_nodes(
+    node_list: list[str],
+    depends_on: dict[str, list[str]],
+) -> dict[str, dict]:
+    """Configure all nodes with support for 'back' to return to previous node."""
+    nodes_config: dict[str, dict] = {}
+    i = 0
+    while i < len(node_list):
+        node_id = node_list[i]
+        deps = depends_on.get(node_id, [])
+        click.echo(f"\n── Node {i + 1}/{len(node_list)}: {node_id} ──")
+        cfg = _configure_node(node_id=node_id, dependencies=deps)
+        if cfg is _BACK:
+            if i > 0:
+                i -= 1
+                click.echo(f"  ↩ Returning to '{node_list[i]}'")
+            else:
+                click.echo("  Already at the first node.")
+            continue
+        nodes_config[node_id] = cfg
+        i += 1
+    return nodes_config
+
+
+def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> dict | object:
+    """Interactively configure a single node.
+
+    Returns dict for YAML generation, or _BACK sentinel.
+    """
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))
 
-    click.echo(f"\n  Agent type for '{node_id}':")
+    click.echo(f"  Agent type for '{node_id}':")
     click.echo("    1) LLM (language model)")
     click.echo("    2) Human review (approve/reject)")
     click.echo("    3) Human input (free text)")
     click.echo("    4) A2A (external agent)")
+    click.echo("    Type 'back' to return to previous node")
     agent_type = _prompt("Choose")
+
+    if agent_type.lower() == "back":
+        return _BACK
 
     config: dict = {"outputs": ["result"]}
     if dependencies:
