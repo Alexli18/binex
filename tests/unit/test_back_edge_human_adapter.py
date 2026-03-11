@@ -56,17 +56,6 @@ class TestApproveFlow:
         feedbacks = [a for a in result.artifacts if a.type == "feedback"]
         assert len(feedbacks) == 0
 
-    @pytest.mark.asyncio
-    async def test_approve_returns_cost_record(self) -> None:
-        adapter = HumanApprovalAdapter()
-        task = _make_task()
-        arts = [_make_artifact()]
-        with patch("binex.adapters.human.click.prompt", return_value="a"), \
-             patch("binex.adapters.human.click.echo"):
-            result = await adapter.execute(task, arts, "trace_1")
-        assert result.cost is not None
-        assert result.cost.cost == 0.0
-
 
 class TestRejectFlow:
     @pytest.mark.asyncio

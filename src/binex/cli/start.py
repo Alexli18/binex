@@ -314,7 +314,7 @@ async def _execute(workflow_path: str) -> tuple:
 
     async def _progress_execute(
         spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-        accumulated_cost_=0.0,
+        accumulated_cost_=0.0, node_artifacts_history_=None,
     ):
         counter[0] += 1
         if has_rich():
@@ -328,7 +328,7 @@ async def _execute(workflow_path: str) -> tuple:
             click.echo(f"  [{counter[0]}/{total}] {node_id_} ...", err=True)
         await original_execute(
             spec_, dag_, scheduler_, run_id_, trace_id_,
-            node_id_, node_artifacts_, accumulated_cost_,
+            node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
         )
 
     orch._execute_node = _progress_execute

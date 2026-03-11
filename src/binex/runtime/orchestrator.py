@@ -491,7 +491,7 @@ class Orchestrator:
             node_artifacts_history.setdefault(nid, []).append(old)
 
 
-_WHEN_RE = re.compile(r"^\$\{(\w+)\.(\w+)\}\s*(==|!=)\s*(.+)$")
+_WHEN_RE = re.compile(r"^\$\{([\w-]+)\.([\w-]+)\}\s*(==|!=)\s*(.+)$")
 
 
 def evaluate_when(when_str: str, node_artifacts: dict[str, list[Artifact]]) -> bool:

@@ -255,7 +255,7 @@ def _install_live_wrapper(orch, live_table, live, all_artifacts):
 
     async def _live_execute(
         spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-        accumulated_cost_=0.0,
+        accumulated_cost_=0.0, node_artifacts_history_=None,
     ):
         live_table.update_node(node_id_, "running")
         live.update(live_table.build())
@@ -263,7 +263,7 @@ def _install_live_wrapper(orch, live_table, live, all_artifacts):
         try:
             await original_execute(
                 spec_, dag_, scheduler_, run_id_, trace_id_,
-                node_id_, node_artifacts_, accumulated_cost_,
+                node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
             )
             elapsed = _time.monotonic() - t0
             live_table.update_node(
@@ -293,7 +293,7 @@ def _install_verbose_wrapper(orch: Orchestrator, all_artifacts: list[Artifact]) 
 
     async def _verbose_execute(
         spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-        accumulated_cost_=0.0,
+        accumulated_cost_=0.0, node_artifacts_history_=None,
     ):
         counter[0] += 1
         total = len(spec_.nodes)
@@ -306,7 +306,7 @@ def _install_verbose_wrapper(orch: Orchestrator, all_artifacts: list[Artifact]) 
 
         await original_execute(
             spec_, dag_, scheduler_, run_id_, trace_id_,
-            node_id_, node_artifacts_, accumulated_cost_,
+            node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
         )
         if node_id_ in node_artifacts_:
             for art in node_artifacts_[node_id_]:

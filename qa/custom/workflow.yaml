@@ -1,0 +1,31 @@
+name: start-wizard-workflow
+nodes:
+  user_input:
+    agent: human://input
+    system_prompt: 'Enter your input:'
+    outputs:
+    - result
+  generate:
+    agent: llm://ollama/llama3.2
+    outputs:
+    - result
+    depends_on:
+    - user_input
+  human-review:
+    agent: human://review
+    outputs:
+    - result
+    depends_on:
+    - generate
+    back_edge:
+      target: generate
+      when: "${human-review.decision} == rejected"
+      max_iterations: 3
+  output:
+    agent: llm://ollama/llama3.2
+    system_prompt: "Format the approved training plan in a clean, concise way. Output only the final plan."
+    outputs:
+    - result
+    depends_on:
+    - generate
+    - human-review

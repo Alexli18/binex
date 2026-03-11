@@ -11,7 +11,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from binex.models.workflow import BackEdge, WorkflowSpec
+from binex.models.workflow import WorkflowSpec
 
 
 def load_workflow(
@@ -127,7 +127,7 @@ def _resolve_file_prompts(data: dict[str, Any], base_dir: Path | None = None) ->
             ) from exc
 
 
-_WHEN_RE = re.compile(r"^\$\{(\w+)\.(\w+)\}\s*(==|!=)\s*(.+)$")
+_WHEN_RE = re.compile(r"^\$\{([\w-]+)\.([\w-]+)\}\s*(==|!=)\s*(.+)$")
 
 
 def _validate_back_edges(spec: WorkflowSpec) -> None:
