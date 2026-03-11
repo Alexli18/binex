@@ -30,7 +30,8 @@ from binex.trace.debug_report import (
     format_debug_report,
     format_debug_report_json,
 )
-from binex.trace.debug_rich import STATUS_COLORS, format_debug_report_rich
+from binex.cli.ui import STATUS_CONFIG
+from binex.trace.debug_rich import format_debug_report_rich
 
 # ===========================================================================
 # Helpers
@@ -314,10 +315,10 @@ class TestDebugCommandGaps:
 
     # TC-DBG-014: Rich color mapping
     def test_dbg_014_color_mapping(self):
-        assert STATUS_COLORS["completed"] == "green"
-        assert STATUS_COLORS["failed"] == "red"
-        assert STATUS_COLORS["timed_out"] == "yellow"
-        assert STATUS_COLORS["skipped"] == "dim"
+        assert STATUS_CONFIG["completed"][1] == "green"
+        assert STATUS_CONFIG["failed"][1] == "red bold"
+        assert STATUS_CONFIG["timed_out"][1] == "yellow"
+        assert STATUS_CONFIG["skipped"][1] == "dim"
 
     # TC-DBG-015: Combined --errors --json
     def test_dbg_015_combined_errors_json(self):
@@ -392,7 +393,7 @@ class TestStartWizardGaps:
         import yaml
 
         from binex.cli.start import build_start_workflow
-        yaml_str = build_start_workflow(
+        yaml_str, _ = build_start_workflow(
             dsl="A -> B -> C",
             agent_prefix="llm://ollama/",
             model="llama3.2",
@@ -409,7 +410,7 @@ class TestStartWizardGaps:
         import yaml
 
         from binex.cli.start import build_start_workflow
-        yaml_str = build_start_workflow(
+        yaml_str, _ = build_start_workflow(
             dsl="planner -> researcher -> writer",
             agent_prefix="llm://",
             model="gpt-4o",
