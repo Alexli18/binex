@@ -489,6 +489,25 @@ def _step_custom_template() -> tuple[str, str, str]:
     return dsl, "my-project", "Enter your input:"
 
 
+def _step_mode_topology(*, input_fn=None) -> str:
+    """Build workflow topology step by step. Returns DSL string like 'A -> B, C -> D'."""
+    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
+
+    levels: list[str] = []
+    first = _prompt("Name the first node")
+    levels.append(first.strip())
+
+    while True:
+        prev_display = levels[-1]
+        answer = _prompt(f"Nodes after '{prev_display}'? (comma-separated, or 'done')")
+        answer = answer.strip()
+        if answer.lower() == "done":
+            break
+        levels.append(answer.strip())
+
+    return " -> ".join(levels)
+
+
 def _step_user_input() -> bool:
     """Step 2: Ask whether to add a user prompt. Returns want_user_input."""
     _print_step(2, TOTAL_STEPS, "User input")
