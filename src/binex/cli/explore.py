@@ -7,21 +7,13 @@ import json
 
 import click
 
-from binex.cli import get_stores
+from binex.cli import get_stores, has_rich
 from binex.trace.lineage import build_lineage_tree, format_lineage_tree
 
 
 def _get_stores():
     """Create default stores. Extracted for test patching."""
     return get_stores()
-
-
-def _has_rich() -> bool:
-    try:
-        import rich  # noqa: F401
-        return True
-    except ImportError:
-        return False
 
 
 def _short_id(run_id: str) -> str:
@@ -63,16 +55,15 @@ def _preview(content, max_len: int = 50) -> str:
 
 def _status_style(status: str) -> tuple[str, str]:
     """Return (display_text, rich_style) for a status."""
-    if status == "completed":
-        return "completed", "green"
-    if status == "failed":
-        return "FAILED", "bold red"
-    if status == "running":
-        return "running", "yellow"
-    return status, "dim"
+    from binex.cli.ui import STATUS_CONFIG
+    return STATUS_CONFIG.get(status, (status, "dim"))
 
 
-@click.command("explore")
+@click.command("explore", epilog="""\b
+Examples:
+  binex explore              Browse recent runs
+  binex explore <run_id>     Jump to artifacts for a specific run
+""")
 @click.argument("run_id", required=False, default=None)
 def explore_cmd(run_id: str | None) -> None:
     """Interactive browser for runs and artifacts."""
@@ -103,40 +94,30 @@ async def _browse_runs(exec_store, art_store) -> None:
 
     click.echo()
 
-    if _has_rich():
-        from rich.console import Console
-        from rich.table import Table
-        from rich.text import Text
+    if has_rich():
+        from binex.cli.ui import get_console, make_table, status_text
 
-        console = Console()
-        table = Table(
+        table = make_table(
+            ("#", {"style": "dim", "width": 4, "justify": "right"}),
+            ("Run ID", {"style": "cyan", "min_width": 16}),
+            ("Workflow", {"min_width": 20}),
+            ("Status", {"min_width": 10}),
+            ("Nodes", {"justify": "center", "min_width": 6}),
+            ("When", {"style": "dim", "min_width": 8}),
             title="Recent Runs",
-            title_style="bold cyan",
-            show_header=True,
-            header_style="bold",
-            border_style="dim",
-            pad_edge=False,
-            show_edge=True,
         )
-        table.add_column("#", style="dim", width=4, justify="right")
-        table.add_column("Run ID", style="cyan", min_width=16)
-        table.add_column("Workflow", min_width=20)
-        table.add_column("Status", min_width=10)
-        table.add_column("Nodes", justify="center", min_width=6)
-        table.add_column("When", style="dim", min_width=8)
 
         for i, run in enumerate(runs, 1):
-            status_text, status_style = _status_style(run.status)
             nodes = f"{run.completed_nodes}/{run.total_nodes}"
             table.add_row(
                 str(i),
                 _short_id(run.run_id),
                 run.workflow_name,
-                Text(status_text, style=status_style),
+                status_text(run.status),
                 nodes,
                 _time_ago(run.started_at),
             )
-        console.print(table)
+        get_console().print(table)
     else:
         click.echo("  Recent runs:")
         click.echo()
@@ -175,44 +156,7 @@ async def _browse_artifacts(exec_store, art_store, run_id: str) -> None:
 
     while True:
         click.echo()
-
-        if _has_rich():
-            from rich.console import Console
-            from rich.table import Table
-
-            console = Console()
-            table = Table(
-                title=f"Artifacts — {_short_id(run_id)}",
-                title_style="bold cyan",
-                show_header=True,
-                header_style="bold",
-                border_style="dim",
-                show_edge=True,
-            )
-            table.add_column("#", style="dim", width=4, justify="right")
-            table.add_column("Node", style="magenta", min_width=16)
-            table.add_column("Type", style="yellow", min_width=10)
-            table.add_column("Preview", min_width=30)
-
-            for i, art in enumerate(artifacts, 1):
-                node = art.lineage.produced_by if art.lineage else "?"
-                table.add_row(
-                    str(i),
-                    node,
-                    art.type,
-                    _preview(art.content, max_len=60),
-                )
-            console.print(table)
-        else:
-            click.echo(f"  Artifacts for {_short_id(run_id)}:")
-            click.echo()
-            for i, art in enumerate(artifacts, 1):
-                node = art.lineage.produced_by if art.lineage else "?"
-                preview = _preview(art.content)
-                click.echo(
-                    f"  {i:>3})  {node:<20} {art.type:<12} {preview}"
-                )
-
+        _print_artifacts_table(artifacts, run_id)
         click.echo()
 
         choice = click.prompt(
@@ -233,6 +177,66 @@ async def _browse_artifacts(exec_store, art_store, run_id: str) -> None:
         click.echo(f"  Invalid choice. Enter 1-{len(artifacts)}, b, or q.")
 
 
+def _print_artifacts_table(artifacts, run_id: str) -> None:
+    """Display artifacts as a table (rich or plain)."""
+    if has_rich():
+        from binex.cli.ui import get_console, make_table
+
+        table = make_table(
+            ("#", {"style": "dim", "width": 4, "justify": "right"}),
+            ("Node", {"style": "magenta", "min_width": 16}),
+            ("Type", {"style": "yellow", "min_width": 10}),
+            ("Preview", {"min_width": 30}),
+            title=f"Artifacts — {_short_id(run_id)}",
+        )
+
+        for i, art in enumerate(artifacts, 1):
+            node = art.lineage.produced_by if art.lineage else "?"
+            table.add_row(str(i), node, art.type, _preview(art.content, max_len=60))
+        get_console().print(table)
+    else:
+        click.echo(f"  Artifacts for {_short_id(run_id)}:")
+        click.echo()
+        for i, art in enumerate(artifacts, 1):
+            node = art.lineage.produced_by if art.lineage else "?"
+            click.echo(
+                f"  {i:>3})  {node:<20} {art.type:<12} {_preview(art.content)}"
+            )
+
+
+async def _show_lineage(art_store, artifact_id: str) -> None:
+    """Display artifact lineage tree."""
+    tree = await build_lineage_tree(art_store, artifact_id)
+    if not tree:
+        click.echo("  No lineage data available.")
+        return
+
+    click.echo()
+    if has_rich():
+        from rich.tree import Tree as RichTree
+
+        from binex.cli.ui import get_console, make_panel
+
+        def _build_rich_tree(node, parent=None):
+            label = (
+                f"[magenta bold]{node['produced_by']}[/] "
+                f"[dim]({node['artifact_id']})[/] "
+                f"[yellow]{node['type']}[/]"
+            )
+            if parent is None:
+                branch = RichTree(label, guide_style="cyan")
+            else:
+                branch = parent.add(label)
+            for p in node["parents"]:
+                _build_rich_tree(p, branch)
+            return branch
+
+        rich_tree = _build_rich_tree(tree)
+        get_console().print(make_panel(rich_tree, title="Artifact Lineage"))
+    else:
+        click.echo(format_lineage_tree(tree))
+
+
 async def _show_artifact(exec_store, art_store, artifact) -> None:
     """Level 3: show artifact detail with actions."""
     content_str = artifact.content if artifact.content is not None else ""
@@ -241,16 +245,33 @@ async def _show_artifact(exec_store, art_store, artifact) -> None:
 
     node = artifact.lineage.produced_by if artifact.lineage else "?"
     click.echo()
+    _print_artifact_detail(artifact, node, content_str)
 
-    if _has_rich():
-        from rich.console import Console
+    while True:
+        _print_action_hints()
+        choice = click.prompt(
+            "  Action" if has_rich() else "  [l] lineage  [b] back  [q] quit",
+            default="b",
+        )
+        if choice.lower() == "b":
+            return
+        if choice.lower() == "q":
+            raise SystemExit(0)
+        if choice.lower() == "l":
+            await _show_lineage(art_store, artifact.id)
+            continue
+        click.echo("  Enter l, b, or q.")
+
+
+def _print_artifact_detail(artifact, node: str, content_str: str) -> None:
+    """Render artifact detail view (rich or plain)."""
+    if has_rich():
         from rich.markdown import Markdown
-        from rich.panel import Panel
         from rich.text import Text
 
-        console = Console()
+        from binex.cli.ui import get_console, make_panel
 
-        # Metadata line
+        console = get_console()
         meta = Text()
         meta.append("Node: ", style="dim")
         meta.append(node, style="magenta bold")
@@ -261,13 +282,10 @@ async def _show_artifact(exec_store, art_store, artifact) -> None:
         meta.append(artifact.status, style=style)
         console.print(meta)
         console.print()
-
-        console.print(Panel(
+        console.print(make_panel(
             Markdown(content_str),
             title=f"{node} / {artifact.type}",
             subtitle=f"id: {artifact.id}",
-            border_style="blue",
-            padding=(1, 2),
         ))
     else:
         click.echo(f"  ── {node} / {artifact.type} ──")
@@ -275,65 +293,21 @@ async def _show_artifact(exec_store, art_store, artifact) -> None:
         click.echo(f"  id: {artifact.id}")
         click.echo()
 
-    while True:
-        if _has_rich():
-            from rich.console import Console
-            from rich.text import Text
 
-            console = Console()
-            hint = Text()
-            hint.append("  [", style="dim")
-            hint.append("l", style="cyan bold")
-            hint.append("] lineage  [", style="dim")
-            hint.append("b", style="cyan bold")
-            hint.append("] back  [", style="dim")
-            hint.append("q", style="cyan bold")
-            hint.append("] quit", style="dim")
-            console.print(hint)
+def _print_action_hints() -> None:
+    """Print action menu hints."""
+    if has_rich():
+        from rich.text import Text
 
-        choice = click.prompt(
-            "  Action" if _has_rich() else "  [l] lineage  [b] back  [q] quit",
-            default="b",
-        )
-        if choice.lower() == "b":
-            return
-        if choice.lower() == "q":
-            raise SystemExit(0)
-        if choice.lower() == "l":
-            tree = await build_lineage_tree(art_store, artifact.id)
-            if tree:
-                click.echo()
-                if _has_rich():
-                    from rich.console import Console
-                    from rich.panel import Panel
-                    from rich.tree import Tree as RichTree
+        from binex.cli.ui import get_console
 
-                    console = Console()
-
-                    def _build_rich_tree(node, parent=None):
-                        label = (
-                            f"[magenta bold]{node['produced_by']}[/] "
-                            f"[dim]({node['artifact_id']})[/] "
-                            f"[yellow]{node['type']}[/]"
-                        )
-                        if parent is None:
-                            branch = RichTree(label, guide_style="cyan")
-                        else:
-                            branch = parent.add(label)
-                        for p in node["parents"]:
-                            _build_rich_tree(p, branch)
-                        return branch
-
-                    rich_tree = _build_rich_tree(tree)
-                    console.print(Panel(
-                        rich_tree,
-                        title="Artifact Lineage",
-                        border_style="green",
-                        padding=(1, 2),
-                    ))
-                else:
-                    click.echo(format_lineage_tree(tree))
-            else:
-                click.echo("  No lineage data available.")
-            continue
-        click.echo("  Enter l, b, or q.")
+        console = get_console()
+        hint = Text()
+        hint.append("  [", style="dim")
+        hint.append("l", style="cyan bold")
+        hint.append("] lineage  [", style="dim")
+        hint.append("b", style="cyan bold")
+        hint.append("] back  [", style="dim")
+        hint.append("q", style="cyan bold")
+        hint.append("] quit", style="dim")
+        console.print(hint)
