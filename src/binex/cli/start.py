@@ -843,7 +843,7 @@ def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> 
     # Advanced params
     add_advanced = _prompt("Configure advanced parameters? (y/n)")
     if add_advanced.lower() == "y":
-        advanced = _configure_advanced_params(input_fn=_prompt)
+        advanced = _configure_advanced_params()
         config.update(advanced)
 
     return config
@@ -871,35 +871,57 @@ def _step_mode_topology(*, input_fn=None) -> str:
 def _configure_advanced_params(*, input_fn=None) -> dict:
     """Collect optional advanced parameters. Returns dict of extra YAML keys.
 
-    Empty input skips each parameter.
+    Empty input or non-numeric input skips each parameter.
     """
     _prompt = input_fn or (lambda prompt: click.prompt(prompt, default=""))
     result: dict = {}
 
-    budget_str = _prompt("Budget max_cost in $ (empty to skip)")
-    if budget_str:
+    budget_str = _prompt("Budget max_cost in $ (Enter to skip)")
+    if _is_number(budget_str):
         result["budget"] = {"max_cost": float(budget_str)}
 
-    retry_str = _prompt("Max retries (empty to skip)")
-    if retry_str:
+    retry_str = _prompt("Max retries (Enter to skip)")
+    if _is_int(retry_str):
         backoff = _prompt("Backoff strategy [fixed/exponential]") or "exponential"
         result["retry_policy"] = {"max_retries": int(retry_str), "backoff": backoff}
 
-    deadline_str = _prompt("Deadline in seconds (empty to skip)")
-    if deadline_str:
+    deadline_str = _prompt("Deadline in seconds (Enter to skip)")
+    if _is_number(deadline_str):
         result["deadline_ms"] = int(float(deadline_str) * 1000)
 
-    temp_str = _prompt("Temperature (empty to skip)")
+    temp_str = _prompt("Temperature (Enter to skip)")
     config: dict = {}
-    if temp_str:
+    if _is_number(temp_str):
         config["temperature"] = float(temp_str)
-    tokens_str = _prompt("Max tokens (empty to skip)")
-    if tokens_str:
+    tokens_str = _prompt("Max tokens (Enter to skip)")
+    if _is_int(tokens_str):
         config["max_tokens"] = int(tokens_str)
     if config:
         result["config"] = config
 
     return result
+
+
+def _is_number(s: str) -> bool:
+    """Check if string is a valid number (int or float)."""
+    if not s:
+        return False
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+def _is_int(s: str) -> bool:
+    """Check if string is a valid integer."""
+    if not s:
+        return False
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
 
 
 def _step_user_input() -> bool:
