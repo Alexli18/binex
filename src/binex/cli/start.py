@@ -519,6 +519,58 @@ def _step_custom_dsl() -> tuple[str, str, str]:
     return dsl, "my-project", "Enter your input:"
 
 
+def _get_bundled_prompt_list() -> list[tuple[str, str]]:
+    """Return list of (filename, description) for bundled prompts."""
+    prompts_dir = _get_prompts_dir()
+    result = []
+    for md_file in sorted(prompts_dir.glob("*.md")):
+        first_line = md_file.read_text().strip().split("\n")[0][:60]
+        result.append((md_file.name, first_line))
+    return result
+
+
+def _select_prompt(*, node_id: str, input_fn=None) -> str:
+    """Interactive prompt picker. Returns system_prompt string.
+
+    Options: bundled prompts (file:// ref), custom text, file path.
+    """
+    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
+    bundled = _get_bundled_prompt_list()
+
+    # Find recommended prompt
+    recommended_idx = None
+    for i, (filename, _desc) in enumerate(bundled):
+        stem = filename.removesuffix(".md")
+        if stem == node_id or node_id in stem or stem in node_id:
+            recommended_idx = i
+            break
+
+    click.echo("  System prompt:")
+    for i, (filename, desc) in enumerate(bundled, 1):
+        tag = " (recommended)" if i - 1 == recommended_idx else ""
+        click.echo(f"    {i}) {filename}{tag} — {desc}")
+
+    custom_text_n = len(bundled) + 1
+    file_path_n = len(bundled) + 2
+    click.echo(f"    {custom_text_n}) Write custom text")
+    click.echo(f"    {file_path_n}) Provide file path")
+
+    choice = _prompt("Choose prompt")
+    choice_int = int(choice)
+
+    if choice_int <= len(bundled):
+        filename = bundled[choice_int - 1][0]
+        return f"file://prompts/{filename}"
+    elif choice_int == custom_text_n:
+        text = _prompt("Enter system prompt text")
+        return text
+    else:
+        path = _prompt("Enter path to prompt file")
+        if not path.startswith("file://"):
+            path = f"file://{path}"
+        return path
+
+
 def _step_mode_topology(*, input_fn=None) -> str:
     """Build workflow topology step by step. Returns DSL string like 'A -> B, C -> D'."""
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))

@@ -5,7 +5,12 @@ from __future__ import annotations
 import yaml
 from click.testing import CliRunner
 
-from binex.cli.start import _step_mode_topology, start_cmd
+from binex.cli.start import (
+    _get_bundled_prompt_list,
+    _select_prompt,
+    _step_mode_topology,
+    start_cmd,
+)
 
 
 class TestStepModeTopology:
@@ -58,3 +63,36 @@ class TestCustomTemplateHybrid:
         assert result.exit_code == 0
         data = yaml.safe_load((tmp_path / "hybrid-step" / "workflow.yaml").read_text())
         assert set(data["nodes"].keys()) == {"A", "B"}
+
+
+class TestPromptSelection:
+    """Prompt picker: bundled list + custom text + file path."""
+
+    def test_get_bundled_prompt_list(self):
+        """Should return list of (filename, first_line) tuples."""
+        prompts = _get_bundled_prompt_list()
+        assert len(prompts) == 14
+        assert all(isinstance(p, tuple) and len(p) == 2 for p in prompts)
+
+    def test_select_bundled_prompt(self):
+        """Choosing a number selects bundled prompt as file:// reference."""
+        inputs = iter(["1"])
+        result = _select_prompt(node_id="test", input_fn=lambda prompt: next(inputs))
+        assert result.startswith("file://prompts/")
+        assert result.endswith(".md")
+
+    def test_select_custom_text(self):
+        """Choosing 'custom text' option returns entered text."""
+        prompts = _get_bundled_prompt_list()
+        custom_option = str(len(prompts) + 1)
+        inputs = iter([custom_option, "You are a helpful bot"])
+        result = _select_prompt(node_id="test", input_fn=lambda prompt: next(inputs))
+        assert result == "You are a helpful bot"
+
+    def test_select_file_path(self):
+        """Choosing 'file path' option returns file:// reference."""
+        prompts = _get_bundled_prompt_list()
+        file_option = str(len(prompts) + 2)
+        inputs = iter([file_option, "/path/to/my-prompt.md"])
+        result = _select_prompt(node_id="test", input_fn=lambda prompt: next(inputs))
+        assert result == "file:///path/to/my-prompt.md"
