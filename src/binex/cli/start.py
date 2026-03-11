@@ -283,6 +283,46 @@ def build_start_workflow(
     return yaml_str, needed_prompts
 
 
+def build_custom_workflow(*, name: str, nodes_config: dict[str, dict]) -> tuple[str, set[str]]:
+    """Generate workflow YAML from per-node configuration dicts.
+
+    Returns (yaml_string, set_of_needed_prompt_files).
+    """
+    needed_prompts: set[str] = set()
+    nodes: dict[str, dict] = {}
+
+    for node_id, cfg in nodes_config.items():
+        node: dict = {}
+        node["agent"] = cfg["agent"]
+
+        if cfg.get("system_prompt"):
+            node["system_prompt"] = cfg["system_prompt"]
+            sp = cfg["system_prompt"]
+            if sp.startswith("file://prompts/") and sp.endswith(".md"):
+                needed_prompts.add(sp.removeprefix("file://prompts/"))
+
+        node["outputs"] = cfg.get("outputs", ["result"])
+
+        if cfg.get("depends_on"):
+            node["depends_on"] = cfg["depends_on"]
+        if cfg.get("back_edge"):
+            node["back_edge"] = cfg["back_edge"]
+        if cfg.get("budget"):
+            node["budget"] = cfg["budget"]
+        if cfg.get("retry_policy"):
+            node["retry_policy"] = cfg["retry_policy"]
+        if cfg.get("deadline_ms"):
+            node["deadline_ms"] = cfg["deadline_ms"]
+        if cfg.get("config"):
+            node["config"] = cfg["config"]
+
+        nodes[node_id] = node
+
+    workflow = {"name": name, "nodes": nodes}
+    yaml_str = yaml.dump(workflow, default_flow_style=False, sort_keys=False)
+    return yaml_str, needed_prompts
+
+
 # ---------------------------------------------------------------------------
 # Run workflow (optional post-generation execution)
 # ---------------------------------------------------------------------------

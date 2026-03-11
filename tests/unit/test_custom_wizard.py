@@ -252,3 +252,77 @@ class TestConfigureNode:
         assert config["back_edge"]["target"] == "writer"
         assert config["back_edge"]["max_iterations"] == 3
         assert "rejected" in config["back_edge"]["when"]
+
+
+from binex.cli.start import build_custom_workflow
+
+
+class TestBuildCustomWorkflow:
+    """Generate YAML from per-node config dicts."""
+
+    def test_simple_two_nodes(self):
+        configs = {
+            "planner": {
+                "agent": "llm://ollama/llama3.2",
+                "system_prompt": "file://prompts/research-planner.md",
+                "outputs": ["result"],
+            },
+            "writer": {
+                "agent": "llm://ollama/llama3.2",
+                "system_prompt": "You are a writer",
+                "outputs": ["result"],
+                "depends_on": ["planner"],
+            },
+        }
+        yaml_str, needed = build_custom_workflow(name="test-wf", nodes_config=configs)
+        data = yaml.safe_load(yaml_str)
+        assert data["name"] == "test-wf"
+        assert set(data["nodes"].keys()) == {"planner", "writer"}
+        assert data["nodes"]["writer"]["depends_on"] == ["planner"]
+        assert "research-planner.md" in needed
+
+    def test_back_edge_included(self):
+        configs = {
+            "generate": {"agent": "llm://ollama/llama3.2", "outputs": ["result"]},
+            "review": {
+                "agent": "human://review",
+                "outputs": ["result"],
+                "depends_on": ["generate"],
+                "back_edge": {
+                    "target": "generate",
+                    "when": "${review.decision} == rejected",
+                    "max_iterations": 3,
+                },
+            },
+        }
+        yaml_str, _ = build_custom_workflow(name="be-wf", nodes_config=configs)
+        data = yaml.safe_load(yaml_str)
+        assert "back_edge" in data["nodes"]["review"]
+        assert data["nodes"]["review"]["back_edge"]["target"] == "generate"
+
+    def test_advanced_params_included(self):
+        configs = {
+            "node1": {
+                "agent": "llm://openai/gpt-4o",
+                "outputs": ["result"],
+                "budget": {"max_cost": 0.50},
+                "retry_policy": {"max_retries": 2, "backoff": "fixed"},
+                "deadline_ms": 30000,
+                "config": {"temperature": 0.7},
+            },
+        }
+        yaml_str, _ = build_custom_workflow(name="adv-wf", nodes_config=configs)
+        data = yaml.safe_load(yaml_str)
+        node = data["nodes"]["node1"]
+        assert node["budget"]["max_cost"] == 0.50
+        assert node["retry_policy"]["max_retries"] == 2
+        assert node["deadline_ms"] == 30000
+        assert node["config"]["temperature"] == 0.7
+
+    def test_no_none_values_in_output(self):
+        configs = {
+            "review": {"agent": "human://review", "outputs": ["result"], "system_prompt": None},
+        }
+        yaml_str, _ = build_custom_workflow(name="clean", nodes_config=configs)
+        assert "null" not in yaml_str
+        assert "None" not in yaml_str
