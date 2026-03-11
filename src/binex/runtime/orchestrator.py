@@ -56,6 +56,7 @@ class Orchestrator:
         self.artifact_store = artifact_store
         self.execution_store = execution_store
         self.dispatcher = Dispatcher()
+        self._pending_feedback: dict[str, list[Artifact]] = {}
 
     async def run_workflow(
         self,
@@ -84,6 +85,7 @@ class Orchestrator:
 
         # node_id -> list of output artifacts
         node_artifacts: dict[str, list[Artifact]] = {}
+        node_artifacts_history: dict[str, list[list[Artifact]]] = {}
         accumulated_cost = 0.0
         budget_exceeded = False
 
@@ -110,6 +112,7 @@ class Orchestrator:
             tasks = self._schedule_ready_nodes(
                 spec, dag, scheduler, run_id, trace_id,
                 ready, node_artifacts, accumulated_cost,
+                node_artifacts_history,
             )
 
             if tasks:
@@ -169,8 +172,11 @@ class Orchestrator:
         ready: list[str],
         node_artifacts: dict[str, list[Artifact]],
         accumulated_cost: float,
+        node_artifacts_history: dict[str, list[list[Artifact]]] | None = None,
     ) -> list:
         """Evaluate when-conditions and schedule ready nodes for execution."""
+        if node_artifacts_history is None:
+            node_artifacts_history = {}
         tasks = []
         for node_id in ready:
             node_spec = spec.nodes[node_id]
@@ -184,6 +190,7 @@ class Orchestrator:
                 self._execute_node(
                     spec, dag, scheduler, run_id, trace_id,
                     node_id, node_artifacts, accumulated_cost,
+                    node_artifacts_history,
                 )
             )
         return tasks
@@ -284,7 +291,10 @@ class Orchestrator:
         node_id: str,
         node_artifacts: dict[str, list[Artifact]],
         accumulated_cost: float = 0.0,
+        node_artifacts_history: dict[str, list[list[Artifact]]] | None = None,
     ) -> None:
+        if node_artifacts_history is None:
+            node_artifacts_history = {}
         node_spec = spec.nodes[node_id]
         retry_policy = node_spec.retry_policy or (
             spec.defaults.retry_policy if spec.defaults else None
@@ -298,6 +308,8 @@ class Orchestrator:
         input_artifacts: list[Artifact] = []
         for dep_id in dag.dependencies(node_id):
             input_artifacts.extend(node_artifacts.get(dep_id, []))
+        # Inject pending feedback from back-edge
+        input_artifacts.extend(self._pending_feedback.pop(node_id, []))
 
         start_ms = _now_ms()
         succeeded, error_msg, output_artifacts = await self._retry_loop(
@@ -308,6 +320,11 @@ class Orchestrator:
         if succeeded:
             scheduler.mark_completed(node_id)
             status = task.status.__class__("completed")
+            # Evaluate back-edge after successful completion
+            await self._evaluate_back_edge(
+                spec, scheduler, dag, node_id,
+                node_artifacts, node_artifacts_history,
+            )
         else:
             scheduler.mark_failed(node_id)
             status = task.status.__class__("failed")
@@ -428,6 +445,50 @@ class Orchestrator:
                     await asyncio.sleep(delay)
 
         return False, error_msg, output_artifacts
+
+
+    async def _evaluate_back_edge(
+        self,
+        spec: WorkflowSpec,
+        scheduler: Scheduler,
+        dag: DAG,
+        node_id: str,
+        node_artifacts: dict[str, list[Artifact]],
+        node_artifacts_history: dict[str, list[list[Artifact]]],
+    ) -> None:
+        """Evaluate back_edge after successful node execution. Resets chain if triggered."""
+        back_edge = spec.nodes[node_id].back_edge
+        if back_edge is None:
+            return
+
+        if not evaluate_when(back_edge.when, node_artifacts):
+            return
+
+        iteration = scheduler.get_execution_count(node_id)
+        if iteration >= back_edge.max_iterations:
+            decision = click.prompt(
+                f"  Max iterations ({back_edge.max_iterations}) reached for '{node_id}'. "
+                f"[a]ccept last draft · [f]ail workflow",
+                type=click.Choice(["a", "f"]),
+                show_choices=False,
+            )
+            if decision == "f":
+                scheduler.mark_failed(node_id)
+            return
+
+        # Collect feedback artifacts for injection into target node
+        feedback_arts = [
+            a for a in node_artifacts.get(node_id, [])
+            if a.type == "feedback"
+        ]
+        if feedback_arts:
+            self._pending_feedback[back_edge.target] = feedback_arts
+
+        # Reset chain and archive old artifacts
+        reset_nodes = scheduler.reset_chain(back_edge.target, node_id, dag)
+        for nid in reset_nodes:
+            old = node_artifacts.pop(nid, [])
+            node_artifacts_history.setdefault(nid, []).append(old)
 
 
 _WHEN_RE = re.compile(r"^\$\{(\w+)\.(\w+)\}\s*(==|!=)\s*(.+)$")
