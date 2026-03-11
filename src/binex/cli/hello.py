@@ -73,7 +73,7 @@ def _print_next_steps(summary) -> None:
     """Print next-steps guidance, using a rich panel when available."""
     from binex.cli import has_rich
 
-    if has_rich() and sys.stderr.isatty():
+    if has_rich():
         from rich.text import Text
 
         from binex.cli.ui import get_console, make_panel

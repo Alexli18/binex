@@ -93,7 +93,7 @@ def _print_text_output(summary, spec, artifacts, terminal_nodes):
     """Format and print human-readable run output."""
     from binex.cli import has_rich
 
-    if has_rich() and sys.stdout.isatty():
+    if has_rich():
         _print_rich_output(summary, spec, artifacts, terminal_nodes)
         return
 
