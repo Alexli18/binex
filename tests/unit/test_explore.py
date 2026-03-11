@@ -551,7 +551,7 @@ class TestReplayWizardAgentSwaps:
                 cli, ["explore", "run_abc123"],
                 input="r\n1\nstep1=llm://claude\ndone\nmy_workflow.yaml\nn\n\nq\n",
             )
-        assert "Replay from: step1" in result.output
+        assert "step1" in result.output
         assert "my_workflow.yaml" in result.output
 
 

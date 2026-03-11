@@ -717,9 +717,27 @@ async def _action_replay(exec_store, art_store, run_id: str, run, records) -> No
 
     # Step 1: select start node
     click.echo()
-    click.echo("  Replay wizard — select start node:")
-    for i, rec in enumerate(records, 1):
-        click.echo(f"  {i:>3})  {rec.task_id}")
+    if has_rich():
+        from binex.cli.ui import get_console, make_table, status_text
+
+        console = get_console()
+        table = make_table(
+            ("#", {"style": "dim", "width": 4, "justify": "right"}),
+            ("Node", {"style": "bold", "min_width": 14}),
+            ("Status", {"min_width": 10}),
+            ("Agent", {"style": "dim"}),
+            title="Replay — select start node",
+        )
+        for i, rec in enumerate(records, 1):
+            table.add_row(
+                str(i), rec.task_id,
+                status_text(rec.status.value), rec.agent_id,
+            )
+        console.print(table)
+    else:
+        click.echo("  Replay wizard — select start node:")
+        for i, rec in enumerate(records, 1):
+            click.echo(f"  {i:>3})  {rec.task_id}")
     click.echo()
 
     choice = click.prompt("  Start from node (or c=cancel)", default="c")
@@ -757,10 +775,28 @@ async def _action_replay(exec_store, art_store, run_id: str, run, records) -> No
 
     # Step 4: confirm
     click.echo()
-    click.echo(f"  Replay from: {from_step}")
-    if agent_swaps:
-        click.echo(f"  Agent swaps: {agent_swaps}")
-    click.echo(f"  Workflow: {workflow}")
+    if has_rich():
+        from rich.text import Text
+
+        from binex.cli.ui import get_console, make_panel
+
+        summary_lines = Text()
+        summary_lines.append("From node: ", style="dim")
+        summary_lines.append(from_step, style="bold")
+        summary_lines.append("\nWorkflow: ", style="dim")
+        summary_lines.append(workflow)
+        if agent_swaps:
+            summary_lines.append("\nAgent swaps:", style="dim")
+            for node, agent in agent_swaps.items():
+                summary_lines.append(f"\n  {node}", style="magenta")
+                summary_lines.append(" → ", style="dim")
+                summary_lines.append(agent, style="cyan")
+        get_console().print(make_panel(summary_lines, title="Replay Summary"))
+    else:
+        click.echo(f"  Replay from: {from_step}")
+        if agent_swaps:
+            click.echo(f"  Agent swaps: {agent_swaps}")
+        click.echo(f"  Workflow: {workflow}")
     confirm = click.prompt("  Confirm? (y/n)", default="n")
     if confirm.lower() != "y":
         click.echo("  Replay cancelled.")
@@ -786,7 +822,25 @@ async def _action_replay(exec_store, art_store, run_id: str, run, records) -> No
             from_step=from_step,
             agent_swaps=agent_swaps,
         )
-        click.echo(f"  Replay complete. New run: {summary.run_id}")
-        click.echo(f"  Status: {summary.status}")
+        if has_rich():
+            from rich.text import Text as RText
+
+            from binex.cli.ui import STATUS_CONFIG, make_panel
+            from binex.cli.ui import get_console as gc
+
+            result_text = RText()
+            result_text.append("New Run: ", style="dim")
+            result_text.append(summary.run_id, style="cyan")
+            result_text.append("\nStatus: ", style="dim")
+            _, st = STATUS_CONFIG.get(summary.status, (summary.status, "dim"))
+            result_text.append(summary.status, style=st)
+            result_text.append(
+                f"\nNodes: {summary.completed_nodes}/{summary.total_nodes}",
+                style="dim",
+            )
+            gc().print(make_panel(result_text, title="Replay Complete"))
+        else:
+            click.echo(f"  Replay complete. New run: {summary.run_id}")
+            click.echo(f"  Status: {summary.status}")
     except Exception as exc:
         click.echo(f"  Replay failed: {exc}")
