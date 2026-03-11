@@ -126,8 +126,8 @@ async def _browse_runs(exec_store, art_store) -> None:
     else:
         click.echo("  Recent runs:")
         click.echo()
+        from binex.cli.ui import STATUS_CONFIG
         for i, run in enumerate(runs, 1):
-            from binex.cli.ui import STATUS_CONFIG
             display, _ = STATUS_CONFIG.get(run.status, (run.status, "dim"))
             ago = _time_ago(run.started_at)
             click.echo(
@@ -161,9 +161,10 @@ async def _dashboard(exec_store, art_store, run_id: str) -> None:
             click.echo(f"Run '{run_id}' not found.")
             return
         records = await exec_store.list_records(run_id)
+        cost_records = await exec_store.list_costs(run_id)
 
         click.echo()
-        _render_dashboard(run, records, run_id)
+        _render_dashboard(run, records, run_id, cost_records)
         _print_dashboard_menu()
 
         choice = click.prompt("  Action", default="q")
@@ -184,7 +185,7 @@ async def _dashboard(exec_store, art_store, run_id: str) -> None:
         elif key == "n":
             await _action_node(exec_store, art_store, run_id, records)
         elif key == "r":
-            await _action_replay(exec_store, run_id, run, records)
+            await _action_replay(exec_store, art_store, run_id, run, records)
         else:
             click.echo("  Unknown action. Use t/g/d/c/a/n/r/q.")
             continue
@@ -193,8 +194,13 @@ async def _dashboard(exec_store, art_store, run_id: str) -> None:
             return
 
 
-def _render_dashboard(run, records, run_id: str) -> None:
+def _render_dashboard(run, records, run_id: str, cost_records=None) -> None:
     """Render dashboard panel with header, status, and node table."""
+    # Build per-node cost lookup
+    node_costs: dict[str, float] = {}
+    for cr in (cost_records or []):
+        node_costs[cr.task_id] = node_costs.get(cr.task_id, 0.0) + cr.cost
+
     if has_rich():
         from rich.console import Group as RichGroup
         from rich.text import Text
@@ -227,14 +233,18 @@ def _render_dashboard(run, records, run_id: str) -> None:
             ("Node", {"style": "bold", "min_width": 14}),
             ("Status", {"min_width": 10}),
             ("Agent", {"style": "dim"}),
+            ("Cost", {"justify": "right"}),
             ("Latency", {"justify": "right"}),
         )
         for rec in records:
             latency = f"{rec.latency_ms}ms" if rec.latency_ms else ""
+            nc = node_costs.get(rec.task_id)
+            cost_str = f"${nc:.4f}" if nc else ""
             table.add_row(
                 rec.task_id,
                 status_text(rec.status.value),
                 rec.agent_id,
+                cost_str,
                 latency,
             )
 
@@ -248,10 +258,11 @@ def _render_dashboard(run, records, run_id: str) -> None:
         # Plain text fallback
         click.echo(f"  === Dashboard: {_short_id(run_id)} ===")
         click.echo(f"  Workflow: {run.workflow_name}")
+        cost_str = f"Cost: ${run.total_cost:.4f}  " if run.total_cost else ""
         click.echo(
             f"  Status: {run.status}  "
             f"Nodes: {run.completed_nodes}/{run.total_nodes}  "
-            f"Cost: ${run.total_cost:.4f}  "
+            f"{cost_str}"
             f"{_time_ago(run.started_at)}"
         )
         click.echo()
@@ -259,9 +270,11 @@ def _render_dashboard(run, records, run_id: str) -> None:
             click.echo("  Nodes:")
             for rec in records:
                 latency = f"{rec.latency_ms}ms" if rec.latency_ms else ""
+                nc = node_costs.get(rec.task_id)
+                nc_str = f"${nc:.4f}" if nc else ""
                 click.echo(
                     f"    {rec.task_id:<20} {rec.status.value:<12} "
-                    f"{rec.agent_id:<20} {latency}"
+                    f"{rec.agent_id:<20} {nc_str:<10} {latency}"
                 )
         else:
             click.echo("  (no execution records)")
@@ -362,11 +375,11 @@ async def _action_debug(exec_store, art_store, run_id: str) -> None:
 
 async def _action_cost(exec_store, run_id: str) -> None:
     """Show cost breakdown."""
-    from binex.cli.cost import _print_cost_text
+    from binex.cli.cost import print_cost_text
 
     cost_summary = await exec_store.get_run_cost_summary(run_id)
     cost_records = await exec_store.list_costs(run_id)
-    _print_cost_text(run_id, cost_summary, cost_records)
+    print_cost_text(run_id, cost_summary, cost_records)
 
 
 async def _action_artifacts(exec_store, art_store, run_id: str) -> None:
@@ -525,7 +538,7 @@ async def _action_node(exec_store, art_store, run_id: str, records) -> None:
             click.echo(f"  Node: {rec.task_id}")
             click.echo(f"  Agent: {rec.agent_id}")
             click.echo(f"  Status: {rec.status.value}")
-            click.echo(f"  Latency: {rec.latency_ms}ms")
+            click.echo(f"  Latency: {rec.latency_ms}ms" if rec.latency_ms else "  Latency: -")
             if rec.error:
                 click.echo(f"  Error: {rec.error}")
             if rec.prompt:
@@ -556,7 +569,7 @@ async def _action_node(exec_store, art_store, run_id: str, records) -> None:
         click.echo(f"  Invalid choice. Enter 1-{len(records)} or b.")
 
 
-async def _action_replay(exec_store, run_id: str, run, records) -> None:
+async def _action_replay(exec_store, art_store, run_id: str, run, records) -> None:
     """Replay wizard: select start node, agent swaps, workflow path, confirm."""
     if run.status == "running":
         click.echo("  Cannot replay a running workflow.")
@@ -619,19 +632,25 @@ async def _action_replay(exec_store, run_id: str, run, records) -> None:
 
     # Step 5: execute replay
     try:
-        import subprocess
-        result = subprocess.run(
-            ["binex", "replay", run_id, "--from", from_step, "--workflow", workflow]
-            + [
-                arg
-                for node, agent in agent_swaps.items()
-                for arg in ["--agent", f"{node}={agent}"]
-            ],
-            capture_output=True,
-            text=True,
+        from binex.cli.adapter_registry import register_workflow_adapters
+        from binex.runtime.replay import ReplayEngine
+        from binex.workflow_spec.loader import load_workflow
+
+        spec = load_workflow(workflow)
+        engine = ReplayEngine(
+            execution_store=exec_store,
+            artifact_store=art_store,
         )
-        click.echo(result.stdout)
-        if result.stderr:
-            click.echo(result.stderr)
+        register_workflow_adapters(
+            engine.dispatcher, spec, agent_swaps=agent_swaps,
+        )
+        summary = await engine.replay(
+            original_run_id=run_id,
+            workflow=spec,
+            from_step=from_step,
+            agent_swaps=agent_swaps,
+        )
+        click.echo(f"  Replay complete. New run: {summary.run_id}")
+        click.echo(f"  Status: {summary.status}")
     except Exception as exc:
         click.echo(f"  Replay failed: {exc}")

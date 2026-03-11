@@ -6,7 +6,6 @@ import asyncio
 from datetime import UTC, datetime
 from unittest.mock import patch
 
-import pytest
 from click.testing import CliRunner
 
 from binex.cli.main import cli
@@ -214,7 +213,9 @@ class TestDashboardDisplay:
         runner = CliRunner()
         with patch(PATCH_TARGET, return_value=stores):
             result = runner.invoke(cli, ["explore", "run_abc123"], input="q\n")
-        assert "no execution records" in result.output.lower() or result.exit_code == 0
+        # Dashboard renders with an empty node table (rich) or "(no execution records)" (plain)
+        assert result.exit_code == 0
+        assert "run_abc123" in result.output
 
 
 class TestActionTrace:
@@ -246,7 +247,7 @@ class TestActionGraph:
         runner = CliRunner()
         with patch(PATCH_TARGET, return_value=stores):
             result = runner.invoke(cli, ["explore", "run_abc123"], input="g\n\nq\n")
-        assert "No records" in result.output or result.exit_code == 0
+        assert "No records" in result.output
 
 
 class TestActionDebug:
@@ -367,7 +368,7 @@ class TestActionNode:
             result = runner.invoke(
                 cli, ["explore", "run_abc123"], input="n\n\nq\n",
             )
-        assert "No execution records" in result.output or result.exit_code == 0
+        assert "No execution records" in result.output
 
 
 class TestActionReplay:
@@ -402,7 +403,7 @@ class TestActionReplay:
             result = runner.invoke(
                 cli, ["explore", "run_abc123"], input="r\n\nq\n",
             )
-        assert "No execution records" in result.output or result.exit_code == 0
+        assert "No execution records" in result.output
 
     def test_replay_wizard_decline(self):
         """User selects node, skips swaps, enters workflow, then declines."""
@@ -430,7 +431,7 @@ class TestDashboardMenuLoop:
             result = runner.invoke(
                 cli, ["explore", "run_abc123"], input="x\nq\n",
             )
-        assert "Unknown action" in result.output or result.exit_code == 0
+        assert "Unknown action" in result.output
 
     def test_quit_from_wait(self):
         """User performs an action then quits from the wait prompt."""

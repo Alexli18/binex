@@ -59,7 +59,7 @@ async def _cost_show(run_id: str, json_out: bool) -> None:
         if json_out:
             _print_cost_json(run_id, cost_summary, cost_records)
         else:
-            _print_cost_text(run_id, cost_summary, cost_records)
+            print_cost_text(run_id, cost_summary, cost_records)
     finally:
         await execution_store.close()
 
@@ -91,7 +91,7 @@ def _print_cost_json(run_id, cost_summary, cost_records) -> None:
     click.echo(json.dumps(data, default=str, indent=2))
 
 
-def _print_cost_text(run_id, cost_summary, cost_records) -> None:
+def print_cost_text(run_id, cost_summary, cost_records) -> None:
     """Format cost data as human-readable text."""
     from binex.cli import has_rich
 
