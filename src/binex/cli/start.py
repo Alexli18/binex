@@ -13,6 +13,12 @@ import yaml
 
 from binex.cli import has_rich
 from binex.cli.dsl_parser import PATTERNS, parse_dsl
+from binex.cli.prompt_roles import (
+    CATEGORY_ICONS,
+    CATEGORY_ORDER,
+    TEMPLATE_CATEGORIES,
+    get_role,
+)
 from binex.cli.providers import PROVIDERS, ProviderConfig
 
 # ---------------------------------------------------------------------------
@@ -22,26 +28,26 @@ from binex.cli.providers import PROVIDERS, ProviderConfig
 # Maps node names to prompt .md filenames in binex/prompts/
 _NODE_PROMPT_FILES: dict[str, str] = {
     # Research pipeline
-    "planner": "research-planner.md",
-    "researcher1": "researcher.md",
-    "researcher2": "researcher.md",
-    "validator": "research-validator.md",
-    "summarizer": "research-synthesizer.md",
+    "planner": "gen-research-planner.md",
+    "researcher1": "gen-researcher.md",
+    "researcher2": "gen-researcher.md",
+    "validator": "gen-research-validator.md",
+    "summarizer": "gen-research-synthesizer.md",
     # Content review pipeline
-    "draft": "draft-writer.md",
-    "review": "content-reviewer.md",
-    "revise": "content-reviser.md",
-    "finalize": "content-editor.md",
+    "draft": "gen-draft-writer.md",
+    "review": "gen-content-reviewer.md",
+    "revise": "gen-content-reviser.md",
+    "finalize": "gen-content-editor.md",
     # Data processing pipeline
-    "splitter": "chunk-splitter.md",
-    "processor": "chunk-processor.md",
-    "merger": "chunk-merger.md",
+    "splitter": "gen-chunk-splitter.md",
+    "processor": "gen-chunk-processor.md",
+    "merger": "gen-chunk-merger.md",
     # Map-reduce pipeline
-    "mapper": "data-processor.md",
-    "reducer": "data-aggregator.md",
+    "mapper": "gen-data-processor.md",
+    "reducer": "gen-data-aggregator.md",
     # Generic fallbacks
-    "analyzer": "data-refiner.md",
-    "reviewer": "content-reviewer.md",
+    "analyzer": "gen-data-refiner.md",
+    "reviewer": "gen-content-reviewer.md",
 }
 
 
@@ -64,44 +70,6 @@ def _copy_prompts_to_project(
         if src.exists():
             shutil.copy2(src, dst_dir / filename)
 
-TEMPLATES: dict[str, dict[str, str]] = {
-    "research": {
-        "label": "Research pipeline",
-        "description": "plan, research, summarize a topic",
-        "pattern": "research",
-        "prompt": "What would you like to research?",
-        "default_name": "my-research-pipeline",
-    },
-    "content-review": {
-        "label": "Content review",
-        "description": "draft, review, revise, finalize",
-        "pattern": "chain-with-review",
-        "prompt": "What content would you like to create?",
-        "default_name": "my-content-review",
-    },
-    "data-processing": {
-        "label": "Data processing",
-        "description": "split work, process in parallel, merge results",
-        "pattern": "map-reduce",
-        "prompt": "What data would you like to process?",
-        "default_name": "my-data-pipeline",
-    },
-    "decision": {
-        "label": "Decision pipeline",
-        "description": "analyze, get human approval, execute",
-        "pattern": "human-approval",
-        "prompt": "What decision do you need to make?",
-        "default_name": "my-decision-pipeline",
-    },
-}
-
-# Template icons for visual flair
-_TEMPLATE_ICONS: dict[str, str] = {
-    "research": "\U0001f50d",
-    "content-review": "\U0001f4dd",
-    "data-processing": "\u2699\ufe0f",
-    "decision": "\u2696\ufe0f",
-}
 
 
 # ---------------------------------------------------------------------------
@@ -426,6 +394,513 @@ def _run_workflow(workflow_path: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Category navigation (Phase 3 — US1)
+# ---------------------------------------------------------------------------
+
+
+def _step_choose_category(*, input_fn=None) -> str | None:
+    """Display 8 categories. Returns category name, 'c' for constructor, or None for quit."""
+    _prompt = input_fn or (lambda p: click.prompt(p))
+
+    if has_rich():
+        from rich.text import Text
+
+        from binex.cli.ui import get_console
+
+        console = get_console(stderr=True)
+        console.print("\n  [bold cyan]Category:[/bold cyan]")
+        for i, cat in enumerate(CATEGORY_ORDER, 1):
+            icon = CATEGORY_ICONS.get(cat, "\u2022")
+            count = len(TEMPLATE_CATEGORIES.get(cat, []))
+            label = cat.capitalize()
+            line = Text()
+            line.append(f"    {i}) ", style="dim")
+            line.append(f"{icon} {label:16s}", style="bold")
+            line.append(f" \u2014 {count} templates", style="dim")
+            console.print(line)
+        console.print()
+        line = Text()
+        line.append("    c) ", style="dim")
+        line.append("\U0001f527 Empty constructor", style="bold")
+        line.append(" \u2014 build your own from scratch", style="dim")
+        console.print(line)
+    else:
+        click.echo("\n  Category:")
+        for i, cat in enumerate(CATEGORY_ORDER, 1):
+            icon = CATEGORY_ICONS.get(cat, "\u2022")
+            count = len(TEMPLATE_CATEGORIES.get(cat, []))
+            label = cat.capitalize()
+            click.echo(f"    {i}) {icon} {label:16s} \u2014 {count} templates")
+        click.echo()
+        click.echo("    c) \U0001f527 Empty constructor \u2014 build your own from scratch")
+
+    choice = _prompt("Choose")
+    choice = choice.strip().lower()
+
+    if choice == "c":
+        return "c"
+    if choice in ("b", "q"):
+        return None
+
+    try:
+        idx = int(choice)
+    except ValueError:
+        return None
+    if 1 <= idx <= len(CATEGORY_ORDER):
+        return CATEGORY_ORDER[idx - 1]
+    return None
+
+
+def _step_pick_template(category: str, *, input_fn=None):
+    """Display templates in a category. Returns TemplateConfig or None for back."""
+    _prompt = input_fn or (lambda p: click.prompt(p))
+    templates = TEMPLATE_CATEGORIES.get(category, [])
+
+    from binex.cli.ui import render_dag_ascii
+
+    label = category.capitalize()
+    if has_rich():
+        from rich.text import Text
+
+        from binex.cli.ui import get_console
+
+        console = get_console(stderr=True)
+        console.print(f"\n  [bold cyan]{label}:[/bold cyan]")
+        for i, t in enumerate(templates, 1):
+            parsed = parse_dsl([t.dsl])
+            nodes = list(parsed.nodes)
+            edges = []
+            for n, deps in parsed.depends_on.items():
+                for d in deps:
+                    edges.append((d, n))
+            dag_str = render_dag_ascii(nodes, edges)
+            line = Text()
+            line.append(f"    {i}) ", style="dim")
+            line.append(f"{t.label:20s}", style="bold")
+            line.append(f" {dag_str}", style="dim")
+            console.print(line)
+        console.print("\n  [dim][b] Back to categories[/dim]")
+    else:
+        click.echo(f"\n  {label}:")
+        for i, t in enumerate(templates, 1):
+            parsed = parse_dsl([t.dsl])
+            nodes = list(parsed.nodes)
+            edges = []
+            for n, deps in parsed.depends_on.items():
+                for d in deps:
+                    edges.append((d, n))
+            dag_str = render_dag_ascii(nodes, edges)
+            click.echo(f"    {i}) {t.label:20s} {dag_str}")
+        click.echo("\n  [b] Back to categories")
+
+    choice = _prompt("Choose")
+    choice = choice.strip().lower()
+
+    if choice == "b":
+        return None
+
+    try:
+        idx = int(choice)
+    except ValueError:
+        return None
+    if 1 <= idx <= len(templates):
+        return templates[idx - 1]
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Variant picker (Phase 4 — US2)
+# ---------------------------------------------------------------------------
+
+
+def _select_prompt_variant(
+    *, role_name: str, input_fn=None,
+) -> str:
+    """Pick a prompt variant for a role. Returns system_prompt string.
+
+    For known roles: shows role-specific variants.
+    For unknown roles: falls back to full bundled prompt list.
+    """
+    _prompt = input_fn or (lambda p: click.prompt(p))
+    role = get_role(role_name)
+
+    if role is None:
+        # Fallback to generic prompt picker
+        return _select_prompt(node_id=role_name, input_fn=_prompt)
+
+    variants = role.variants
+
+    while True:
+        if has_rich():
+            from rich.text import Text
+
+            from binex.cli.ui import get_console
+
+            console = get_console(stderr=True)
+            console.print(
+                f"  Prompt variants for [bold]{role_name}[/bold]:"
+            )
+            for i, v in enumerate(variants, 1):
+                line = Text()
+                line.append(f"    {i}) ", style="dim")
+                if v.is_default:
+                    line.append("\u2605 ", style="yellow")
+                else:
+                    line.append("  ", style="dim")
+                line.append(f"{v.label:12s}", style="bold")
+                line.append(f" \u2014 {v.description}", style="dim")
+                if v.is_default:
+                    line.append(" (recommended)", style="green")
+                console.print(line)
+            console.print()
+            console.print(
+                "  [dim][v N] Preview  [custom] Custom text  "
+                "[edit] $EDITOR  [file] From file[/dim]"
+            )
+        else:
+            click.echo(f"  Prompt variants for {role_name}:")
+            for i, v in enumerate(variants, 1):
+                star = "\u2605 " if v.is_default else "  "
+                rec = " (recommended)" if v.is_default else ""
+                click.echo(
+                    f"    {i}) {star}{v.label:12s}"
+                    f" \u2014 {v.description}{rec}"
+                )
+            click.echo()
+            click.echo(
+                "  [v N] Preview  [custom] Custom text  "
+                "[edit] $EDITOR  [file] From file"
+            )
+
+        choice = _prompt("Choose")
+        choice = choice.strip()
+
+        # Preview
+        if choice.lower().startswith("v "):
+            try:
+                preview_idx = int(choice.split()[1])
+                if 1 <= preview_idx <= len(variants):
+                    _preview_prompt_file(variants[preview_idx - 1].filename)
+            except (ValueError, IndexError):
+                pass
+            continue
+
+        if choice.lower() == "custom":
+            text = _prompt("Enter system prompt text")
+            return text
+
+        if choice.lower() == "edit":
+            content = click.edit()
+            if content and content.strip():
+                return content.strip()
+            # Editor cancelled — fall back to text
+            text = _prompt("Editor cancelled. Enter prompt text")
+            return text
+
+        if choice.lower() == "file":
+            path = _prompt("Enter path to prompt file")
+            if not path.startswith("file://"):
+                path = f"file://{path}"
+            return path
+
+        # Numeric selection
+        try:
+            idx = int(choice)
+            if 1 <= idx <= len(variants):
+                return f"file://prompts/{variants[idx - 1].filename}"
+        except ValueError:
+            pass
+
+        # Default: pick the default variant
+        return f"file://prompts/{role.default_variant.filename}"
+
+
+def _preview_prompt_file(filename: str) -> None:
+    """Display prompt file content."""
+    prompts_dir = _get_prompts_dir()
+    path = prompts_dir / filename
+    if not path.exists():
+        click.echo(f"  (File not found: {filename})")
+        return
+    content = path.read_text()
+    if has_rich():
+        from binex.cli.ui import get_console, make_panel
+
+        console = get_console(stderr=True)
+        console.print(make_panel(content, title=filename))
+    else:
+        click.echo(f"\n--- {filename} ---")
+        click.echo(content)
+        click.echo("--- end ---\n")
+
+
+# ---------------------------------------------------------------------------
+# Constructor (Phase 5 — US3)
+# ---------------------------------------------------------------------------
+
+
+def _constructor_loop(
+    nodes_config: dict[str, dict],
+    edges: list[tuple[str, str]],
+    *,
+    input_fn=None,
+    node_roles: dict[str, str] | None = None,
+) -> dict[str, dict]:
+    """Main constructor loop: display DAG, menu for add/delete/edit/move/preview/done."""
+    _prompt = input_fn or (lambda p: click.prompt(p))
+
+    from binex.cli.ui import render_dag_ascii
+
+    while True:
+        # Display current graph
+        node_names = list(nodes_config.keys())
+        dag_str = render_dag_ascii(node_names, edges)
+
+        if has_rich():
+            from binex.cli.ui import get_console
+
+            console = get_console(stderr=True)
+            console.print("\n[bold cyan]\u2500\u2500 Constructor "
+                          "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+                          "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+                          "\u2500\u2500\u2500\u2500[/bold cyan]")
+            console.print(f"Current graph: [bold]{dag_str}[/bold]")
+            console.print(
+                f"Nodes: {len(nodes_config)} | Edges: {len(edges)}"
+            )
+            console.print()
+            console.print("  [bold][a][/bold] Add node")
+            console.print("  [bold][d][/bold] Delete node")
+            console.print("  [bold][e][/bold] Edit node")
+            console.print("  [bold][m][/bold] Move node")
+            console.print("  [bold][p][/bold] Preview YAML")
+            console.print("  [bold][done][/bold] Finish")
+        else:
+            click.echo("\n\u2500\u2500 Constructor "
+                        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+                        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+                        "\u2500\u2500\u2500\u2500")
+            click.echo(f"Current graph: {dag_str}")
+            click.echo(f"Nodes: {len(nodes_config)} | Edges: {len(edges)}")
+            click.echo()
+            click.echo("  [a] Add node")
+            click.echo("  [d] Delete node")
+            click.echo("  [e] Edit node")
+            click.echo("  [m] Move node")
+            click.echo("  [p] Preview YAML")
+            click.echo("  [done] Finish")
+
+        action = _prompt("Action").strip().lower()
+
+        if action == "done":
+            return nodes_config
+        elif action == "a":
+            nodes_config, edges = _constructor_add_node(
+                nodes_config, edges, input_fn=_prompt,
+            )
+        elif action == "d":
+            nodes_config, edges = _constructor_delete_node(
+                nodes_config, edges, input_fn=_prompt,
+            )
+        elif action == "e":
+            nodes_config = _constructor_edit_node(
+                nodes_config, edges, input_fn=_prompt,
+                node_roles=node_roles,
+            )
+        elif action == "m":
+            nodes_config, edges = _constructor_move_node(
+                nodes_config, edges, input_fn=_prompt,
+            )
+        elif action == "p":
+            yaml_content, _ = build_custom_workflow(
+                name="constructor-preview", nodes_config=nodes_config,
+            )
+            _preview_yaml(yaml_content)
+
+
+def _constructor_add_node(
+    nodes_config: dict[str, dict],
+    edges: list[tuple[str, str]],
+    *,
+    input_fn=None,
+) -> tuple[dict[str, dict], list[tuple[str, str]]]:
+    """Add a new node to the graph."""
+    _prompt = input_fn or (lambda p: click.prompt(p))
+
+    name = _prompt("Node name")
+    if name in nodes_config:
+        click.echo(f"  Node '{name}' already exists.")
+        return nodes_config, edges
+
+    # Select prompt
+    prompt_str = _select_prompt_variant(
+        role_name=name, input_fn=_prompt,
+    )
+
+    # Select agent
+    provider, model = _select_provider(input_fn=_prompt)
+    agent_uri = f"{provider.agent_prefix}{model}"
+
+    # Dependencies
+    dep_str = _prompt("Depends on (comma-separated, or empty)")
+    deps = [d.strip() for d in dep_str.split(",") if d.strip()] \
+        if dep_str else []
+
+    cfg: dict = {
+        "agent": agent_uri,
+        "system_prompt": prompt_str,
+        "outputs": ["result"],
+    }
+    if deps:
+        cfg["depends_on"] = deps
+        for d in deps:
+            if d in nodes_config:
+                edges.append((d, name))
+
+    nodes_config[name] = cfg
+    click.echo(f"  Added node '{name}'")
+    return nodes_config, edges
+
+
+def _constructor_delete_node(
+    nodes_config: dict[str, dict],
+    edges: list[tuple[str, str]],
+    *,
+    input_fn=None,
+) -> tuple[dict[str, dict], list[tuple[str, str]]]:
+    """Delete a node and its edges."""
+    _prompt = input_fn or (lambda p: click.prompt(p))
+
+    node_list = list(nodes_config.keys())
+    for i, name in enumerate(node_list, 1):
+        click.echo(f"    {i}) {name}")
+
+    try:
+        choice = int(_prompt("Delete which node?"))
+    except ValueError:
+        click.echo("  Invalid choice.")
+        return nodes_config, edges
+    if choice < 1 or choice > len(node_list):
+        click.echo("  Invalid choice.")
+        return nodes_config, edges
+
+    target = node_list[choice - 1]
+    del nodes_config[target]
+    edges = [(s, d) for s, d in edges if s != target and d != target]
+
+    # Remove from depends_on of other nodes
+    for cfg in nodes_config.values():
+        deps = cfg.get("depends_on", [])
+        if target in deps:
+            deps.remove(target)
+
+    click.echo(f"  Deleted node '{target}'")
+    return nodes_config, edges
+
+
+def _constructor_edit_node(
+    nodes_config: dict[str, dict],
+    edges: list[tuple[str, str]],
+    *,
+    input_fn=None,
+    node_roles: dict[str, str] | None = None,
+) -> dict[str, dict]:
+    """Edit a node's prompt, agent, or config."""
+    _prompt = input_fn or (lambda p: click.prompt(p))
+
+    node_list = list(nodes_config.keys())
+    for i, name in enumerate(node_list, 1):
+        click.echo(f"    {i}) {name}")
+
+    try:
+        choice = int(_prompt("Edit which node?"))
+    except ValueError:
+        click.echo("  Invalid choice.")
+        return nodes_config
+    if choice < 1 or choice > len(node_list):
+        click.echo("  Invalid choice.")
+        return nodes_config
+
+    target = node_list[choice - 1]
+    cfg = nodes_config[target]
+
+    click.echo(f"  Editing '{target}':")
+    click.echo("    [p] Prompt")
+    click.echo("    [a] Agent (provider/model)")
+    click.echo("    [c] Config (advanced params)")
+    click.echo("    [b] Back")
+
+    sub = _prompt("Choose").strip().lower()
+
+    if sub == "p":
+        # Look up role from node_roles mapping, fallback to node name
+        role_name = (node_roles or {}).get(target, target)
+        cfg["system_prompt"] = _select_prompt_variant(
+            role_name=role_name, input_fn=_prompt,
+        )
+    elif sub == "a":
+        provider, model = _select_provider(input_fn=_prompt)
+        cfg["agent"] = f"{provider.agent_prefix}{model}"
+    elif sub == "c":
+        advanced = _configure_advanced_params(input_fn=_prompt)
+        cfg.update(advanced)
+
+    nodes_config[target] = cfg
+    return nodes_config
+
+
+def _constructor_move_node(
+    nodes_config: dict[str, dict],
+    edges: list[tuple[str, str]],
+    *,
+    input_fn=None,
+) -> tuple[dict[str, dict], list[tuple[str, str]]]:
+    """Move a node by changing its edges."""
+    _prompt = input_fn or (lambda p: click.prompt(p))
+
+    node_list = list(nodes_config.keys())
+    for i, name in enumerate(node_list, 1):
+        click.echo(f"    {i}) {name}")
+
+    try:
+        choice = int(_prompt("Move which node?"))
+    except ValueError:
+        click.echo("  Invalid choice.")
+        return nodes_config, edges
+    if choice < 1 or choice > len(node_list):
+        click.echo("  Invalid choice.")
+        return nodes_config, edges
+
+    target = node_list[choice - 1]
+
+    # Remove old edges for this node
+    edges = [(s, d) for s, d in edges if s != target and d != target]
+
+    # New parents
+    parent_str = _prompt(f"New parents for '{target}' (comma-separated, or empty)")
+    parents = [p.strip() for p in parent_str.split(",") if p.strip()] \
+        if parent_str else []
+
+    # New children
+    child_str = _prompt(f"New children of '{target}' (comma-separated, or empty)")
+    children = [c.strip() for c in child_str.split(",") if c.strip()] \
+        if child_str else []
+
+    for p in parents:
+        if p in nodes_config:
+            edges.append((p, target))
+    for c in children:
+        if c in nodes_config:
+            edges.append((target, c))
+
+    # Update depends_on
+    nodes_config[target]["depends_on"] = parents if parents else []
+
+    click.echo(f"  Moved node '{target}'")
+    return nodes_config, edges
+
+
+# ---------------------------------------------------------------------------
 # Wizard steps
 # ---------------------------------------------------------------------------
 
@@ -433,55 +908,27 @@ TOTAL_STEPS = 5
 
 
 def _step_choose_template() -> tuple[str, str, str]:
-    """Step 1: Template selection. Returns (dsl, default_name, user_prompt_text)."""
+    """Step 1: Two-level category → template selection.
+
+    Returns (dsl, default_name, user_prompt_text).
+    """
     _print_step(1, TOTAL_STEPS, "Choose a template")
-    click.echo()
 
-    template_keys = list(TEMPLATES.keys())
-    if has_rich():
-        from rich.text import Text
+    while True:
+        cat = _step_choose_category()
+        if cat is None:
+            click.echo("Cancelled.")
+            sys.exit(0)
+        if cat == "c":
+            return _step_custom_template()
 
-        from binex.cli.ui import get_console
+        tpl = _step_pick_template(cat)
+        if tpl is None:
+            continue
 
-        console = get_console(stderr=True)
-        for i, key in enumerate(template_keys, 1):
-            t = TEMPLATES[key]
-            icon = _TEMPLATE_ICONS.get(key, "\u2022")
-            line = Text()
-            line.append(f"  {i}) ", style="dim")
-            line.append(f"{icon} {t['label']:20s}", style="bold")
-            line.append(f" \u2014 {t['description']}", style="dim")
-            console.print(line)
-        custom_n = len(template_keys) + 1
-        line = Text()
-        line.append(f"  {custom_n}) ", style="dim")
-        line.append(f"\U0001f527 {'Custom':20s}", style="bold")
-        line.append(" \u2014 build your own workflow with arrows", style="dim")
-        console.print(line)
-    else:
-        for i, key in enumerate(template_keys, 1):
-            t = TEMPLATES[key]
-            click.echo(f"  {i}) {t['label']:20s} \u2014 {t['description']}")
-        custom_n = len(template_keys) + 1
-        click.echo(f"  {custom_n}) {'Custom':20s} \u2014 build your own workflow with arrows")
-    click.echo()
-
-    choice = click.prompt("Choose", default=1, type=int)
-
-    if choice < 1 or choice > len(template_keys) + 1:
-        click.echo(f"Error: invalid choice {choice}.", err=True)
-        sys.exit(1)
-
-    if choice <= len(template_keys):
-        tpl_key = template_keys[choice - 1]
-        tpl = TEMPLATES[tpl_key]
-        dsl = PATTERNS[tpl["pattern"]]
-        _print_confirm(f"{tpl['label']}")
-        _print_dsl_preview(dsl)
-        return dsl, tpl["default_name"], tpl["prompt"]
-
-    # Custom mode
-    return _step_custom_template()
+        _print_confirm(f"{tpl.label}")
+        _print_dsl_preview(tpl.dsl)
+        return tpl.dsl, tpl.default_name, f"Input for {tpl.label}:"
 
 
 def _custom_interactive_wizard(dsl: str) -> None:
