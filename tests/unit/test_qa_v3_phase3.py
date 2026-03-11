@@ -10,9 +10,11 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import UTC, datetime, timedelta
+from io import StringIO
 from unittest.mock import patch
 
 import pytest
+from rich.console import Console
 from click.testing import CliRunner
 
 from binex.adapters.human import HumanApprovalAdapter, HumanInputAdapter
@@ -376,7 +378,11 @@ class TestDebugCommandGaps:
                 NodeReport(node_id="skip", agent_id="", status="skipped", blocked_by=["done"]),
             ],
         )
-        output = format_debug_report_rich(report)
+        buf = StringIO()
+        test_console = Console(file=buf, force_terminal=True, width=120)
+        with patch("binex.trace.debug_rich.get_console", return_value=test_console):
+            format_debug_report_rich(report)
+        output = buf.getvalue()
         assert "skip" in output
 
 

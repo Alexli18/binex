@@ -2,10 +2,23 @@
 
 from __future__ import annotations
 
+from io import StringIO
+from unittest.mock import patch
+
 import pytest
+from rich.console import Console
 
 from binex.trace.debug_report import DebugReport, NodeReport
 from binex.trace.debug_rich import format_debug_report_rich
+
+
+def _capture_rich(report, **kwargs) -> str:
+    """Call format_debug_report_rich and capture its console output."""
+    buf = StringIO()
+    test_console = Console(file=buf, force_terminal=True, width=120)
+    with patch("binex.trace.debug_rich.get_console", return_value=test_console):
+        format_debug_report_rich(report, **kwargs)
+    return buf.getvalue()
 
 
 def _make_report(*, status="failed", nodes=None):
@@ -44,7 +57,7 @@ def _make_report(*, status="failed", nodes=None):
 def test_rich_format_returns_string():
     """Rich formatter returns string containing run_id and node IDs."""
     report = _make_report()
-    output = format_debug_report_rich(report)
+    output = _capture_rich(report)
 
     assert isinstance(output, str)
     assert "run-rich-001" in output
@@ -58,7 +71,7 @@ def test_rich_format_returns_string():
 def test_rich_format_errors_only():
     """Rich formatter with errors_only shows only failed nodes."""
     report = _make_report()
-    output = format_debug_report_rich(report, errors_only=True)
+    output = _capture_rich(report, errors_only=True)
 
     assert "step_b" in output
     assert "Connection refused" in output

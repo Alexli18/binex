@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock
+from io import StringIO
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
 from fastapi.testclient import TestClient
+from rich.console import Console
 
 from binex.models.artifact import Artifact, Lineage
 from binex.models.execution import ExecutionRecord, RunSummary
@@ -18,6 +20,15 @@ from binex.trace.debug_report import DebugReport, NodeReport
 from binex.trace.debug_rich import format_debug_report_rich
 from binex.trace.diff import diff_runs, format_diff
 from binex.trace.tracer import generate_timeline, generate_timeline_json
+
+
+def _capture_rich(report, **kwargs) -> str:
+    """Call format_debug_report_rich and capture its console output."""
+    buf = StringIO()
+    test_console = Console(file=buf, force_terminal=True, width=120)
+    with patch("binex.trace.debug_rich.get_console", return_value=test_console):
+        format_debug_report_rich(report, **kwargs)
+    return buf.getvalue()
 
 
 # ---------------------------------------------------------------------------
@@ -326,7 +337,7 @@ def test_rich_format_unicode_error_message_no_crash() -> None:
     )
 
     # Act
-    output = format_debug_report_rich(report)
+    output = _capture_rich(report)
 
     # Assert — no crash, output is a non-empty string containing the run_id
     assert isinstance(output, str)
@@ -357,7 +368,7 @@ def test_rich_format_empty_error_string() -> None:
     )
 
     # Act
-    output = format_debug_report_rich(report)
+    output = _capture_rich(report)
 
     # Assert
     assert isinstance(output, str)
@@ -388,7 +399,7 @@ def test_rich_format_multiline_error() -> None:
     )
 
     # Act
-    output = format_debug_report_rich(report)
+    output = _capture_rich(report)
 
     # Assert — should contain key parts of the traceback
     assert isinstance(output, str)
@@ -419,7 +430,7 @@ def test_rich_format_special_chars_in_prompt() -> None:
     )
 
     # Act
-    output = format_debug_report_rich(report)
+    output = _capture_rich(report)
 
     # Assert
     assert isinstance(output, str)
