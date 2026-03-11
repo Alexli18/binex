@@ -96,3 +96,32 @@ class TestPromptSelection:
         inputs = iter([file_option, "/path/to/my-prompt.md"])
         result = _select_prompt(node_id="test", input_fn=lambda prompt: next(inputs))
         assert result == "file:///path/to/my-prompt.md"
+
+
+from binex.cli.start import _configure_advanced_params
+
+
+class TestAdvancedParams:
+    """Optional advanced parameter configuration."""
+
+    def test_budget_only(self):
+        inputs = iter(["0.50", "", "", "", ""])
+        result = _configure_advanced_params(input_fn=lambda prompt: next(inputs))
+        assert result["budget"] == {"max_cost": 0.50}
+        assert "retry_policy" not in result
+        assert "deadline_ms" not in result
+        assert "config" not in result
+
+    def test_all_params(self):
+        inputs = iter(["1.00", "3", "exponential", "30", "0.7", "2000"])
+        result = _configure_advanced_params(input_fn=lambda prompt: next(inputs))
+        assert result["budget"] == {"max_cost": 1.00}
+        assert result["retry_policy"] == {"max_retries": 3, "backoff": "exponential"}
+        assert result["deadline_ms"] == 30000
+        assert result["config"] == {"temperature": 0.7, "max_tokens": 2000}
+
+    def test_skip_all(self):
+        """Empty inputs skip all optional params."""
+        inputs = iter(["", "", "", "", ""])
+        result = _configure_advanced_params(input_fn=lambda prompt: next(inputs))
+        assert result == {}

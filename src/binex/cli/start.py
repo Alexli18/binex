@@ -590,6 +590,40 @@ def _step_mode_topology(*, input_fn=None) -> str:
     return " -> ".join(levels)
 
 
+def _configure_advanced_params(*, input_fn=None) -> dict:
+    """Collect optional advanced parameters. Returns dict of extra YAML keys.
+
+    Empty input skips each parameter.
+    """
+    _prompt = input_fn or (lambda prompt: click.prompt(prompt, default=""))
+    result: dict = {}
+
+    budget_str = _prompt("Budget max_cost in $ (empty to skip)")
+    if budget_str:
+        result["budget"] = {"max_cost": float(budget_str)}
+
+    retry_str = _prompt("Max retries (empty to skip)")
+    if retry_str:
+        backoff = _prompt("Backoff strategy [fixed/exponential]") or "exponential"
+        result["retry_policy"] = {"max_retries": int(retry_str), "backoff": backoff}
+
+    deadline_str = _prompt("Deadline in seconds (empty to skip)")
+    if deadline_str:
+        result["deadline_ms"] = int(float(deadline_str) * 1000)
+
+    temp_str = _prompt("Temperature (empty to skip)")
+    config: dict = {}
+    if temp_str:
+        config["temperature"] = float(temp_str)
+    tokens_str = _prompt("Max tokens (empty to skip)")
+    if tokens_str:
+        config["max_tokens"] = int(tokens_str)
+    if config:
+        result["config"] = config
+
+    return result
+
+
 def _step_user_input() -> bool:
     """Step 2: Ask whether to add a user prompt. Returns want_user_input."""
     _print_step(2, TOTAL_STEPS, "User input")
