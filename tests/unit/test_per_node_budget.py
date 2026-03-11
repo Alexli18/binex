@@ -490,7 +490,8 @@ class TestCostShowNodeBudget:
         store.close = AsyncMock()
 
         runner = CliRunner()
-        with patch("binex.cli.cost._get_stores", return_value=(store, AsyncMock())):
+        with patch("binex.cli.cost._get_stores", return_value=(store, AsyncMock())), \
+             patch("binex.cli.has_rich", return_value=False):
             result = runner.invoke(cost_show_cmd, ["run_1"])
 
         assert result.exit_code == 0

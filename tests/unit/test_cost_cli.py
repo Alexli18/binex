@@ -99,7 +99,7 @@ class TestCostShow:
         with patch(
             "binex.cli.cost._get_stores",
             return_value=(store_with_costs, InMemoryArtifactStore()),
-        ):
+        ), patch("binex.cli.has_rich", return_value=False):
             result = runner.invoke(cost_show_cmd, ["run_test123"])
 
         assert result.exit_code == 0

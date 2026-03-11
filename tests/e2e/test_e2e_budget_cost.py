@@ -37,19 +37,18 @@ nodes:
     run_data = json.loads(result.stdout)
     run_id = run_data["run_id"]
 
-    # Cost show
+    # Cost show — local adapters no longer create cost records
     result = run_binex("cost", "show", run_id, "--json", env=env)
     assert result.returncode == 0
     cost_data = json.loads(result.stdout)
     assert cost_data["total_cost"] == 0.0
-    assert len(cost_data["nodes"]) == 3
+    assert len(cost_data["nodes"]) == 0
 
-    # Cost history
+    # Cost history — no records for local adapters
     result = run_binex("cost", "history", run_id, "--json", env=env)
     assert result.returncode == 0
     hist = json.loads(result.stdout)
-    assert len(hist["records"]) == 3
-    assert all(r["source"] == "local" for r in hist["records"])
+    assert len(hist["records"]) == 0
 
 
 # --- TC-E2E-010: Budget in JSON output ---
@@ -117,7 +116,8 @@ nodes:
     result = run_binex("run", str(wf), "--json", env=env)
     run_id = json.loads(result.stdout)["run_id"]
 
-    result = run_binex("cost", "show", run_id, env=env)
+    plain_env = {**env, "NO_COLOR": "1"}
+    result = run_binex("cost", "show", run_id, env=plain_env)
     assert result.returncode == 0
     assert f"Run: {run_id}" in result.stdout
     assert "Total cost:" in result.stdout
@@ -140,10 +140,12 @@ nodes:
     result = run_binex("run", str(wf), "--json", env=env)
     run_id = json.loads(result.stdout)["run_id"]
 
-    result = run_binex("cost", "history", run_id, env=env)
+    plain_env = {**env, "NO_COLOR": "1"}
+    result = run_binex("cost", "history", run_id, env=plain_env)
     assert result.returncode == 0
     assert "Cost history for" in result.stdout
-    assert "local" in result.stdout  # source=local
+    # local adapters no longer create cost records, so no "local" source entries
+    assert "No cost records" in result.stdout or "local" not in result.stdout
 
 
 # --- TC-E2E-014: Cost for nonexistent run ---
@@ -188,9 +190,9 @@ nodes:
     # All run_ids unique
     assert len(set(run_ids)) == 3
 
-    # Each run has exactly 2 cost records
+    # Local adapters no longer create cost records — expect 0 per run
     for rid in run_ids:
         result = run_binex("cost", "history", rid, "--json", env=env)
         assert result.returncode == 0
         data = json.loads(result.stdout)
-        assert len(data["records"]) == 2
+        assert len(data["records"]) == 0
