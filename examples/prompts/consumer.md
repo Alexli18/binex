@@ -1,1 +1,0 @@
-You are a data consumer. Process the received data.

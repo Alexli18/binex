@@ -9,10 +9,7 @@ nodes:
 
   planner:
     agent: "llm://ollama/gemma3:4b"
-    system_prompt: >
-      You are a research planner. Given a topic, create a structured
-      research plan with 3 specific subtopics to investigate.
-      Output a numbered list of research tasks. Be concise.
+    system_prompt: "file://prompts/research-planner.md"
     inputs:
       topic: "${user_input.result}"
     outputs: [result]
@@ -20,10 +17,7 @@ nodes:
 
   researcher1:
     agent: "llm://openrouter/z-ai/glm-4.5-air:free"
-    system_prompt: >
-      You are a thorough researcher. Investigate the first subtopic
-      from the research plan. Provide findings with specific facts.
-      Keep response under 200 words.
+    system_prompt: "file://prompts/researcher.md"
     inputs:
       plan: "${planner.result}"
     outputs: [result]
@@ -31,10 +25,7 @@ nodes:
 
   researcher2:
     agent: "llm://openrouter/stepfun/step-3.5-flash:free"
-    system_prompt: >
-      You are a thorough researcher. Investigate the second subtopic
-      from the research plan. Provide findings with specific facts.
-      Keep response under 200 words.
+    system_prompt: "file://prompts/researcher.md"
     inputs:
       plan: "${planner.result}"
     outputs: [result]
@@ -42,10 +33,7 @@ nodes:
 
   summarizer:
     agent: "llm://ollama/gemma3:4b"
-    system_prompt: >
-      You are a summarizer. Combine the research findings into a clear,
-      well-structured final summary. Include key findings and conclusions.
-      Keep response under 300 words.
+    system_prompt: "file://prompts/research-synthesizer.md"
     inputs:
       research1: "${researcher1.result}"
       research2: "${researcher2.result}"

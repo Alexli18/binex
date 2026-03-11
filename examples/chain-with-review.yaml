@@ -16,7 +16,7 @@ description: "Content pipeline: draft -> review -> revise -> final"
 nodes:
   draft:
     agent: "local://echo"
-    system_prompt: "Generate initial draft from the given topic"
+    system_prompt: "file://prompts/draft-writer.md"
     inputs:
       query: "${user.query}"
     outputs: [output]
@@ -24,7 +24,7 @@ nodes:
 
   review:
     agent: "local://echo"
-    system_prompt: "Review the draft and provide detailed feedback"
+    system_prompt: "file://prompts/content-reviewer.md"
     inputs:
       draft: "${draft.output}"
     outputs: [output]
@@ -32,7 +32,7 @@ nodes:
 
   revise:
     agent: "local://echo"
-    system_prompt: "Revise the draft incorporating review feedback"
+    system_prompt: "file://prompts/content-reviser.md"
     inputs:
       draft: "${draft.output}"
       feedback: "${review.output}"
@@ -41,7 +41,7 @@ nodes:
 
   final:
     agent: "local://echo"
-    system_prompt: "Polish and finalize the revised content"
+    system_prompt: "file://prompts/content-editor.md"
     inputs:
       revised: "${revise.output}"
     outputs: [output]

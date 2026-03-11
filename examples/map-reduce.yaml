@@ -18,7 +18,7 @@ description: "Map-reduce: split -> 3 parallel workers -> reduce"
 nodes:
   split:
     agent: "local://echo"
-    system_prompt: "Split the input data into three chunks"
+    system_prompt: "file://prompts/chunk-splitter.md"
     inputs:
       query: "${user.query}"
     outputs: [chunks]
@@ -26,7 +26,7 @@ nodes:
 
   worker1:
     agent: "local://echo"
-    system_prompt: "Process chunk 1"
+    system_prompt: "file://prompts/chunk-processor.md"
     inputs:
       chunk: "${split.chunks}"
     outputs: [result]
@@ -34,7 +34,7 @@ nodes:
 
   worker2:
     agent: "local://echo"
-    system_prompt: "Process chunk 2"
+    system_prompt: "file://prompts/chunk-processor.md"
     inputs:
       chunk: "${split.chunks}"
     outputs: [result]
@@ -42,7 +42,7 @@ nodes:
 
   worker3:
     agent: "local://echo"
-    system_prompt: "Process chunk 3"
+    system_prompt: "file://prompts/chunk-processor.md"
     inputs:
       chunk: "${split.chunks}"
     outputs: [result]
@@ -50,7 +50,7 @@ nodes:
 
   reduce:
     agent: "local://echo"
-    system_prompt: "Merge and aggregate all worker results"
+    system_prompt: "file://prompts/chunk-merger.md"
     inputs:
       result1: "${worker1.result}"
       result2: "${worker2.result}"

@@ -16,7 +16,7 @@ description: "Human-in-the-loop feedback: generate -> human review -> revise -> 
 nodes:
   generate:
     agent: "local://echo"
-    system_prompt: "Generate initial content from the query"
+    system_prompt: "file://prompts/draft-writer.md"
     inputs:
       query: "${user.query}"
     outputs: [output]
@@ -32,7 +32,7 @@ nodes:
 
   revise:
     agent: "local://echo"
-    system_prompt: "Revise the content based on human feedback"
+    system_prompt: "file://prompts/content-reviser.md"
     inputs:
       original: "${generate.output}"
       feedback: "${human-review.output}"
@@ -41,7 +41,7 @@ nodes:
 
   output:
     agent: "local://echo"
-    system_prompt: "Finalize and format the revised content"
+    system_prompt: "file://prompts/content-editor.md"
     inputs:
       revised: "${revise.output}"
     outputs: [output]

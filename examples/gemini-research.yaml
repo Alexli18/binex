@@ -4,14 +4,14 @@ description: "Research pipeline using Gemini 2.5 Flash"
 nodes:
   planner:
     agent: "llm://gemini/gemini-2.5-flash"
-    system_prompt: "Break down this research topic into 3 specific sub-questions to investigate"
+    system_prompt: "file://prompts/research-planner.md"
     inputs:
       query: "${user.query}"
     outputs: [plan]
 
   researcher:
     agent: "llm://gemini/gemini-2.5-flash"
-    system_prompt: "Answer this research question with specific facts and references"
+    system_prompt: "file://prompts/researcher.md"
     inputs:
       questions: "${planner.plan}"
     outputs: [findings]
@@ -19,7 +19,7 @@ nodes:
 
   summarizer:
     agent: "llm://gemini/gemini-2.5-flash"
-    system_prompt: "Synthesize these research findings into a concise summary with key takeaways"
+    system_prompt: "file://prompts/research-synthesizer.md"
     inputs:
       research: "${researcher.findings}"
     outputs: [report]

@@ -22,7 +22,7 @@ nodes:
   # Step 1: Break the user's query into sub-questions
   planner:
     agent: "llm://ollama/llama3.2"
-    system_prompt: "Break down this research topic into 3 specific sub-questions to investigate"
+    system_prompt: "file://prompts/research-planner.md"
     inputs:
       query: "${user.query}"        # user provides the research topic
     outputs: [plan]
@@ -30,7 +30,7 @@ nodes:
   # Step 2: Answer the sub-questions with facts
   researcher:
     agent: "llm://ollama/llama3.2"
-    system_prompt: "Answer this research question with specific facts and references"
+    system_prompt: "file://prompts/researcher.md"
     inputs:
       questions: "${planner.plan}"  # runtime reference to planner's output
     outputs: [findings]
@@ -39,7 +39,7 @@ nodes:
   # Step 3: Synthesize findings into a report
   summarizer:
     agent: "llm://ollama/llama3.2"
-    system_prompt: "Synthesize these research findings into a concise summary with key takeaways"
+    system_prompt: "file://prompts/research-synthesizer.md"
     inputs:
       research: "${researcher.findings}"
     outputs: [report]

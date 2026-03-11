@@ -9,17 +9,17 @@ name: file-prompt-demo
 description: "Demo of file:// system_prompt loading"
 
 nodes:
-  producer:
+  planner:
     agent: "local://echo"
-    system_prompt: "file://prompts/producer.md"
+    system_prompt: "file://prompts/research-planner.md"
     inputs:
-      data: "hello from file prompt"
+      topic: "hello from file prompt"
     outputs: [result]
 
-  consumer:
+  researcher:
     agent: "local://echo"
-    system_prompt: "file://prompts/consumer.md"
+    system_prompt: "file://prompts/researcher.md"
     inputs:
-      data: "${producer.result}"
+      plan: "${planner.result}"
     outputs: [final]
-    depends_on: [producer]
+    depends_on: [planner]

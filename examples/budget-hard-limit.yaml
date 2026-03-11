@@ -1,0 +1,49 @@
+# Budget Hard Limit Example
+# ==========================
+# Demonstrates budget enforcement with policy: stop.
+# When accumulated cost exceeds max_cost, remaining nodes are skipped
+# and the run status becomes "over_budget".
+#
+# The orchestrator checks budget between scheduling batches —
+# a running node is NOT interrupted mid-execution.
+#
+# Run:   binex run examples/budget-hard-limit.yaml
+# Cost:  binex cost show <run_id>
+# Debug: binex debug <run_id>
+
+name: budget-hard-limit
+description: "Pipeline with hard $1.00 budget limit — stops on overspend"
+
+budget:
+  max_cost: 1.00
+  policy: stop           # skip remaining nodes if budget exceeded
+
+nodes:
+  planner:
+    agent: "local://echo"
+    system_prompt: "file://prompts/research-planner.md"
+    inputs:
+      topic: "${user.topic}"
+    outputs: [plan]
+
+  researcher:
+    agent: "local://echo"
+    system_prompt: "file://prompts/researcher.md"
+    inputs:
+      plan: "${node.planner.plan}"
+    outputs: [findings]
+    depends_on: [planner]
+
+  summarizer:
+    agent: "local://echo"
+    system_prompt: "file://prompts/research-synthesizer.md"
+    inputs:
+      data: "${node.researcher.findings}"
+    outputs: [summary]
+    depends_on: [researcher]
+
+defaults:
+  deadline_ms: 30000
+  retry_policy:
+    max_retries: 1
+    backoff: exponential
