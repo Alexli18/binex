@@ -162,3 +162,93 @@ class TestConfigureBackEdge:
             input_fn=lambda prompt: next(inputs),
         )
         assert result["max_iterations"] == 3
+
+
+from binex.cli.start import _configure_node
+
+
+class TestConfigureNode:
+    """Per-node interactive configuration."""
+
+    def test_llm_node_basic(self):
+        """LLM node returns agent URI, prompt, no back-edge."""
+        inputs = iter([
+            "1",          # agent type: LLM
+            "1",          # provider: ollama
+            "",           # model: default (will use provider default)
+            "1",          # prompt: first bundled
+            "n",          # back-edge: no
+            "n",          # advanced: no
+        ])
+        config = _configure_node(
+            node_id="writer",
+            dependencies=["planner"],
+            input_fn=lambda prompt: next(inputs),
+        )
+        assert config["agent"].startswith("llm://")
+        assert config["system_prompt"].startswith("file://prompts/")
+        assert "back_edge" not in config
+        assert config["depends_on"] == ["planner"]
+
+    def test_human_review_node(self):
+        """Human review node uses human://review agent."""
+        inputs = iter([
+            "2",          # agent type: Human review
+            "n",          # back-edge: no
+            "n",          # advanced: no
+        ])
+        config = _configure_node(
+            node_id="review",
+            dependencies=["writer"],
+            input_fn=lambda prompt: next(inputs),
+        )
+        assert config["agent"] == "human://review"
+
+    def test_human_input_node(self):
+        """Human input node uses human://input agent."""
+        inputs = iter([
+            "3",          # agent type: Human input
+            "What is your topic?",  # prompt text
+            "n",          # back-edge: no
+            "n",          # advanced: no
+        ])
+        config = _configure_node(
+            node_id="ask",
+            dependencies=[],
+            input_fn=lambda prompt: next(inputs),
+        )
+        assert config["agent"] == "human://input"
+        assert config["system_prompt"] == "What is your topic?"
+
+    def test_a2a_node(self):
+        """A2A node uses a2a:// agent."""
+        inputs = iter([
+            "4",                          # agent type: A2A
+            "http://localhost:9000",       # endpoint
+            "n",                          # back-edge: no
+            "n",                          # advanced: no
+        ])
+        config = _configure_node(
+            node_id="external",
+            dependencies=["planner"],
+            input_fn=lambda prompt: next(inputs),
+        )
+        assert config["agent"] == "a2a://http://localhost:9000"
+
+    def test_back_edge_config(self):
+        """Human review node with back-edge."""
+        inputs = iter([
+            "2",          # agent type: Human review
+            "y",          # back-edge: yes
+            "1",          # target: first upstream node (writer)
+            "3",          # max_iterations
+            "n",          # advanced: no
+        ])
+        config = _configure_node(
+            node_id="review",
+            dependencies=["writer"],
+            input_fn=lambda prompt: next(inputs),
+        )
+        assert config["back_edge"]["target"] == "writer"
+        assert config["back_edge"]["max_iterations"] == 3
+        assert "rejected" in config["back_edge"]["when"]

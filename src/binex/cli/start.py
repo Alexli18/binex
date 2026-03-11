@@ -592,6 +592,75 @@ def _configure_back_edge(*, node_id: str, upstream_nodes: list[str], input_fn=No
     }
 
 
+def _select_provider(*, input_fn=None) -> tuple:
+    """Select provider and model. Returns (ProviderConfig, model_string)."""
+    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
+
+    provider_names = list(PROVIDERS.keys())
+    click.echo("  Provider:")
+    for i, name in enumerate(provider_names, 1):
+        p = PROVIDERS[name]
+        suffix = "free, local" if p.env_var is None else "API key required"
+        click.echo(f"    {i}) {name} — {suffix}")
+
+    choice = int(_prompt("Choose provider"))
+    provider = PROVIDERS[provider_names[choice - 1]]
+
+    model_input = _prompt(f"Model [{provider.default_model}]")
+    model = model_input if model_input else provider.default_model
+
+    # Deduplicate provider prefix
+    prefix_provider = provider.agent_prefix.split("://")[-1].rstrip("/")
+    if prefix_provider and model.startswith(f"{prefix_provider}/"):
+        model = model[len(prefix_provider) + 1:]
+
+    return provider, model
+
+
+def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> dict:
+    """Interactively configure a single node. Returns dict for YAML generation."""
+    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
+
+    click.echo(f"\n  Agent type for '{node_id}':")
+    click.echo("    1) LLM (language model)")
+    click.echo("    2) Human review (approve/reject)")
+    click.echo("    3) Human input (free text)")
+    click.echo("    4) A2A (external agent)")
+    agent_type = _prompt("Choose")
+
+    config: dict = {"outputs": ["result"]}
+    if dependencies:
+        config["depends_on"] = dependencies
+
+    if agent_type == "1":
+        provider, model = _select_provider(input_fn=_prompt)
+        config["agent"] = f"{provider.agent_prefix}{model}"
+        config["system_prompt"] = _select_prompt(node_id=node_id, input_fn=_prompt)
+    elif agent_type == "2":
+        config["agent"] = "human://review"
+    elif agent_type == "3":
+        config["agent"] = "human://input"
+        config["system_prompt"] = _prompt("Prompt text for user")
+    elif agent_type == "4":
+        endpoint = _prompt("Endpoint URL")
+        config["agent"] = f"a2a://{endpoint}"
+
+    # Back-edge
+    add_back_edge = _prompt("Add review loop (back-edge)? (y/n)")
+    if add_back_edge.lower() == "y":
+        config["back_edge"] = _configure_back_edge(
+            node_id=node_id, upstream_nodes=dependencies, input_fn=_prompt,
+        )
+
+    # Advanced params
+    add_advanced = _prompt("Configure advanced parameters? (y/n)")
+    if add_advanced.lower() == "y":
+        advanced = _configure_advanced_params(input_fn=_prompt)
+        config.update(advanced)
+
+    return config
+
+
 def _step_mode_topology(*, input_fn=None) -> str:
     """Build workflow topology step by step. Returns DSL string like 'A -> B, C -> D'."""
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))
