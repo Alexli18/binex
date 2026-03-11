@@ -171,10 +171,23 @@ def scaffold_workflow(
 
     # --list-patterns: show table and exit
     if list_patterns:
-        click.echo(f"{'Pattern':<28} DSL")
-        click.echo("-" * 60)
-        for pname, pdsl in PATTERNS.items():
-            click.echo(f"{pname:<28} {pdsl}")
+        from binex.cli import has_rich
+
+        if has_rich():
+            from binex.cli.ui import get_console, make_table
+
+            table = make_table(
+                ("Pattern", {"style": "bold", "min_width": 24}),
+                ("DSL", {}),
+            )
+            for pname, pdsl in PATTERNS.items():
+                table.add_row(pname, pdsl)
+            get_console().print(table)
+        else:
+            click.echo(f"{'Pattern':<28} DSL")
+            click.echo("-" * 60)
+            for pname, pdsl in PATTERNS.items():
+                click.echo(f"{pname:<28} {pdsl}")
         return
 
     # Resolve DSL source
