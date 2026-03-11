@@ -119,3 +119,118 @@ def test_env_var_mixed_with_user_vars(
     spec = load_workflow_from_string(yaml_str, fmt="yaml", user_vars={"topic": "AI"})
     assert spec.nodes["producer"].config["api_key"] == "secret"
     assert spec.nodes["producer"].inputs["topic"] == "AI"
+
+
+class TestResolveFilePrompts:
+    """Tests for file:// system_prompt resolution."""
+
+    def test_resolve_file_prompt_relative(self, tmp_path):
+        """Relative file:// path resolves relative to base_dir."""
+        prompt_dir = tmp_path / "prompts"
+        prompt_dir.mkdir()
+        (prompt_dir / "agent.md").write_text("You are a helpful agent.")
+
+        data = {
+            "name": "test",
+            "nodes": {
+                "a": {
+                    "agent": "llm://openai/gpt-4",
+                    "system_prompt": "file://prompts/agent.md",
+                    "outputs": ["out"],
+                }
+            },
+        }
+
+        from binex.workflow_spec.loader import _resolve_file_prompts
+        _resolve_file_prompts(data, base_dir=tmp_path)
+        assert data["nodes"]["a"]["system_prompt"] == "You are a helpful agent."
+
+    def test_resolve_file_prompt_absolute(self, tmp_path):
+        """Absolute file:// path is used as-is."""
+        prompt_file = tmp_path / "prompt.txt"
+        prompt_file.write_text("Absolute prompt content.")
+
+        data = {
+            "name": "test",
+            "nodes": {
+                "a": {
+                    "agent": "llm://openai/gpt-4",
+                    "system_prompt": f"file://{prompt_file}",
+                    "outputs": ["out"],
+                }
+            },
+        }
+
+        from binex.workflow_spec.loader import _resolve_file_prompts
+        _resolve_file_prompts(data, base_dir=tmp_path)
+        assert data["nodes"]["a"]["system_prompt"] == "Absolute prompt content."
+
+    def test_resolve_file_prompt_not_found(self, tmp_path):
+        """Missing file raises ValueError with node name and path."""
+        data = {
+            "name": "test",
+            "nodes": {
+                "researcher": {
+                    "agent": "llm://openai/gpt-4",
+                    "system_prompt": "file://missing.md",
+                    "outputs": ["out"],
+                }
+            },
+        }
+
+        from binex.workflow_spec.loader import _resolve_file_prompts
+        with pytest.raises(ValueError, match="researcher"):
+            _resolve_file_prompts(data, base_dir=tmp_path)
+
+    def test_plain_system_prompt_unchanged(self, tmp_path):
+        """Plain string system_prompt is not affected."""
+        data = {
+            "name": "test",
+            "nodes": {
+                "a": {
+                    "agent": "llm://openai/gpt-4",
+                    "system_prompt": "Just a regular prompt",
+                    "outputs": ["out"],
+                }
+            },
+        }
+
+        from binex.workflow_spec.loader import _resolve_file_prompts
+        _resolve_file_prompts(data, base_dir=tmp_path)
+        assert data["nodes"]["a"]["system_prompt"] == "Just a regular prompt"
+
+    def test_no_system_prompt_unchanged(self, tmp_path):
+        """Node without system_prompt is not affected."""
+        data = {
+            "name": "test",
+            "nodes": {
+                "a": {
+                    "agent": "llm://openai/gpt-4",
+                    "outputs": ["out"],
+                }
+            },
+        }
+
+        from binex.workflow_spec.loader import _resolve_file_prompts
+        _resolve_file_prompts(data, base_dir=tmp_path)
+        assert "system_prompt" not in data["nodes"]["a"]
+
+
+class TestLoadWorkflowFilePrompt:
+    """Integration: load_workflow resolves file:// system_prompt."""
+
+    def test_load_workflow_resolves_file_prompt(self, tmp_path):
+        """Full load_workflow pipeline resolves file:// prompts."""
+        prompt_dir = tmp_path / "prompts"
+        prompt_dir.mkdir()
+        (prompt_dir / "researcher.md").write_text("You are a researcher.")
+
+        workflow_yaml = tmp_path / "workflow.yaml"
+        workflow_yaml.write_text(
+            'name: test-workflow\nnodes:\n  researcher:\n    agent: llm://openai/gpt-4\n    system_prompt: "file://prompts/researcher.md"\n    outputs: [result]\n'
+        )
+
+        from binex.workflow_spec.loader import load_workflow
+
+        spec = load_workflow(workflow_yaml)
+        assert spec.nodes["researcher"].system_prompt == "You are a researcher."

@@ -5,16 +5,18 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+import time as _time
 
 import click
 
-from binex.adapters.local import LocalPythonAdapter
-from binex.cli import get_stores
-from binex.models.artifact import Artifact, Lineage
-from binex.models.task import TaskNode
+from binex.cli import get_stores, render_terminal_artifacts
+from binex.cli.adapter_registry import register_workflow_adapters
+from binex.models.artifact import Artifact
 from binex.runtime.orchestrator import Orchestrator
 from binex.workflow_spec.loader import load_workflow
 from binex.workflow_spec.validator import validate_workflow
+
+VERBOSE_CONTENT_MAX_LEN = 2000
 
 
 def _get_stores():
@@ -22,7 +24,19 @@ def _get_stores():
     return get_stores()
 
 
-@click.command("run")
+def _can_use_live() -> bool:
+    """Return True when rich live display is available and output is a TTY."""
+    from binex.cli import has_rich
+    return has_rich() and sys.stderr.isatty()
+
+
+@click.command("run", epilog="""\b
+Examples:
+  binex run workflow.yaml                       Run a workflow
+  binex run workflow.yaml --var topic="AI"      Pass variables
+  binex run workflow.yaml -v                    Verbose per-node output
+  binex run workflow.yaml --json                Machine-readable output
+""")
 @click.argument("workflow_file", type=click.Path(exists=True))
 @click.option("--var", multiple=True, help="Variable substitution key=value")
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
@@ -42,93 +56,124 @@ def run_cmd(
 
     summary, node_errors, artifacts = asyncio.run(_run(spec, verbose))
 
-    if not json_out:
-        for node_id, err in node_errors:
-            click.echo(f"  [{node_id}] Error: {err}", err=True)
-
     # Identify terminal nodes (no downstream dependents)
     all_deps = {dep for node in spec.nodes.values() for dep in node.depends_on}
     terminal_nodes = [nid for nid in spec.nodes if nid not in all_deps]
 
     if json_out:
-        data = summary.model_dump()
-        if verbose:
-            data["artifacts"] = [
-                {"node": a.lineage.produced_by, "type": a.type, "content": a.content}
-                for a in artifacts
-            ]
-        # Always include terminal output in JSON
-        data["output"] = {
-            a.lineage.produced_by: a.content
-            for a in artifacts
-            if a.lineage.produced_by in terminal_nodes
-        }
-        # Add budget info to JSON if budget defined
-        if spec.budget:
-            data["budget"] = spec.budget.max_cost
-            remaining = spec.budget.max_cost - summary.total_cost
-            data["remaining_budget"] = remaining
-        click.echo(json.dumps(data, default=str, indent=2))
+        _print_json_output(summary, spec, artifacts, terminal_nodes, verbose)
     else:
-        click.echo(f"Run ID: {summary.run_id}")
-        click.echo(f"Workflow: {summary.workflow_name}")
-        click.echo(f"Status: {summary.status}")
-        click.echo(f"Nodes: {summary.completed_nodes}/{summary.total_nodes} completed")
-        if summary.failed_nodes:
-            click.echo(f"Failed: {summary.failed_nodes}")
-
-        # Cost summary
-        if summary.total_cost > 0:
-            click.echo(f"Cost: ${summary.total_cost:.2f}")
-        if spec.budget:
-            remaining = spec.budget.max_cost - summary.total_cost
-            click.echo(f"Budget: ${spec.budget.max_cost:.2f} (remaining: ${remaining:.2f})")
-        if summary.status == "over_budget" and spec.budget:
-            click.echo("Budget exceeded \u2014 run stopped")
-            click.echo(
-                f"Spent: ${summary.total_cost:.2f} / Budget: ${spec.budget.max_cost:.2f}"
-            )
-
-        # Show final output from terminal nodes
-        if summary.status == "completed" and artifacts:
-            terminal_arts = [
-                a for a in artifacts if a.lineage.produced_by in terminal_nodes
-            ]
-            if terminal_arts:
-                try:
-                    from rich.console import Console
-                    from rich.markdown import Markdown
-                    from rich.panel import Panel
-
-                    console = Console()
-                    for art in terminal_arts:
-                        content = art.content if art.content is not None else ""
-                        if not isinstance(content, str):
-                            content = json.dumps(content, default=str, indent=2)
-                        if len(content) > 4000:
-                            content = content[:4000] + "..."
-                        console.print(Panel(
-                            Markdown(content),
-                            title=f"[bold]{art.lineage.produced_by}[/bold]",
-                            subtitle=art.type,
-                            border_style="green",
-                        ))
-                except ImportError:
-                    click.echo(f"\n{'── Result ':─<60}")
-                    for art in terminal_arts:
-                        content = art.content
-                        if isinstance(content, str) and len(content) > 2000:
-                            content = content[:2000] + "..."
-                        click.echo(f"[{art.lineage.produced_by}] {art.type}:")
-                        click.echo(f"  {content}")
-
-        if summary.status != "completed":
-            click.echo(
-                f"\nTip: run 'binex debug {summary.run_id}' for full details",
-                err=True,
-            )
+        for node_id, err in node_errors:
+            click.echo(f"  [{node_id}] Error: {err}", err=True)
+        _print_text_output(summary, spec, artifacts, terminal_nodes)
 
     sys.exit(0 if summary.status == "completed" else 1)
+
+
+def _print_json_output(summary, spec, artifacts, terminal_nodes, verbose):
+    """Format and print JSON run output."""
+    data = summary.model_dump()
+    if verbose:
+        data["artifacts"] = [
+            {"node": a.lineage.produced_by, "type": a.type, "content": a.content}
+            for a in artifacts
+        ]
+    data["output"] = {
+        a.lineage.produced_by: a.content
+        for a in artifacts
+        if a.lineage.produced_by in terminal_nodes
+    }
+    if spec.budget:
+        data["budget"] = spec.budget.max_cost
+        data["remaining_budget"] = spec.budget.max_cost - summary.total_cost
+    click.echo(json.dumps(data, default=str, indent=2))
+
+
+def _print_text_output(summary, spec, artifacts, terminal_nodes):
+    """Format and print human-readable run output."""
+    from binex.cli import has_rich
+
+    if has_rich():
+        _print_rich_output(summary, spec, artifacts, terminal_nodes)
+        return
+
+    # Plain-text fallback (also used by CliRunner in tests)
+    click.echo(f"Run ID: {summary.run_id}")
+    click.echo(f"Workflow: {summary.workflow_name}")
+    click.echo(f"Status: {summary.status}")
+    click.echo(f"Nodes: {summary.completed_nodes}/{summary.total_nodes} completed")
+    if summary.failed_nodes:
+        click.echo(f"Failed: {summary.failed_nodes}")
+
+    if summary.total_cost > 0:
+        click.echo(f"Cost: ${summary.total_cost:.2f}")
+    if spec.budget:
+        remaining = spec.budget.max_cost - summary.total_cost
+        click.echo(f"Budget: ${spec.budget.max_cost:.2f} (remaining: ${remaining:.2f})")
+    if summary.status == "over_budget" and spec.budget:
+        click.echo("Budget exceeded \u2014 run stopped")
+        click.echo(
+            f"Spent: ${summary.total_cost:.2f} / Budget: ${spec.budget.max_cost:.2f}"
+        )
+
+    if summary.status == "completed" and artifacts:
+        render_terminal_artifacts(artifacts, terminal_nodes)
+
+    if summary.status != "completed":
+        click.echo(
+            f"\nTip: run 'binex debug {summary.run_id}' for full details",
+            err=True,
+        )
+
+
+def _print_rich_output(summary, spec, artifacts, terminal_nodes):
+    """Print styled run output using rich panels."""
+    from rich.console import Group
+    from rich.text import Text
+
+    from binex.cli.ui import get_console, make_header, make_panel, status_text
+
+    header = make_header(
+        workflow=summary.workflow_name,
+        run_id=summary.run_id,
+    )
+
+    status_line = Text()
+    status_line.append("Status: ", style="dim")
+    status_line.append_text(status_text(summary.status))
+    status_line.append(
+        f"  ({summary.completed_nodes}/{summary.total_nodes} nodes)", style="dim",
+    )
+
+    parts: list[Text] = [header, Text(), status_line]
+
+    if summary.total_cost > 0:
+        cost_line = Text()
+        cost_line.append("Cost: ", style="dim")
+        cost_line.append(f"${summary.total_cost:.4f}", style="bold")
+        parts.append(cost_line)
+
+    if spec.budget:
+        remaining = spec.budget.max_cost - summary.total_cost
+        budget_line = Text()
+        budget_line.append("Budget: ", style="dim")
+        budget_line.append(f"${spec.budget.max_cost:.2f}", style="bold")
+        budget_line.append(f" (remaining: ${remaining:.2f})", style="dim")
+        parts.append(budget_line)
+
+    if summary.status == "over_budget":
+        parts.append(Text("Budget exceeded \u2014 run stopped", style="red bold"))
+
+    get_console().print(make_panel(Group(*parts), title="Run Complete"))
+
+    if summary.status == "completed" and artifacts:
+        render_terminal_artifacts(artifacts, terminal_nodes)
+
+    if summary.status != "completed":
+        click.echo(
+            f"\nTip: run 'binex debug {summary.run_id}' for full details",
+            err=True,
+        )
 
 
 async def _run(spec, verbose: bool = False):
@@ -139,117 +184,155 @@ async def _run(spec, verbose: bool = False):
         execution_store=execution_store,
     )
 
-    # Verbose progress callback
     all_artifacts: list[Artifact] = []
+
+    # Determine output mode: live table (TTY + rich), plain verbose, or quiet
+    use_live = verbose and _can_use_live()
+
+    if use_live:
+        return await _run_with_live(
+            orch, spec, execution_store, artifact_store, all_artifacts,
+        )
+
     if verbose:
-        original_execute = orch._execute_node
-        counter = [0]
+        _install_verbose_wrapper(orch, all_artifacts)
 
-        async def _verbose_execute(
-            spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-        ):
-            counter[0] += 1
-            total = len(spec_.nodes)
-            click.echo(f"\n  [{counter[0]}/{total}] {node_id_} ...", err=True)
-
-            # Show input refs from depends_on
-            node_spec = spec_.nodes.get(node_id_)
-            if node_spec and node_spec.depends_on:
-                for dep in node_spec.depends_on:
-                    click.echo(f"        <- {dep}", err=True)
-
-            await original_execute(
-                spec_, dag_, scheduler_, run_id_, trace_id_,
-                node_id_, node_artifacts_,
-            )
-            if node_id_ in node_artifacts_:
-                for art in node_artifacts_[node_id_]:
-                    all_artifacts.append(art)
-                    content = art.content
-                    if isinstance(content, str) and len(content) > 2000:
-                        content = content[:2000] + "..."
-                    click.echo(f"  [{node_id_}] -> {art.type}:", err=True)
-                    click.echo(f"{content}\n", err=True)
-
-        orch._execute_node = _verbose_execute
-
-    # Register a default local echo adapter for local:// agents
-    async def _default_handler(task: TaskNode, inputs: list[Artifact]) -> list[Artifact]:
-        content = {a.id: a.content for a in inputs} if inputs else {"msg": "no input"}
-        return [
-            Artifact(
-                id=f"art_{task.node_id}",
-                run_id=task.run_id,
-                type="result",
-                content=content,
-                lineage=Lineage(
-                    produced_by=task.node_id,
-                    derived_from=[a.id for a in inputs],
-                ),
-            )
-        ]
-
-    # Auto-register adapters for all agents in the workflow
-    for node in spec.nodes.values():
-        agent = node.agent
-        if agent in orch.dispatcher._adapters:
-            continue
-        if agent.startswith("local://"):
-            orch.dispatcher.register_adapter(
-                agent, LocalPythonAdapter(handler=_default_handler),
-            )
-        elif agent.startswith("llm://"):
-            from binex.adapters.llm import LLMAdapter
-            model = agent.removeprefix("llm://")
-            config = node.config
-            orch.dispatcher.register_adapter(
-                agent,
-                LLMAdapter(
-                    model=model,
-                    api_base=config.get("api_base"),
-                    api_key=config.get("api_key"),
-                    temperature=config.get("temperature"),
-                    max_tokens=config.get("max_tokens"),
-                ),
-            )
-        elif agent == "human://input":
-            from binex.adapters.human import HumanInputAdapter
-            orch.dispatcher.register_adapter(agent, HumanInputAdapter())
-        elif agent.startswith("human://"):
-            from binex.adapters.human import HumanApprovalAdapter
-            orch.dispatcher.register_adapter(agent, HumanApprovalAdapter())
-        elif agent.startswith("a2a://"):
-            from binex.adapters.a2a import A2AAgentAdapter
-            endpoint = agent.removeprefix("a2a://")
-            orch.dispatcher.register_adapter(agent, A2AAgentAdapter(endpoint=endpoint))
+    register_workflow_adapters(orch.dispatcher, spec)
 
     try:
         summary = await orch.run_workflow(spec)
 
-        # Collect errors from execution records
-        errors = []
-        records = await execution_store.list_records(summary.run_id)
-        for rec in records:
-            if rec.error:
-                errors.append((rec.task_id, rec.error))
+        errors = _collect_errors(await execution_store.list_records(summary.run_id))
 
-        # Show skipped nodes in verbose mode
         if verbose:
-            skipped = summary.total_nodes - summary.completed_nodes - summary.failed_nodes
-            if skipped > 0:
-                # Determine which nodes were skipped
-                executed_ids = {rec.task_id for rec in records}
-                for node_id in spec.nodes:
-                    if node_id not in executed_ids:
-                        click.echo(f"  [skipped] {node_id}", err=True)
-
-        # Collect all artifacts if not already done via verbose
-        if not verbose:
+            _show_skipped_nodes(spec, summary, await execution_store.list_records(summary.run_id))
+        else:
             all_artifacts = await artifact_store.list_by_run(summary.run_id)
 
         return summary, errors, all_artifacts
     finally:
         await execution_store.close()
+
+
+async def _run_with_live(orch, spec, execution_store, artifact_store, all_artifacts):
+    """Run workflow with a live-updating rich table."""
+    from rich.live import Live
+
+    from binex.cli.ui import LiveRunTable, get_console
+
+    nodes_info = [
+        {"id": nid, "agent": node.agent, "depends_on": list(node.depends_on)}
+        for nid, node in spec.nodes.items()
+    ]
+    live_table = LiveRunTable(nodes_info)
+
+    register_workflow_adapters(orch.dispatcher, spec)
+
+    try:
+        with Live(
+            live_table.build(),
+            console=get_console(stderr=True),
+            refresh_per_second=4,
+        ) as live:
+            _install_live_wrapper(orch, live_table, live, all_artifacts)
+            summary = await orch.run_workflow(spec)
+
+        errors = _collect_errors(
+            await execution_store.list_records(summary.run_id),
+        )
+        _show_skipped_nodes(
+            spec, summary,
+            await execution_store.list_records(summary.run_id),
+        )
+        return summary, errors, all_artifacts
+    finally:
+        await execution_store.close()
+
+
+def _install_live_wrapper(orch, live_table, live, all_artifacts):
+    """Monkey-patch orchestrator to update LiveRunTable on each node."""
+    original_execute = orch._execute_node
+
+    async def _live_execute(
+        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
+        accumulated_cost_=0.0, node_artifacts_history_=None,
+    ):
+        live_table.update_node(node_id_, "running")
+        live.update(live_table.build())
+        t0 = _time.monotonic()
+        try:
+            await original_execute(
+                spec_, dag_, scheduler_, run_id_, trace_id_,
+                node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
+            )
+            elapsed = _time.monotonic() - t0
+            live_table.update_node(
+                node_id_, "completed", latency=f"{elapsed:.2f}s",
+            )
+        except Exception as exc:
+            elapsed = _time.monotonic() - t0
+            live_table.update_node(
+                node_id_, "failed",
+                latency=f"{elapsed:.2f}s",
+                error=str(exc)[:50],
+            )
+            raise
+        finally:
+            if node_id_ in node_artifacts_:
+                for art in node_artifacts_[node_id_]:
+                    all_artifacts.append(art)
+            live.update(live_table.build())
+
+    orch._execute_node = _live_execute
+
+
+def _install_verbose_wrapper(orch: Orchestrator, all_artifacts: list[Artifact]) -> None:
+    """Monkey-patch orchestrator to print progress for each node execution."""
+    original_execute = orch._execute_node
+    counter = [0]
+
+    async def _verbose_execute(
+        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
+        accumulated_cost_=0.0, node_artifacts_history_=None,
+    ):
+        counter[0] += 1
+        total = len(spec_.nodes)
+        click.echo(f"\n  [{counter[0]}/{total}] {node_id_} ...", err=True)
+
+        node_spec = spec_.nodes.get(node_id_)
+        if node_spec and node_spec.depends_on:
+            for dep in node_spec.depends_on:
+                click.echo(f"        <- {dep}", err=True)
+
+        await original_execute(
+            spec_, dag_, scheduler_, run_id_, trace_id_,
+            node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
+        )
+        if node_id_ in node_artifacts_:
+            for art in node_artifacts_[node_id_]:
+                all_artifacts.append(art)
+                content = art.content
+                if isinstance(content, str) and len(content) > VERBOSE_CONTENT_MAX_LEN:
+                    content = content[:VERBOSE_CONTENT_MAX_LEN] + "..."
+                click.echo(f"  [{node_id_}] -> {art.type}:", err=True)
+                click.echo(f"{content}\n", err=True)
+
+    orch._execute_node = _verbose_execute
+
+
+def _collect_errors(records) -> list[tuple[str, str]]:
+    """Extract (task_id, error) pairs from execution records."""
+    return [(rec.task_id, rec.error) for rec in records if rec.error]
+
+
+def _show_skipped_nodes(spec, summary, records) -> None:
+    """Print skipped node names in verbose mode."""
+    skipped = summary.total_nodes - summary.completed_nodes - summary.failed_nodes
+    if skipped > 0:
+        executed_ids = {rec.task_id for rec in records}
+        for node_id in spec.nodes:
+            if node_id not in executed_ids:
+                click.echo(f"  [skipped] {node_id}", err=True)
 
 
 def _parse_vars(var_tuples: tuple[str, ...]) -> dict[str, str]:

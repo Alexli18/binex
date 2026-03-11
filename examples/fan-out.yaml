@@ -19,7 +19,7 @@ nodes:
   # The planner runs first and produces a research plan
   planner:
     agent: "local://echo"
-    system_prompt: "Create research plan"
+    system_prompt: "file://prompts/gen-research-planner.md"
     inputs: {}
     outputs: [plan]
     depends_on: []
@@ -28,7 +28,7 @@ nodes:
   # Each consumes the same "plan" artifact from the planner node.
   researcher1:
     agent: "local://echo"
-    system_prompt: "Research topic A"
+    system_prompt: "file://prompts/gen-researcher.md"
     inputs:
       plan: "${planner.plan}"     # runtime artifact reference
     outputs: [findings]
@@ -36,7 +36,7 @@ nodes:
 
   researcher2:
     agent: "local://echo"
-    system_prompt: "Research topic B"
+    system_prompt: "file://prompts/gen-researcher.md"
     inputs:
       plan: "${planner.plan}"
     outputs: [findings]
@@ -44,7 +44,7 @@ nodes:
 
   researcher3:
     agent: "local://echo"
-    system_prompt: "Research topic C"
+    system_prompt: "file://prompts/gen-researcher.md"
     inputs:
       plan: "${planner.plan}"
     outputs: [findings]

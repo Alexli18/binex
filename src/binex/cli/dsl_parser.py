@@ -55,41 +55,12 @@ def parse_dsl(dsl_strings: list[str] | tuple[str, ...]) -> ParsedDSL:
     if not dsl_strings:
         raise ValueError("DSL input is empty — provide at least one topology string.")
 
-    # Collect all unique nodes (preserving first-seen order) and edges.
     seen_nodes: dict[str, None] = {}  # ordered set
     all_edges: list[tuple[str, str]] = []
 
     for dsl in dsl_strings:
-        dsl = dsl.strip()
-        if not dsl:
-            raise ValueError("DSL input is empty — provide at least one topology string.")
-
-        layers = dsl.split("->")
-
-        for layer in layers:
-            names = [n.strip() for n in layer.split(",")]
-            for name in names:
-                if not name:
-                    raise ValueError(
-                        f"Empty node name found in DSL '{dsl}'. "
-                        "Malformed input — check arrows and commas."
-                    )
-
-        parsed_layers: list[list[str]] = []
-        for layer in layers:
-            names = [n.strip() for n in layer.split(",")]
-            parsed_layers.append(names)
-            for name in names:
-                if name not in seen_nodes:
-                    seen_nodes[name] = None
-
-        # Create edges: each node in layer N connects to every node in layer N+1
-        for i in range(len(parsed_layers) - 1):
-            for src in parsed_layers[i]:
-                for dst in parsed_layers[i + 1]:
-                    edge = (src, dst)
-                    if edge not in all_edges:
-                        all_edges.append(edge)
+        layers = _parse_layers(dsl)
+        _collect_nodes_and_edges(layers, seen_nodes, all_edges)
 
     # Build depends_on mapping
     nodes = list(seen_nodes)
@@ -99,3 +70,41 @@ def parse_dsl(dsl_strings: list[str] | tuple[str, ...]) -> ParsedDSL:
             depends_on[dst].append(src)
 
     return ParsedDSL(nodes=nodes, edges=all_edges, depends_on=depends_on)
+
+
+def _parse_layers(dsl: str) -> list[list[str]]:
+    """Parse a single DSL string into validated layers of node names."""
+    dsl = dsl.strip()
+    if not dsl:
+        raise ValueError("DSL input is empty — provide at least one topology string.")
+
+    layers: list[list[str]] = []
+    for layer in dsl.split("->"):
+        names = [n.strip() for n in layer.split(",")]
+        for name in names:
+            if not name:
+                raise ValueError(
+                    f"Empty node name found in DSL '{dsl}'. "
+                    "Malformed input — check arrows and commas."
+                )
+        layers.append(names)
+    return layers
+
+
+def _collect_nodes_and_edges(
+    layers: list[list[str]],
+    seen_nodes: dict[str, None],
+    all_edges: list[tuple[str, str]],
+) -> None:
+    """Register nodes and create edges between adjacent layers."""
+    for layer in layers:
+        for name in layer:
+            if name not in seen_nodes:
+                seen_nodes[name] = None
+
+    for i in range(len(layers) - 1):
+        for src in layers[i]:
+            for dst in layers[i + 1]:
+                edge = (src, dst)
+                if edge not in all_edges:
+                    all_edges.append(edge)

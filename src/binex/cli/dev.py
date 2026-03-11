@@ -31,6 +31,18 @@ def _run_compose(compose_file: Path, *args: str) -> subprocess.CompletedProcess[
     return subprocess.run(cmd, capture_output=True, text=True)
 
 
+def _health_icon(ok: bool) -> str:
+    """Return the appropriate icon for health check result."""
+    from binex.cli import has_rich
+
+    if has_rich():
+        from binex.cli.ui import status_icon
+        return status_icon("ok") if ok else status_icon("error")
+    else:
+        from binex.cli.ui import plain_status_icon
+        return plain_status_icon("ok") if ok else plain_status_icon("error")
+
+
 def _wait_for_health(url: str, label: str, timeout: int = 60) -> bool:
     """Wait for a service health endpoint to respond."""
     deadline = time.time() + timeout
@@ -38,12 +50,14 @@ def _wait_for_health(url: str, label: str, timeout: int = 60) -> bool:
         try:
             resp = httpx.get(url, timeout=5.0)
             if resp.status_code == 200:
-                click.echo(f"  ✓ {label} is healthy")
+                icon = _health_icon(True)
+                click.echo(f"  {icon} {label} is healthy")
                 return True
         except (httpx.ConnectError, httpx.TimeoutException, httpx.ReadError):
             pass
         time.sleep(2)
-    click.echo(f"  ✗ {label} failed to start within {timeout}s")
+    icon = _health_icon(False)
+    click.echo(f"  {icon} {label} failed to start within {timeout}s")
     return False
 
 
@@ -89,10 +103,29 @@ def dev_cmd(detach: bool) -> None:
             if not _wait_for_health(url, label, timeout=120):
                 all_healthy = False
 
-        if all_healthy:
-            click.echo("\n✓ All services are running. Use 'binex doctor' to verify.")
+        from binex.cli import has_rich
+
+        if has_rich():
+            from binex.cli.ui import get_console, make_panel
+
+            console = get_console()
+            if all_healthy:
+                console.print(make_panel(
+                    "[green]All services are running.[/green]\n"
+                    "Use 'binex doctor' to verify.",
+                    title="Dev Environment Ready",
+                ))
+            else:
+                console.print(make_panel(
+                    "[yellow]Some services failed to start.[/yellow]\n"
+                    "Run 'binex doctor' for details.",
+                    title="Dev Environment",
+                ))
         else:
-            click.echo("\n⚠ Some services failed to start. Run 'binex doctor' for details.")
+            if all_healthy:
+                click.echo("\n✓ All services are running. Use 'binex doctor' to verify.")
+            else:
+                click.echo("\n! Some services failed to start. Run 'binex doctor' for details.")
     else:
         # Foreground mode — exec into docker compose up
         cmd = ["docker", "compose", "-f", str(compose_file), *up_args]

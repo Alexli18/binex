@@ -30,6 +30,7 @@ class CostRecord(BaseModel):
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     model: str | None = None
+    node_budget: float | None = None  # per-node budget limit (if set)
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @field_validator("cost")
@@ -68,6 +69,19 @@ class NodeCostHint(BaseModel):
         return v
 
 
+class NodeBudget(BaseModel):
+    """Per-node budget constraint. Policy inherited from workflow."""
+
+    max_cost: float
+
+    @field_validator("max_cost")
+    @classmethod
+    def max_cost_positive(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("max_cost must be > 0")
+        return v
+
+
 class RunCostSummary(BaseModel):
     """Computed cost summary for a run (not persisted separately)."""
 
@@ -91,6 +105,7 @@ __all__ = [
     "CostRecord",
     "CostSource",
     "ExecutionResult",
+    "NodeBudget",
     "NodeCostHint",
     "RunCostSummary",
 ]

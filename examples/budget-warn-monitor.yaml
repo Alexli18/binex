@@ -1,0 +1,56 @@
+# Budget Warn/Monitor Example
+# =============================
+# Demonstrates budget monitoring with policy: warn.
+# All nodes execute regardless of cost. A warning is logged to stderr
+# when accumulated cost exceeds max_cost.
+#
+# Use this pattern during development or when you want visibility
+# into costs without stopping execution.
+#
+# Run:     binex run examples/budget-warn-monitor.yaml --var query="LLM agents"
+# Cost:    binex cost show <run_id>
+# History: binex cost history <run_id>
+# JSON:    binex cost show <run_id> --json
+
+name: budget-warn-monitor
+description: "Multi-step pipeline with soft budget monitoring ($10 warn threshold)"
+
+budget:
+  max_cost: 10.00
+  policy: warn           # log warning but continue execution
+
+nodes:
+  draft:
+    agent: "local://echo"
+    system_prompt: "file://prompts/gen-draft-writer.md"
+    inputs:
+      query: "${user.query}"
+    outputs: [text]
+
+  review:
+    agent: "local://echo"
+    system_prompt: "file://prompts/gen-content-reviewer.md"
+    inputs:
+      text: "${node.draft.text}"
+    outputs: [feedback]
+    depends_on: [draft]
+
+  revise:
+    agent: "local://echo"
+    system_prompt: "file://prompts/gen-content-reviser.md"
+    inputs:
+      text: "${node.draft.text}"
+      feedback: "${node.review.feedback}"
+    outputs: [revised]
+    depends_on: [draft, review]
+
+  polish:
+    agent: "local://echo"
+    system_prompt: "file://prompts/gen-content-editor.md"
+    inputs:
+      text: "${node.revise.revised}"
+    outputs: [final]
+    depends_on: [revise]
+
+defaults:
+  deadline_ms: 60000

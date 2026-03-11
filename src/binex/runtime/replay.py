@@ -32,6 +32,50 @@ class ReplayEngine:
         self.artifact_store = artifact_store
         self.dispatcher = dispatcher or Dispatcher()
 
+    async def _cache_upstream_steps(
+        self,
+        original_run_id: str,
+        run_id: str,
+        trace_id: str,
+        topo_order: list[str],
+        cached_steps: set[str],
+        node_artifacts: dict[str, list[Artifact]],
+    ) -> None:
+        """Copy execution records and artifacts from the original run for cached steps."""
+        original_records = await self.execution_store.list_records(original_run_id)
+        original_by_task: dict[str, ExecutionRecord] = {
+            r.task_id: r for r in original_records
+        }
+
+        for step in topo_order:
+            if step not in cached_steps:
+                continue
+
+            orig_rec = original_by_task.get(step)
+            if orig_rec is None:
+                continue
+
+            cached_artifacts: list[Artifact] = []
+            for art_id in orig_rec.output_artifact_refs:
+                art = await self.artifact_store.get(art_id)
+                if art is not None:
+                    cached_artifacts.append(art)
+
+            node_artifacts[step] = cached_artifacts
+
+            cached_record = ExecutionRecord(
+                id=f"rec_{uuid.uuid4().hex[:12]}",
+                run_id=run_id,
+                task_id=step,
+                agent_id=orig_rec.agent_id,
+                status=TaskStatus.COMPLETED,
+                input_artifact_refs=orig_rec.input_artifact_refs,
+                output_artifact_refs=orig_rec.output_artifact_refs,
+                latency_ms=0,
+                trace_id=trace_id,
+            )
+            await self.execution_store.record(cached_record)
+
     async def replay(
         self,
         original_run_id: str,
@@ -55,21 +99,18 @@ class ReplayEngine:
         dag = DAG.from_workflow(spec)
         topo_order = dag.topological_order()
 
-        # Determine which steps to cache vs re-execute
         from_index = topo_order.index(from_step)
         cached_steps = set(topo_order[:from_index])
         re_execute_steps = set(topo_order[from_index:])
-
-        # Apply agent swaps
         agent_swaps = agent_swaps or {}
 
-        # Create new run
         run_id = f"run_{uuid.uuid4().hex[:12]}"
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
 
         summary = RunSummary(
             run_id=run_id,
             workflow_name=spec.name,
+            workflow_path=spec.source_path,
             status="running",
             total_nodes=len(spec.nodes),
             forked_from=original_run_id,
@@ -77,50 +118,16 @@ class ReplayEngine:
         )
         await self.execution_store.create_run(summary)
 
-        # Load original execution records for cached steps
-        original_records = await self.execution_store.list_records(original_run_id)
-        original_by_task: dict[str, ExecutionRecord] = {
-            r.task_id: r for r in original_records
-        }
-
-        # node_id -> list of output artifacts (for input resolution)
         node_artifacts: dict[str, list[Artifact]] = {}
 
-        # Phase 1: Create cached records for upstream steps
-        for step in topo_order:
-            if step not in cached_steps:
-                continue
+        # Phase 1: Cache upstream steps from original run
+        await self._cache_upstream_steps(
+            original_run_id, run_id, trace_id,
+            topo_order, cached_steps, node_artifacts,
+        )
 
-            orig_rec = original_by_task.get(step)
-            if orig_rec is None:
-                continue
-
-            # Link to original artifacts
-            cached_artifacts: list[Artifact] = []
-            for art_id in orig_rec.output_artifact_refs:
-                art = await self.artifact_store.get(art_id)
-                if art is not None:
-                    cached_artifacts.append(art)
-
-            node_artifacts[step] = cached_artifacts
-
-            # Create a cached execution record in the new run
-            cached_record = ExecutionRecord(
-                id=f"rec_{uuid.uuid4().hex[:12]}",
-                run_id=run_id,
-                task_id=step,
-                agent_id=orig_rec.agent_id,
-                status=TaskStatus.COMPLETED,
-                input_artifact_refs=orig_rec.input_artifact_refs,
-                output_artifact_refs=orig_rec.output_artifact_refs,
-                latency_ms=0,
-                trace_id=trace_id,
-            )
-            await self.execution_store.record(cached_record)
-
-        # Phase 2: Re-execute from from_step onward using the scheduler
+        # Phase 2: Re-execute from from_step onward
         scheduler = Scheduler(dag)
-        # Pre-mark cached steps as completed
         for step in cached_steps:
             scheduler.mark_completed(step)
 

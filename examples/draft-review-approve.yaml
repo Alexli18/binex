@@ -24,7 +24,7 @@ nodes:
 
   draft:
     agent: "llm://ollama/gemma3:4b"
-    system_prompt: "Write a detailed first draft on the given topic. Be thorough and informative."
+    system_prompt: "file://prompts/gen-draft-writer.md"
     inputs:
       topic: "${user_input.query}"
     outputs: [content]
@@ -32,10 +32,7 @@ nodes:
 
   review:
     agent: "llm://ollama/gemma3:4b"
-    system_prompt: >
-      You are an editor. Review this draft critically.
-      List specific strengths and weaknesses.
-      Provide actionable recommendations for improvement.
+    system_prompt: "file://prompts/gen-content-reviewer.md"
     inputs:
       draft: "${draft.content}"
     outputs: [feedback]
@@ -43,10 +40,7 @@ nodes:
 
   revise:
     agent: "llm://ollama/gemma3:4b"
-    system_prompt: >
-      You are a writer. Take the original draft and the editor's feedback,
-      then produce a polished, improved version that addresses all recommendations.
-      Output only the final revised text.
+    system_prompt: "file://prompts/gen-content-reviser.md"
     inputs:
       original_draft: "${draft.content}"
       editor_feedback: "${review.feedback}"

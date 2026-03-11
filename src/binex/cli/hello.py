@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
+import time as _time
 
 import click
 
@@ -18,6 +20,12 @@ from binex.runtime.orchestrator import Orchestrator
 def _get_stores():
     """Create default stores. Extracted for test patching."""
     return get_stores()
+
+
+def _can_use_live() -> bool:
+    """Return True when rich live display is available and output is a TTY."""
+    from binex.cli import has_rich
+    return has_rich() and sys.stderr.isatty()
 
 
 def _build_hello_workflow() -> WorkflowSpec:
@@ -58,57 +66,54 @@ def hello_cmd() -> None:
     )
     click.echo(f"Run ID: {summary.run_id}", err=True)
 
-    click.echo("\nNext steps:", err=True)
-    click.echo(f"  binex debug {summary.run_id}               — inspect the run", err=True)
-    click.echo("  binex init                       — create your own project", err=True)
-    click.echo("  binex run examples/simple.yaml   — try a workflow file", err=True)
+    _print_next_steps(summary)
 
 
-async def _run_hello():
-    spec = _build_hello_workflow()
-    execution_store, artifact_store = _get_stores()
+def _print_next_steps(summary) -> None:
+    """Print next-steps guidance, using a rich panel when available."""
+    from binex.cli import has_rich
 
-    orch = Orchestrator(
-        artifact_store=artifact_store,
-        execution_store=execution_store,
-    )
+    if has_rich():
+        from rich.text import Text
 
-    # Track node outputs for display
-    node_outputs: dict[str, str] = {}
+        from binex.cli.ui import get_console, make_panel
 
-    # Wrap _execute_node for verbose progress output
-    original_execute = orch._execute_node
-    counter = [0]
+        lines = Text()
+        lines.append("Next steps:\n\n", style="bold")
+        lines.append(f"  binex debug {summary.run_id}", style="cyan")
+        lines.append("   \u2014 inspect the run\n")
+        lines.append("  binex init", style="cyan")
+        lines.append("                       \u2014 create your own project\n")
+        lines.append("  binex run examples/simple.yaml", style="cyan")
+        lines.append("   \u2014 try a workflow file")
 
-    async def _verbose_execute(
-        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-    ):
-        counter[0] += 1
-        total = len(spec_.nodes)
-        click.echo(f"\n  [{counter[0]}/{total}] {node_id_} ...", err=True)
-
-        await original_execute(
-            spec_, dag_, scheduler_, run_id_, trace_id_,
-            node_id_, node_artifacts_,
+        get_console(stderr=True).print(make_panel(lines, title="Get Started"))
+    else:
+        click.echo("\nNext steps:", err=True)
+        click.echo(
+            f"  binex debug {summary.run_id}               "
+            "\u2014 inspect the run",
+            err=True,
+        )
+        click.echo(
+            "  binex init                       "
+            "\u2014 create your own project",
+            err=True,
+        )
+        click.echo(
+            "  binex run examples/simple.yaml   "
+            "\u2014 try a workflow file",
+            err=True,
         )
 
-        if node_id_ in node_artifacts_:
-            for art in node_artifacts_[node_id_]:
-                content = art.content
-                if isinstance(content, dict):
-                    content = json.dumps(content)
-                node_outputs[node_id_] = content
-                click.echo(f"  [{node_id_}] -> {art.type}:", err=True)
-                click.echo(f"{content}\n", err=True)
 
-    orch._execute_node = _verbose_execute
+def _register_hello_handler(orch):
+    """Register the hello-specific echo handler on the orchestrator."""
 
-    # Register the hello-specific echo handler
     async def _hello_handler(task: TaskNode, inputs: list[Artifact]) -> list[Artifact]:
         if task.node_id == "greeter":
             content = "Hello from Binex!"
         else:
-            # responder: return JSON of input contents
             content = json.dumps({a.lineage.produced_by: a.content for a in inputs})
 
         return [
@@ -128,8 +133,121 @@ async def _run_hello():
         "local://echo", LocalPythonAdapter(handler=_hello_handler),
     )
 
+
+async def _run_hello():
+    spec = _build_hello_workflow()
+    execution_store, artifact_store = _get_stores()
+
+    orch = Orchestrator(
+        artifact_store=artifact_store,
+        execution_store=execution_store,
+    )
+
+    node_outputs: dict[str, str] = {}
+
+    use_live = _can_use_live()
+
+    if use_live:
+        return await _run_hello_live(orch, spec, execution_store, node_outputs)
+
+    # Plain verbose fallback (used by CliRunner in tests)
+    _install_verbose_wrapper(orch, node_outputs)
+    _register_hello_handler(orch)
+
     try:
         summary = await orch.run_workflow(spec)
+        return summary, node_outputs
+    finally:
+        await execution_store.close()
+
+
+def _install_verbose_wrapper(orch, node_outputs):
+    """Monkey-patch orchestrator to print per-node progress (plain text)."""
+    original_execute = orch._execute_node
+    counter = [0]
+
+    async def _verbose_execute(
+        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
+        accumulated_cost_=0.0, node_artifacts_history_=None,
+    ):
+        counter[0] += 1
+        total = len(spec_.nodes)
+        click.echo(f"\n  [{counter[0]}/{total}] {node_id_} ...", err=True)
+
+        await original_execute(
+            spec_, dag_, scheduler_, run_id_, trace_id_,
+            node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
+        )
+
+        if node_id_ in node_artifacts_:
+            for art in node_artifacts_[node_id_]:
+                content = art.content
+                if isinstance(content, dict):
+                    content = json.dumps(content)
+                node_outputs[node_id_] = content
+                click.echo(f"  [{node_id_}] -> {art.type}:", err=True)
+                click.echo(f"{content}\n", err=True)
+
+    orch._execute_node = _verbose_execute
+
+
+async def _run_hello_live(orch, spec, execution_store, node_outputs):
+    """Run hello workflow with live-updating rich table."""
+    from rich.live import Live
+
+    from binex.cli.ui import LiveRunTable, get_console
+
+    nodes_info = [
+        {"id": nid, "agent": node.agent, "depends_on": list(node.depends_on)}
+        for nid, node in spec.nodes.items()
+    ]
+    live_table = LiveRunTable(nodes_info)
+
+    original_execute = orch._execute_node
+
+    async def _live_execute(
+        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
+        accumulated_cost_=0.0, node_artifacts_history_=None,
+    ):
+        live_table.update_node(node_id_, "running")
+        live.update(live_table.build())
+        t0 = _time.monotonic()
+        try:
+            await original_execute(
+                spec_, dag_, scheduler_, run_id_, trace_id_,
+                node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
+            )
+            elapsed = _time.monotonic() - t0
+            live_table.update_node(
+                node_id_, "completed", latency=f"{elapsed:.2f}s",
+            )
+        except Exception as exc:
+            elapsed = _time.monotonic() - t0
+            live_table.update_node(
+                node_id_, "failed",
+                latency=f"{elapsed:.2f}s",
+                error=str(exc)[:50],
+            )
+            raise
+        finally:
+            if node_id_ in node_artifacts_:
+                for art in node_artifacts_[node_id_]:
+                    content = art.content
+                    if isinstance(content, dict):
+                        content = json.dumps(content)
+                    node_outputs[node_id_] = content
+            live.update(live_table.build())
+
+    orch._execute_node = _live_execute
+    _register_hello_handler(orch)
+
+    try:
+        with Live(
+            live_table.build(),
+            console=get_console(stderr=True),
+            refresh_per_second=4,
+        ) as live:
+            summary = await orch.run_workflow(spec)
         return summary, node_outputs
     finally:
         await execution_store.close()

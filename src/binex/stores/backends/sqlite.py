@@ -42,7 +42,8 @@ class SqliteExecutionStore:
                 failed_nodes INTEGER DEFAULT 0,
                 forked_from TEXT,
                 forked_at_step TEXT,
-                total_cost REAL DEFAULT 0.0
+                total_cost REAL DEFAULT 0.0,
+                workflow_path TEXT
             );
             CREATE TABLE IF NOT EXISTS execution_records (
                 id TEXT PRIMARY KEY,
@@ -80,6 +81,12 @@ class SqliteExecutionStore:
             await self._db.commit()
         except Exception:
             pass  # Column already exists
+        # Migration: add workflow_path column to existing runs table
+        try:
+            await self._db.execute("ALTER TABLE runs ADD COLUMN workflow_path TEXT")
+            await self._db.commit()
+        except Exception:
+            pass  # Column already exists
         await self._db.commit()
         self._initialized = True
 
@@ -94,8 +101,8 @@ class SqliteExecutionStore:
         await db.execute(
             """INSERT INTO runs (run_id, workflow_name, status, started_at,
                completed_at, total_nodes, completed_nodes, failed_nodes,
-               forked_from, forked_at_step, total_cost)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               forked_from, forked_at_step, total_cost, workflow_path)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 run_summary.run_id,
                 run_summary.workflow_name,
@@ -108,6 +115,7 @@ class SqliteExecutionStore:
                 run_summary.forked_from,
                 run_summary.forked_at_step,
                 run_summary.total_cost,
+                run_summary.workflow_path,
             ),
         )
         await db.commit()
@@ -125,7 +133,8 @@ class SqliteExecutionStore:
         await db.execute(
             """UPDATE runs SET workflow_name=?, status=?, started_at=?,
                completed_at=?, total_nodes=?, completed_nodes=?, failed_nodes=?,
-               forked_from=?, forked_at_step=?, total_cost=? WHERE run_id=?""",
+               forked_from=?, forked_at_step=?, total_cost=?, workflow_path=?
+               WHERE run_id=?""",
             (
                 run_summary.workflow_name,
                 run_summary.status,
@@ -137,6 +146,7 @@ class SqliteExecutionStore:
                 run_summary.forked_from,
                 run_summary.forked_at_step,
                 run_summary.total_cost,
+                run_summary.workflow_path,
                 run_summary.run_id,
             ),
         )
@@ -208,6 +218,7 @@ class SqliteExecutionStore:
             forked_from=row[8],
             forked_at_step=row[9],
             total_cost=row[10] if len(row) > 10 else 0.0,
+            workflow_path=row[11] if len(row) > 11 else None,
         )
 
     async def record_cost(self, cost_record: CostRecord) -> None:

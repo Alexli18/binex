@@ -54,6 +54,21 @@ class DAG:
     def entry_nodes(self) -> list[str]:
         return sorted(nid for nid in self._nodes if not self._backward[nid])
 
+    def is_ancestor(self, ancestor: str, descendant: str) -> bool:
+        """Check if ancestor is reachable from descendant via backward edges."""
+        visited: set[str] = set()
+        queue = [descendant]
+        while queue:
+            current = queue.pop(0)
+            if current == ancestor:
+                return True
+            if current in visited:
+                continue
+            visited.add(current)
+            for dep in self._backward.get(current, set()):
+                queue.append(dep)
+        return False
+
     def topological_order(self) -> list[str]:
         """Kahn's algorithm for topological sort with cycle detection."""
         in_degree = {nid: len(self._backward[nid]) for nid in self._nodes}

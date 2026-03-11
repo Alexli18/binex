@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import os
+
 import click
 from dotenv import load_dotenv
 
+from binex.cli import BinexGroup
 from binex.cli.artifacts import artifacts_cmd
 from binex.cli.cost import cost_group
 from binex.cli.debug import debug_cmd
@@ -21,11 +24,29 @@ from binex.cli.start import start_cmd
 from binex.cli.trace import trace_cmd
 from binex.cli.validate import validate_cmd
 
+_EPILOG = """\b
+Examples:
+  binex hello                              Run the built-in demo
+  binex run workflow.yaml --var topic=AI   Execute a workflow
+  binex debug latest                       Inspect the most recent run
+  binex init                               Create a new project
 
-@click.group()
+Learn more:
+  https://binex.dev/docs
+"""
+
+
+@click.group(cls=BinexGroup, epilog=_EPILOG)
 @click.version_option(package_name="binex")
-def cli() -> None:
+@click.option(
+    "--no-color", is_flag=True, default=False,
+    help="Disable colored output.",
+)
+@click.pass_context
+def cli(ctx: click.Context, no_color: bool) -> None:
     """Binex — debuggable runtime for A2A agents."""
+    if no_color or os.environ.get("NO_COLOR"):
+        ctx.color = False
 
 
 cli.add_command(run_cmd, "run")

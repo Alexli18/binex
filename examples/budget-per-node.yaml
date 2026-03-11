@@ -1,0 +1,51 @@
+# Per-Node Budget Example
+# ========================
+# Each node has its own budget limit. Policy inherited from workflow.
+# When a node exceeds its budget, the policy determines behavior:
+#   stop  → node marked failed, dependents don't run
+#   warn  → warning logged, result kept, execution continues
+#
+# Run:     binex run examples/budget-per-node.yaml --var topic="AI safety"
+# Cost:    binex cost show <run_id>
+# History: binex cost history <run_id>
+
+name: per-node-budget
+description: "Pipeline with per-node budget limits"
+
+budget:
+  max_cost: 5.00
+  policy: stop
+
+nodes:
+  planner:
+    agent: "local://echo"
+    system_prompt: "file://prompts/gen-research-planner.md"
+    inputs:
+      topic: "${user.topic}"
+    outputs: [plan]
+    budget: 0.50
+
+  researcher:
+    agent: "local://echo"
+    system_prompt: "file://prompts/gen-researcher.md"
+    inputs:
+      plan: "${node.planner.plan}"
+    outputs: [findings]
+    depends_on: [planner]
+    budget:
+      max_cost: 3.00
+
+  summarizer:
+    agent: "local://echo"
+    system_prompt: "file://prompts/gen-research-synthesizer.md"
+    inputs:
+      data: "${node.researcher.findings}"
+    outputs: [summary]
+    depends_on: [researcher]
+    budget: 1.00
+
+defaults:
+  deadline_ms: 30000
+  retry_policy:
+    max_retries: 2
+    backoff: exponential

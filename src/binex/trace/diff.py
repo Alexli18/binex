@@ -108,27 +108,37 @@ def format_diff(diff_result: dict[str, Any]) -> str:
     lines.append("")
 
     for step in diff_result["steps"]:
-        task_id = step["task_id"]
-        markers: list[str] = []
-
-        if step["status_changed"]:
-            markers.append(f"status: {step['status_a']} -> {step['status_b']}")
-        if step["agent_changed"]:
-            markers.append(f"agent: {step['agent_a']} -> {step['agent_b']}")
-        if step["artifacts_changed"]:
-            markers.append("artifacts: CHANGED")
-        if step["latency_a"] is not None and step["latency_b"] is not None:
-            delta = step["latency_b"] - step["latency_a"]
-            sign = "+" if delta >= 0 else ""
-            markers.append(
-                f"latency: {step['latency_a']}ms -> {step['latency_b']}ms ({sign}{delta}ms)"
-            )
-
-        if markers:
-            lines.append(f"  {task_id}:")
-            for m in markers:
-                lines.append(f"    {m}")
-        else:
-            lines.append(f"  {task_id}: (no changes)")
+        _format_step_plain(step, lines)
 
     return "\n".join(lines)
+
+
+def _format_step_plain(step: dict[str, Any], lines: list[str]) -> None:
+    """Append plain-text lines for a single diff step."""
+    task_id = step["task_id"]
+    markers = _collect_step_markers(step)
+
+    if markers:
+        lines.append(f"  {task_id}:")
+        for m in markers:
+            lines.append(f"    {m}")
+    else:
+        lines.append(f"  {task_id}: (no changes)")
+
+
+def _collect_step_markers(step: dict[str, Any]) -> list[str]:
+    """Collect change markers for a diff step."""
+    markers: list[str] = []
+    if step["status_changed"]:
+        markers.append(f"status: {step['status_a']} -> {step['status_b']}")
+    if step["agent_changed"]:
+        markers.append(f"agent: {step['agent_a']} -> {step['agent_b']}")
+    if step["artifacts_changed"]:
+        markers.append("artifacts: CHANGED")
+    if step["latency_a"] is not None and step["latency_b"] is not None:
+        delta = step["latency_b"] - step["latency_a"]
+        sign = "+" if delta >= 0 else ""
+        markers.append(
+            f"latency: {step['latency_a']}ms -> {step['latency_b']}ms ({sign}{delta}ms)"
+        )
+    return markers

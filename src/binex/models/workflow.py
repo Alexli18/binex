@@ -4,10 +4,25 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
-from binex.models.cost import BudgetConfig, NodeCostHint
+from binex.models.cost import BudgetConfig, NodeBudget, NodeCostHint
 from binex.models.task import RetryPolicy
+
+
+class BackEdge(BaseModel):
+    """Conditional back-edge: re-execute upstream nodes on condition."""
+
+    target: str
+    when: str
+    max_iterations: int = 5
+
+    @field_validator("max_iterations")
+    @classmethod
+    def max_iterations_positive(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError("max_iterations must be >= 1")
+        return v
 
 
 class NodeSpec(BaseModel):
@@ -25,6 +40,15 @@ class NodeSpec(BaseModel):
     when: str | None = None
     tools: list[Any] = Field(default_factory=list)
     cost: NodeCostHint | None = None
+    budget: float | NodeBudget | None = None
+    back_edge: BackEdge | None = None
+
+    @model_validator(mode="after")
+    def _normalize_budget(self) -> NodeSpec:
+        """Convert float/int shorthand to NodeBudget."""
+        if isinstance(self.budget, (int, float)):
+            self.budget = NodeBudget(max_cost=float(self.budget))
+        return self
 
 
 class DefaultsSpec(BaseModel):
@@ -42,6 +66,7 @@ class WorkflowSpec(BaseModel):
     nodes: dict[str, NodeSpec]
     defaults: DefaultsSpec | None = None
     budget: BudgetConfig | None = None
+    source_path: str | None = None
 
     @model_validator(mode="after")
     def _set_node_ids(self) -> WorkflowSpec:
@@ -51,4 +76,4 @@ class WorkflowSpec(BaseModel):
         return self
 
 
-__all__ = ["DefaultsSpec", "NodeSpec", "WorkflowSpec"]
+__all__ = ["BackEdge", "DefaultsSpec", "NodeSpec", "WorkflowSpec"]

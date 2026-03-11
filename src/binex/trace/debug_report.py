@@ -137,37 +137,50 @@ def format_debug_report(
     lines.append(f"Duration: {duration_s}s")
     lines.append("")
 
-    # Filter nodes
-    nodes = report.nodes
+    nodes = _filter_nodes(report.nodes, node_filter, errors_only)
+
+    for node in nodes:
+        _format_node_plain(node, lines)
+
+    return "\n".join(lines)
+
+
+def _filter_nodes(
+    nodes: list[NodeReport],
+    node_filter: str | None,
+    errors_only: bool,
+) -> list[NodeReport]:
+    """Apply node_filter and errors_only filters."""
     if node_filter:
         nodes = [n for n in nodes if n.node_id == node_filter]
     if errors_only:
         nodes = [n for n in nodes if n.status in ("failed", "timed_out")]
+    return nodes
 
-    for node in nodes:
-        latency_str = f" {node.latency_ms}ms" if node.latency_ms else ""
-        lines.append(f"-- {node.node_id} [{node.status}]{latency_str} ------")
 
-        if node.status == "skipped":
-            if node.blocked_by:
-                lines.append(f"  Blocked by: {', '.join(node.blocked_by)}")
-        else:
-            lines.append(f"  Agent:  {node.agent_id}")
-            if node.prompt:
-                lines.append(f"  Prompt: {_truncate(node.prompt)}")
-            for art in node.input_artifacts:
-                lines.append(f"  Input:  {art.id} <- {art.lineage.produced_by}")
-            for art in node.output_artifacts:
-                content_str = _truncate(str(art.content)) if art.content else ""
-                lines.append(f"  Output: {art.id} ({art.type})")
-                if content_str:
-                    lines.append(f"          {content_str}")
-            if node.error:
-                lines.append(f"  ERROR:  {node.error}")
+def _format_node_plain(node: NodeReport, lines: list[str]) -> None:
+    """Append plain-text lines for a single node report."""
+    latency_str = f" {node.latency_ms}ms" if node.latency_ms else ""
+    lines.append(f"-- {node.node_id} [{node.status}]{latency_str} ------")
 
-        lines.append("")
+    if node.status == "skipped":
+        if node.blocked_by:
+            lines.append(f"  Blocked by: {', '.join(node.blocked_by)}")
+    else:
+        lines.append(f"  Agent:  {node.agent_id}")
+        if node.prompt:
+            lines.append(f"  Prompt: {_truncate(node.prompt)}")
+        for art in node.input_artifacts:
+            lines.append(f"  Input:  {art.id} <- {art.lineage.produced_by}")
+        for art in node.output_artifacts:
+            content_str = _truncate(str(art.content)) if art.content else ""
+            lines.append(f"  Output: {art.id} ({art.type})")
+            if content_str:
+                lines.append(f"          {content_str}")
+        if node.error:
+            lines.append(f"  ERROR:  {node.error}")
 
-    return "\n".join(lines)
+    lines.append("")
 
 
 def format_debug_report_json(report: DebugReport) -> dict:

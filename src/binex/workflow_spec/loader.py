@@ -30,9 +30,12 @@ def load_workflow(
     else:
         raise ValueError(f"Unsupported file extension: {suffix}")
 
-    return load_workflow_from_string(
+    spec = load_workflow_from_string(
         path.read_text(), fmt=fmt, user_vars=user_vars,
+        base_dir=path.parent,
     )
+    spec.source_path = str(path)
+    return spec
 
 
 def load_workflow_from_string(
@@ -40,16 +43,19 @@ def load_workflow_from_string(
     *,
     fmt: str = "yaml",
     user_vars: dict[str, str] | None = None,
+    base_dir: Path | None = None,
 ) -> WorkflowSpec:
     """Parse a workflow from a YAML or JSON string."""
     data = _parse_raw(content, fmt)
     _resolve_env_vars(data)
     if user_vars:
         _interpolate(data, user_vars)
+    _resolve_file_prompts(data, base_dir=base_dir)
     try:
         spec = WorkflowSpec(**data)
     except ValidationError as exc:
         raise ValueError(f"Invalid workflow spec: {exc}") from exc
+    _validate_back_edges(spec)
     return spec
 
 
@@ -88,6 +94,71 @@ def _interpolate(obj: Any, user_vars: dict[str, str]) -> Any:
     if isinstance(obj, list):
         return [_interpolate(item, user_vars) for item in obj]
     return obj
+
+
+def _resolve_file_prompts(data: dict[str, Any], base_dir: Path | None = None) -> None:
+    """Resolve file:// prefixed system_prompt values by reading file content."""
+    nodes = data.get("nodes")
+    if not isinstance(nodes, dict):
+        return
+
+    for node_name, node_data in nodes.items():
+        if not isinstance(node_data, dict):
+            continue
+        prompt = node_data.get("system_prompt")
+        if not isinstance(prompt, str) or not prompt.startswith("file://"):
+            continue
+
+        file_path_str = prompt[len("file://"):]
+        file_path = Path(file_path_str)
+
+        if not file_path.is_absolute() and base_dir is not None:
+            file_path = base_dir / file_path
+
+        try:
+            node_data["system_prompt"] = file_path.read_text()
+        except FileNotFoundError:
+            raise ValueError(
+                f"Node '{node_name}': system_prompt file not found: {file_path}"
+            )
+        except OSError as exc:
+            raise ValueError(
+                f"Node '{node_name}': cannot read system_prompt file {file_path}: {exc}"
+            ) from exc
+
+
+_WHEN_RE = re.compile(r"^\$\{([\w-]+)\.([\w-]+)\}\s*(==|!=)\s*(.+)$")
+
+
+def _validate_back_edges(spec: WorkflowSpec) -> None:
+    """Validate all back_edge declarations in the workflow spec."""
+    if not any(n.back_edge for n in spec.nodes.values()):
+        return
+
+    from binex.graph.dag import DAG
+
+    dag = DAG.from_workflow(spec)
+
+    for node_id, node in spec.nodes.items():
+        if node.back_edge is None:
+            continue
+
+        be = node.back_edge
+
+        if be.target not in spec.nodes:
+            raise ValueError(
+                f"Node '{node_id}': back_edge target '{be.target}' not found in workflow"
+            )
+
+        if not dag.is_ancestor(be.target, node_id):
+            raise ValueError(
+                f"Node '{node_id}': back_edge target '{be.target}' is not upstream of '{node_id}'"
+            )
+
+        if not _WHEN_RE.match(be.when.strip()):
+            raise ValueError(
+                f"Node '{node_id}': back_edge has invalid when condition syntax: {be.when!r}"
+            )
 
 
 def _parse_raw(content: str, fmt: str) -> dict[str, Any]:

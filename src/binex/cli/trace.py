@@ -8,13 +8,31 @@ import sys
 
 import click
 
-from binex.cli import get_stores
+from binex.cli import get_stores, has_rich
 from binex.trace.tracer import generate_timeline, generate_timeline_json
 
 
 def _get_stores():
     """Create default stores. Extracted for test patching."""
     return get_stores()
+
+
+async def build_timeline_data(exec_store, run_id: str):
+    """Fetch and sort timeline records for reuse by explore dashboard."""
+    run = await exec_store.get_run(run_id)
+    records = await exec_store.list_records(run_id)
+    if records:
+        records.sort(key=lambda r: r.timestamp)
+    return run, records
+
+
+async def build_graph_data(exec_store, run_id: str):
+    """Fetch records and build graph structure for reuse by explore dashboard."""
+    records = await exec_store.list_records(run_id)
+    if not records:
+        return [], {}, []
+    nodes, edges = _build_graph_from_records(records)
+    return records, nodes, edges
 
 
 class TraceGroup(click.Group):
@@ -27,17 +45,15 @@ class TraceGroup(click.Group):
         return super().parse_args(ctx, args)
 
 
-@click.group("trace", cls=TraceGroup)
+@click.group("trace", cls=TraceGroup, epilog="""\b
+Examples:
+  binex trace <run_id>               Show timeline (default)
+  binex trace timeline <run_id>      Same as above
+  binex trace node <run_id> <step>   Inspect a single step
+  binex trace graph <run_id>         Show DAG visualization
+""")
 def trace_cmd() -> None:
     """Inspect execution trace for a run."""
-
-
-def _has_rich() -> bool:
-    try:
-        import rich  # noqa: F401
-        return True
-    except ImportError:
-        return False
 
 
 @trace_cmd.command("timeline")
@@ -47,7 +63,7 @@ def _has_rich() -> bool:
 def trace_timeline_cmd(run_id: str, json_out: bool, rich_out: bool | None) -> None:
     """Human-readable timeline of all steps (default)."""
     if rich_out is None:
-        rich_out = _has_rich()
+        rich_out = has_rich()
     asyncio.run(_timeline(run_id, json_out, rich_out))
 
 
@@ -59,8 +75,7 @@ async def _timeline(run_id: str, json_out: bool, rich_out: bool = False) -> None
             click.echo(json.dumps(data, indent=2))
         elif rich_out:
             from binex.trace.trace_rich import format_trace_rich
-            output = await format_trace_rich(exec_store, run_id)
-            click.echo(output)
+            await format_trace_rich(exec_store, run_id)
         else:
             output = await generate_timeline(exec_store, run_id)
             click.echo(output)
@@ -76,7 +91,7 @@ async def _timeline(run_id: str, json_out: bool, rich_out: bool = False) -> None
 def trace_node_cmd(run_id: str, step: str, json_out: bool, rich_out: bool | None) -> None:
     """Show detailed view of a single execution step."""
     if rich_out is None:
-        rich_out = _has_rich()
+        rich_out = has_rich()
     asyncio.run(_node(run_id, step, json_out, rich_out))
 
 
@@ -92,26 +107,30 @@ async def _node(run_id: str, step: str, json_out: bool, rich_out: bool = False) 
             click.echo(json.dumps(record.model_dump(), default=str, indent=2))
         elif rich_out:
             from binex.trace.trace_rich import format_trace_node_rich
-            output = await format_trace_node_rich(record)
-            click.echo(output)
+            await format_trace_node_rich(record)
         else:
-            click.echo(f"Step: {record.task_id}")
-            click.echo(f"Agent: {record.agent_id}")
-            click.echo(f"Status: {record.status.value}")
-            click.echo(f"Latency: {record.latency_ms}ms")
-            click.echo(f"Timestamp: {record.timestamp}")
-            if record.input_artifact_refs:
-                click.echo(f"Inputs: {', '.join(record.input_artifact_refs)}")
-            if record.output_artifact_refs:
-                click.echo(f"Outputs: {', '.join(record.output_artifact_refs)}")
-            if record.error:
-                click.echo(f"Error: {record.error}")
-            if record.prompt:
-                click.echo(f"Prompt: {record.prompt}")
-            if record.model:
-                click.echo(f"Model: {record.model}")
+            _print_node_plain(record)
     finally:
         await exec_store.close()
+
+
+def _print_node_plain(record) -> None:
+    """Print execution record details in plain text."""
+    click.echo(f"Step: {record.task_id}")
+    click.echo(f"Agent: {record.agent_id}")
+    click.echo(f"Status: {record.status.value}")
+    click.echo(f"Latency: {record.latency_ms}ms")
+    click.echo(f"Timestamp: {record.timestamp}")
+    if record.input_artifact_refs:
+        click.echo(f"Inputs: {', '.join(record.input_artifact_refs)}")
+    if record.output_artifact_refs:
+        click.echo(f"Outputs: {', '.join(record.output_artifact_refs)}")
+    if record.error:
+        click.echo(f"Error: {record.error}")
+    if record.prompt:
+        click.echo(f"Prompt: {record.prompt}")
+    if record.model:
+        click.echo(f"Model: {record.model}")
 
 
 @trace_cmd.command("graph")
@@ -121,7 +140,7 @@ async def _node(run_id: str, step: str, json_out: bool, rich_out: bool = False) 
 def trace_graph_cmd(run_id: str, json_out: bool, rich_out: bool | None) -> None:
     """Show DAG visualization of a run."""
     if rich_out is None:
-        rich_out = _has_rich()
+        rich_out = has_rich()
     asyncio.run(_graph(run_id, json_out, rich_out))
 
 
@@ -133,22 +152,7 @@ async def _graph(run_id: str, json_out: bool, rich_out: bool = False) -> None:
             click.echo(f"No records found for run '{run_id}'.", err=True)
             sys.exit(1)
 
-        nodes: dict[str, str] = {}
-        for rec in records:
-            status_icon = "+" if rec.status.value == "completed" else "x"
-            nodes[rec.task_id] = f"[{status_icon}] {rec.task_id} ({rec.agent_id})"
-
-        # Infer edges from artifact refs
-        output_map: dict[str, str] = {}
-        for rec in records:
-            for art_ref in rec.output_artifact_refs:
-                output_map[art_ref] = rec.task_id
-
-        edge_list: list[tuple[str, str]] = []
-        for rec in records:
-            for art_ref in rec.input_artifact_refs:
-                if art_ref in output_map:
-                    edge_list.append((output_map[art_ref], rec.task_id))
+        nodes, edge_list = _build_graph_from_records(records)
 
         if json_out:
             data = {
@@ -161,14 +165,33 @@ async def _graph(run_id: str, json_out: bool, rich_out: bool = False) -> None:
             click.echo(json.dumps(data, indent=2))
         elif rich_out:
             from binex.trace.trace_rich import format_trace_graph_rich
-            output = await format_trace_graph_rich(records, nodes, edge_list)
-            click.echo(output)
+            await format_trace_graph_rich(records, nodes, edge_list)
         else:
             click.echo("DAG:")
-            rendered: set[str] = set()
-            _render_dag(nodes, edge_list, rendered, click.echo)
+            _render_dag(nodes, edge_list, set(), click.echo)
     finally:
         await exec_store.close()
+
+
+def _build_graph_from_records(records) -> tuple[dict[str, str], list[tuple[str, str]]]:
+    """Build node labels and edge list from execution records."""
+    nodes: dict[str, str] = {}
+    for rec in records:
+        status_icon = "+" if rec.status.value == "completed" else "x"
+        nodes[rec.task_id] = f"[{status_icon}] {rec.task_id} ({rec.agent_id})"
+
+    output_map: dict[str, str] = {}
+    for rec in records:
+        for art_ref in rec.output_artifact_refs:
+            output_map[art_ref] = rec.task_id
+
+    edge_list: list[tuple[str, str]] = []
+    for rec in records:
+        for art_ref in rec.input_artifact_refs:
+            if art_ref in output_map:
+                edge_list.append((output_map[art_ref], rec.task_id))
+
+    return nodes, edge_list
 
 
 def _render_dag(

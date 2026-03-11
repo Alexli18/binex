@@ -52,12 +52,12 @@ nodes:
     assert cost_data["run_id"] == run_id
     assert cost_data["total_cost"] == 0.0  # local adapters = $0
 
-    # Step 4: Cost history
+    # Step 4: Cost history — local adapters no longer create cost records
     result = run_binex("cost", "history", run_id, "--json", env=env)
     assert result.returncode == 0, f"stderr: {result.stderr}"
     hist_data = json.loads(result.stdout)
     assert hist_data["run_id"] == run_id
-    assert len(hist_data["records"]) == 2  # one per node
+    assert len(hist_data["records"]) == 0  # local adapters don't create cost records
 
     # Step 5: Verify real files on disk
     db_file = store_path / "binex.db"

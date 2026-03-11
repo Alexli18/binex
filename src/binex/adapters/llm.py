@@ -45,6 +45,103 @@ class LLMAdapter:
         self._max_tokens = max_tokens
         self._workflow_dir = workflow_dir
 
+    def _build_completion_kwargs(
+        self, messages: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Build kwargs dict for litellm.acompletion, including optional params."""
+        kwargs: dict[str, Any] = {"model": self._model, "messages": messages}
+        optional = {
+            "api_base": self._api_base,
+            "api_key": self._api_key,
+            "temperature": self._temperature,
+            "max_tokens": self._max_tokens,
+        }
+        for key, value in optional.items():
+            if value is not None:
+                kwargs[key] = value
+        return kwargs
+
+    async def _run_tool_loop(
+        self,
+        messages: list[dict[str, Any]],
+        kwargs: dict[str, Any],
+        message: Any,
+        resolved_tools: list[Any],
+        max_rounds: int,
+    ) -> tuple[Any, list[Any]]:
+        """Execute the tool-calling loop. Returns (final_message, all_responses)."""
+        all_responses: list[Any] = []
+        rounds = 0
+
+        while getattr(message, "tool_calls", None) and resolved_tools:
+            rounds += 1
+            if rounds > max_rounds:
+                raise RuntimeError(f"Exceeded max tool rounds ({max_rounds})")
+
+            messages.append(message.model_dump())
+
+            for tool_call in message.tool_calls:
+                func_name = tool_call.function.name
+                try:
+                    arguments = json.loads(tool_call.function.arguments)
+                except (json.JSONDecodeError, TypeError):
+                    arguments = {}
+
+                matching = [t for t in resolved_tools if t.name == func_name]
+                if matching:
+                    result = await execute_tool_call(matching[0], arguments)
+                else:
+                    result = f"Error: Unknown tool '{func_name}'"
+
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": result,
+                })
+
+            kwargs["messages"] = messages
+            response = await self._completion_with_retry(**kwargs)
+            message = response.choices[0].message
+            all_responses.append(response)
+
+        return message, all_responses
+
+    @staticmethod
+    def _accumulate_cost(
+        responses: list[Any], task: TaskNode, model: str,
+    ) -> CostRecord:
+        """Calculate total cost from a list of LLM responses."""
+        total_cost = 0.0
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+        source = "llm_tokens"
+        has_usage = False
+
+        for resp in responses:
+            usage = getattr(resp, "usage", None)
+            if usage:
+                has_usage = True
+                total_prompt_tokens += getattr(usage, "prompt_tokens", None) or 0
+                total_completion_tokens += getattr(usage, "completion_tokens", None) or 0
+                try:
+                    total_cost += litellm.completion_cost(completion_response=resp)
+                except Exception:
+                    source = "llm_tokens_unavailable"
+
+        if not has_usage:
+            source = "llm_tokens_unavailable"
+
+        return CostRecord(
+            id=f"cost_{uuid.uuid4().hex[:12]}",
+            run_id=task.run_id,
+            task_id=task.node_id,
+            cost=total_cost,
+            source=source,
+            prompt_tokens=total_prompt_tokens if has_usage else None,
+            completion_tokens=total_completion_tokens if has_usage else None,
+            model=model,
+        )
+
     async def execute(
         self,
         task: TaskNode,
@@ -58,22 +155,10 @@ class LLMAdapter:
             messages.append({"role": "system", "content": task.system_prompt})
         messages.append({"role": "user", "content": prompt})
 
-        kwargs: dict[str, Any] = {
-            "model": self._model,
-            "messages": messages,
-        }
-        if self._api_base is not None:
-            kwargs["api_base"] = self._api_base
-        if self._api_key is not None:
-            kwargs["api_key"] = self._api_key
-        if self._temperature is not None:
-            kwargs["temperature"] = self._temperature
-        if self._max_tokens is not None:
-            kwargs["max_tokens"] = self._max_tokens
+        kwargs = self._build_completion_kwargs(messages)
 
         # Tool calling setup
         max_tool_rounds = task.config.get("max_tool_rounds", 10)
-
         resolved_tools: list[Any] = []
         if task.tools and max_tool_rounds > 0:
             resolved_tools = resolve_tools(task.tools, workflow_dir=self._workflow_dir)
@@ -81,57 +166,21 @@ class LLMAdapter:
 
         response = await self._completion_with_retry(**kwargs)
         message = response.choices[0].message
-
-        # Track cost across all LLM calls (including tool-calling loop)
         all_responses = [response]
 
-        # Tool calling loop
-        rounds = 0
-        while getattr(message, "tool_calls", None) and resolved_tools:
-            rounds += 1
-            if rounds > max_tool_rounds:
-                raise RuntimeError(
-                    f"Exceeded max tool rounds ({max_tool_rounds})"
-                )
-
-            # Append assistant message with tool calls
-            messages.append(message.model_dump())
-
-            # Execute each tool call
-            for tool_call in message.tool_calls:
-                func_name = tool_call.function.name
-                try:
-                    arguments = json.loads(tool_call.function.arguments)
-                except (json.JSONDecodeError, TypeError):
-                    arguments = {}
-
-                # Find matching tool definition
-                matching = [t for t in resolved_tools if t.name == func_name]
-                if matching:
-                    result = await execute_tool_call(matching[0], arguments)
-                else:
-                    result = f"Error: Unknown tool '{func_name}'"
-
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tool_call.id,
-                    "content": result,
-                })
-
-            # Re-call with updated messages
-            kwargs["messages"] = messages
-            response = await self._completion_with_retry(**kwargs)
-            message = response.choices[0].message
-            all_responses.append(response)
-
-        content = message.content
+        # Run tool-calling loop if needed
+        if getattr(message, "tool_calls", None) and resolved_tools:
+            message, extra_responses = await self._run_tool_loop(
+                messages, kwargs, message, resolved_tools, max_tool_rounds,
+            )
+            all_responses.extend(extra_responses)
 
         artifacts = [
             Artifact(
                 id=f"art_{uuid.uuid4().hex[:12]}",
                 run_id=task.run_id,
                 type="llm_response",
-                content=content,
+                content=message.content,
                 lineage=Lineage(
                     produced_by=task.node_id,
                     derived_from=[a.id for a in input_artifacts],
@@ -139,42 +188,7 @@ class LLMAdapter:
             )
         ]
 
-        # Accumulate cost across all LLM calls
-        total_cost = 0.0
-        total_prompt_tokens = 0
-        total_completion_tokens = 0
-        source = "llm_tokens"
-        has_usage = False
-
-        for resp in all_responses:
-            usage = getattr(resp, "usage", None)
-            if usage:
-                has_usage = True
-                pt = getattr(usage, "prompt_tokens", None) or 0
-                ct = getattr(usage, "completion_tokens", None) or 0
-                total_prompt_tokens += pt
-                total_completion_tokens += ct
-                try:
-                    total_cost += litellm.completion_cost(
-                        completion_response=resp
-                    )
-                except Exception:
-                    source = "llm_tokens_unavailable"
-
-        if not has_usage:
-            source = "llm_tokens_unavailable"
-
-        cost_record = CostRecord(
-            id=f"cost_{uuid.uuid4().hex[:12]}",
-            run_id=task.run_id,
-            task_id=task.node_id,
-            cost=total_cost,
-            source=source,
-            prompt_tokens=total_prompt_tokens if has_usage else None,
-            completion_tokens=total_completion_tokens if has_usage else None,
-            model=self._model,
-        )
-
+        cost_record = self._accumulate_cost(all_responses, task, self._model)
         return ExecutionResult(artifacts=artifacts, cost=cost_record)
 
     @staticmethod
@@ -210,7 +224,13 @@ class LLMAdapter:
                     continue
                 parts.append(f"{key}: {value}")
         for art in input_artifacts:
-            parts.append(f"\nInput ({art.type}):\n{art.content}")
+            if art.type == "feedback":
+                parts.append(
+                    f"\nYour previous output was rejected. "
+                    f"Please revise based on this feedback:\n{art.content}"
+                )
+            else:
+                parts.append(f"\nInput ({art.type}):\n{art.content}")
         return "\n".join(parts) if parts else "No input provided."
 
     async def cancel(self, task_id: str) -> None:

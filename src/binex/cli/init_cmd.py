@@ -190,8 +190,22 @@ def init_cmd(project_name: str | None) -> None:
         created.append("docker-compose.yml")
 
     # ---- summary ----
-    click.echo(f"\nProject '{project_name}' initialised!")
-    click.echo("Created:")
-    for f in created:
-        click.echo(f"  {f}")
-    click.echo("\nRun your workflow:\n  binex run workflow.yaml --var topic=\"your topic\"")
+    from binex.cli import has_rich
+
+    if has_rich():
+        from binex.cli.ui import get_console, make_panel
+
+        lines = [f"Project [bold]{project_name}[/bold] initialised!\n"]
+        lines.append("Created:")
+        for f in created:
+            lines.append(f"  {f}")
+        lines.append("\nRun your workflow:")
+        lines.append('  binex run workflow.yaml --var topic="your topic"')
+        console = get_console()
+        console.print(make_panel("\n".join(lines), title="Project Initialized"))
+    else:
+        click.echo(f"\nProject '{project_name}' initialised!")
+        click.echo("Created:")
+        for f in created:
+            click.echo(f"  {f}")
+        click.echo("\nRun your workflow:\n  binex run workflow.yaml --var topic=\"your topic\"")

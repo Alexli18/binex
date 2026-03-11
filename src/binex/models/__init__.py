@@ -6,6 +6,7 @@ from binex.models.cost import (
     BudgetConfig,
     CostRecord,
     ExecutionResult,
+    NodeBudget,
     NodeCostHint,
     RunCostSummary,
 )
@@ -24,6 +25,7 @@ __all__ = [
     "ExecutionRecord",
     "ExecutionResult",
     "Lineage",
+    "NodeBudget",
     "NodeCostHint",
     "NodeSpec",
     "RetryPolicy",

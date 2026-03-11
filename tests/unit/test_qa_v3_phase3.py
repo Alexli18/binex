@@ -10,9 +10,11 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import UTC, datetime, timedelta
+from io import StringIO
 from unittest.mock import patch
 
 import pytest
+from rich.console import Console
 from click.testing import CliRunner
 
 from binex.adapters.human import HumanApprovalAdapter, HumanInputAdapter
@@ -30,7 +32,8 @@ from binex.trace.debug_report import (
     format_debug_report,
     format_debug_report_json,
 )
-from binex.trace.debug_rich import STATUS_COLORS, format_debug_report_rich
+from binex.cli.ui import STATUS_CONFIG
+from binex.trace.debug_rich import format_debug_report_rich
 
 # ===========================================================================
 # Helpers
@@ -122,7 +125,7 @@ class TestHumanAdaptersGaps:
     def test_hum_003_decision_type(self):
         adapter = HumanApprovalAdapter()
         task = _make_task()
-        with patch("binex.adapters.human.click.prompt", return_value="y"), \
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [_make_input_artifact()], "t1"))
         assert result.artifacts[0].type == "decision"
@@ -163,7 +166,7 @@ class TestHumanAdaptersGaps:
             id="a2", run_id="run_1", type="text",
             content="y", lineage=Lineage(produced_by="prev"),
         )
-        with patch("binex.adapters.human.click.prompt", return_value="y"), \
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
              patch("binex.adapters.human.click.echo"):
             result = asyncio.run(adapter.execute(task, [art1, art2], "t1"))
         assert result.artifacts[0].lineage.derived_from == ["a1", "a2"]
@@ -314,10 +317,10 @@ class TestDebugCommandGaps:
 
     # TC-DBG-014: Rich color mapping
     def test_dbg_014_color_mapping(self):
-        assert STATUS_COLORS["completed"] == "green"
-        assert STATUS_COLORS["failed"] == "red"
-        assert STATUS_COLORS["timed_out"] == "yellow"
-        assert STATUS_COLORS["skipped"] == "dim"
+        assert STATUS_CONFIG["completed"][1] == "green"
+        assert STATUS_CONFIG["failed"][1] == "red bold"
+        assert STATUS_CONFIG["timed_out"][1] == "yellow"
+        assert STATUS_CONFIG["skipped"][1] == "dim"
 
     # TC-DBG-015: Combined --errors --json
     def test_dbg_015_combined_errors_json(self):
@@ -375,7 +378,11 @@ class TestDebugCommandGaps:
                 NodeReport(node_id="skip", agent_id="", status="skipped", blocked_by=["done"]),
             ],
         )
-        output = format_debug_report_rich(report)
+        buf = StringIO()
+        test_console = Console(file=buf, force_terminal=True, width=120)
+        with patch("binex.trace.debug_rich.get_console", return_value=test_console):
+            format_debug_report_rich(report)
+        output = buf.getvalue()
         assert "skip" in output
 
 
@@ -392,7 +399,7 @@ class TestStartWizardGaps:
         import yaml
 
         from binex.cli.start import build_start_workflow
-        yaml_str = build_start_workflow(
+        yaml_str, _ = build_start_workflow(
             dsl="A -> B -> C",
             agent_prefix="llm://ollama/",
             model="llama3.2",
@@ -409,7 +416,7 @@ class TestStartWizardGaps:
         import yaml
 
         from binex.cli.start import build_start_workflow
-        yaml_str = build_start_workflow(
+        yaml_str, _ = build_start_workflow(
             dsl="planner -> researcher -> writer",
             agent_prefix="llm://",
             model="gpt-4o",

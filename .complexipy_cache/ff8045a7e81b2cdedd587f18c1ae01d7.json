@@ -1,0 +1,2191 @@
+{
+  "functions": [
+    {
+      "complexity": 0,
+      "file_name": "a2a.py",
+      "function_name": "A2AAgentAdapter::__init__",
+      "path": "binex/adapters/a2a.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "a2a.py",
+      "function_name": "A2AAgentAdapter::cancel",
+      "path": "binex/adapters/a2a.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "a2a.py",
+      "function_name": "A2AAgentAdapter::execute",
+      "path": "binex/adapters/a2a.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "a2a.py",
+      "function_name": "A2AAgentAdapter::health",
+      "path": "binex/adapters/a2a.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "base.py",
+      "function_name": "AgentAdapter::cancel",
+      "path": "binex/adapters/base.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "base.py",
+      "function_name": "AgentAdapter::execute",
+      "path": "binex/adapters/base.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "base.py",
+      "function_name": "AgentAdapter::health",
+      "path": "binex/adapters/base.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "human.py",
+      "function_name": "HumanApprovalAdapter::cancel",
+      "path": "binex/adapters/human.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "human.py",
+      "function_name": "HumanApprovalAdapter::health",
+      "path": "binex/adapters/human.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "human.py",
+      "function_name": "HumanInputAdapter::cancel",
+      "path": "binex/adapters/human.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "human.py",
+      "function_name": "HumanInputAdapter::health",
+      "path": "binex/adapters/human.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "human.py",
+      "function_name": "HumanApprovalAdapter::execute",
+      "path": "binex/adapters/human.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "human.py",
+      "function_name": "HumanInputAdapter::execute",
+      "path": "binex/adapters/human.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "llm.py",
+      "function_name": "LLMAdapter::__init__",
+      "path": "binex/adapters/llm.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "llm.py",
+      "function_name": "LLMAdapter::cancel",
+      "path": "binex/adapters/llm.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "llm.py",
+      "function_name": "LLMAdapter::health",
+      "path": "binex/adapters/llm.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "llm.py",
+      "function_name": "LLMAdapter::_build_completion_kwargs",
+      "path": "binex/adapters/llm.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "llm.py",
+      "function_name": "LLMAdapter::_completion_with_retry",
+      "path": "binex/adapters/llm.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "llm.py",
+      "function_name": "LLMAdapter::execute",
+      "path": "binex/adapters/llm.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "llm.py",
+      "function_name": "LLMAdapter::_accumulate_cost",
+      "path": "binex/adapters/llm.py"
+    },
+    {
+      "complexity": 10,
+      "file_name": "llm.py",
+      "function_name": "LLMAdapter::_build_prompt",
+      "path": "binex/adapters/llm.py"
+    },
+    {
+      "complexity": 11,
+      "file_name": "llm.py",
+      "function_name": "LLMAdapter::_run_tool_loop",
+      "path": "binex/adapters/llm.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "local.py",
+      "function_name": "LocalPythonAdapter::__init__",
+      "path": "binex/adapters/local.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "local.py",
+      "function_name": "LocalPythonAdapter::cancel",
+      "path": "binex/adapters/local.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "local.py",
+      "function_name": "LocalPythonAdapter::execute",
+      "path": "binex/adapters/local.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "local.py",
+      "function_name": "LocalPythonAdapter::health",
+      "path": "binex/adapters/local.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "llm_client.py",
+      "function_name": "LLMClient::complete_json",
+      "path": "binex/agents/common/llm_client.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "llm_client.py",
+      "function_name": "LLMClient::config",
+      "path": "binex/agents/common/llm_client.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "llm_client.py",
+      "function_name": "LLMClient::__init__",
+      "path": "binex/agents/common/llm_client.py"
+    },
+    {
+      "complexity": 6,
+      "file_name": "llm_client.py",
+      "function_name": "LLMClient::complete",
+      "path": "binex/agents/common/llm_client.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "llm_config.py",
+      "function_name": "LLMConfig::for_litellm_proxy",
+      "path": "binex/agents/common/llm_config.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "llm_config.py",
+      "function_name": "LLMConfig::for_ollama",
+      "path": "binex/agents/common/llm_config.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "agent.py",
+      "function_name": "PlannerAgent::execute",
+      "path": "binex/agents/planner/agent.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "agent.py",
+      "function_name": "PlannerAgent::__init__",
+      "path": "binex/agents/planner/agent.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "agent.py",
+      "function_name": "PlannerAgent::_parse_subtasks",
+      "path": "binex/agents/planner/agent.py"
+    },
+    {
+      "complexity": 6,
+      "file_name": "agent.py",
+      "function_name": "PlannerAgent::_extract_query",
+      "path": "binex/agents/planner/agent.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "cancel",
+      "path": "binex/agents/planner/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "execute",
+      "path": "binex/agents/planner/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "health",
+      "path": "binex/agents/planner/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "agent.py",
+      "function_name": "ResearcherAgent::execute",
+      "path": "binex/agents/researcher/agent.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "agent.py",
+      "function_name": "ResearcherAgent::__init__",
+      "path": "binex/agents/researcher/agent.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "agent.py",
+      "function_name": "ResearcherAgent::_parse_results",
+      "path": "binex/agents/researcher/agent.py"
+    },
+    {
+      "complexity": 15,
+      "file_name": "agent.py",
+      "function_name": "ResearcherAgent::_extract_query",
+      "path": "binex/agents/researcher/agent.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "cancel",
+      "path": "binex/agents/researcher/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "execute",
+      "path": "binex/agents/researcher/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "health",
+      "path": "binex/agents/researcher/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "agent.py",
+      "function_name": "SummarizerAgent::execute",
+      "path": "binex/agents/summarizer/agent.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "agent.py",
+      "function_name": "SummarizerAgent::__init__",
+      "path": "binex/agents/summarizer/agent.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "agent.py",
+      "function_name": "SummarizerAgent::_parse_report",
+      "path": "binex/agents/summarizer/agent.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "agent.py",
+      "function_name": "SummarizerAgent::_extract_findings",
+      "path": "binex/agents/summarizer/agent.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "cancel",
+      "path": "binex/agents/summarizer/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "execute",
+      "path": "binex/agents/summarizer/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "health",
+      "path": "binex/agents/summarizer/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "agent.py",
+      "function_name": "ValidatorAgent::execute",
+      "path": "binex/agents/validator/agent.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "agent.py",
+      "function_name": "ValidatorAgent::__init__",
+      "path": "binex/agents/validator/agent.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "agent.py",
+      "function_name": "ValidatorAgent::_parse_validation",
+      "path": "binex/agents/validator/agent.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "agent.py",
+      "function_name": "ValidatorAgent::_combine_findings",
+      "path": "binex/agents/validator/agent.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "cancel",
+      "path": "binex/agents/validator/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "execute",
+      "path": "binex/agents/validator/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "health",
+      "path": "binex/agents/validator/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "__init__.py",
+      "function_name": "get_stores",
+      "path": "binex/cli/__init__.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "__init__.py",
+      "function_name": "run_async",
+      "path": "binex/cli/__init__.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "__init__.py",
+      "function_name": "_prepare_content",
+      "path": "binex/cli/__init__.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "__init__.py",
+      "function_name": "has_rich",
+      "path": "binex/cli/__init__.py"
+    },
+    {
+      "complexity": 10,
+      "file_name": "__init__.py",
+      "function_name": "render_terminal_artifacts",
+      "path": "binex/cli/__init__.py"
+    },
+    {
+      "complexity": 14,
+      "file_name": "__init__.py",
+      "function_name": "BinexGroup::format_commands",
+      "path": "binex/cli/__init__.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "adapter_registry.py",
+      "function_name": "_default_handler",
+      "path": "binex/cli/adapter_registry.py"
+    },
+    {
+      "complexity": 12,
+      "file_name": "adapter_registry.py",
+      "function_name": "register_workflow_adapters",
+      "path": "binex/cli/adapter_registry.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "artifacts.py",
+      "function_name": "_get_stores",
+      "path": "binex/cli/artifacts.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "artifacts.py",
+      "function_name": "artifacts_cmd",
+      "path": "binex/cli/artifacts.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "artifacts.py",
+      "function_name": "artifacts_lineage_cmd",
+      "path": "binex/cli/artifacts.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "artifacts.py",
+      "function_name": "artifacts_list_cmd",
+      "path": "binex/cli/artifacts.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "artifacts.py",
+      "function_name": "artifacts_show_cmd",
+      "path": "binex/cli/artifacts.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "artifacts.py",
+      "function_name": "_lineage",
+      "path": "binex/cli/artifacts.py"
+    },
+    {
+      "complexity": 9,
+      "file_name": "artifacts.py",
+      "function_name": "_list",
+      "path": "binex/cli/artifacts.py"
+    },
+    {
+      "complexity": 15,
+      "file_name": "artifacts.py",
+      "function_name": "_show",
+      "path": "binex/cli/artifacts.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "cost.py",
+      "function_name": "_get_stores",
+      "path": "binex/cli/cost.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "cost.py",
+      "function_name": "cost_group",
+      "path": "binex/cli/cost.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "cost.py",
+      "function_name": "cost_history_cmd",
+      "path": "binex/cli/cost.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "cost.py",
+      "function_name": "cost_show_cmd",
+      "path": "binex/cli/cost.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "cost.py",
+      "function_name": "_print_cost_json",
+      "path": "binex/cli/cost.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "cost.py",
+      "function_name": "_find_node_budget",
+      "path": "binex/cli/cost.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "cost.py",
+      "function_name": "_cost_show",
+      "path": "binex/cli/cost.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "cost.py",
+      "function_name": "_print_cost_text",
+      "path": "binex/cli/cost.py"
+    },
+    {
+      "complexity": 8,
+      "file_name": "cost.py",
+      "function_name": "_cost_history",
+      "path": "binex/cli/cost.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "debug.py",
+      "function_name": "_get_stores",
+      "path": "binex/cli/debug.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "debug.py",
+      "function_name": "_resolve_run_id",
+      "path": "binex/cli/debug.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "debug.py",
+      "function_name": "debug_cmd",
+      "path": "binex/cli/debug.py"
+    },
+    {
+      "complexity": 9,
+      "file_name": "debug.py",
+      "function_name": "_debug_async",
+      "path": "binex/cli/debug.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "dev.py",
+      "function_name": "_run_compose",
+      "path": "binex/cli/dev.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "dev.py",
+      "function_name": "_find_compose_file",
+      "path": "binex/cli/dev.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "dev.py",
+      "function_name": "_wait_for_health",
+      "path": "binex/cli/dev.py"
+    },
+    {
+      "complexity": 15,
+      "file_name": "dev.py",
+      "function_name": "dev_cmd",
+      "path": "binex/cli/dev.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "diff.py",
+      "function_name": "_run_diff",
+      "path": "binex/cli/diff.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "diff.py",
+      "function_name": "diff_cmd",
+      "path": "binex/cli/diff.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "doctor.py",
+      "function_name": "_check_binary",
+      "path": "binex/cli/doctor.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "doctor.py",
+      "function_name": "_check_store_backend",
+      "path": "binex/cli/doctor.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "doctor.py",
+      "function_name": "run_checks",
+      "path": "binex/cli/doctor.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "doctor.py",
+      "function_name": "_check_docker_running",
+      "path": "binex/cli/doctor.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "doctor.py",
+      "function_name": "_check_http_service",
+      "path": "binex/cli/doctor.py"
+    },
+    {
+      "complexity": 10,
+      "file_name": "doctor.py",
+      "function_name": "doctor_cmd",
+      "path": "binex/cli/doctor.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "dsl_parser.py",
+      "function_name": "parse_dsl",
+      "path": "binex/cli/dsl_parser.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "dsl_parser.py",
+      "function_name": "_parse_layers",
+      "path": "binex/cli/dsl_parser.py"
+    },
+    {
+      "complexity": 16,
+      "file_name": "dsl_parser.py",
+      "function_name": "_collect_nodes_and_edges",
+      "path": "binex/cli/dsl_parser.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "explore.py",
+      "function_name": "_get_stores",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "explore.py",
+      "function_name": "_status_style",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "explore.py",
+      "function_name": "explore_cmd",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "explore.py",
+      "function_name": "_print_action_hints",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "explore.py",
+      "function_name": "_short_id",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "explore.py",
+      "function_name": "_print_artifact_detail",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "explore.py",
+      "function_name": "_explore",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "explore.py",
+      "function_name": "_preview",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "explore.py",
+      "function_name": "_time_ago",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 8,
+      "file_name": "explore.py",
+      "function_name": "_show_lineage",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 10,
+      "file_name": "explore.py",
+      "function_name": "_browse_artifacts",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 12,
+      "file_name": "explore.py",
+      "function_name": "_print_artifacts_table",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 12,
+      "file_name": "explore.py",
+      "function_name": "_show_artifact",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 14,
+      "file_name": "explore.py",
+      "function_name": "_browse_runs",
+      "path": "binex/cli/explore.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "hello.py",
+      "function_name": "_build_hello_workflow",
+      "path": "binex/cli/hello.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "hello.py",
+      "function_name": "_get_stores",
+      "path": "binex/cli/hello.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "hello.py",
+      "function_name": "hello_cmd",
+      "path": "binex/cli/hello.py"
+    },
+    {
+      "complexity": 12,
+      "file_name": "hello.py",
+      "function_name": "_run_hello",
+      "path": "binex/cli/hello.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "init_cmd.py",
+      "function_name": "_docker_compose_yml",
+      "path": "binex/cli/init_cmd.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "init_cmd.py",
+      "function_name": "_test_workflow_py",
+      "path": "binex/cli/init_cmd.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "init_cmd.py",
+      "function_name": "_workflow_yaml",
+      "path": "binex/cli/init_cmd.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "init_cmd.py",
+      "function_name": "_env_example",
+      "path": "binex/cli/init_cmd.py"
+    },
+    {
+      "complexity": 12,
+      "file_name": "init_cmd.py",
+      "function_name": "init_cmd",
+      "path": "binex/cli/init_cmd.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "main.py",
+      "function_name": "main",
+      "path": "binex/cli/main.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "main.py",
+      "function_name": "cli",
+      "path": "binex/cli/main.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "providers.py",
+      "function_name": "get_provider",
+      "path": "binex/cli/providers.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "replay.py",
+      "function_name": "_run_replay",
+      "path": "binex/cli/replay.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "replay.py",
+      "function_name": "_parse_agent_swaps",
+      "path": "binex/cli/replay.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "replay.py",
+      "function_name": "replay_cmd",
+      "path": "binex/cli/replay.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "run.py",
+      "function_name": "_collect_errors",
+      "path": "binex/cli/run.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "run.py",
+      "function_name": "_get_stores",
+      "path": "binex/cli/run.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "run.py",
+      "function_name": "_print_json_output",
+      "path": "binex/cli/run.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "run.py",
+      "function_name": "_parse_vars",
+      "path": "binex/cli/run.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "run.py",
+      "function_name": "cancel_cmd",
+      "path": "binex/cli/run.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "run.py",
+      "function_name": "_cancel",
+      "path": "binex/cli/run.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "run.py",
+      "function_name": "_run",
+      "path": "binex/cli/run.py"
+    },
+    {
+      "complexity": 6,
+      "file_name": "run.py",
+      "function_name": "_show_skipped_nodes",
+      "path": "binex/cli/run.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "run.py",
+      "function_name": "run_cmd",
+      "path": "binex/cli/run.py"
+    },
+    {
+      "complexity": 8,
+      "file_name": "run.py",
+      "function_name": "_print_text_output",
+      "path": "binex/cli/run.py"
+    },
+    {
+      "complexity": 16,
+      "file_name": "run.py",
+      "function_name": "_install_verbose_wrapper",
+      "path": "binex/cli/run.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scaffold.py",
+      "function_name": "_agent_card_json",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scaffold.py",
+      "function_name": "_agent_py",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scaffold.py",
+      "function_name": "_class_name",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scaffold.py",
+      "function_name": "_is_human_node",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scaffold.py",
+      "function_name": "_requirements_txt",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scaffold.py",
+      "function_name": "_server_py",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scaffold.py",
+      "function_name": "scaffold_group",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "scaffold.py",
+      "function_name": "_detect_human_type",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "scaffold.py",
+      "function_name": "_generate_env_example",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "scaffold.py",
+      "function_name": "scaffold_agent",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 9,
+      "file_name": "scaffold.py",
+      "function_name": "_build_workflow_yaml",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 22,
+      "file_name": "scaffold.py",
+      "function_name": "scaffold_workflow",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 27,
+      "file_name": "scaffold.py",
+      "function_name": "_interactive_node_config",
+      "path": "binex/cli/scaffold.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "start.py",
+      "function_name": "_get_prompts_dir",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "start.py",
+      "function_name": "_get_stores",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "start.py",
+      "function_name": "start_cmd",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "start.py",
+      "function_name": "_print_banner",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "start.py",
+      "function_name": "_print_confirm",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "start.py",
+      "function_name": "_print_done_panel",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "start.py",
+      "function_name": "_print_file_created",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "start.py",
+      "function_name": "_print_step",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "start.py",
+      "function_name": "_step_user_input",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "start.py",
+      "function_name": "_copy_prompts_to_project",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "start.py",
+      "function_name": "_run_workflow",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "start.py",
+      "function_name": "_step_project_name",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "start.py",
+      "function_name": "_step_generate_project",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 8,
+      "file_name": "start.py",
+      "function_name": "_execute",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 9,
+      "file_name": "start.py",
+      "function_name": "_print_dsl_preview",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 9,
+      "file_name": "start.py",
+      "function_name": "_step_choose_template",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 9,
+      "file_name": "start.py",
+      "function_name": "_step_custom_template",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 13,
+      "file_name": "start.py",
+      "function_name": "build_start_workflow",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 25,
+      "file_name": "start.py",
+      "function_name": "_step_choose_provider",
+      "path": "binex/cli/start.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "trace.py",
+      "function_name": "_get_stores",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "trace.py",
+      "function_name": "trace_cmd",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "trace.py",
+      "function_name": "trace_graph_cmd",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "trace.py",
+      "function_name": "trace_node_cmd",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "trace.py",
+      "function_name": "trace_timeline_cmd",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "trace.py",
+      "function_name": "TraceGroup::parse_args",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "trace.py",
+      "function_name": "_timeline",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "trace.py",
+      "function_name": "_print_node_plain",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 6,
+      "file_name": "trace.py",
+      "function_name": "_graph",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 6,
+      "file_name": "trace.py",
+      "function_name": "_node",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "trace.py",
+      "function_name": "_render_dag",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 12,
+      "file_name": "trace.py",
+      "function_name": "_build_graph_from_records",
+      "path": "binex/cli/trace.py"
+    },
+    {
+      "complexity": 13,
+      "file_name": "validate.py",
+      "function_name": "validate_cmd",
+      "path": "binex/cli/validate.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "dag.py",
+      "function_name": "DAG::__init__",
+      "path": "binex/graph/dag.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "dag.py",
+      "function_name": "DAG::dependencies",
+      "path": "binex/graph/dag.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "dag.py",
+      "function_name": "DAG::dependents",
+      "path": "binex/graph/dag.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "dag.py",
+      "function_name": "DAG::entry_nodes",
+      "path": "binex/graph/dag.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "dag.py",
+      "function_name": "DAG::nodes",
+      "path": "binex/graph/dag.py"
+    },
+    {
+      "complexity": 6,
+      "file_name": "dag.py",
+      "function_name": "DAG::from_workflow",
+      "path": "binex/graph/dag.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "dag.py",
+      "function_name": "DAG::topological_order",
+      "path": "binex/graph/dag.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scheduler.py",
+      "function_name": "Scheduler::__init__",
+      "path": "binex/graph/scheduler.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scheduler.py",
+      "function_name": "Scheduler::is_complete",
+      "path": "binex/graph/scheduler.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scheduler.py",
+      "function_name": "Scheduler::mark_completed",
+      "path": "binex/graph/scheduler.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scheduler.py",
+      "function_name": "Scheduler::mark_failed",
+      "path": "binex/graph/scheduler.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scheduler.py",
+      "function_name": "Scheduler::mark_running",
+      "path": "binex/graph/scheduler.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "scheduler.py",
+      "function_name": "Scheduler::mark_skipped",
+      "path": "binex/graph/scheduler.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "scheduler.py",
+      "function_name": "Scheduler::is_blocked",
+      "path": "binex/graph/scheduler.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "scheduler.py",
+      "function_name": "Scheduler::ready_nodes",
+      "path": "binex/graph/scheduler.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "cost.py",
+      "function_name": "BudgetConfig::max_cost_positive",
+      "path": "binex/models/cost.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "cost.py",
+      "function_name": "CostRecord::cost_non_negative",
+      "path": "binex/models/cost.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "cost.py",
+      "function_name": "NodeBudget::max_cost_positive",
+      "path": "binex/models/cost.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "cost.py",
+      "function_name": "NodeCostHint::estimate_non_negative",
+      "path": "binex/models/cost.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "task.py",
+      "function_name": "TaskStatus::valid_transitions",
+      "path": "binex/models/task.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "workflow.py",
+      "function_name": "NodeSpec::_normalize_budget",
+      "path": "binex/models/workflow.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "workflow.py",
+      "function_name": "WorkflowSpec::_set_node_ids",
+      "path": "binex/models/workflow.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "__main__.py",
+      "function_name": "main",
+      "path": "binex/registry/__main__.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "RegistryState::__init__",
+      "path": "binex/registry/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "health_check",
+      "path": "binex/registry/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "app.py",
+      "function_name": "search_agents",
+      "path": "binex/registry/app.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "app.py",
+      "function_name": "delete_agent",
+      "path": "binex/registry/app.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "app.py",
+      "function_name": "get_agent",
+      "path": "binex/registry/app.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "app.py",
+      "function_name": "register_agent",
+      "path": "binex/registry/app.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "app.py",
+      "function_name": "list_agents",
+      "path": "binex/registry/app.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "discovery.py",
+      "function_name": "AgentDiscovery::__init__",
+      "path": "binex/registry/discovery.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "discovery.py",
+      "function_name": "AgentDiscovery::discover",
+      "path": "binex/registry/discovery.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "discovery.py",
+      "function_name": "AgentDiscovery::refresh",
+      "path": "binex/registry/discovery.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "discovery.py",
+      "function_name": "_endpoint_id",
+      "path": "binex/registry/discovery.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "discovery.py",
+      "function_name": "AgentDiscovery::fetch_agent_card",
+      "path": "binex/registry/discovery.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "health.py",
+      "function_name": "HealthChecker::__init__",
+      "path": "binex/registry/health.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "health.py",
+      "function_name": "HealthChecker::check",
+      "path": "binex/registry/health.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "health.py",
+      "function_name": "HealthChecker::compute_health",
+      "path": "binex/registry/health.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "index.py",
+      "function_name": "CapabilityIndex::__init__",
+      "path": "binex/registry/index.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "index.py",
+      "function_name": "CapabilityIndex::_rank",
+      "path": "binex/registry/index.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "index.py",
+      "function_name": "CapabilityIndex::search",
+      "path": "binex/registry/index.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "index.py",
+      "function_name": "CapabilityIndex::update_agent",
+      "path": "binex/registry/index.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "index.py",
+      "function_name": "CapabilityIndex::add_agent",
+      "path": "binex/registry/index.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "index.py",
+      "function_name": "CapabilityIndex::search_multi",
+      "path": "binex/registry/index.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "index.py",
+      "function_name": "CapabilityIndex::remove_agent",
+      "path": "binex/registry/index.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "dispatcher.py",
+      "function_name": "Dispatcher::__init__",
+      "path": "binex/runtime/dispatcher.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "dispatcher.py",
+      "function_name": "Dispatcher::register_adapter",
+      "path": "binex/runtime/dispatcher.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "dispatcher.py",
+      "function_name": "Dispatcher::get_adapter",
+      "path": "binex/runtime/dispatcher.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "dispatcher.py",
+      "function_name": "_backoff_delay",
+      "path": "binex/runtime/dispatcher.py"
+    },
+    {
+      "complexity": 15,
+      "file_name": "dispatcher.py",
+      "function_name": "Dispatcher::dispatch",
+      "path": "binex/runtime/dispatcher.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "lifecycle.py",
+      "function_name": "transition",
+      "path": "binex/runtime/lifecycle.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "orchestrator.py",
+      "function_name": "Orchestrator::__init__",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "orchestrator.py",
+      "function_name": "_now_ms",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "orchestrator.py",
+      "function_name": "get_effective_policy",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "orchestrator.py",
+      "function_name": "Orchestrator::_budget_post_check",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "orchestrator.py",
+      "function_name": "get_node_max_cost",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "orchestrator.py",
+      "function_name": "Orchestrator::_budget_pre_check",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "orchestrator.py",
+      "function_name": "Orchestrator::_check_batch_budget",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "orchestrator.py",
+      "function_name": "Orchestrator::_determine_final_status",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "orchestrator.py",
+      "function_name": "Orchestrator::_build_task_node",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "orchestrator.py",
+      "function_name": "Orchestrator::_execute_node",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "orchestrator.py",
+      "function_name": "evaluate_when",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 6,
+      "file_name": "orchestrator.py",
+      "function_name": "Orchestrator::_schedule_ready_nodes",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "orchestrator.py",
+      "function_name": "Orchestrator::_skip_all_remaining",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 12,
+      "file_name": "orchestrator.py",
+      "function_name": "Orchestrator::run_workflow",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 33,
+      "file_name": "orchestrator.py",
+      "function_name": "Orchestrator::_retry_loop",
+      "path": "binex/runtime/orchestrator.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "replay.py",
+      "function_name": "ReplayEngine::__init__",
+      "path": "binex/runtime/replay.py"
+    },
+    {
+      "complexity": 6,
+      "file_name": "replay.py",
+      "function_name": "ReplayEngine::_execute_node",
+      "path": "binex/runtime/replay.py"
+    },
+    {
+      "complexity": 10,
+      "file_name": "replay.py",
+      "function_name": "ReplayEngine::_cache_upstream_steps",
+      "path": "binex/runtime/replay.py"
+    },
+    {
+      "complexity": 19,
+      "file_name": "replay.py",
+      "function_name": "ReplayEngine::replay",
+      "path": "binex/runtime/replay.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "settings.py",
+      "function_name": "Settings::__init__",
+      "path": "binex/settings.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "settings.py",
+      "function_name": "Settings::artifacts_dir",
+      "path": "binex/settings.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "settings.py",
+      "function_name": "Settings::db_path",
+      "path": "binex/settings.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "__init__.py",
+      "function_name": "create_artifact_store",
+      "path": "binex/stores/__init__.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "__init__.py",
+      "function_name": "create_execution_store",
+      "path": "binex/stores/__init__.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "artifact_store.py",
+      "function_name": "ArtifactStore::get",
+      "path": "binex/stores/artifact_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "artifact_store.py",
+      "function_name": "ArtifactStore::get_lineage",
+      "path": "binex/stores/artifact_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "artifact_store.py",
+      "function_name": "ArtifactStore::list_by_run",
+      "path": "binex/stores/artifact_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "artifact_store.py",
+      "function_name": "ArtifactStore::store",
+      "path": "binex/stores/artifact_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "filesystem.py",
+      "function_name": "FilesystemArtifactStore::__init__",
+      "path": "binex/stores/backends/filesystem.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "filesystem.py",
+      "function_name": "FilesystemArtifactStore::_artifact_path",
+      "path": "binex/stores/backends/filesystem.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "filesystem.py",
+      "function_name": "FilesystemArtifactStore::store",
+      "path": "binex/stores/backends/filesystem.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "filesystem.py",
+      "function_name": "FilesystemArtifactStore::_sanitize_component",
+      "path": "binex/stores/backends/filesystem.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "filesystem.py",
+      "function_name": "FilesystemArtifactStore::list_by_run",
+      "path": "binex/stores/backends/filesystem.py"
+    },
+    {
+      "complexity": 6,
+      "file_name": "filesystem.py",
+      "function_name": "FilesystemArtifactStore::get",
+      "path": "binex/stores/backends/filesystem.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "filesystem.py",
+      "function_name": "FilesystemArtifactStore::get_lineage",
+      "path": "binex/stores/backends/filesystem.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryArtifactStore::__init__",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryArtifactStore::get",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryArtifactStore::list_by_run",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryArtifactStore::store",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::__init__",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::close",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::create_run",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::get_run",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::list_costs",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::list_records",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::list_runs",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::record",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::record_cost",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::update_run",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::get_run_cost_summary",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "memory.py",
+      "function_name": "InMemoryExecutionStore::get_step",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "memory.py",
+      "function_name": "InMemoryArtifactStore::get_lineage",
+      "path": "binex/stores/backends/memory.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::__init__",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::_row_to_cost_record",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::_row_to_execution_record",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::_row_to_run_summary",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::create_run",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::list_costs",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::list_records",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::list_runs",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::record",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::record_cost",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::update_run",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::_ensure_initialized",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::close",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::get_run",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::get_run_cost_summary",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::get_step",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "sqlite.py",
+      "function_name": "SqliteExecutionStore::initialize",
+      "path": "binex/stores/backends/sqlite.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "execution_store.py",
+      "function_name": "ExecutionStore::create_run",
+      "path": "binex/stores/execution_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "execution_store.py",
+      "function_name": "ExecutionStore::get_run",
+      "path": "binex/stores/execution_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "execution_store.py",
+      "function_name": "ExecutionStore::get_run_cost_summary",
+      "path": "binex/stores/execution_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "execution_store.py",
+      "function_name": "ExecutionStore::get_step",
+      "path": "binex/stores/execution_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "execution_store.py",
+      "function_name": "ExecutionStore::list_costs",
+      "path": "binex/stores/execution_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "execution_store.py",
+      "function_name": "ExecutionStore::list_records",
+      "path": "binex/stores/execution_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "execution_store.py",
+      "function_name": "ExecutionStore::list_runs",
+      "path": "binex/stores/execution_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "execution_store.py",
+      "function_name": "ExecutionStore::record",
+      "path": "binex/stores/execution_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "execution_store.py",
+      "function_name": "ExecutionStore::record_cost",
+      "path": "binex/stores/execution_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "execution_store.py",
+      "function_name": "ExecutionStore::update_run",
+      "path": "binex/stores/execution_store.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "tools.py",
+      "function_name": "ToolDefinition::to_openai_schema",
+      "path": "binex/tools.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "tools.py",
+      "function_name": "tool",
+      "path": "binex/tools.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "tools.py",
+      "function_name": "_resolve_inline_tool",
+      "path": "binex/tools.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "tools.py",
+      "function_name": "execute_tool_call",
+      "path": "binex/tools.py"
+    },
+    {
+      "complexity": 9,
+      "file_name": "tools.py",
+      "function_name": "resolve_tools",
+      "path": "binex/tools.py"
+    },
+    {
+      "complexity": 12,
+      "file_name": "tools.py",
+      "function_name": "load_python_tool",
+      "path": "binex/tools.py"
+    },
+    {
+      "complexity": 16,
+      "file_name": "tools.py",
+      "function_name": "build_tool_schema",
+      "path": "binex/tools.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "debug_report.py",
+      "function_name": "format_debug_report_json",
+      "path": "binex/trace/debug_report.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "debug_report.py",
+      "function_name": "_truncate",
+      "path": "binex/trace/debug_report.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "debug_report.py",
+      "function_name": "format_debug_report",
+      "path": "binex/trace/debug_report.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "debug_report.py",
+      "function_name": "_filter_nodes",
+      "path": "binex/trace/debug_report.py"
+    },
+    {
+      "complexity": 9,
+      "file_name": "debug_report.py",
+      "function_name": "build_debug_report",
+      "path": "binex/trace/debug_report.py"
+    },
+    {
+      "complexity": 19,
+      "file_name": "debug_report.py",
+      "function_name": "_format_node_plain",
+      "path": "binex/trace/debug_report.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "debug_rich.py",
+      "function_name": "format_debug_report_rich",
+      "path": "binex/trace/debug_rich.py"
+    },
+    {
+      "complexity": 24,
+      "file_name": "debug_rich.py",
+      "function_name": "_render_node_rich",
+      "path": "binex/trace/debug_rich.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "diff.py",
+      "function_name": "format_diff",
+      "path": "binex/trace/diff.py"
+    },
+    {
+      "complexity": 4,
+      "file_name": "diff.py",
+      "function_name": "_format_step_plain",
+      "path": "binex/trace/diff.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "diff.py",
+      "function_name": "_collect_step_markers",
+      "path": "binex/trace/diff.py"
+    },
+    {
+      "complexity": 10,
+      "file_name": "diff.py",
+      "function_name": "_artifacts_differ",
+      "path": "binex/trace/diff.py"
+    },
+    {
+      "complexity": 15,
+      "file_name": "diff.py",
+      "function_name": "diff_runs",
+      "path": "binex/trace/diff.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "diff_rich.py",
+      "function_name": "_status_color",
+      "path": "binex/trace/diff_rich.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "diff_rich.py",
+      "function_name": "format_diff_rich",
+      "path": "binex/trace/diff_rich.py"
+    },
+    {
+      "complexity": 17,
+      "file_name": "diff_rich.py",
+      "function_name": "_build_diff_row",
+      "path": "binex/trace/diff_rich.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "lineage.py",
+      "function_name": "format_lineage_tree",
+      "path": "binex/trace/lineage.py"
+    },
+    {
+      "complexity": 6,
+      "file_name": "lineage.py",
+      "function_name": "build_lineage_tree",
+      "path": "binex/trace/lineage.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "trace_rich.py",
+      "function_name": "_make_console",
+      "path": "binex/trace/trace_rich.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "trace_rich.py",
+      "function_name": "format_trace_node_rich",
+      "path": "binex/trace/trace_rich.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "trace_rich.py",
+      "function_name": "_topo_sort",
+      "path": "binex/trace/trace_rich.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "trace_rich.py",
+      "function_name": "format_trace_graph_rich",
+      "path": "binex/trace/trace_rich.py"
+    },
+    {
+      "complexity": 11,
+      "file_name": "trace_rich.py",
+      "function_name": "format_trace_rich",
+      "path": "binex/trace/trace_rich.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "tracer.py",
+      "function_name": "generate_timeline_json",
+      "path": "binex/trace/tracer.py"
+    },
+    {
+      "complexity": 11,
+      "file_name": "tracer.py",
+      "function_name": "generate_timeline",
+      "path": "binex/trace/tracer.py"
+    },
+    {
+      "complexity": 2,
+      "file_name": "loader.py",
+      "function_name": "load_workflow_from_string",
+      "path": "binex/workflow_spec/loader.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "loader.py",
+      "function_name": "load_workflow",
+      "path": "binex/workflow_spec/loader.py"
+    },
+    {
+      "complexity": 5,
+      "file_name": "loader.py",
+      "function_name": "_parse_raw",
+      "path": "binex/workflow_spec/loader.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "loader.py",
+      "function_name": "_interpolate",
+      "path": "binex/workflow_spec/loader.py"
+    },
+    {
+      "complexity": 7,
+      "file_name": "loader.py",
+      "function_name": "_resolve_env_vars",
+      "path": "binex/workflow_spec/loader.py"
+    },
+    {
+      "complexity": 12,
+      "file_name": "loader.py",
+      "function_name": "_resolve_file_prompts",
+      "path": "binex/workflow_spec/loader.py"
+    },
+    {
+      "complexity": 0,
+      "file_name": "validator.py",
+      "function_name": "validate_workflow",
+      "path": "binex/workflow_spec/validator.py"
+    },
+    {
+      "complexity": 1,
+      "file_name": "validator.py",
+      "function_name": "_check_entry_nodes",
+      "path": "binex/workflow_spec/validator.py"
+    },
+    {
+      "complexity": 3,
+      "file_name": "validator.py",
+      "function_name": "_check_interpolation_targets",
+      "path": "binex/workflow_spec/validator.py"
+    },
+    {
+      "complexity": 6,
+      "file_name": "validator.py",
+      "function_name": "_check_depends_on_refs",
+      "path": "binex/workflow_spec/validator.py"
+    },
+    {
+      "complexity": 8,
+      "file_name": "validator.py",
+      "function_name": "_check_when_conditions",
+      "path": "binex/workflow_spec/validator.py"
+    },
+    {
+      "complexity": 16,
+      "file_name": "validator.py",
+      "function_name": "_check_value_interpolations",
+      "path": "binex/workflow_spec/validator.py"
+    },
+    {
+      "complexity": 19,
+      "file_name": "validator.py",
+      "function_name": "_check_cycles",
+      "path": "binex/workflow_spec/validator.py"
+    }
+  ],
+  "targets": [
+    "/Users/alex/Desktop/Binex/src/binex"
+  ]
+}

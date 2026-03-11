@@ -18,7 +18,7 @@ description: "Multi-stage pipeline with parallel processing at each stage"
 nodes:
   A:
     agent: "local://echo"
-    system_prompt: "Parse and split incoming request"
+    system_prompt: "file://prompts/gen-data-processor.md"
     inputs:
       query: "${user.query}"
     outputs: [output]
@@ -26,7 +26,7 @@ nodes:
 
   B:
     agent: "local://echo"
-    system_prompt: "Process branch 1 of the data"
+    system_prompt: "file://prompts/gen-data-processor.md"
     inputs:
       data: "${A.output}"
     outputs: [output]
@@ -34,7 +34,7 @@ nodes:
 
   C:
     agent: "local://echo"
-    system_prompt: "Process branch 2 of the data"
+    system_prompt: "file://prompts/gen-data-processor.md"
     inputs:
       data: "${A.output}"
     outputs: [output]
@@ -42,7 +42,7 @@ nodes:
 
   D:
     agent: "local://echo"
-    system_prompt: "Refine branch 1 results"
+    system_prompt: "file://prompts/gen-data-refiner.md"
     inputs:
       b_result: "${B.output}"
       c_result: "${C.output}"
@@ -51,7 +51,7 @@ nodes:
 
   E:
     agent: "local://echo"
-    system_prompt: "Refine branch 2 results"
+    system_prompt: "file://prompts/gen-data-refiner.md"
     inputs:
       b_result: "${B.output}"
       c_result: "${C.output}"
@@ -60,7 +60,7 @@ nodes:
 
   F:
     agent: "local://echo"
-    system_prompt: "Aggregate all refined results into final output"
+    system_prompt: "file://prompts/gen-data-aggregator.md"
     inputs:
       d_result: "${D.output}"
       e_result: "${E.output}"

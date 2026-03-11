@@ -233,11 +233,7 @@ class TestLocalPythonAdapterCost:
         result = await adapter.execute(task, [], "trace_6")
 
         assert isinstance(result, ExecutionResult)
-        assert result.cost is not None
-        assert result.cost.cost == 0.0
-        assert result.cost.source == "local"
-        assert result.cost.run_id == "run_test"
-        assert result.cost.task_id == "test_node"
+        assert result.cost is None
 
 
 # ---------------------------------------------------------------------------
@@ -254,15 +250,12 @@ class TestHumanApprovalAdapterCost:
 
         task = _make_task(agent="human://approval")
 
-        with patch("binex.adapters.human.click.prompt", return_value="y"):
+        with patch("binex.adapters.human.click.prompt", return_value="a"), \
+             patch("binex.adapters.human.click.echo"):
             adapter = HumanApprovalAdapter()
             result = await adapter.execute(task, [_make_input_artifact()], "trace_7")
 
-        assert result.cost is not None
-        assert result.cost.cost == 0.0
-        assert result.cost.source == "local"
-        assert result.cost.run_id == "run_test"
-        assert result.cost.task_id == "test_node"
+        assert result.cost is None
         # Verify artifacts are still produced
         assert len(result.artifacts) == 1
         assert result.artifacts[0].content == "approved"
@@ -281,11 +274,7 @@ class TestHumanInputAdapterCost:
             adapter = HumanInputAdapter()
             result = await adapter.execute(task, [], "trace_8")
 
-        assert result.cost is not None
-        assert result.cost.cost == 0.0
-        assert result.cost.source == "local"
-        assert result.cost.run_id == "run_test"
-        assert result.cost.task_id == "test_node"
+        assert result.cost is None
         # Verify artifacts are still produced
         assert len(result.artifacts) == 1
         assert result.artifacts[0].content == "user text"

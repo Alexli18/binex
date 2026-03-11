@@ -2,67 +2,52 @@
 
 from __future__ import annotations
 
-import io
 from typing import Any
 
-from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 from rich.text import Text
 
+from binex.cli.ui import STATUS_CONFIG, get_console, make_panel, make_table
 from binex.stores.execution_store import ExecutionStore
 
-STATUS_STYLES = {
-    "completed": ("green", "bold green"),
-    "failed": ("red", "bold red"),
-    "timed_out": ("yellow", "bold yellow"),
-    "running": ("blue", "bold blue"),
-    "skipped": ("dim", "dim"),
-}
 
-
-def _make_console() -> Console:
-    """Create a Console that captures output without printing to terminal."""
-    return Console(record=True, file=io.StringIO(), width=100)
-
-
-async def format_trace_rich(store: ExecutionStore, run_id: str) -> str:
-    """Generate a rich-formatted timeline for a run."""
-    console = _make_console()
+async def format_trace_rich(store: ExecutionStore, run_id: str) -> None:
+    """Print a rich-formatted timeline for a run directly to the terminal."""
+    console = get_console()
 
     run = await store.get_run(run_id)
     records = await store.list_records(run_id)
     if not records:
-        console.print("[red]No records found for this run.[/red]")
-        return console.export_text()
+        console.print(Text("No records found for this run.", style="red"))
+        return
 
     records.sort(key=lambda r: r.timestamp)
 
     # Header
     if run:
-        status_color = "green" if run.status == "completed" else "red"
-        console.print(Panel(
+        _, status_style = STATUS_CONFIG.get(run.status, (run.status, "dim"))
+        console.print(make_panel(
             f"[bold]{run.workflow_name}[/bold]\n"
             f"Run: [cyan]{run.run_id}[/cyan]\n"
-            f"Status: [{status_color}]{run.status}[/{status_color}]\n"
+            f"Status: [{status_style}]{run.status}[/{status_style}]\n"
             f"Started: {run.started_at}"
             + (f"\nCompleted: {run.completed_at}" if run.completed_at else ""),
-            title="[bold]Trace Timeline[/bold]",
-            border_style="blue",
+            title="Trace Timeline",
         ))
 
     # Timeline table
-    table = Table(show_header=True, header_style="bold", expand=True)
-    table.add_column("#", style="dim", width=3)
-    table.add_column("Node", style="bold")
-    table.add_column("Agent")
-    table.add_column("Status", justify="center")
-    table.add_column("Latency", justify="right")
-    table.add_column("Details")
+    table = make_table(
+        ("#", {"style": "dim", "width": 3}),
+        ("Node", {"style": "bold"}),
+        ("Agent", {}),
+        ("Status", {"justify": "center"}),
+        ("Latency", {"justify": "right"}),
+        ("Details", {}),
+    )
 
     for i, rec in enumerate(records, 1):
         status = rec.status.value
-        _color, style = STATUS_STYLES.get(status, ("white", "white"))
+        _, style = STATUS_CONFIG.get(status, ("unknown", "dim"))
 
         details_parts = []
         if rec.input_artifact_refs:
@@ -82,15 +67,16 @@ async def format_trace_rich(store: ExecutionStore, run_id: str) -> str:
         )
 
     console.print(table)
-    return console.export_text()
 
 
-async def format_trace_node_rich(record: Any) -> str:
-    """Format a single node detail with rich."""
-    console = _make_console()
+async def format_trace_node_rich(record: Any) -> None:
+    """Print a single node detail with rich directly to the terminal."""
+    console = get_console()
 
     status = record.status.value
-    color, style = STATUS_STYLES.get(status, ("white", "white"))
+    _, style = STATUS_CONFIG.get(status, ("unknown", "dim"))
+    # Extract base color for border
+    color = style.split()[0]
 
     lines = []
     lines.append(f"[bold]Node:[/bold] {record.task_id}")
@@ -119,16 +105,15 @@ async def format_trace_node_rich(record: Any) -> str:
         title=f"[bold]{record.task_id}[/bold]",
         border_style=color,
     ))
-    return console.export_text()
 
 
 async def format_trace_graph_rich(
     records: list,
     nodes: dict[str, str],
     edges: list[tuple[str, str]],
-) -> str:
-    """Format DAG as a rich table with topological order and dependencies."""
-    console = _make_console()
+) -> None:
+    """Print DAG as a rich table directly to the terminal."""
+    console = get_console()
 
     rec_map = {r.task_id: r for r in records}
 
@@ -140,23 +125,20 @@ async def format_trace_graph_rich(
     # Topological sort
     order = _topo_sort(nodes, edges)
 
-    table = Table(
-        title="[bold blue]DAG[/bold blue]",
-        show_header=True,
-        header_style="bold",
-        expand=True,
+    table = make_table(
+        ("#", {"style": "dim", "width": 3}),
+        ("Node", {"style": "bold"}),
+        ("Agent", {}),
+        ("Status", {"justify": "center"}),
+        ("Depends On", {}),
+        title="DAG",
     )
-    table.add_column("#", style="dim", width=3)
-    table.add_column("Node", style="bold")
-    table.add_column("Agent")
-    table.add_column("Status", justify="center")
-    table.add_column("Depends On")
 
     for i, node_id in enumerate(order, 1):
         rec = rec_map.get(node_id)
         if rec:
             status = rec.status.value
-            _color, style = STATUS_STYLES.get(status, ("white", "white"))
+            _, style = STATUS_CONFIG.get(status, ("unknown", "dim"))
             agent = rec.agent_id
         else:
             status = "-"
@@ -175,7 +157,6 @@ async def format_trace_graph_rich(
         )
 
     console.print(table)
-    return console.export_text()
 
 
 def _topo_sort(
