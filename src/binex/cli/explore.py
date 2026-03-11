@@ -43,17 +43,15 @@ def _time_ago(dt) -> str:
 
 
 def _guess_workflow_path(workflow_name: str) -> str | None:
-    """Try to find a workflow file matching the name. Returns path or None."""
+    """Try to find a workflow YAML containing this workflow name. Returns path or None."""
     from pathlib import Path
 
+    # 1. Exact name matches
     candidates = [
         Path(workflow_name),
         Path(f"{workflow_name}.yaml"),
         Path(f"{workflow_name}.yml"),
-        Path("workflow.yaml"),
-        Path("workflow.yml"),
     ]
-    # Also search common locations
     for prefix in [Path("."), Path("examples"), Path("workflows")]:
         for suffix in [".yaml", ".yml", ""]:
             candidates.append(prefix / f"{workflow_name}{suffix}")
@@ -61,6 +59,19 @@ def _guess_workflow_path(workflow_name: str) -> str | None:
     for candidate in candidates:
         if candidate.is_file():
             return str(candidate)
+
+    # 2. Search for YAML files containing the workflow name (max depth 3)
+    for pattern in ["*.yaml", "*.yml", "**/*.yaml", "**/*.yml"]:
+        for path in sorted(Path(".").glob(pattern)):
+            if path.stat().st_size > 50_000:
+                continue
+            try:
+                text = path.read_text(encoding="utf-8", errors="ignore")
+                if workflow_name in text:
+                    return str(path)
+            except OSError:
+                continue
+
     return None
 
 
