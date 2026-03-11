@@ -427,7 +427,37 @@ def _step_choose_template() -> tuple[str, str, str]:
 
 
 def _step_custom_template() -> tuple[str, str, str]:
-    """Custom template sub-step: show DSL help, get user topology."""
+    """Custom template sub-step: DSL or step-by-step topology builder."""
+    if has_rich():
+        from binex.cli.ui import get_console
+
+        console = get_console(stderr=True)
+        console.print()
+        console.print(
+            "  [bold]1)[/bold] [cyan]DSL[/cyan] — write topology as arrows"
+            " (e.g. A -> B, C -> D)"
+        )
+        console.print("  [bold]2)[/bold] [cyan]Step-by-step[/cyan] — build nodes one at a time")
+        console.print()
+    else:
+        click.echo()
+        click.echo("  1) DSL — write topology as arrows (e.g. A -> B, C -> D)")
+        click.echo("  2) Step-by-step — build nodes one at a time")
+        click.echo()
+
+    mode = click.prompt("Choose mode", type=click.Choice(["1", "2"]), default="1")
+
+    if mode == "1":
+        return _step_custom_dsl()
+    else:
+        dsl = _step_mode_topology()
+        _print_confirm("Custom workflow")
+        _print_dsl_preview(dsl)
+        return dsl, "my-project", "Enter your input:"
+
+
+def _step_custom_dsl() -> tuple[str, str, str]:
+    """Show DSL help, get user topology via direct input."""
     if has_rich():
         from binex.cli.ui import get_console, make_panel
 

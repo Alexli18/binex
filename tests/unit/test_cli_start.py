@@ -148,7 +148,7 @@ class TestStartWizardTemplateSelection:
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
         # custom DSL, user_input=n, ollama, default model, run=n
-        result = runner.invoke(start_cmd, input="5\nX -> Y -> Z\nn\n1\n\ncust\nn\n")
+        result = runner.invoke(start_cmd, input="5\n1\nX -> Y -> Z\nn\n1\n\ncust\nn\n")
         assert result.exit_code == 0
         data = yaml.safe_load((tmp_path / "cust" / "workflow.yaml").read_text())
         assert set(data["nodes"].keys()) == {"X", "Y", "Z"}
@@ -157,7 +157,7 @@ class TestStartWizardTemplateSelection:
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
         # custom pattern "linear", user_input=n, ollama, run=n
-        result = runner.invoke(start_cmd, input="5\nlinear\nn\n1\n\nlin\nn\n")
+        result = runner.invoke(start_cmd, input="5\n1\nlinear\nn\n1\n\nlin\nn\n")
         assert result.exit_code == 0
         data = yaml.safe_load((tmp_path / "lin" / "workflow.yaml").read_text())
         # linear = A -> B -> C
@@ -251,7 +251,7 @@ class TestStartE2EFlow:
         # model=default, api_key=sk-abc, name=e2e-custom, run=n
         result = runner.invoke(
             start_cmd,
-            input="5\nfetcher -> parser -> writer\nn\n2\n\nsk-abc\ne2e-custom\nn\n",
+            input="5\n1\nfetcher -> parser -> writer\nn\n2\n\nsk-abc\ne2e-custom\nn\n",
         )
         assert result.exit_code == 0
         proj = tmp_path / "e2e-custom"
