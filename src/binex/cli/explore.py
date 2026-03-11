@@ -189,7 +189,18 @@ async def _dashboard(exec_store, art_store, run_id: str) -> None:
                     return
                 continue
         elif key == "r":
-            await _action_replay(exec_store, art_store, run_id, run, records)
+            new_run_id = await _action_replay(exec_store, art_store, run_id, run, records)
+            if new_run_id:
+                choice = click.prompt(
+                    "  [Enter] back · [e] explore new run · [q] quit",
+                    default="",
+                )
+                k = choice.strip().lower()
+                if k == "q":
+                    return
+                if k == "e":
+                    run_id = new_run_id
+                continue
         else:
             click.echo("  Unknown action. Use t/g/d/c/a/n/r/q.")
             continue
@@ -705,7 +716,7 @@ def _render_node_plain(rec, node_arts, node_total_cost: float) -> None:
         click.echo(f"  Cost: ${node_total_cost:.4f}")
 
 
-async def _action_replay(exec_store, art_store, run_id: str, run, records) -> None:
+async def _action_replay(exec_store, art_store, run_id: str, run, records) -> str | None:
     """Replay wizard: select start node, agent swaps, workflow path, confirm."""
     if run.status == "running":
         if has_rich():
@@ -885,9 +896,11 @@ async def _action_replay(exec_store, art_store, run_id: str, run, records) -> No
         else:
             click.echo(f"  Replay complete. New run: {summary.run_id}")
             click.echo(f"  Status: {summary.status}")
+        return summary.run_id
     except Exception as exc:
         if has_rich():
             from binex.cli.ui import get_console as fc
             fc().print(f"  [red bold]✗ Replay failed:[/red bold] {exc}")
         else:
             click.echo(f"  Replay failed: {exc}")
+        return None
