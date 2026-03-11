@@ -717,15 +717,40 @@ def _select_prompt(*, node_id: str, input_fn=None) -> str:
             recommended_idx = i
             break
 
-    click.echo("  System prompt:")
-    for i, (filename, desc) in enumerate(bundled, 1):
-        tag = " (recommended)" if i - 1 == recommended_idx else ""
-        click.echo(f"    {i}) {filename}{tag} — {desc}")
+    if has_rich():
+        from rich.text import Text
 
-    custom_text_n = len(bundled) + 1
-    file_path_n = len(bundled) + 2
-    click.echo(f"    {custom_text_n}) Write custom text")
-    click.echo(f"    {file_path_n}) Provide file path")
+        from binex.cli.ui import get_console
+
+        console = get_console(stderr=True)
+        console.print("  System prompt:")
+        for i, (filename, desc) in enumerate(bundled, 1):
+            line = Text()
+            line.append(f"    {i}) ", style="dim")
+            line.append(filename, style="cyan")
+            if i - 1 == recommended_idx:
+                line.append(" (recommended)", style="green")
+            line.append(f" \u2014 {desc}", style="dim")
+            console.print(line)
+        custom_text_n = len(bundled) + 1
+        file_path_n = len(bundled) + 2
+        line = Text()
+        line.append(f"    {custom_text_n}) ", style="dim")
+        line.append("Write custom text", style="bold")
+        console.print(line)
+        line = Text()
+        line.append(f"    {file_path_n}) ", style="dim")
+        line.append("Provide file path", style="bold")
+        console.print(line)
+    else:
+        click.echo("  System prompt:")
+        for i, (filename, desc) in enumerate(bundled, 1):
+            tag = " (recommended)" if i - 1 == recommended_idx else ""
+            click.echo(f"    {i}) {filename}{tag} — {desc}")
+        custom_text_n = len(bundled) + 1
+        file_path_n = len(bundled) + 2
+        click.echo(f"    {custom_text_n}) Write custom text")
+        click.echo(f"    {file_path_n}) Provide file path")
 
     choice = _prompt("Choose prompt")
 
@@ -757,9 +782,22 @@ def _configure_back_edge(*, node_id: str, upstream_nodes: list[str], input_fn=No
     """Configure a back-edge for review loops. Returns back_edge dict."""
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))
 
-    click.echo("  Return to which node on reject?")
-    for i, name in enumerate(upstream_nodes, 1):
-        click.echo(f"    {i}) {name}")
+    if has_rich():
+        from rich.text import Text
+
+        from binex.cli.ui import get_console
+
+        console = get_console(stderr=True)
+        console.print("  Return to which node on reject?")
+        for i, name in enumerate(upstream_nodes, 1):
+            line = Text()
+            line.append(f"    {i}) ", style="dim")
+            line.append(name, style="bold cyan")
+            console.print(line)
+    else:
+        click.echo("  Return to which node on reject?")
+        for i, name in enumerate(upstream_nodes, 1):
+            click.echo(f"    {i}) {name}")
 
     choice = int(_prompt("Choose target"))
     target = upstream_nodes[choice - 1]
@@ -779,11 +817,27 @@ def _select_provider(*, input_fn=None) -> tuple:
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))
 
     provider_names = list(PROVIDERS.keys())
-    click.echo("  Provider:")
-    for i, name in enumerate(provider_names, 1):
-        p = PROVIDERS[name]
-        suffix = "free, local" if p.env_var is None else "API key required"
-        click.echo(f"    {i}) {name} — {suffix}")
+    if has_rich():
+        from rich.text import Text
+
+        from binex.cli.ui import get_console
+
+        console = get_console(stderr=True)
+        console.print("  Provider:")
+        for i, name in enumerate(provider_names, 1):
+            p = PROVIDERS[name]
+            suffix = "free, local" if p.env_var is None else "API key required"
+            line = Text()
+            line.append(f"    {i}) ", style="dim")
+            line.append(f"{name:12s}", style="bold")
+            line.append(f" \u2014 {suffix}", style="dim")
+            console.print(line)
+    else:
+        click.echo("  Provider:")
+        for i, name in enumerate(provider_names, 1):
+            p = PROVIDERS[name]
+            suffix = "free, local" if p.env_var is None else "API key required"
+            click.echo(f"    {i}) {name} — {suffix}")
 
     choice = int(_prompt("Choose provider"))
     provider = PROVIDERS[provider_names[choice - 1]]
@@ -812,14 +866,37 @@ def _configure_all_nodes(
     while i < len(node_list):
         node_id = node_list[i]
         deps = depends_on.get(node_id, [])
-        click.echo(f"\n── Node {i + 1}/{len(node_list)}: {node_id} ──")
+        if has_rich():
+            from binex.cli.ui import get_console
+
+            console = get_console(stderr=True)
+            console.print(
+                f"\n[bold cyan]── Node {i + 1}/{len(node_list)}: {node_id} ──[/bold cyan]"
+            )
+        else:
+            click.echo(f"\n── Node {i + 1}/{len(node_list)}: {node_id} ──")
         cfg = _configure_node(node_id=node_id, dependencies=deps)
         if cfg is _BACK:
             if i > 0:
                 i -= 1
-                click.echo(f"  ↩ Returning to '{node_list[i]}'")
+                if has_rich():
+                    from binex.cli.ui import get_console
+
+                    console = get_console(stderr=True)
+                    console.print(
+                        f"  [yellow]↩[/yellow] Returning to "
+                        f"'[bold]{node_list[i]}[/bold]'"
+                    )
+                else:
+                    click.echo(f"  ↩ Returning to '{node_list[i]}'")
             else:
-                click.echo("  Already at the first node.")
+                if has_rich():
+                    from binex.cli.ui import get_console
+
+                    console = get_console(stderr=True)
+                    console.print("  [dim]Already at the first node.[/dim]")
+                else:
+                    click.echo("  Already at the first node.")
             continue
         nodes_config[node_id] = cfg
         i += 1
@@ -833,12 +910,31 @@ def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> 
     """
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))
 
-    click.echo(f"  Agent type for '{node_id}':")
-    click.echo("    1) LLM (language model)")
-    click.echo("    2) Human review (approve/reject)")
-    click.echo("    3) Human input (free text)")
-    click.echo("    4) A2A (external agent)")
-    click.echo("    Type 'back' to return to previous node")
+    if has_rich():
+        from rich.text import Text
+
+        from binex.cli.ui import get_console
+
+        console = get_console(stderr=True)
+        console.print(f"  Agent type for '[bold]{node_id}[/bold]':")
+        for num, label in [
+            ("1", "LLM (language model)"),
+            ("2", "Human review (approve/reject)"),
+            ("3", "Human input (free text)"),
+            ("4", "A2A (external agent)"),
+        ]:
+            line = Text()
+            line.append(f"    {num}) ", style="dim")
+            line.append(label, style="bold")
+            console.print(line)
+        console.print("    [dim]Type 'back' to return to previous node[/dim]")
+    else:
+        click.echo(f"  Agent type for '{node_id}':")
+        click.echo("    1) LLM (language model)")
+        click.echo("    2) Human review (approve/reject)")
+        click.echo("    3) Human input (free text)")
+        click.echo("    4) A2A (external agent)")
+        click.echo("    Type 'back' to return to previous node")
     agent_type = _prompt("Choose")
 
     if agent_type.lower() == "back":
@@ -885,6 +981,12 @@ def _step_mode_topology(*, input_fn=None) -> str:
     first = _prompt("Name the first node")
     levels.append(first.strip())
 
+    if has_rich():
+        from binex.cli.ui import get_console
+
+        console = get_console(stderr=True)
+        console.print(f"  [dim]Current graph:[/dim] [bold magenta]{levels[0]}[/bold magenta]")
+
     while True:
         prev_display = levels[-1]
         answer = _prompt(f"Nodes after '{prev_display}'? (comma-separated, or 'done')")
@@ -892,6 +994,24 @@ def _step_mode_topology(*, input_fn=None) -> str:
         if answer.lower() == "done":
             break
         levels.append(answer.strip())
+        if has_rich():
+            from binex.cli.ui import get_console
+
+            console = get_console(stderr=True)
+            # Build styled graph preview
+            parts = " -> ".join(levels).replace(",", " ,").split()
+            from rich.text import Text
+
+            preview = Text("  Current graph: ", style="dim")
+            for part in parts:
+                ps = part.strip()
+                if ps == "->":
+                    preview.append(" \u2192 ", style="dim")
+                elif ps == ",":
+                    preview.append(", ", style="dim")
+                else:
+                    preview.append(ps, style="bold magenta")
+            console.print(preview)
 
     return " -> ".join(levels)
 
@@ -904,28 +1024,60 @@ def _configure_advanced_params(*, input_fn=None) -> dict:
     _prompt = input_fn or (lambda prompt: click.prompt(prompt, default=""))
     result: dict = {}
 
-    budget_str = _prompt("Budget max_cost in $ (Enter to skip)")
-    if _is_number(budget_str):
-        result["budget"] = {"max_cost": float(budget_str)}
+    if has_rich():
+        from binex.cli.ui import get_console
 
-    retry_str = _prompt("Max retries (Enter to skip)")
-    if _is_int(retry_str):
-        backoff = _prompt("Backoff strategy [fixed/exponential]") or "exponential"
-        result["retry_policy"] = {"max_retries": int(retry_str), "backoff": backoff}
+        console = get_console(stderr=True)
 
-    deadline_str = _prompt("Deadline in seconds (Enter to skip)")
-    if _is_number(deadline_str):
-        result["deadline_ms"] = int(float(deadline_str) * 1000)
+        console.print("  [bold]Budget[/bold] [dim](Enter to skip)[/dim]")
+        budget_str = _prompt("Budget max_cost in $ (Enter to skip)")
+        if _is_number(budget_str):
+            result["budget"] = {"max_cost": float(budget_str)}
 
-    temp_str = _prompt("Temperature (Enter to skip)")
-    config: dict = {}
-    if _is_number(temp_str):
-        config["temperature"] = float(temp_str)
-    tokens_str = _prompt("Max tokens (Enter to skip)")
-    if _is_int(tokens_str):
-        config["max_tokens"] = int(tokens_str)
-    if config:
-        result["config"] = config
+        console.print("  [bold]Retry policy[/bold] [dim](Enter to skip)[/dim]")
+        retry_str = _prompt("Max retries (Enter to skip)")
+        if _is_int(retry_str):
+            backoff = _prompt("Backoff strategy [fixed/exponential]") or "exponential"
+            result["retry_policy"] = {"max_retries": int(retry_str), "backoff": backoff}
+
+        console.print("  [bold]Deadline[/bold] [dim](Enter to skip)[/dim]")
+        deadline_str = _prompt("Deadline in seconds (Enter to skip)")
+        if _is_number(deadline_str):
+            result["deadline_ms"] = int(float(deadline_str) * 1000)
+
+        console.print("  [bold]LLM config[/bold] [dim](Enter to skip)[/dim]")
+        temp_str = _prompt("Temperature (Enter to skip)")
+        config: dict = {}
+        if _is_number(temp_str):
+            config["temperature"] = float(temp_str)
+        tokens_str = _prompt("Max tokens (Enter to skip)")
+        if _is_int(tokens_str):
+            config["max_tokens"] = int(tokens_str)
+        if config:
+            result["config"] = config
+    else:
+        budget_str = _prompt("Budget max_cost in $ (Enter to skip)")
+        if _is_number(budget_str):
+            result["budget"] = {"max_cost": float(budget_str)}
+
+        retry_str = _prompt("Max retries (Enter to skip)")
+        if _is_int(retry_str):
+            backoff = _prompt("Backoff strategy [fixed/exponential]") or "exponential"
+            result["retry_policy"] = {"max_retries": int(retry_str), "backoff": backoff}
+
+        deadline_str = _prompt("Deadline in seconds (Enter to skip)")
+        if _is_number(deadline_str):
+            result["deadline_ms"] = int(float(deadline_str) * 1000)
+
+        temp_str = _prompt("Temperature (Enter to skip)")
+        config: dict = {}
+        if _is_number(temp_str):
+            config["temperature"] = float(temp_str)
+        tokens_str = _prompt("Max tokens (Enter to skip)")
+        if _is_int(tokens_str):
+            config["max_tokens"] = int(tokens_str)
+        if config:
+            result["config"] = config
 
     return result
 
