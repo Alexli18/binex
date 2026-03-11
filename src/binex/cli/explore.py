@@ -708,7 +708,11 @@ def _render_node_plain(rec, node_arts, node_total_cost: float) -> None:
 async def _action_replay(exec_store, art_store, run_id: str, run, records) -> None:
     """Replay wizard: select start node, agent swaps, workflow path, confirm."""
     if run.status == "running":
-        click.echo("  Cannot replay a running workflow.")
+        if has_rich():
+            from binex.cli.ui import get_console as rc
+            rc().print("  [yellow]⚠[/yellow] Cannot replay a running workflow.")
+        else:
+            click.echo("  Cannot replay a running workflow.")
         return
 
     if not records:
@@ -758,19 +762,57 @@ async def _action_replay(exec_store, art_store, run_id: str, run, records) -> No
 
     # Step 2: agent swaps
     agent_swaps: dict[str, str] = {}
+    rec_map = {rec.task_id: rec for rec in records}
     while True:
-        swap = click.prompt(
-            "  Agent swap (node=agent, or done)", default="done",
-        )
+        if has_rich():
+            from rich.text import Text as SwapText
+
+            from binex.cli.ui import get_console as swap_console
+            from binex.cli.ui import make_table as swap_table
+
+            if agent_swaps:
+                t = swap_table(
+                    ("Node", {"style": "bold", "min_width": 14}),
+                    ("Original Agent", {"style": "dim"}),
+                    ("New Agent", {"style": "cyan bold"}),
+                    title="Agent Swaps",
+                )
+                for node, new_agent in agent_swaps.items():
+                    orig = rec_map[node].agent_id if node in rec_map else "?"
+                    t.add_row(node, orig, new_agent)
+                swap_console().print(t)
+
+            hint = SwapText()
+            hint.append("  Format: ", style="dim")
+            hint.append("node=agent", style="cyan")
+            hint.append("  (e.g. ", style="dim")
+            hint.append("draft=llm://gpt-4o", style="cyan")
+            hint.append(")", style="dim")
+            swap_console().print(hint)
+
+        swap = click.prompt("  Agent swap (or done)", default="done")
         if swap.lower() == "done":
             break
         if "=" in swap:
             parts = swap.split("=", 1)
-            agent_swaps[parts[0].strip()] = parts[1].strip()
+            node_name = parts[0].strip()
+            agent_uri = parts[1].strip()
+            if node_name not in rec_map:
+                click.echo(f"  Node '{node_name}' not found. Available: {', '.join(rec_map)}")
+            else:
+                agent_swaps[node_name] = agent_uri
+                if has_rich():
+                    from binex.cli.ui import get_console as sc2
+                    sc2().print(f"  [green]✓[/green] {node_name} → [cyan]{agent_uri}[/cyan]")
+                else:
+                    click.echo(f"  ✓ {node_name} → {agent_uri}")
         else:
             click.echo("  Format: node=agent (e.g. step2=llm://gpt-4o)")
 
     # Step 3: workflow path
+    if has_rich():
+        from binex.cli.ui import get_console as wf_console
+        wf_console().print("  [dim]Enter path to workflow YAML file[/dim]")
     workflow = click.prompt("  Workflow file path").strip().strip("'\"")
 
 
@@ -844,4 +886,8 @@ async def _action_replay(exec_store, art_store, run_id: str, run, records) -> No
             click.echo(f"  Replay complete. New run: {summary.run_id}")
             click.echo(f"  Status: {summary.status}")
     except Exception as exc:
-        click.echo(f"  Replay failed: {exc}")
+        if has_rich():
+            from binex.cli.ui import get_console as fc
+            fc().print(f"  [red bold]✗ Replay failed:[/red bold] {exc}")
+        else:
+            click.echo(f"  Replay failed: {exc}")
