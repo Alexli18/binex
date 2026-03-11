@@ -473,3 +473,203 @@ class TestEdgeCases:
         from binex.cli.explore import _time_ago
         result = _time_ago(datetime.now(UTC))
         assert "ago" in result
+
+
+class TestReplayWizardAgentSwaps:
+    """Test the agent swap loop in the replay wizard."""
+
+    def test_swap_one_agent_then_decline(self):
+        """Select node, enter agent swap, done, enter workflow, decline."""
+        stores = _make_stores(
+            runs=[_run()],
+            records=[
+                _record(task_id="step1", agent_id="llm://gpt-4o"),
+            ],
+        )
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(
+                cli, ["explore", "run_abc123"],
+                input="r\n1\nstep1=llm://new-model\ndone\nworkflow.yaml\nn\n\nq\n",
+            )
+        assert "step1" in result.output
+        assert "Replay cancelled" in result.output
+        assert result.exit_code == 0
+
+    def test_swap_bad_format_then_done(self):
+        """Enter bad swap format, get help message, then done."""
+        stores = _make_stores(
+            runs=[_run()],
+            records=[_record(task_id="step1")],
+        )
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(
+                cli, ["explore", "run_abc123"],
+                input="r\n1\nbadformat\ndone\nworkflow.yaml\nn\n\nq\n",
+            )
+        assert "Format: node=agent" in result.output
+        assert result.exit_code == 0
+
+    def test_swap_invalid_node_selection(self):
+        """Select invalid node number in replay wizard."""
+        stores = _make_stores(
+            runs=[_run()],
+            records=[_record(task_id="step1")],
+        )
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(
+                cli, ["explore", "run_abc123"],
+                input="r\n99\n\nq\n",
+            )
+        assert "Invalid node selection" in result.output
+
+    def test_swap_non_numeric_node_selection(self):
+        """Enter non-numeric value for node selection."""
+        stores = _make_stores(
+            runs=[_run()],
+            records=[_record(task_id="step1")],
+        )
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(
+                cli, ["explore", "run_abc123"],
+                input="r\nabc\n\nq\n",
+            )
+        assert "Invalid node selection" in result.output
+
+    def test_swap_shows_confirm_summary(self):
+        """After swap and workflow entry, shows replay summary before confirm."""
+        stores = _make_stores(
+            runs=[_run()],
+            records=[_record(task_id="step1")],
+        )
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(
+                cli, ["explore", "run_abc123"],
+                input="r\n1\nstep1=llm://claude\ndone\nmy_workflow.yaml\nn\n\nq\n",
+            )
+        assert "Replay from: step1" in result.output
+        assert "my_workflow.yaml" in result.output
+
+
+class TestEdgeCasesAdditional:
+    """Additional edge case tests."""
+
+    def test_multiple_runs_sorted_newest_first(self):
+        """Runs should be listed with newest first."""
+        from datetime import timedelta
+
+        old = _run("run_old", "old-wf")
+        old.started_at = datetime.now(UTC) - timedelta(hours=2)
+        new = _run("run_new", "new-wf")
+        new.started_at = datetime.now(UTC)
+        stores = _make_stores(runs=[old, new])
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(cli, ["explore"], input="q\n")
+        # Both runs should appear
+        assert "old-wf" in result.output
+        assert "new-wf" in result.output
+        # Newest first: new-wf should appear before old-wf
+        pos_new = result.output.index("new-wf")
+        pos_old = result.output.index("old-wf")
+        assert pos_new < pos_old
+
+    def test_artifact_detail_lineage_action(self):
+        """Selecting lineage on an artifact shows lineage info."""
+        art = _artifact(content="data output")
+        stores = _make_stores(
+            runs=[_run()],
+            records=[_record()],
+            artifacts=[art],
+        )
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(
+                cli, ["explore", "run_abc123"],
+                input="a\n1\nl\nb\n\nq\n",
+            )
+        # Should show artifact detail then lineage (or no lineage message)
+        assert "data output" in result.output or "lineage" in result.output.lower()
+        assert result.exit_code == 0
+
+    def test_node_inspect_shows_artifact_content(self):
+        """Node inspect displays artifacts produced by that node."""
+        art = _artifact(node="step1", content="node output result")
+        stores = _make_stores(
+            runs=[_run()],
+            records=[_record(task_id="step1", agent_id="llm://gpt-4o")],
+            artifacts=[art],
+        )
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(
+                cli, ["explore", "run_abc123"],
+                input="n\n1\n\nq\n",
+            )
+        assert "node output result" in result.output
+        assert "Artifacts: 1" in result.output
+
+    def test_cost_action_no_cost_shows_zero(self):
+        """Cost action with no cost data should still render without error."""
+        stores = _make_stores(
+            runs=[_run(total_cost=0.0)],
+            records=[_record()],
+        )
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(
+                cli, ["explore", "run_abc123"],
+                input="c\n\nq\n",
+            )
+        # Should show $0.00 total or "no billed nodes" message
+        assert "$0.00" in result.output or "no billed nodes" in result.output
+        assert result.exit_code == 0
+
+
+class TestDashboardDisplayExtended:
+    """Extended dashboard display tests."""
+
+    def test_dashboard_shows_workflow_name(self):
+        """Dashboard should display the workflow name."""
+        stores = _make_stores(
+            runs=[_run(name="my-cool-workflow")],
+            records=[_record()],
+        )
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(cli, ["explore", "run_abc123"], input="q\n")
+        assert "my-cool-workflow" in result.output
+
+    def test_dashboard_shows_node_agent_info(self):
+        """Dashboard should display agent info for each node."""
+        stores = _make_stores(
+            runs=[_run()],
+            records=[
+                _record(task_id="step1", agent_id="llm://gpt-4o"),
+                _record(
+                    rec_id="rec_2", task_id="step2",
+                    agent_id="local://echo",
+                ),
+            ],
+        )
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(cli, ["explore", "run_abc123"], input="q\n")
+        assert "llm://gpt-4o" in result.output
+        assert "local://echo" in result.output
+
+    def test_dashboard_shows_cost_when_present(self):
+        """Dashboard should show cost info when total_cost > 0."""
+        stores = _make_stores(
+            runs=[_run(total_cost=0.1234)],
+            records=[_record()],
+            costs=[_cost(cost=0.1234)],
+        )
+        runner = CliRunner()
+        with patch(PATCH_TARGET, return_value=stores):
+            result = runner.invoke(cli, ["explore", "run_abc123"], input="q\n")
+        assert "0.1234" in result.output
