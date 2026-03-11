@@ -171,7 +171,9 @@ class TestDoctorMissingBinary:
             runner = CliRunner()
             result = runner.invoke(cli, ["doctor"])
         assert result.exit_code == 1
-        assert "Some checks failed" in result.output
+        # Rich output: panel with issue details
+        assert "System Health" in result.output
+        assert "missing" in result.output
 
 
 # ---------------------------------------------------------------------------

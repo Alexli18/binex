@@ -13,11 +13,11 @@ from click.testing import CliRunner
 
 from binex.cli.debug import debug_cmd
 from binex.cli.doctor import (
-    STATUS_ICONS,
     _check_http_service,
     doctor_cmd,
     run_checks,
 )
+from binex.cli.ui import _PLAIN_ICONS
 from binex.models.artifact import Artifact, Lineage
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
@@ -182,9 +182,13 @@ class TestRunChecks:
 
 
 class TestStatusIcons:
-    def test_all_statuses_have_icons(self):
-        expected = {"ok", "missing", "error", "degraded", "unreachable", "timeout", "not initialized"}
-        assert set(STATUS_ICONS.keys()) == expected
+    def test_all_doctor_statuses_have_plain_icons(self):
+        """All statuses used by doctor checks have plain icons in ui.py."""
+        doctor_statuses = {
+            "ok", "missing", "error", "degraded",
+            "unreachable", "timeout", "not_initialized",
+        }
+        assert doctor_statuses <= set(_PLAIN_ICONS.keys())
 
 
 # ---------------------------------------------------------------------------
@@ -204,15 +208,18 @@ class TestDoctorCmdEdgeCases:
             runner = CliRunner()
             result = runner.invoke(doctor_cmd)
         assert result.exit_code == 0
-        assert "All checks passed" in result.output
+        # Rich output: panel with table, no error exit
+        assert "System Health" in result.output
+        assert "Ollama" in result.output
 
-    def test_doctor_unknown_status_uses_question_mark(self):
-        """Unknown status falls back to '?' icon."""
+    def test_doctor_unknown_status_rendered(self):
+        """Unknown status is rendered in the table."""
         checks = [{"name": "Custom", "status": "weird", "detail": "strange"}]
         with patch("binex.cli.doctor.run_checks", return_value=checks):
             runner = CliRunner()
             result = runner.invoke(doctor_cmd)
-        assert "?" in result.output
+        assert "Custom" in result.output
+        assert "weird" in result.output
 
     def test_docker_timeout_returns_error(self):
         """subprocess.TimeoutExpired returns error status."""

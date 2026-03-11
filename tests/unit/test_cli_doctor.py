@@ -121,4 +121,6 @@ class TestDoctorCommand:
             runner = CliRunner()
             result = runner.invoke(doctor_cmd)
             assert result.exit_code == 0
-            assert "All checks passed" in result.output
+            # Rich output: panel title and table content
+            assert "System Health" in result.output
+            assert "Docker" in result.output
