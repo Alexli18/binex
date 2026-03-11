@@ -39,26 +39,42 @@ class TestCustomTemplateHybrid:
     """Custom template offers DSL or step mode."""
 
     def test_dsl_mode_still_works(self, tmp_path, monkeypatch):
-        """Entering DSL directly works as before."""
+        """Entering DSL directly works with per-node configuration."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
-        # custom=5, mode=1(dsl), topology="X -> Y", user_input=n, ollama, default, name, run=n
+        # custom=5, mode=1(dsl), topology="X -> Y"
+        # node X: type=1(LLM), provider=1(ollama), model=llama3.2, prompt=1, back_edge=n, adv=n
+        # node Y: same
+        # save=y, name=hybrid-dsl, run=n
         result = runner.invoke(
             start_cmd,
-            input="5\n1\nX -> Y\nn\n1\n\nhybrid-dsl\nn\n",
+            input=(
+                "5\n1\nX -> Y\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "y\nhybrid-dsl\nn\n"
+            ),
         )
         assert result.exit_code == 0
         data = yaml.safe_load((tmp_path / "hybrid-dsl" / "workflow.yaml").read_text())
         assert set(data["nodes"].keys()) == {"X", "Y"}
 
     def test_step_mode_works(self, tmp_path, monkeypatch):
-        """Choosing step launches interactive builder."""
+        """Choosing step launches interactive builder with per-node config."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
-        # custom=5, mode=2(step), nodes: A -> B -> done, user_input=n, ollama, default, name, run=n
+        # custom=5, mode=2(step), nodes: A -> B -> done
+        # node A: type=1(LLM), provider=1(ollama), model=llama3.2, prompt=1, back_edge=n, adv=n
+        # node B: same
+        # save=y, name=hybrid-step, run=n
         result = runner.invoke(
             start_cmd,
-            input="5\n2\nA\nB\ndone\nn\n1\n\nhybrid-step\nn\n",
+            input=(
+                "5\n2\nA\nB\ndone\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "y\nhybrid-step\nn\n"
+            ),
         )
         assert result.exit_code == 0
         data = yaml.safe_load((tmp_path / "hybrid-step" / "workflow.yaml").read_text())
@@ -338,3 +354,122 @@ class TestPreviewYaml:
 
     def test_preview_with_empty_yaml(self):
         _preview_yaml("")
+
+
+class TestCustomWizardE2E:
+    """End-to-end tests for the full custom interactive wizard."""
+
+    def test_dsl_mode_full_flow(self, tmp_path, monkeypatch):
+        """DSL mode -> configure nodes -> preview -> save."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        # Template=5 (custom), mode=1(dsl), topology="A -> B",
+        # node A: type=1(LLM), provider=1(ollama), model=default,
+        #         prompt=1(first bundled), back_edge=n, advanced=n
+        # node B: type=1(LLM), provider=1(ollama), model=default,
+        #         prompt=1, back_edge=n, advanced=n
+        # save=y, project_name=e2e-dsl, run=n
+        result = runner.invoke(
+            start_cmd,
+            input=(
+                "5\n1\nA -> B\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "y\ne2e-dsl\nn\n"
+            ),
+        )
+        assert result.exit_code == 0, f"Failed: {result.output}"
+        proj = tmp_path / "e2e-dsl"
+        assert (proj / "workflow.yaml").exists()
+        data = yaml.safe_load((proj / "workflow.yaml").read_text())
+        assert set(data["nodes"].keys()) == {"A", "B"}
+        assert data["nodes"]["A"]["agent"].startswith("llm://")
+        assert data["nodes"]["B"]["depends_on"] == ["A"]
+
+    def test_step_mode_with_back_edge(self, tmp_path, monkeypatch):
+        """Step mode -> human review with back-edge -> save."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        # Template=5, mode=2(step)
+        # nodes: generate -> review -> done
+        # node generate: type=1(LLM), provider=1(ollama), model=default,
+        #                prompt=1, back_edge=n, advanced=n
+        # node review: type=2(Human review),
+        #              back_edge=y, target=1(generate), max_iter=3, advanced=n
+        result = runner.invoke(
+            start_cmd,
+            input=(
+                "5\n2\n"
+                "generate\nreview\ndone\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "2\ny\n1\n3\nn\n"
+                "y\nbe-proj\nn\n"
+            ),
+        )
+        assert result.exit_code == 0, f"Failed: {result.output}"
+        data = yaml.safe_load(
+            (tmp_path / "be-proj" / "workflow.yaml").read_text(),
+        )
+        assert data["nodes"]["review"]["agent"] == "human://review"
+        assert data["nodes"]["review"]["back_edge"]["target"] == "generate"
+
+    def test_cancel_exits_cleanly(self, tmp_path, monkeypatch):
+        """Declining save with cancel option exits cleanly."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        # Template=5, mode=1(dsl), topology="A -> B"
+        # node A,B: type=1(LLM), provider=1(ollama), model=default,
+        #           prompt=1, back_edge=n, advanced=n
+        # save=n, action=2(cancel)
+        result = runner.invoke(
+            start_cmd,
+            input=(
+                "5\n1\nA -> B\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "n\n2\n"
+            ),
+        )
+        assert result.exit_code == 0
+
+    def test_generates_env_and_gitignore(self, tmp_path, monkeypatch):
+        """Custom wizard generates .env and .gitignore files."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        result = runner.invoke(
+            start_cmd,
+            input=(
+                "5\n1\nX -> Y\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "y\nenv-proj\nn\n"
+            ),
+        )
+        assert result.exit_code == 0
+        proj = tmp_path / "env-proj"
+        assert (proj / ".env").exists()
+        assert (proj / ".gitignore").exists()
+        gitignore = (proj / ".gitignore").read_text()
+        assert ".binex/" in gitignore
+        assert ".env" in gitignore
+
+    def test_mixed_agent_types(self, tmp_path, monkeypatch):
+        """Workflow with LLM and human nodes."""
+        monkeypatch.chdir(tmp_path)
+        runner = CliRunner()
+        # A(LLM) -> B(human review)
+        result = runner.invoke(
+            start_cmd,
+            input=(
+                "5\n1\nwriter -> reviewer\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "2\nn\nn\n"
+                "y\nmixed-proj\nn\n"
+            ),
+        )
+        assert result.exit_code == 0
+        data = yaml.safe_load(
+            (tmp_path / "mixed-proj" / "workflow.yaml").read_text(),
+        )
+        assert data["nodes"]["writer"]["agent"].startswith("llm://")
+        assert data["nodes"]["reviewer"]["agent"] == "human://review"

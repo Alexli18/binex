@@ -147,8 +147,21 @@ class TestStartWizardTemplateSelection:
     def test_custom_dsl(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
-        # custom DSL, user_input=n, ollama, default model, run=n
-        result = runner.invoke(start_cmd, input="5\n1\nX -> Y -> Z\nn\n1\n\ncust\nn\n")
+        # custom=5, mode=1(dsl), topology="X -> Y -> Z"
+        # node X: type=1(LLM), provider=1(ollama), model=default, prompt=1, back_edge=n, adv=n
+        # node Y: same
+        # node Z: same
+        # save=y, project_name=cust, run=n
+        result = runner.invoke(
+            start_cmd,
+            input=(
+                "5\n1\nX -> Y -> Z\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "y\ncust\nn\n"
+            ),
+        )
         assert result.exit_code == 0
         data = yaml.safe_load((tmp_path / "cust" / "workflow.yaml").read_text())
         assert set(data["nodes"].keys()) == {"X", "Y", "Z"}
@@ -156,8 +169,19 @@ class TestStartWizardTemplateSelection:
     def test_custom_pattern_name(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
-        # custom pattern "linear", user_input=n, ollama, run=n
-        result = runner.invoke(start_cmd, input="5\n1\nlinear\nn\n1\n\nlin\nn\n")
+        # custom=5, mode=1(dsl), pattern="linear" (A -> B -> C)
+        # node A,B,C: type=1(LLM), provider=1(ollama), model=default, prompt=1, back_edge=n, adv=n
+        # save=y, project_name=lin, run=n
+        result = runner.invoke(
+            start_cmd,
+            input=(
+                "5\n1\nlinear\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "y\nlin\nn\n"
+            ),
+        )
         assert result.exit_code == 0
         data = yaml.safe_load((tmp_path / "lin" / "workflow.yaml").read_text())
         # linear = A -> B -> C
@@ -244,20 +268,26 @@ class TestStartE2EFlow:
     """T016, T023: End-to-end flows."""
 
     def test_full_flow_custom_dsl_no_user_input(self, tmp_path, monkeypatch):
-        """T016: Custom DSL with OpenAI provider, verify nodes and .env."""
+        """T016: Custom DSL with per-node config, verify nodes."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
-        # custom=5, dsl="fetcher -> parser -> writer", user_input=n, provider=2 (openai),
-        # model=default, api_key=sk-abc, name=e2e-custom, run=n
+        # custom=5, mode=1(dsl), topology="fetcher -> parser -> writer"
+        # each node: type=1(LLM), provider=1(ollama), model=default, prompt=1, back_edge=n, adv=n
+        # save=y, name=e2e-custom, run=n
         result = runner.invoke(
             start_cmd,
-            input="5\n1\nfetcher -> parser -> writer\nn\n2\n\nsk-abc\ne2e-custom\nn\n",
+            input=(
+                "5\n1\nfetcher -> parser -> writer\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "1\n1\nllama3.2\n1\nn\nn\n"
+                "y\ne2e-custom\nn\n"
+            ),
         )
         assert result.exit_code == 0
         proj = tmp_path / "e2e-custom"
         data = yaml.safe_load((proj / "workflow.yaml").read_text())
         assert set(data["nodes"].keys()) == {"fetcher", "parser", "writer"}
-        assert "OPENAI_API_KEY=sk-abc" in (proj / ".env").read_text()
 
     def test_full_flow_research_with_user_input(self, tmp_path, monkeypatch):
         """T023: Research template with user input."""

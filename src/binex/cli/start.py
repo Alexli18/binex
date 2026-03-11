@@ -484,8 +484,122 @@ def _step_choose_template() -> tuple[str, str, str]:
     return _step_custom_template()
 
 
+def _custom_interactive_wizard(dsl: str) -> None:
+    """Full custom wizard: configure each node, preview, save project.
+
+    This handles everything from topology through file generation so the
+    caller can ``sys.exit(0)`` afterwards, bypassing the regular
+    provider/user-input/project steps in ``start_cmd``.
+    """
+    parsed = parse_dsl([dsl])
+
+    # Phase 1 — per-node configuration
+    nodes_config: dict[str, dict] = {}
+    for node_id in parsed.nodes:
+        deps = parsed.depends_on.get(node_id, [])
+        cfg = _configure_node(node_id=node_id, dependencies=deps)
+        nodes_config[node_id] = cfg
+
+    # Phase 2 — build YAML and preview
+    yaml_content, needed_prompts = build_custom_workflow(
+        name="custom-workflow", nodes_config=nodes_config,
+    )
+    _preview_yaml(yaml_content)
+
+    # Phase 3 — confirm save
+    save = click.prompt("Save this workflow?", default="y",
+                        type=click.Choice(["y", "n"], case_sensitive=False))
+    if save.lower() != "y":
+        action = click.prompt(
+            "1) Return to config  2) Cancel",
+            default="2", type=click.Choice(["1", "2"]),
+        )
+        if action == "2":
+            click.echo("Cancelled.")
+            return
+        # action == "1": re-configure (simple restart of node loop)
+        nodes_config = {}
+        for node_id in parsed.nodes:
+            deps = parsed.depends_on.get(node_id, [])
+            cfg = _configure_node(node_id=node_id, dependencies=deps)
+            nodes_config[node_id] = cfg
+        yaml_content, needed_prompts = build_custom_workflow(
+            name="custom-workflow", nodes_config=nodes_config,
+        )
+        _preview_yaml(yaml_content)
+
+    # Phase 4 — project name & generation
+    project_name = click.prompt("Project name", default="my-project")
+
+    try:
+        project_dir = Path.cwd() / project_name
+    except FileNotFoundError:
+        click.echo(
+            "Error: current directory does not exist. "
+            "Please cd to a valid directory and try again.",
+            err=True,
+        )
+        sys.exit(1)
+
+    if project_dir.exists() and any(project_dir.iterdir()):
+        click.echo(
+            f"Error: directory '{project_name}' already exists and is not empty.",
+            err=True,
+        )
+        sys.exit(1)
+
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    workflow_path = project_dir / "workflow.yaml"
+    workflow_path.write_text(yaml_content)
+    _print_file_created("workflow.yaml")
+
+    if needed_prompts:
+        _copy_prompts_to_project(project_dir, needed_prompts)
+        _print_file_created(f"prompts/ ({len(needed_prompts)} files)")
+
+    # Collect env vars from node agents for .env
+    env_lines: list[str] = []
+    seen_vars: set[str] = set()
+    for cfg in nodes_config.values():
+        agent = cfg.get("agent", "")
+        for prov in PROVIDERS.values():
+            if agent.startswith(prov.agent_prefix) and prov.env_var:
+                if prov.env_var not in seen_vars:
+                    env_lines.append(f"{prov.env_var}=\n")
+                    seen_vars.add(prov.env_var)
+
+    env_path = project_dir / ".env"
+    env_path.write_text("".join(env_lines))
+    _print_file_created(".env")
+
+    gitignore_path = project_dir / ".gitignore"
+    gitignore_path.write_text(".binex/\n.env\n__pycache__/\n*.pyc\n")
+    _print_file_created(".gitignore")
+
+    click.echo()
+
+    run_now = click.prompt(
+        "Run the workflow now?",
+        default="y",
+        type=click.Choice(["y", "n"], case_sensitive=False),
+    )
+
+    if run_now.lower() == "y":
+        _run_workflow(str(workflow_path))
+    else:
+        _print_done_panel(project_name)
+
+
 def _step_custom_template() -> tuple[str, str, str]:
-    """Custom template sub-step: DSL or step-by-step topology builder."""
+    """Custom template sub-step: DSL or step-by-step topology builder.
+
+    When the full custom wizard is used (node-by-node configuration),
+    this function calls ``_custom_interactive_wizard`` and exits via
+    ``sys.exit(0)`` so the caller never reaches the global provider steps.
+    Otherwise it falls back to the original behaviour returning
+    ``(dsl, default_name, user_prompt_text)``.
+    """
     if has_rich():
         from binex.cli.ui import get_console
 
@@ -506,16 +620,22 @@ def _step_custom_template() -> tuple[str, str, str]:
     mode = click.prompt("Choose mode", type=click.Choice(["1", "2"]), default="1")
 
     if mode == "1":
-        return _step_custom_dsl()
+        dsl = _step_custom_dsl_topology()
     else:
         dsl = _step_mode_topology()
         _print_confirm("Custom workflow")
         _print_dsl_preview(dsl)
-        return dsl, "my-project", "Enter your input:"
+
+    # Run the full custom interactive wizard and exit
+    _custom_interactive_wizard(dsl)
+    sys.exit(0)
+
+    # Fallback (never reached, keeps type-checker happy)
+    return dsl, "my-project", "Enter your input:"
 
 
-def _step_custom_dsl() -> tuple[str, str, str]:
-    """Show DSL help, get user topology via direct input."""
+def _step_custom_dsl_topology() -> str:
+    """Show DSL help, get user topology via direct input. Returns DSL string."""
     if has_rich():
         from binex.cli.ui import get_console, make_panel
 
@@ -574,7 +694,7 @@ def _step_custom_dsl() -> tuple[str, str, str]:
 
     _print_confirm("Custom workflow")
     _print_dsl_preview(dsl)
-    return dsl, "my-project", "Enter your input:"
+    return dsl
 
 
 def _get_bundled_prompt_list() -> list[tuple[str, str]]:
