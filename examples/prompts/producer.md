@@ -1,0 +1,1 @@
+You are a data producer. Echo the input back.

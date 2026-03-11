@@ -420,8 +420,8 @@ class TestAllExampleYAMLsStrict:
     def test_exactly_20_example_files_exist(self) -> None:
         """Verify the expected number of example YAML files."""
         yaml_files = sorted(EXAMPLES_DIR.glob("*.yaml"))
-        assert len(yaml_files) == 21, (
-            f"Expected 21 example YAML files, found {len(yaml_files)}: "
+        assert len(yaml_files) == 25, (
+            f"Expected 25 example YAML files, found {len(yaml_files)}: "
             f"{[f.name for f in yaml_files]}"
         )
 
@@ -443,7 +443,7 @@ class TestAllExampleYAMLsStrict:
             for path in yaml_files:
                 try:
                     content = path.read_text()
-                    spec = load_workflow_from_string(content, fmt="yaml")
+                    spec = load_workflow_from_string(content, fmt="yaml", base_dir=path.parent)
                     assert spec.name, f"{path.name}: spec.name is empty"
                     assert len(spec.nodes) > 0, f"{path.name}: spec has no nodes"
                 except Exception as exc:
@@ -476,7 +476,7 @@ class TestAllExampleYAMLsStrict:
         try:
             for path in yaml_files:
                 content = path.read_text()
-                spec = load_workflow_from_string(content, fmt="yaml")
+                spec = load_workflow_from_string(content, fmt="yaml", base_dir=path.parent)
                 for node_id, node in spec.nodes.items():
                     if not node.agent.startswith(known_prefixes):
                         violations.append(
