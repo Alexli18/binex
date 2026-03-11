@@ -11,7 +11,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from binex.models.workflow import WorkflowSpec
+from binex.models.workflow import BackEdge, WorkflowSpec
 
 
 def load_workflow(
@@ -55,6 +55,7 @@ def load_workflow_from_string(
         spec = WorkflowSpec(**data)
     except ValidationError as exc:
         raise ValueError(f"Invalid workflow spec: {exc}") from exc
+    _validate_back_edges(spec)
     return spec
 
 
@@ -124,6 +125,40 @@ def _resolve_file_prompts(data: dict[str, Any], base_dir: Path | None = None) ->
             raise ValueError(
                 f"Node '{node_name}': cannot read system_prompt file {file_path}: {exc}"
             ) from exc
+
+
+_WHEN_RE = re.compile(r"^\$\{(\w+)\.(\w+)\}\s*(==|!=)\s*(.+)$")
+
+
+def _validate_back_edges(spec: WorkflowSpec) -> None:
+    """Validate all back_edge declarations in the workflow spec."""
+    if not any(n.back_edge for n in spec.nodes.values()):
+        return
+
+    from binex.graph.dag import DAG
+
+    dag = DAG.from_workflow(spec)
+
+    for node_id, node in spec.nodes.items():
+        if node.back_edge is None:
+            continue
+
+        be = node.back_edge
+
+        if be.target not in spec.nodes:
+            raise ValueError(
+                f"Node '{node_id}': back_edge target '{be.target}' not found in workflow"
+            )
+
+        if not dag.is_ancestor(be.target, node_id):
+            raise ValueError(
+                f"Node '{node_id}': back_edge target '{be.target}' is not upstream of '{node_id}'"
+            )
+
+        if not _WHEN_RE.match(be.when.strip()):
+            raise ValueError(
+                f"Node '{node_id}': back_edge has invalid when condition syntax: {be.when!r}"
+            )
 
 
 def _parse_raw(content: str, fmt: str) -> dict[str, Any]:
