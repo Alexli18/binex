@@ -22,14 +22,14 @@ budget:
 nodes:
   draft:
     agent: "local://echo"
-    system_prompt: "file://prompts/draft-writer.md"
+    system_prompt: "file://prompts/gen-draft-writer.md"
     inputs:
       query: "${user.query}"
     outputs: [text]
 
   review:
     agent: "local://echo"
-    system_prompt: "file://prompts/content-reviewer.md"
+    system_prompt: "file://prompts/gen-content-reviewer.md"
     inputs:
       text: "${node.draft.text}"
     outputs: [feedback]
@@ -37,7 +37,7 @@ nodes:
 
   revise:
     agent: "local://echo"
-    system_prompt: "file://prompts/content-reviser.md"
+    system_prompt: "file://prompts/gen-content-reviser.md"
     inputs:
       text: "${node.draft.text}"
       feedback: "${node.review.feedback}"
@@ -46,7 +46,7 @@ nodes:
 
   polish:
     agent: "local://echo"
-    system_prompt: "file://prompts/content-editor.md"
+    system_prompt: "file://prompts/gen-content-editor.md"
     inputs:
       text: "${node.revise.revised}"
     outputs: [final]

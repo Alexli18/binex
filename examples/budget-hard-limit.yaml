@@ -21,14 +21,14 @@ budget:
 nodes:
   planner:
     agent: "local://echo"
-    system_prompt: "file://prompts/research-planner.md"
+    system_prompt: "file://prompts/gen-research-planner.md"
     inputs:
       topic: "${user.topic}"
     outputs: [plan]
 
   researcher:
     agent: "local://echo"
-    system_prompt: "file://prompts/researcher.md"
+    system_prompt: "file://prompts/gen-researcher.md"
     inputs:
       plan: "${node.planner.plan}"
     outputs: [findings]
@@ -36,7 +36,7 @@ nodes:
 
   summarizer:
     agent: "local://echo"
-    system_prompt: "file://prompts/research-synthesizer.md"
+    system_prompt: "file://prompts/gen-research-synthesizer.md"
     inputs:
       data: "${node.researcher.findings}"
     outputs: [summary]

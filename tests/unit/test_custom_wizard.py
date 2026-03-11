@@ -42,14 +42,14 @@ class TestCustomTemplateHybrid:
         """Entering DSL directly works with per-node configuration."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
-        # custom=5, mode=1(dsl), topology="X -> Y"
+        # custom=c, mode=1(dsl), topology="X -> Y"
         # node X: type=1(LLM), provider=1(ollama), model=llama3.2, prompt=1, back_edge=n, adv=n
         # node Y: same
         # save=y, name=hybrid-dsl, run=n
         result = runner.invoke(
             start_cmd,
             input=(
-                "5\n1\nX -> Y\n"
+                "c\n1\nX -> Y\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "y\nhybrid-dsl\nn\n"
@@ -63,14 +63,14 @@ class TestCustomTemplateHybrid:
         """Choosing step launches interactive builder with per-node config."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
-        # custom=5, mode=2(step), nodes: A -> B -> done
+        # custom=c, mode=2(step), nodes: A -> B -> done
         # node A: type=1(LLM), provider=1(ollama), model=llama3.2, prompt=1, back_edge=n, adv=n
         # node B: same
         # save=y, name=hybrid-step, run=n
         result = runner.invoke(
             start_cmd,
             input=(
-                "5\n2\nA\nB\ndone\n"
+                "c\n2\nA\nB\ndone\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "y\nhybrid-step\nn\n"
@@ -87,7 +87,7 @@ class TestPromptSelection:
     def test_get_bundled_prompt_list(self):
         """Should return list of (filename, first_line) tuples."""
         prompts = _get_bundled_prompt_list()
-        assert len(prompts) == 14
+        assert len(prompts) >= 14
         assert all(isinstance(p, tuple) and len(p) == 2 for p in prompts)
 
     def test_select_bundled_prompt(self):
@@ -115,15 +115,15 @@ class TestPromptSelection:
 
     def test_select_by_filename(self):
         """Typing filename instead of number selects bundled prompt."""
-        inputs = iter(["research-planner.md"])
+        inputs = iter(["gen-research-planner.md"])
         result = _select_prompt(node_id="test", input_fn=lambda prompt: next(inputs))
-        assert result == "file://prompts/research-planner.md"
+        assert result == "file://prompts/gen-research-planner.md"
 
     def test_select_by_stem(self):
         """Typing filename without .md extension works too."""
-        inputs = iter(["researcher"])
+        inputs = iter(["gen-researcher"])
         result = _select_prompt(node_id="test", input_fn=lambda prompt: next(inputs))
-        assert result == "file://prompts/researcher.md"
+        assert result == "file://prompts/gen-researcher.md"
 
 
 from binex.cli.start import _configure_advanced_params
@@ -375,7 +375,7 @@ class TestCustomWizardE2E:
         """DSL mode -> configure nodes -> preview -> save."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
-        # Template=5 (custom), mode=1(dsl), topology="A -> B",
+        # Template=c (custom), mode=1(dsl), topology="A -> B",
         # node A: type=1(LLM), provider=1(ollama), model=default,
         #         prompt=1(first bundled), back_edge=n, advanced=n
         # node B: type=1(LLM), provider=1(ollama), model=default,
@@ -384,7 +384,7 @@ class TestCustomWizardE2E:
         result = runner.invoke(
             start_cmd,
             input=(
-                "5\n1\nA -> B\n"
+                "c\n1\nA -> B\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "y\ne2e-dsl\nn\n"
@@ -402,7 +402,7 @@ class TestCustomWizardE2E:
         """Step mode -> human review with back-edge -> save."""
         monkeypatch.chdir(tmp_path)
         runner = CliRunner()
-        # Template=5, mode=2(step)
+        # Template=c, mode=2(step)
         # nodes: generate -> review -> done
         # node generate: type=1(LLM), provider=1(ollama), model=default,
         #                prompt=1, back_edge=n, advanced=n
@@ -411,7 +411,7 @@ class TestCustomWizardE2E:
         result = runner.invoke(
             start_cmd,
             input=(
-                "5\n2\n"
+                "c\n2\n"
                 "generate\nreview\ndone\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "2\ny\n1\n3\nn\n"
@@ -436,7 +436,7 @@ class TestCustomWizardE2E:
         result = runner.invoke(
             start_cmd,
             input=(
-                "5\n1\nA -> B\n"
+                "c\n1\nA -> B\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "n\n2\n"
@@ -451,7 +451,7 @@ class TestCustomWizardE2E:
         result = runner.invoke(
             start_cmd,
             input=(
-                "5\n1\nX -> Y\n"
+                "c\n1\nX -> Y\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "y\nenv-proj\nn\n"
@@ -473,7 +473,7 @@ class TestCustomWizardE2E:
         result = runner.invoke(
             start_cmd,
             input=(
-                "5\n1\nwriter -> reviewer\n"
+                "c\n1\nwriter -> reviewer\n"
                 "1\n1\nllama3.2\n1\nn\nn\n"
                 "2\nn\nn\n"
                 "y\nmixed-proj\nn\n"

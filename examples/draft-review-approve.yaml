@@ -24,7 +24,7 @@ nodes:
 
   draft:
     agent: "llm://ollama/gemma3:4b"
-    system_prompt: "file://prompts/draft-writer.md"
+    system_prompt: "file://prompts/gen-draft-writer.md"
     inputs:
       topic: "${user_input.query}"
     outputs: [content]
@@ -32,7 +32,7 @@ nodes:
 
   review:
     agent: "llm://ollama/gemma3:4b"
-    system_prompt: "file://prompts/content-reviewer.md"
+    system_prompt: "file://prompts/gen-content-reviewer.md"
     inputs:
       draft: "${draft.content}"
     outputs: [feedback]
@@ -40,7 +40,7 @@ nodes:
 
   revise:
     agent: "llm://ollama/gemma3:4b"
-    system_prompt: "file://prompts/content-reviser.md"
+    system_prompt: "file://prompts/gen-content-reviser.md"
     inputs:
       original_draft: "${draft.content}"
       editor_feedback: "${review.feedback}"

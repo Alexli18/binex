@@ -240,6 +240,55 @@ def render_to_string(renderable: Any, *, width: int = 120) -> str:
 
 
 # ---------------------------------------------------------------------------
+# DAG ASCII renderer
+# ---------------------------------------------------------------------------
+
+
+def render_dag_ascii(
+    nodes: list[str],
+    edges: list[tuple[str, str]],
+) -> str:
+    """Render a DAG as a compact ASCII string using topological layering.
+
+    Groups parallel nodes on the same layer, connects layers with ``→``.
+    Example: ``A → [B, C] → D``
+    """
+    if not nodes:
+        return ""
+    if not edges:
+        return nodes[0] if len(nodes) == 1 else ", ".join(nodes)
+
+    # Build adjacency info
+    in_degree: dict[str, int] = {n: 0 for n in nodes}
+    children: dict[str, list[str]] = {n: [] for n in nodes}
+    for src, dst in edges:
+        children[src].append(dst)
+        in_degree[dst] = in_degree.get(dst, 0) + 1
+
+    # Kahn's algorithm — topological layering
+    layers: list[list[str]] = []
+    queue = [n for n in nodes if in_degree.get(n, 0) == 0]
+    while queue:
+        layers.append(sorted(queue))
+        next_queue: list[str] = []
+        for n in queue:
+            for child in children.get(n, []):
+                in_degree[child] -= 1
+                if in_degree[child] == 0:
+                    next_queue.append(child)
+        queue = next_queue
+
+    # Render layers
+    parts: list[str] = []
+    for layer in layers:
+        if len(layer) == 1:
+            parts.append(layer[0])
+        else:
+            parts.append("[" + ", ".join(layer) + "]")
+    return " → ".join(parts)
+
+
+# ---------------------------------------------------------------------------
 # Live run table
 # ---------------------------------------------------------------------------
 

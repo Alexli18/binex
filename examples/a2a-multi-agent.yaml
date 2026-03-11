@@ -26,7 +26,7 @@ nodes:
   # Coordinator agent running on port 8001
   coordinator:
     agent: "a2a://localhost:8001"
-    system_prompt: "file://prompts/research-planner.md"
+    system_prompt: "file://prompts/gen-research-planner.md"
     inputs:
       query: "${user.query}"
     outputs: [plan]
@@ -35,7 +35,7 @@ nodes:
   # Researcher agent running on port 8002
   researcher:
     agent: "a2a://localhost:8002"
-    system_prompt: "file://prompts/researcher.md"
+    system_prompt: "file://prompts/gen-researcher.md"
     inputs:
       plan: "${coordinator.plan}"
     outputs: [findings]
@@ -44,7 +44,7 @@ nodes:
   # Reviewer agent running on port 8003
   reviewer:
     agent: "a2a://localhost:8003"
-    system_prompt: "file://prompts/research-validator.md"
+    system_prompt: "file://prompts/gen-research-validator.md"
     inputs:
       findings: "${researcher.findings}"
     outputs: [review]

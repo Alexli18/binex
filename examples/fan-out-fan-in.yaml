@@ -19,7 +19,7 @@ nodes:
   # Step 1: Create a research plan
   planner:
     agent: "local://echo"
-    system_prompt: "file://prompts/research-planner.md"
+    system_prompt: "file://prompts/gen-research-planner.md"
     inputs: {}
     outputs: [plan]
     depends_on: []
@@ -27,7 +27,7 @@ nodes:
   # Step 2: Three parallel researchers (fan-out from planner)
   researcher1:
     agent: "local://echo"
-    system_prompt: "file://prompts/researcher.md"
+    system_prompt: "file://prompts/gen-researcher.md"
     inputs:
       plan: "${planner.plan}"
     outputs: [findings]
@@ -35,7 +35,7 @@ nodes:
 
   researcher2:
     agent: "local://echo"
-    system_prompt: "file://prompts/researcher.md"
+    system_prompt: "file://prompts/gen-researcher.md"
     inputs:
       plan: "${planner.plan}"
     outputs: [findings]
@@ -43,7 +43,7 @@ nodes:
 
   researcher3:
     agent: "local://echo"
-    system_prompt: "file://prompts/researcher.md"
+    system_prompt: "file://prompts/gen-researcher.md"
     inputs:
       plan: "${planner.plan}"
     outputs: [findings]
@@ -52,7 +52,7 @@ nodes:
   # Step 3: Summarizer waits for ALL researchers (fan-in)
   summarizer:
     agent: "local://echo"
-    system_prompt: "file://prompts/research-synthesizer.md"
+    system_prompt: "file://prompts/gen-research-synthesizer.md"
     inputs:
       findings_a: "${researcher1.findings}"
       findings_b: "${researcher2.findings}"

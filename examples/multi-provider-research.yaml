@@ -30,7 +30,7 @@ nodes:
   # OpenAI GPT-4o for structured planning (low temperature for consistency)
   planner:
     agent: "llm://gpt-4o"
-    system_prompt: "file://prompts/research-planner.md"
+    system_prompt: "file://prompts/gen-research-planner.md"
     inputs:
       query: "${user.query}"
     outputs: [plan]
@@ -40,7 +40,7 @@ nodes:
   # Google Gemini for broad research
   researcher:
     agent: "llm://gemini/gemini-2.0-flash"
-    system_prompt: "file://prompts/researcher.md"
+    system_prompt: "file://prompts/gen-researcher.md"
     inputs:
       questions: "${planner.plan}"
     outputs: [findings]
@@ -49,7 +49,7 @@ nodes:
   # Anthropic Claude for synthesis and writing
   summarizer:
     agent: "llm://claude-sonnet-4-20250514"
-    system_prompt: "file://prompts/research-synthesizer.md"
+    system_prompt: "file://prompts/gen-research-synthesizer.md"
     inputs:
       research: "${researcher.findings}"
     outputs: [report]
