@@ -326,3 +326,15 @@ class TestBuildCustomWorkflow:
         yaml_str, _ = build_custom_workflow(name="clean", nodes_config=configs)
         assert "null" not in yaml_str
         assert "None" not in yaml_str
+
+
+from binex.cli.start import _preview_yaml
+
+
+class TestPreviewYaml:
+    def test_preview_returns_without_error(self):
+        yaml_content = "name: test\nnodes:\n  a:\n    agent: llm://test\n"
+        _preview_yaml(yaml_content)
+
+    def test_preview_with_empty_yaml(self):
+        _preview_yaml("")

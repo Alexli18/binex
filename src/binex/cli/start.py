@@ -323,6 +323,24 @@ def build_custom_workflow(*, name: str, nodes_config: dict[str, dict]) -> tuple[
     return yaml_str, needed_prompts
 
 
+def _preview_yaml(yaml_content: str) -> None:
+    """Display YAML with syntax highlighting if Rich is available."""
+    if has_rich():
+        from rich.syntax import Syntax
+
+        from binex.cli.ui import get_console, make_panel
+
+        console = get_console(stderr=True)
+        syntax = Syntax(yaml_content, "yaml", theme="monokai", line_numbers=False)
+        console.print()
+        console.print(make_panel(syntax, title="Workflow Preview"))
+        console.print()
+    else:
+        click.echo("\n--- Workflow Preview ---")
+        click.echo(yaml_content)
+        click.echo("--- End Preview ---\n")
+
+
 # ---------------------------------------------------------------------------
 # Run workflow (optional post-generation execution)
 # ---------------------------------------------------------------------------
