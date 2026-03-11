@@ -734,7 +734,17 @@ def _select_prompt(*, node_id: str, input_fn=None) -> str:
     click.echo(f"    {file_path_n}) Provide file path")
 
     choice = _prompt("Choose prompt")
-    choice_int = int(choice)
+
+    # Support both number and filename input
+    try:
+        choice_int = int(choice)
+    except ValueError:
+        # User typed a filename — match against bundled list
+        matched = [f for f, _ in bundled if f == choice or f.removesuffix(".md") == choice]
+        if matched:
+            return f"file://prompts/{matched[0]}"
+        # Treat as custom text
+        return choice
 
     if choice_int <= len(bundled):
         filename = bundled[choice_int - 1][0]

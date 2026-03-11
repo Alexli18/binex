@@ -113,6 +113,18 @@ class TestPromptSelection:
         result = _select_prompt(node_id="test", input_fn=lambda prompt: next(inputs))
         assert result == "file:///path/to/my-prompt.md"
 
+    def test_select_by_filename(self):
+        """Typing filename instead of number selects bundled prompt."""
+        inputs = iter(["research-planner.md"])
+        result = _select_prompt(node_id="test", input_fn=lambda prompt: next(inputs))
+        assert result == "file://prompts/research-planner.md"
+
+    def test_select_by_stem(self):
+        """Typing filename without .md extension works too."""
+        inputs = iter(["researcher"])
+        result = _select_prompt(node_id="test", input_fn=lambda prompt: next(inputs))
+        assert result == "file://prompts/researcher.md"
+
 
 from binex.cli.start import _configure_advanced_params
 
