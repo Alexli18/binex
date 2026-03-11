@@ -35,6 +35,7 @@ class RunSummary(BaseModel):
 
     run_id: str
     workflow_name: str
+    workflow_path: str | None = None
     status: str
     started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None

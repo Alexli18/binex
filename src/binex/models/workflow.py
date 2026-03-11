@@ -50,6 +50,7 @@ class WorkflowSpec(BaseModel):
     nodes: dict[str, NodeSpec]
     defaults: DefaultsSpec | None = None
     budget: BudgetConfig | None = None
+    source_path: str | None = None
 
     @model_validator(mode="after")
     def _set_node_ids(self) -> WorkflowSpec:

@@ -42,38 +42,6 @@ def _time_ago(dt) -> str:
     return f"{days}d ago"
 
 
-def _guess_workflow_path(workflow_name: str) -> str | None:
-    """Try to find a workflow YAML containing this workflow name. Returns path or None."""
-    from pathlib import Path
-
-    # 1. Exact name matches
-    candidates = [
-        Path(workflow_name),
-        Path(f"{workflow_name}.yaml"),
-        Path(f"{workflow_name}.yml"),
-    ]
-    for prefix in [Path("."), Path("examples"), Path("workflows")]:
-        for suffix in [".yaml", ".yml", ""]:
-            candidates.append(prefix / f"{workflow_name}{suffix}")
-
-    for candidate in candidates:
-        if candidate.is_file():
-            return str(candidate)
-
-    # 2. Search for YAML files containing the workflow name (max depth 3)
-    for pattern in ["*.yaml", "*.yml", "**/*.yaml", "**/*.yml"]:
-        for path in sorted(Path(".").glob(pattern)):
-            if path.stat().st_size > 50_000:
-                continue
-            try:
-                text = path.read_text(encoding="utf-8", errors="ignore")
-                if workflow_name in text:
-                    return str(path)
-            except OSError:
-                continue
-
-    return None
-
 
 def _preview(content, max_len: int = 50) -> str:
     """Truncate content for preview."""
@@ -853,18 +821,26 @@ async def _action_replay(exec_store, art_store, run_id: str, run, records) -> st
         else:
             click.echo("  Format: node=agent (e.g. step2=llm://gpt-4o)")
 
-    # Step 3: workflow path — try to guess default from workflow_name
-    default_path = _guess_workflow_path(run.workflow_name)
+    # Step 3: workflow path — use stored workflow_path from run, or prompt
+    default_path = run.workflow_path
     if default_path:
-        workflow = click.prompt(
-            "  Workflow file path", default=default_path,
-        ).strip().strip("'\"")
+        if has_rich():
+            from binex.cli.ui import get_console as wf_console
+            wf_console().print(
+                f"  [dim]Workflow path from original run:[/dim] [cyan]{default_path}[/cyan]"
+            )
+        change = click.prompt("  Change workflow path? (y/n)", default="n")
+        if change.strip().lower() == "y":
+            workflow = click.prompt(
+                "  Workflow file path", default=default_path,
+            ).strip().strip("'\"")
+        else:
+            workflow = default_path
     else:
         if has_rich():
             from binex.cli.ui import get_console as wf_console
             wf_console().print("  [dim]Enter path to workflow YAML file[/dim]")
         workflow = click.prompt("  Workflow file path").strip().strip("'\"")
-
 
     # Step 4: confirm
     click.echo()

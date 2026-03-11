@@ -30,10 +30,12 @@ def load_workflow(
     else:
         raise ValueError(f"Unsupported file extension: {suffix}")
 
-    return load_workflow_from_string(
+    spec = load_workflow_from_string(
         path.read_text(), fmt=fmt, user_vars=user_vars,
         base_dir=path.parent,
     )
+    spec.source_path = str(path)
+    return spec
 
 
 def load_workflow_from_string(

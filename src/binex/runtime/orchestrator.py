@@ -76,6 +76,7 @@ class Orchestrator:
         summary = RunSummary(
             run_id=run_id,
             workflow_name=spec.name,
+            workflow_path=spec.source_path,
             status="running",
             total_nodes=len(spec.nodes),
         )
