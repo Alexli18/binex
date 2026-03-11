@@ -224,7 +224,13 @@ class LLMAdapter:
                     continue
                 parts.append(f"{key}: {value}")
         for art in input_artifacts:
-            parts.append(f"\nInput ({art.type}):\n{art.content}")
+            if art.type == "feedback":
+                parts.append(
+                    f"\nYour previous output was rejected. "
+                    f"Please revise based on this feedback:\n{art.content}"
+                )
+            else:
+                parts.append(f"\nInput ({art.type}):\n{art.content}")
         return "\n".join(parts) if parts else "No input provided."
 
     async def cancel(self, task_id: str) -> None:
