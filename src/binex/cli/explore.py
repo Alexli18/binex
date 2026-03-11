@@ -183,7 +183,11 @@ async def _dashboard(exec_store, art_store, run_id: str) -> None:
         elif key == "a":
             await _action_artifacts(exec_store, art_store, run_id)
         elif key == "n":
-            await _action_node(exec_store, art_store, run_id, records)
+            node_arts = await _action_node(exec_store, art_store, run_id, records)
+            if node_arts:
+                if _wait_for_enter_or_preview(node_arts):
+                    return
+                continue
         elif key == "r":
             await _action_replay(exec_store, art_store, run_id, run, records)
         else:
@@ -310,6 +314,51 @@ def _wait_for_enter() -> bool:
         "  [Enter] back to dashboard · [q] quit", default="",
     )
     return choice.strip().lower() == "q"
+
+
+def _wait_for_enter_or_preview(node_arts: list) -> bool:
+    """Prompt with preview option for node detail. Returns True if quit."""
+    while True:
+        choice = click.prompt(
+            "  [Enter] back · [p] full preview · [q] quit", default="",
+        )
+        key = choice.strip().lower()
+        if key == "q":
+            return True
+        if key == "p":
+            _show_full_preview(node_arts)
+            continue
+        return False
+
+
+def _show_full_preview(node_arts: list) -> None:
+    """Render full artifact content as Rich Markdown panels."""
+    if not node_arts:
+        click.echo("  No artifacts to preview.")
+        return
+
+    for art in node_arts:
+        content = art.content if art.content is not None else ""
+        if not isinstance(content, str):
+            content = json.dumps(content, default=str, indent=2)
+        node = art.lineage.produced_by if art.lineage else "?"
+
+        click.echo()
+        if has_rich():
+            from rich.markdown import Markdown
+
+            from binex.cli.ui import get_console, make_panel
+
+            console = get_console()
+            console.print(make_panel(
+                Markdown(content),
+                title=f"[bold]{node}[/bold] / {art.type}",
+                subtitle=f"id: {art.id}",
+            ))
+        else:
+            click.echo(f"  ── {node} / {art.type} ──")
+            click.echo(f"  {content}")
+            click.echo(f"  id: {art.id}")
 
 
 # ---------------------------------------------------------------------------
@@ -512,11 +561,11 @@ async def _show_lineage(art_store, artifact_id: str) -> None:
         click.echo(format_lineage_tree(tree))
 
 
-async def _action_node(exec_store, art_store, run_id: str, records) -> None:
-    """Show numbered list of nodes, select one for detail."""
+async def _action_node(exec_store, art_store, run_id: str, records) -> list:
+    """Show numbered list of nodes, select one for detail. Returns node artifacts."""
     if not records:
         click.echo("  No execution records.")
-        return
+        return []
 
     click.echo()
     if has_rich():
@@ -549,7 +598,7 @@ async def _action_node(exec_store, art_store, run_id: str, records) -> None:
 
     choice = click.prompt("  Select node (or b=back)", default="b")
     if choice.lower() == "b":
-        return
+        return []
 
     try:
         idx = int(choice) - 1
@@ -571,10 +620,12 @@ async def _action_node(exec_store, art_store, run_id: str, records) -> None:
                 _render_node_rich(rec, node_arts, node_total_cost)
             else:
                 _render_node_plain(rec, node_arts, node_total_cost)
+            return node_arts
         else:
             click.echo(f"  Invalid choice. Enter 1-{len(records)} or b.")
     except ValueError:
         click.echo(f"  Invalid choice. Enter 1-{len(records)} or b.")
+    return []
 
 
 def _render_node_rich(rec, node_arts, node_total_cost: float) -> None:
