@@ -571,6 +571,27 @@ def _select_prompt(*, node_id: str, input_fn=None) -> str:
         return path
 
 
+def _configure_back_edge(*, node_id: str, upstream_nodes: list[str], input_fn=None) -> dict:
+    """Configure a back-edge for review loops. Returns back_edge dict."""
+    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
+
+    click.echo("  Return to which node on reject?")
+    for i, name in enumerate(upstream_nodes, 1):
+        click.echo(f"    {i}) {name}")
+
+    choice = int(_prompt("Choose target"))
+    target = upstream_nodes[choice - 1]
+
+    max_iter_str = _prompt("Max iterations [3]") or "3"
+    max_iterations = int(max_iter_str)
+
+    return {
+        "target": target,
+        "when": f"${{{node_id}.decision}} == rejected",
+        "max_iterations": max_iterations,
+    }
+
+
 def _step_mode_topology(*, input_fn=None) -> str:
     """Build workflow topology step by step. Returns DSL string like 'A -> B, C -> D'."""
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))

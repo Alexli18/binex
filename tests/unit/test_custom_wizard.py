@@ -125,3 +125,40 @@ class TestAdvancedParams:
         inputs = iter(["", "", "", "", ""])
         result = _configure_advanced_params(input_fn=lambda prompt: next(inputs))
         assert result == {}
+
+
+from binex.cli.start import _configure_back_edge
+
+
+class TestConfigureBackEdge:
+    """Back-edge (review loop) configuration."""
+
+    def test_basic_back_edge(self):
+        inputs = iter(["1", "3"])  # target choice=1 (writer), max_iterations=3
+        result = _configure_back_edge(
+            node_id="review",
+            upstream_nodes=["writer"],
+            input_fn=lambda prompt: next(inputs),
+        )
+        assert result["target"] == "writer"
+        assert result["when"] == "${review.decision} == rejected"
+        assert result["max_iterations"] == 3
+
+    def test_multiple_upstream_choice(self):
+        inputs = iter(["2", "5"])  # target=2nd upstream (researcher), max=5
+        result = _configure_back_edge(
+            node_id="review",
+            upstream_nodes=["writer", "researcher"],
+            input_fn=lambda prompt: next(inputs),
+        )
+        assert result["target"] == "researcher"
+        assert result["max_iterations"] == 5
+
+    def test_default_max_iterations(self):
+        inputs = iter(["1", ""])  # target, empty=default 3
+        result = _configure_back_edge(
+            node_id="review",
+            upstream_nodes=["generate"],
+            input_fn=lambda prompt: next(inputs),
+        )
+        assert result["max_iterations"] == 3
