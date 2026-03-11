@@ -18,7 +18,7 @@ Complete schema reference for Binex workflow files.
 |-------|------|----------|-------------|
 | `id` | `str` | no | Auto-set from the dict key |
 | `agent` | `str` | yes | Agent URI — one of `local://`, `llm://`, `a2a://` |
-| `system_prompt` | `str` | no | System prompt sent to the agent |
+| `system_prompt` | `str` | no | System prompt sent to the agent (supports `file://` prefix) |
 | `inputs` | `dict[str, Any]` | no | Input key-value pairs; supports variable interpolation |
 | `outputs` | `list[str]` | yes | Artifact names this node produces |
 | `depends_on` | `list[str]` | no | Node IDs that must complete before this node runs |
@@ -39,6 +39,21 @@ Complete schema reference for Binex workflow files.
 | `max_tokens` | `4096` | Max tokens in completion |
 
 All `config` values are forwarded to `litellm.acompletion()` when not `None`.
+
+### External System Prompt — `file://`
+
+The `system_prompt` field supports loading content from an external file using the `file://` prefix.
+Relative paths are resolved relative to the workflow YAML file's directory. Absolute paths are used as-is.
+
+```yaml
+nodes:
+  researcher:
+    agent: "llm://openai/gpt-4"
+    system_prompt: "file://prompts/researcher.md"
+    outputs: [findings]
+```
+
+If the referenced file does not exist, workflow loading fails with a clear error message.
 
 ### Conditional Execution — `when`
 
