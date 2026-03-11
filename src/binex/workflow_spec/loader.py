@@ -32,6 +32,7 @@ def load_workflow(
 
     return load_workflow_from_string(
         path.read_text(), fmt=fmt, user_vars=user_vars,
+        base_dir=path.parent,
     )
 
 
@@ -40,12 +41,14 @@ def load_workflow_from_string(
     *,
     fmt: str = "yaml",
     user_vars: dict[str, str] | None = None,
+    base_dir: Path | None = None,
 ) -> WorkflowSpec:
     """Parse a workflow from a YAML or JSON string."""
     data = _parse_raw(content, fmt)
     _resolve_env_vars(data)
     if user_vars:
         _interpolate(data, user_vars)
+    _resolve_file_prompts(data, base_dir=base_dir)
     try:
         spec = WorkflowSpec(**data)
     except ValidationError as exc:

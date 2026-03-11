@@ -214,3 +214,23 @@ class TestResolveFilePrompts:
         from binex.workflow_spec.loader import _resolve_file_prompts
         _resolve_file_prompts(data, base_dir=tmp_path)
         assert "system_prompt" not in data["nodes"]["a"]
+
+
+class TestLoadWorkflowFilePrompt:
+    """Integration: load_workflow resolves file:// system_prompt."""
+
+    def test_load_workflow_resolves_file_prompt(self, tmp_path):
+        """Full load_workflow pipeline resolves file:// prompts."""
+        prompt_dir = tmp_path / "prompts"
+        prompt_dir.mkdir()
+        (prompt_dir / "researcher.md").write_text("You are a researcher.")
+
+        workflow_yaml = tmp_path / "workflow.yaml"
+        workflow_yaml.write_text(
+            'name: test-workflow\nnodes:\n  researcher:\n    agent: llm://openai/gpt-4\n    system_prompt: "file://prompts/researcher.md"\n    outputs: [result]\n'
+        )
+
+        from binex.workflow_spec.loader import load_workflow
+
+        spec = load_workflow(workflow_yaml)
+        assert spec.nodes["researcher"].system_prompt == "You are a researcher."
