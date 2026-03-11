@@ -771,7 +771,8 @@ async def _action_replay(exec_store, art_store, run_id: str, run, records) -> No
             click.echo("  Format: node=agent (e.g. step2=llm://gpt-4o)")
 
     # Step 3: workflow path
-    workflow = click.prompt("  Workflow file path")
+    workflow = click.prompt("  Workflow file path").strip().strip("'\"")
+
 
     # Step 4: confirm
     click.echo()
