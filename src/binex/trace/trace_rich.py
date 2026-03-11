@@ -8,24 +8,26 @@ from rich.console import Group
 from rich.panel import Panel
 from rich.text import Text
 
-from binex.cli.ui import STATUS_CONFIG, make_panel, make_table, render_to_string
+from binex.cli.ui import STATUS_CONFIG, get_console, make_panel, make_table
 from binex.stores.execution_store import ExecutionStore
 
 
-async def format_trace_rich(store: ExecutionStore, run_id: str) -> str:
-    """Generate a rich-formatted timeline for a run."""
+async def format_trace_rich(store: ExecutionStore, run_id: str) -> None:
+    """Print a rich-formatted timeline for a run directly to the terminal."""
+    console = get_console()
+
     run = await store.get_run(run_id)
     records = await store.list_records(run_id)
     if not records:
-        return render_to_string(Text("No records found for this run.", style="red"))
+        console.print(Text("No records found for this run.", style="red"))
+        return
 
     records.sort(key=lambda r: r.timestamp)
 
     # Header
-    renderables: list = []
     if run:
         _, status_style = STATUS_CONFIG.get(run.status, (run.status, "dim"))
-        renderables.append(make_panel(
+        console.print(make_panel(
             f"[bold]{run.workflow_name}[/bold]\n"
             f"Run: [cyan]{run.run_id}[/cyan]\n"
             f"Status: [{status_style}]{run.status}[/{status_style}]\n"
@@ -65,12 +67,13 @@ async def format_trace_rich(store: ExecutionStore, run_id: str) -> str:
             " | ".join(details_parts) if details_parts else "-",
         )
 
-    renderables.append(table)
-    return render_to_string(Group(*renderables))
+    console.print(table)
 
 
-async def format_trace_node_rich(record: Any) -> str:
-    """Format a single node detail with rich."""
+async def format_trace_node_rich(record: Any) -> None:
+    """Print a single node detail with rich directly to the terminal."""
+    console = get_console()
+
     status = record.status.value
     _, style = STATUS_CONFIG.get(status, ("unknown", "dim"))
     # Extract base color for border
@@ -98,20 +101,21 @@ async def format_trace_node_rich(record: Any) -> str:
     if record.error:
         lines.append(f"[bold red]Error:[/bold red] {record.error}")
 
-    panel = Panel(
+    console.print(Panel(
         "\n".join(lines),
         title=f"[bold]{record.task_id}[/bold]",
         border_style=color,
-    )
-    return render_to_string(panel)
+    ))
 
 
 async def format_trace_graph_rich(
     records: list,
     nodes: dict[str, str],
     edges: list[tuple[str, str]],
-) -> str:
-    """Format DAG as a rich table with topological order and dependencies."""
+) -> None:
+    """Print DAG as a rich table directly to the terminal."""
+    console = get_console()
+
     rec_map = {r.task_id: r for r in records}
 
     # Build parent map (who depends on whom)
@@ -153,7 +157,7 @@ async def format_trace_graph_rich(
             deps_str,
         )
 
-    return render_to_string(table)
+    console.print(table)
 
 
 def _topo_sort(

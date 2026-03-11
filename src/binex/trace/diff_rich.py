@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from rich.console import Group
 from rich.text import Text
 
-from binex.cli.ui import STATUS_CONFIG, make_panel, make_table, render_to_string
+from binex.cli.ui import STATUS_CONFIG, get_console, make_panel, make_table
 
 
 def _build_diff_row(step: dict[str, Any]) -> tuple[list[str], str, str, str, str, str]:
@@ -47,8 +46,10 @@ def _get_status_style(status: str) -> str:
     return STATUS_CONFIG.get(status, ("unknown", "dim"))[1]
 
 
-def format_diff_rich(diff_result: dict[str, Any]) -> str:
-    """Render a diff result with rich formatting."""
+def format_diff_rich(diff_result: dict[str, Any]) -> None:
+    """Print a diff result with rich formatting directly to the terminal."""
+    console = get_console()
+
     run_a = diff_result["run_a"]
     run_b = diff_result["run_b"]
     status_a = diff_result["status_a"]
@@ -57,14 +58,14 @@ def format_diff_rich(diff_result: dict[str, Any]) -> str:
     style_a = _get_status_style(status_a)
     style_b = _get_status_style(status_b)
 
-    panel = make_panel(
+    console.print(make_panel(
         f"[bold]Workflow:[/bold] {diff_result['workflow_a']}\n"
         f"[bold]Run A:[/bold] [cyan]{run_a}[/cyan] "
         f"[{style_a}]{status_a}[/{style_a}]\n"
         f"[bold]Run B:[/bold] [cyan]{run_b}[/cyan] "
         f"[{style_b}]{status_b}[/{style_b}]",
         title="Run Diff",
-    )
+    ))
 
     table = make_table(
         ("Node", {"style": "bold"}),
@@ -87,4 +88,4 @@ def format_diff_rich(diff_result: dict[str, Any]) -> str:
             style=row_style,
         )
 
-    return render_to_string(Group(panel, table))
+    console.print(table)

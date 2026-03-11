@@ -7,7 +7,7 @@ import sys
 
 import click
 
-from binex.cli import get_stores
+from binex.cli import get_stores, has_rich
 from binex.trace.debug_report import (
     build_debug_report,
     format_debug_report,
@@ -15,25 +15,22 @@ from binex.trace.debug_report import (
 )
 
 
-def _has_rich() -> bool:
-    """Check if rich is available."""
-    try:
-        import rich  # noqa: F401
-        return True
-    except ImportError:
-        return False
-
-
 def _get_stores():
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
 
-@click.command("debug")
+@click.command("debug", epilog="""\b
+Examples:
+  binex debug latest                Inspect the most recent run
+  binex debug <run_id> --errors     Show only failed nodes
+  binex debug <run_id> --node foo   Inspect a single node
+  binex debug <run_id> --json       Machine-readable output
+""")
 @click.argument("run_id")
 @click.option("--node", default=None, help="Show only the specified node")
 @click.option("--errors", is_flag=True, help="Show only failed/timed_out nodes")
-@click.option("--json", "json_out", is_flag=True, help="Output as JSON")
+@click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
 @click.option("--rich/--no-rich", "rich_out", default=None, help="Rich output (auto-detected)")
 def debug_cmd(
     run_id: str,
@@ -45,7 +42,7 @@ def debug_cmd(
     """Post-mortem inspection of a workflow run."""
     # Auto-detect rich if not explicitly set
     if rich_out is None:
-        rich_out = _has_rich()
+        rich_out = has_rich()
 
     result = asyncio.run(
         _debug_async(
@@ -58,6 +55,7 @@ def debug_cmd(
     )
     if result is None:
         click.echo(f"Error: Run '{run_id}' not found.", err=True)
+        click.echo("Tip: use 'binex explore' to browse available runs.", err=True)
         sys.exit(1)
     click.echo(result)
 
@@ -100,9 +98,10 @@ async def _debug_async(
             except ImportError:
                 pass
             else:
-                return format_debug_report_rich(
+                format_debug_report_rich(
                     report, node_filter=node_filter, errors_only=errors_only
                 )
+                return ""
         return format_debug_report(
             report, node_filter=node_filter, errors_only=errors_only
         )

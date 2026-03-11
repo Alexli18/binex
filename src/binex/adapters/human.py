@@ -8,7 +8,7 @@ import click
 
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
-from binex.models.cost import CostRecord, ExecutionResult
+from binex.models.cost import ExecutionResult
 from binex.models.task import TaskNode
 
 
@@ -49,14 +49,7 @@ class HumanApprovalAdapter:
                 ),
             )
         ]
-        cost_record = CostRecord(
-            id=f"cost_{uuid4().hex[:12]}",
-            run_id=task.run_id,
-            task_id=task.node_id,
-            cost=0.0,
-            source="local",
-        )
-        return ExecutionResult(artifacts=artifacts, cost=cost_record)
+        return ExecutionResult(artifacts=artifacts)
 
     async def cancel(self, task_id: str) -> None:
         pass
@@ -107,14 +100,7 @@ class HumanInputAdapter:
                 ),
             )
         ]
-        cost_record = CostRecord(
-            id=f"cost_{uuid4().hex[:12]}",
-            run_id=task.run_id,
-            task_id=task.node_id,
-            cost=0.0,
-            source="local",
-        )
-        return ExecutionResult(artifacts=artifacts, cost=cost_record)
+        return ExecutionResult(artifacts=artifacts)
 
     async def cancel(self, task_id: str) -> None:
         pass

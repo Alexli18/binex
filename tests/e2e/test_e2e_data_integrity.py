@@ -148,15 +148,10 @@ nodes:
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
+    # Local adapters no longer create cost records
     cursor.execute("SELECT * FROM cost_records WHERE run_id = ?", (run_id,))
     rows = cursor.fetchall()
-    assert len(rows) == 1
-
-    row = rows[0]
-    assert row["task_id"] == "A"
-    assert row["cost"] == 0.0
-    assert row["source"] == "local"
-    assert row["currency"] == "USD"
+    assert len(rows) == 0
 
     conn.close()
 

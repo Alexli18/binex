@@ -7,7 +7,7 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
 
-from binex.cli.ui import STATUS_CONFIG, make_panel, render_to_string
+from binex.cli.ui import STATUS_CONFIG, get_console, make_panel
 from binex.trace.debug_report import DebugReport, _truncate
 
 
@@ -16,9 +16,11 @@ def format_debug_report_rich(
     *,
     node_filter: str | None = None,
     errors_only: bool = False,
-) -> str:
-    """Format a debug report with rich colors. Returns a string."""
+) -> None:
+    """Print a debug report with rich colors directly to the terminal."""
     from binex.trace.debug_report import _filter_nodes
+
+    console = get_console()
 
     # Header
     _, status_style = STATUS_CONFIG.get(report.status, (report.status, "dim"))
@@ -30,13 +32,11 @@ def format_debug_report_rich(
     header.append(f" ({report.completed_nodes}/{report.total_nodes} completed)\n")
     header.append(f"Duration: {report.duration_ms / 1000}s")
 
-    parts = [make_panel(header, title="Debug Report")]
+    console.print(make_panel(header, title="Debug Report"))
 
     nodes = _filter_nodes(report.nodes, node_filter, errors_only)
     for node in nodes:
-        parts.append(_render_node_rich(node))
-
-    return render_to_string(Group(*parts))
+        console.print(_render_node_rich(node))
 
 
 def _render_node_rich(node) -> Panel:

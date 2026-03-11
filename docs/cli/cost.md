@@ -149,6 +149,7 @@ Cost records are stored in the `cost_records` table in `.binex/binex.db` alongsi
 
 ## See Also
 
+- [Budget & Cost Tracking Guide](budget-guide.md) — practical examples and patterns
 - [binex run](run.md) — execute a workflow (cost output with `--json`)
 - [binex debug](debug.md) — post-mortem inspection
 - [Workflow Format — Budget](../workflows/format.md#budget-budgetconfig) — configure budget constraints

@@ -12,7 +12,11 @@ from binex.cli import get_stores
 from binex.models.execution import RunSummary
 
 
-@click.command("replay")
+@click.command("replay", epilog="""\b
+Examples:
+  binex replay <run_id> --from step2 --workflow w.yaml
+  binex replay <run_id> --from step2 --workflow w.yaml --agent step2=llm://gpt-4o
+""")
 @click.argument("run_id")
 @click.option("--from", "from_step", required=True, help="Re-execute from this step")
 @click.option("--workflow", required=True, type=click.Path(exists=True), help="Workflow file")
@@ -51,9 +55,7 @@ async def _run_replay(
     workflow_path: str,
     agent_swaps: dict[str, str],
 ) -> RunSummary:
-    from binex.adapters.local import LocalPythonAdapter
-    from binex.models.artifact import Artifact, Lineage
-    from binex.models.task import TaskNode
+    from binex.cli.adapter_registry import register_workflow_adapters
     from binex.runtime.replay import ReplayEngine
     from binex.workflow_spec.loader import load_workflow
 
@@ -66,54 +68,9 @@ async def _run_replay(
         artifact_store=artifact_store,
     )
 
-    # Register default local adapters
-    async def _default_handler(task: TaskNode, inputs: list[Artifact]) -> list[Artifact]:
-        content = {a.id: a.content for a in inputs} if inputs else {"msg": "no input"}
-        return [
-            Artifact(
-                id=f"art_{task.node_id}",
-                run_id=task.run_id,
-                type="result",
-                content=content,
-                lineage=Lineage(
-                    produced_by=task.node_id,
-                    derived_from=[a.id for a in inputs],
-                ),
-            )
-        ]
-
-    for node in spec.nodes.values():
-        agent = agent_swaps.get(node.id, node.agent)
-        if agent.startswith("local://"):
-            engine.dispatcher.register_adapter(
-                agent, LocalPythonAdapter(handler=_default_handler),
-            )
-        elif agent.startswith("llm://"):
-            from binex.adapters.llm import LLMAdapter
-
-            model = agent.removeprefix("llm://")
-            config = node.config
-            engine.dispatcher.register_adapter(
-                agent,
-                LLMAdapter(
-                    model=model,
-                    api_base=config.get("api_base"),
-                    api_key=config.get("api_key"),
-                    temperature=config.get("temperature"),
-                    max_tokens=config.get("max_tokens"),
-                ),
-            )
-        elif agent == "human://input":
-            from binex.adapters.human import HumanInputAdapter
-            engine.dispatcher.register_adapter(agent, HumanInputAdapter())
-        elif agent.startswith("human://"):
-            from binex.adapters.human import HumanApprovalAdapter
-            engine.dispatcher.register_adapter(agent, HumanApprovalAdapter())
-        elif agent.startswith("a2a://"):
-            from binex.adapters.a2a import A2AAgentAdapter
-
-            endpoint = agent.removeprefix("a2a://")
-            engine.dispatcher.register_adapter(agent, A2AAgentAdapter(endpoint=endpoint))
+    register_workflow_adapters(
+        engine.dispatcher, spec, agent_swaps=agent_swaps,
+    )
 
     try:
         return await engine.replay(

@@ -56,7 +56,7 @@ class TestBuildWorkflow:
 
     def test_research_without_user_input(self):
         dsl = PATTERNS["research"]
-        result = build_start_workflow(
+        result, _ = build_start_workflow(
             dsl=dsl, agent_prefix="llm://ollama/", model="llama3.2",
             user_input=False,
         )
@@ -69,7 +69,7 @@ class TestBuildWorkflow:
 
     def test_research_with_user_input(self):
         dsl = PATTERNS["research"]
-        result = build_start_workflow(
+        result, _ = build_start_workflow(
             dsl=dsl, agent_prefix="llm://ollama/", model="llama3.2",
             user_input=True, user_prompt="What to research?",
         )
@@ -84,7 +84,7 @@ class TestBuildWorkflow:
     def test_model_with_provider_prefix_dedup(self):
         """Model like 'ollama/gemma3:4b' should not duplicate provider in URI."""
         dsl = PATTERNS["research"]
-        result = build_start_workflow(
+        result, _ = build_start_workflow(
             dsl=dsl, agent_prefix="llm://ollama/", model="ollama/gemma3:4b",
             user_input=False,
         )
@@ -95,7 +95,7 @@ class TestBuildWorkflow:
     def test_all_templates_valid(self):
         for key, tpl in TEMPLATES.items():
             dsl = PATTERNS[tpl["pattern"]]
-            result = build_start_workflow(
+            result, _ = build_start_workflow(
                 dsl=dsl, agent_prefix="llm://", model="gpt-4o",
                 user_input=False,
             )
@@ -104,7 +104,7 @@ class TestBuildWorkflow:
             assert len(data["nodes"]) > 0, f"Template {key} has no nodes"
 
     def test_custom_dsl_with_user_input(self):
-        result = build_start_workflow(
+        result, _ = build_start_workflow(
             dsl="A -> B -> C", agent_prefix="llm://", model="gpt-4o",
             user_input=True,
         )
@@ -114,7 +114,7 @@ class TestBuildWorkflow:
         assert data["nodes"]["B"]["depends_on"] == ["A"]
 
     def test_custom_dsl_without_user_input(self):
-        result = build_start_workflow(
+        result, _ = build_start_workflow(
             dsl="A -> B, C -> D", agent_prefix="llm://ollama/", model="llama3.2",
             user_input=False,
         )

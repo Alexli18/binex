@@ -232,9 +232,9 @@ def get_console(*, stderr: bool = False, width: int = 120) -> Console:
 
 
 def render_to_string(renderable: Any, *, width: int = 120) -> str:
-    """Render a rich object to a plain string via :class:`~io.StringIO`."""
+    """Render a rich object to a string with ANSI colour codes preserved."""
     buf = StringIO()
-    console = Console(file=buf, width=width, no_color=False)
+    console = Console(file=buf, width=width, force_terminal=True)
     console.print(renderable)
     return buf.getvalue()
 
