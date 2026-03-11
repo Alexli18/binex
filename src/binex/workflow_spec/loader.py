@@ -90,6 +90,37 @@ def _interpolate(obj: Any, user_vars: dict[str, str]) -> Any:
     return obj
 
 
+def _resolve_file_prompts(data: dict[str, Any], base_dir: Path | None = None) -> None:
+    """Resolve file:// prefixed system_prompt values by reading file content."""
+    nodes = data.get("nodes")
+    if not isinstance(nodes, dict):
+        return
+
+    for node_name, node_data in nodes.items():
+        if not isinstance(node_data, dict):
+            continue
+        prompt = node_data.get("system_prompt")
+        if not isinstance(prompt, str) or not prompt.startswith("file://"):
+            continue
+
+        file_path_str = prompt[len("file://"):]
+        file_path = Path(file_path_str)
+
+        if not file_path.is_absolute() and base_dir is not None:
+            file_path = base_dir / file_path
+
+        try:
+            node_data["system_prompt"] = file_path.read_text()
+        except FileNotFoundError:
+            raise ValueError(
+                f"Node '{node_name}': system_prompt file not found: {file_path}"
+            )
+        except OSError as exc:
+            raise ValueError(
+                f"Node '{node_name}': cannot read system_prompt file {file_path}: {exc}"
+            ) from exc
+
+
 def _parse_raw(content: str, fmt: str) -> dict[str, Any]:
     """Parse raw YAML or JSON string into a dict."""
     if fmt == "json":
