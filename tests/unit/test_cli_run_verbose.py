@@ -58,7 +58,7 @@ class TestVerboseShowsTip:
 
         from binex.models.execution import RunSummary
 
-        async def _mock_run(spec, verbose=False):
+        async def _mock_run(spec, verbose=False, **kwargs):
             summary = RunSummary(
                 run_id="run_fail_123",
                 workflow_name="test-verbose",

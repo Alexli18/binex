@@ -1,0 +1,82 @@
+Test ID,Category,Description,Priority,Status,Result,Bug ID,Notes
+TC-DIAG-001,Diagnosis,classify_error timeout,P1,DONE,PASS,,test_timeout
+TC-DIAG-002,Diagnosis,classify_error rate_limit,P1,DONE,PASS,,test_rate_limit
+TC-DIAG-003,Diagnosis,classify_error auth,P1,DONE,PASS,,test_auth
+TC-DIAG-004,Diagnosis,classify_error budget,P1,DONE,PASS,,test_budget
+TC-DIAG-005,Diagnosis,classify_error connection,P1,DONE,PASS,,test_connection
+TC-DIAG-006,Diagnosis,classify_error unknown,P1,DONE,PASS,,test_unknown
+TC-DIAG-007,Diagnosis,classify_error case-insensitive,P2,DONE,PASS,,test_case_insensitive
+TC-DIAG-008,Diagnosis,find_root_cause no failures,P1,DONE,PASS,,test_no_failed_records
+TC-DIAG-009,Diagnosis,find_root_cause first failed in DAG,P1,DONE,PASS,,test_returns_first_failed_in_dag_order
+TC-DIAG-010,Diagnosis,find_root_cause fallback,P2,DONE,PASS,,test_fallback_when_not_in_dag_order
+TC-DIAG-011,Diagnosis,detect_cascade without DAG,P1,DONE,PASS,,test_without_dag_collects_failed
+TC-DIAG-012,Diagnosis,detect_cascade with DAG BFS,P2,DONE,PASS,,test_with_dag_bfs_walk
+TC-DIAG-013,Diagnosis,detect_latency_anomalies < 2 records,P1,DONE,PASS,,test_fewer_than_two_records
+TC-DIAG-014,Diagnosis,detect_latency_anomalies > 3x median,P1,DONE,PASS,,test_flags_nodes_above_3x_median
+TC-DIAG-015,Diagnosis,detect_latency_anomalies skip 0 latency,P2,DONE,PASS,,test_skips_zero_latency
+TC-DIAG-016,Diagnosis,recommendations with root_cause,P1,DONE,PASS,,test_with_root_cause
+TC-DIAG-017,Diagnosis,recommendations with anomalies,P1,DONE,PASS,,test_with_anomalies
+TC-DIAG-018,Diagnosis,recommendations empty,P2,DONE,PASS,,test_none_root_cause_no_anomalies
+TC-DIAG-019,Diagnosis,diagnose_run clean,P1,DONE,PASS,,test_clean_run
+TC-DIAG-020,Diagnosis,diagnose_run issues_found,P1,DONE,PASS,,test_failed_run
+TC-DIAG-021,Diagnosis,report_to_dict full,P1,DONE,PASS,,test_serializes_all_fields
+TC-DIAG-022,Diagnosis,report_to_dict null root_cause,P2,DONE,PASS,,test_none_root_cause
+TC-DIAG-023,Diagnosis,CLI diagnose --json,P1,DONE,PASS,,test_diag_023_diagnose_json_output
+TC-DIAG-024,Diagnosis,CLI diagnose plain text,P1,DONE,PASS,,test_diag_024_diagnose_plain_text
+TC-DIAG-025,Diagnosis,CLI diagnose missing run,P1,DONE,PASS,,test_diag_025_diagnose_nonexistent_run
+TC-DIAG-026,Diagnosis,CLI diagnose --no-rich,P2,DONE,PASS,,test_diag_026_diagnose_no_rich
+TC-BSCT-001,Bisection,find_divergence identical,P1,DONE,PASS,,test_identical_runs_return_none
+TC-BSCT-002,Bisection,find_divergence status divergence,P1,DONE,PASS,,test_status_divergence_detected
+TC-BSCT-003,Bisection,find_divergence content divergence,P1,DONE,PASS,,test_content_divergence_below_threshold
+TC-BSCT-004,Bisection,find_divergence missing run,P1,DONE,PASS,,test_raises_for_missing_good_run
+TC-BSCT-005,Bisection,find_divergence mismatched workflows,P1,DONE,PASS,,test_raises_for_mismatched_workflows
+TC-BSCT-006,Bisection,find_divergence custom threshold,P2,DONE,PASS,,test_custom_threshold_half
+TC-BSCT-007,Bisection,find_divergence upstream_context,P2,DONE,PASS,,test_upstream_context_included
+TC-BSCT-008,Bisection,divergence_to_dict None,P1,DONE,PASS,,test_divergence_to_dict_none
+TC-BSCT-009,Bisection,divergence_to_dict with data,P1,DONE,PASS,,test_divergence_to_dict_with_point
+TC-BSCT-010,Bisection,CLI bisect --json,P1,DONE,PASS,,test_bsct_010_bisect_json_output
+TC-BSCT-011,Bisection,CLI bisect plain text,P1,DONE,PASS,,test_bsct_011_bisect_plain_text
+TC-BSCT-012,Bisection,CLI bisect --threshold,P2,DONE,PASS,,test_bsct_013_bisect_custom_threshold
+TC-BSCT-013,Bisection,CLI bisect missing run,P1,DONE,PASS,,test_bsct_012_bisect_nonexistent_run
+TC-BSCT-014,Bisection,CLI bisect no divergence,P2,DONE,PASS,,test_bsct_014_bisect_no_divergence
+TC-BSCT-015,Bisection,CLI bisect --no-rich,P2,DONE,PASS,,test_bsct_015_bisect_no_rich
+TC-SCHM-001,Schema,validate_output valid dict,P1,DONE,PASS,,test_valid_dict_matching_schema
+TC-SCHM-002,Schema,validate_output valid JSON string,P1,DONE,PASS,,test_valid_json_string
+TC-SCHM-003,Schema,validate_output invalid dict,P1,DONE,PASS,,test_dict_missing_required_field
+TC-SCHM-004,Schema,validate_output None,P1,DONE,PASS,,test_none_output
+TC-SCHM-005,Schema,validate_output non-JSON string,P1,DONE,PASS,,test_non_json_string
+TC-SCHM-006,Schema,validate_output nested schema,P2,DONE,PASS,,test_nested_schema_valid
+TC-SCHM-007,Schema,dispatch schema validates success,P1,DONE,PASS,,test_dispatch_with_valid_schema
+TC-SCHM-008,Schema,dispatch schema retry on failure,P1,DONE,PASS,,test_dispatch_retries_on_schema_failure
+TC-SCHM-009,Schema,dispatch SchemaValidationError,P1,DONE,PASS,,test_dispatch_raises_after_max_retries
+TC-SCHM-010,Schema,dispatch feedback artifact on retry,P2,DONE,PASS,,test_dispatch_adds_feedback_artifact
+TC-SCHM-011,Schema,dispatch no schema skips validation,P1,DONE,PASS,,test_dispatch_without_schema
+TC-SCHM-012,Schema,workflow validator valid schema,P1,DONE,PASS,,test_valid_output_schema_accepted
+TC-SCHM-013,Schema,workflow validator non-dict schema,P1,DONE,PASS,,test_non_dict_output_schema_rejected
+TC-SCHM-014,Schema,workflow validator invalid JSON Schema,P1,DONE,PASS,,test_invalid_json_schema_rejected
+TC-SCHM-015,Schema,workflow validator None schema,P2,DONE,PASS,,test_none_output_schema_accepted
+TC-STRM-001,Streaming,execute stream=True calls streaming,P1,DONE,PASS,,test_strm_001
+TC-STRM-002,Streaming,execute stream=True fallback,P1,DONE,PASS,,test_strm_002
+TC-STRM-003,Streaming,execute stream+tools non-streaming,P1,DONE,PASS,,test_strm_003
+TC-STRM-004,Streaming,stream_callback receives tokens,P2,DONE,PASS,,test_strm_004
+TC-STRM-005,Streaming,dispatcher forwards stream to LLM,P1,DONE,PASS,,test_strm_005
+TC-STRM-006,Streaming,dispatcher non-LLM ignores stream,P1,DONE,PASS,,test_strm_006
+TC-STRM-007,Streaming,orchestrator passes stream params,P1,DONE,PASS,,test_strm_007
+TC-STRM-008,Streaming,CLI run --stream,P1,DONE,PASS,,test_strm_008
+TC-STRM-009,Streaming,CLI run --no-stream,P1,DONE,PASS,,test_strm_009
+TC-STRM-010,Streaming,CLI run TTY auto-detect,P2,DONE,PASS,,test_strm_010
+TC-DIFF-001,Diff,similarity identical strings,P1,DONE,PASS,,test_diff_001
+TC-DIFF-002,Diff,similarity None/None,P1,DONE,PASS,,test_diff_002
+TC-DIFF-003,Diff,similarity one None,P1,DONE,PASS,,test_diff_003
+TC-DIFF-004,Diff,similarity different strings,P1,DONE,PASS,,test_diff_004
+TC-DIFF-005,Diff,summary changed/unchanged count,P1,DONE,PASS,,test_diff_005
+TC-DIFF-006,Diff,summary latency_delta,P2,DONE,PASS,,test_diff_006
+TC-DIFF-007,Diff,summary avg similarity,P2,DONE,PASS,,test_diff_007
+TC-DIFF-008,Diff,diff_runs summary metrics,P1,DONE,PASS,,test_diff_008
+TC-DIFF-009,Diff,diff_runs content per step,P1,DONE,PASS,,test_diff_009
+TC-DIFF-010,Diff,diff_runs missing run error,P1,DONE,PASS,,test_diff_010
+TC-DASH-001,Dashboard,explore menu options,P1,DONE,PASS,,test_dash_001
+TC-DASH-002,Dashboard,_pick_other_run lists runs,P2,DONE,PASS,,test_dash_002
+TC-DASH-003,Dashboard,diagnose registered in CLI,P1,DONE,PASS,,test_dash_003
+TC-DASH-004,Dashboard,bisect registered in CLI,P1,DONE,PASS,,test_dash_004
+TC-DASH-005,Dashboard,COMMAND_SECTIONS includes new cmds,P2,DONE,PASS,,test_dash_005

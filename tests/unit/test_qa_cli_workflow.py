@@ -380,7 +380,7 @@ class TestSEC005A2AEndpointValidation:
 
         from binex.models.execution import RunSummary
 
-        async def _mock_run(spec, verbose=False):
+        async def _mock_run(spec, verbose=False, **kwargs):
             summary = RunSummary(
                 run_id="run_sec_005",
                 workflow_name="a2a-internal",

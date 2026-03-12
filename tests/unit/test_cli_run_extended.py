@@ -106,7 +106,7 @@ class TestRunJsonOutput:
             lineage=Lineage(produced_by="step1", derived_from=[]),
         )
 
-        async def _mock_run(spec, verbose=False):
+        async def _mock_run(spec, verbose=False, **kwargs):
             summary = RunSummary(
                 run_id="run_v", workflow_name="simple",
                 status="completed", total_nodes=1,
@@ -139,7 +139,7 @@ class TestRunFailedOutput:
 
         from binex.models.execution import RunSummary
 
-        async def _mock_run(spec, verbose=False):
+        async def _mock_run(spec, verbose=False, **kwargs):
             summary = RunSummary(
                 run_id="run_fail_001",
                 workflow_name="simple",
@@ -167,7 +167,7 @@ class TestRunFailedOutput:
 
         from binex.models.execution import RunSummary
 
-        async def _mock_run(spec, verbose=False):
+        async def _mock_run(spec, verbose=False, **kwargs):
             summary = RunSummary(
                 run_id="run_fail_002",
                 workflow_name="simple",
