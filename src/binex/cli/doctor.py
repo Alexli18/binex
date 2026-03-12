@@ -100,6 +100,59 @@ def _normalize_status(status: str) -> str:
     return status.replace(" ", "_")
 
 
+def _doctor_rich_output(checks: list[dict]) -> None:
+    """Render doctor checks using Rich panels and tables."""
+    from rich.console import Group
+    from rich.text import Text
+
+    from binex.cli.ui import get_console, make_panel, make_table, status_text
+
+    table = make_table(
+        ("Check", {"style": "bold", "min_width": 18}),
+        ("Detail", {"min_width": 12}),
+        ("Status", {"min_width": 10}),
+    )
+    for check in checks:
+        table.add_row(
+            check["name"],
+            check["detail"],
+            status_text(_normalize_status(check["status"])),
+        )
+
+    healthy = sum(1 for c in checks if c["status"] == "ok")
+    issues = len(checks) - healthy
+
+    footer = Text("  ")
+    footer.append(f"{healthy} healthy", style="green")
+    if issues:
+        footer.append("  ·  ", style="dim")
+        footer.append(f"{issues} issues", style="yellow")
+
+    panel = make_panel(
+        Group(table, Text(), footer),
+        title="System Health",
+    )
+    get_console().print(panel)
+
+
+def _doctor_plain_output(checks: list[dict], has_errors: bool) -> None:
+    """Render doctor checks as plain text."""
+    from binex.cli.ui import plain_status_icon
+
+    click.echo("Binex System Health Check\n")
+    for check in checks:
+        icon = plain_status_icon(_normalize_status(check["status"]))
+        click.echo(
+            f"  {icon} {check['name']}: {check['status']}"
+            f" — {check['detail']}"
+        )
+    click.echo()
+    if has_errors:
+        click.echo("Some checks failed. Run 'binex dev' to start services.")
+    else:
+        click.echo("All checks passed.")
+
+
 @click.command("doctor", epilog="""\b
 Examples:
   binex doctor            Check all components
@@ -120,57 +173,9 @@ def doctor_cmd(json_out: bool) -> None:
         from binex.cli import has_rich as _has_rich
 
         if _has_rich():
-            from rich.console import Group
-            from rich.text import Text
-
-            from binex.cli.ui import (
-                get_console,
-                make_panel,
-                make_table,
-                status_text,
-            )
-
-            table = make_table(
-                ("Check", {"style": "bold", "min_width": 18}),
-                ("Detail", {"min_width": 12}),
-                ("Status", {"min_width": 10}),
-            )
-            for check in checks:
-                table.add_row(
-                    check["name"],
-                    check["detail"],
-                    status_text(_normalize_status(check["status"])),
-                )
-
-            healthy = sum(1 for c in checks if c["status"] == "ok")
-            issues = len(checks) - healthy
-
-            footer = Text("  ")
-            footer.append(f"{healthy} healthy", style="green")
-            if issues:
-                footer.append("  ·  ", style="dim")
-                footer.append(f"{issues} issues", style="yellow")
-
-            panel = make_panel(
-                Group(table, Text(), footer),
-                title="System Health",
-            )
-            get_console().print(panel)
+            _doctor_rich_output(checks)
         else:
-            from binex.cli.ui import plain_status_icon
-
-            click.echo("Binex System Health Check\n")
-            for check in checks:
-                icon = plain_status_icon(_normalize_status(check["status"]))
-                click.echo(
-                    f"  {icon} {check['name']}: {check['status']}"
-                    f" — {check['detail']}"
-                )
-            click.echo()
-            if has_errors:
-                click.echo("Some checks failed. Run 'binex dev' to start services.")
-            else:
-                click.echo("All checks passed.")
+            _doctor_plain_output(checks, has_errors)
 
         if has_errors:
             sys.exit(1)

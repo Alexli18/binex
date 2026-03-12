@@ -61,6 +61,71 @@ def _wait_for_health(url: str, label: str, timeout: int = 60) -> bool:
     return False
 
 
+_DEV_SERVICES = [
+    ("http://localhost:11434/api/tags", "Ollama"),
+    ("http://localhost:4000/health", "LiteLLM Proxy"),
+    ("http://localhost:8000/health", "Registry"),
+    ("http://localhost:8001/health", "Planner Agent"),
+    ("http://localhost:8002/health", "Researcher Agent"),
+    ("http://localhost:8003/health", "Validator Agent"),
+    ("http://localhost:8004/health", "Summarizer Agent"),
+]
+
+
+def _dev_detached(compose_file: Path, up_args: list[str]) -> None:
+    """Run docker compose in detached mode with health checks."""
+    result = _run_compose(compose_file, *up_args)
+    if result.returncode != 0:
+        click.echo(f"Error starting services:\n{result.stderr}")
+        sys.exit(1)
+
+    click.echo("\nWaiting for services to be healthy...")
+
+    all_healthy = True
+    for url, label in _DEV_SERVICES:
+        if not _wait_for_health(url, label, timeout=120):
+            all_healthy = False
+
+    _print_dev_status(all_healthy)
+
+
+def _print_dev_status(all_healthy: bool) -> None:
+    """Print final dev environment status message."""
+    from binex.cli import has_rich
+
+    if has_rich():
+        from binex.cli.ui import get_console, make_panel
+
+        console = get_console()
+        if all_healthy:
+            console.print(make_panel(
+                "[green]All services are running.[/green]\n"
+                "Use 'binex doctor' to verify.",
+                title="Dev Environment Ready",
+            ))
+        else:
+            console.print(make_panel(
+                "[yellow]Some services failed to start.[/yellow]\n"
+                "Run 'binex doctor' for details.",
+                title="Dev Environment",
+            ))
+    else:
+        if all_healthy:
+            click.echo("\n✓ All services are running. Use 'binex doctor' to verify.")
+        else:
+            click.echo("\n! Some services failed to start. Run 'binex doctor' for details.")
+
+
+def _dev_foreground(compose_file: Path, up_args: list[str]) -> None:
+    """Run docker compose in foreground mode."""
+    cmd = ["docker", "compose", "-f", str(compose_file), *up_args]
+    try:
+        subprocess.run(cmd, check=False)
+    except KeyboardInterrupt:
+        click.echo("\nStopping services...")
+        _run_compose(compose_file, "down")
+
+
 @click.command("dev")
 @click.option("--detach", is_flag=True, help="Run in background")
 def dev_cmd(detach: bool) -> None:
@@ -74,63 +139,12 @@ def dev_cmd(detach: bool) -> None:
     click.echo("Starting Binex local development environment...")
     click.echo(f"Using compose file: {compose_file}")
 
-    # Start services
     up_args = ["up"]
     if detach:
         up_args.append("-d")
     up_args.extend(["--build", "--remove-orphans"])
 
     if detach:
-        result = _run_compose(compose_file, *up_args)
-        if result.returncode != 0:
-            click.echo(f"Error starting services:\n{result.stderr}")
-            sys.exit(1)
-
-        click.echo("\nWaiting for services to be healthy...")
-
-        services = [
-            ("http://localhost:11434/api/tags", "Ollama"),
-            ("http://localhost:4000/health", "LiteLLM Proxy"),
-            ("http://localhost:8000/health", "Registry"),
-            ("http://localhost:8001/health", "Planner Agent"),
-            ("http://localhost:8002/health", "Researcher Agent"),
-            ("http://localhost:8003/health", "Validator Agent"),
-            ("http://localhost:8004/health", "Summarizer Agent"),
-        ]
-
-        all_healthy = True
-        for url, label in services:
-            if not _wait_for_health(url, label, timeout=120):
-                all_healthy = False
-
-        from binex.cli import has_rich
-
-        if has_rich():
-            from binex.cli.ui import get_console, make_panel
-
-            console = get_console()
-            if all_healthy:
-                console.print(make_panel(
-                    "[green]All services are running.[/green]\n"
-                    "Use 'binex doctor' to verify.",
-                    title="Dev Environment Ready",
-                ))
-            else:
-                console.print(make_panel(
-                    "[yellow]Some services failed to start.[/yellow]\n"
-                    "Run 'binex doctor' for details.",
-                    title="Dev Environment",
-                ))
-        else:
-            if all_healthy:
-                click.echo("\n✓ All services are running. Use 'binex doctor' to verify.")
-            else:
-                click.echo("\n! Some services failed to start. Run 'binex doctor' for details.")
+        _dev_detached(compose_file, up_args)
     else:
-        # Foreground mode — exec into docker compose up
-        cmd = ["docker", "compose", "-f", str(compose_file), *up_args]
-        try:
-            subprocess.run(cmd, check=False)
-        except KeyboardInterrupt:
-            click.echo("\nStopping services...")
-            _run_compose(compose_file, "down")
+        _dev_foreground(compose_file, up_args)
