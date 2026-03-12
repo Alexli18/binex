@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime
 
 import aiosqlite
@@ -10,6 +11,8 @@ import aiosqlite
 from binex.models.cost import CostRecord, RunCostSummary
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
+
+logger = logging.getLogger(__name__)
 
 
 class SqliteExecutionStore:
@@ -79,14 +82,14 @@ class SqliteExecutionStore:
         try:
             await self._db.execute("ALTER TABLE runs ADD COLUMN total_cost REAL DEFAULT 0.0")
             await self._db.commit()
-        except Exception:
-            pass  # Column already exists
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
         # Migration: add workflow_path column to existing runs table
         try:
             await self._db.execute("ALTER TABLE runs ADD COLUMN workflow_path TEXT")
             await self._db.commit()
-        except Exception:
-            pass  # Column already exists
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
         await self._db.commit()
         self._initialized = True
 
