@@ -152,6 +152,45 @@ def _class_name(name: str) -> str:
 # scaffold workflow (T022-T024)
 # ---------------------------------------------------------------------------
 
+def _list_patterns() -> None:
+    """Show available DSL patterns and exit."""
+    from binex.cli import has_rich
+
+    if has_rich():
+        from binex.cli.ui import get_console, make_table
+
+        table = make_table(
+            ("Pattern", {"style": "bold", "min_width": 24}),
+            ("DSL", {}),
+        )
+        for pname, pdsl in PATTERNS.items():
+            table.add_row(pname, pdsl)
+        get_console().print(table)
+    else:
+        click.echo(f"{'Pattern':<28} DSL")
+        click.echo("-" * 60)
+        for pname, pdsl in PATTERNS.items():
+            click.echo(f"{pname:<28} {pdsl}")
+
+
+def _resolve_dsl_source(
+    pattern_name: str | None, dsl: tuple[str, ...]
+) -> list[str]:
+    """Return DSL strings from --pattern or positional args, or exit on error."""
+    if pattern_name:
+        if pattern_name not in PATTERNS:
+            click.echo(
+                f"Error: unknown pattern '{pattern_name}'. "
+                "Use --list-patterns to see available patterns."
+            )
+            sys.exit(1)
+        return [PATTERNS[pattern_name]]
+    if dsl:
+        return list(dsl)
+    click.echo("Error: provide a DSL string or --pattern.")
+    sys.exit(1)
+
+
 @scaffold_group.command("workflow")
 @click.argument("dsl", nargs=-1)
 @click.option("--name", default="pipeline.yaml", help="Output filename")
@@ -171,39 +210,11 @@ def scaffold_workflow(
 
     # --list-patterns: show table and exit
     if list_patterns:
-        from binex.cli import has_rich
-
-        if has_rich():
-            from binex.cli.ui import get_console, make_table
-
-            table = make_table(
-                ("Pattern", {"style": "bold", "min_width": 24}),
-                ("DSL", {}),
-            )
-            for pname, pdsl in PATTERNS.items():
-                table.add_row(pname, pdsl)
-            get_console().print(table)
-        else:
-            click.echo(f"{'Pattern':<28} DSL")
-            click.echo("-" * 60)
-            for pname, pdsl in PATTERNS.items():
-                click.echo(f"{pname:<28} {pdsl}")
+        _list_patterns()
         return
 
     # Resolve DSL source
-    if pattern_name:
-        if pattern_name not in PATTERNS:
-            click.echo(
-                f"Error: unknown pattern '{pattern_name}'. "
-                "Use --list-patterns to see available patterns."
-            )
-            sys.exit(1)
-        dsl_strings = [PATTERNS[pattern_name]]
-    elif dsl:
-        dsl_strings = list(dsl)
-    else:
-        click.echo("Error: provide a DSL string or --pattern.")
-        sys.exit(1)
+    dsl_strings = _resolve_dsl_source(pattern_name, dsl)
 
     # Parse
     try:
@@ -262,6 +273,91 @@ def _detect_human_type(node_name: str) -> str:
     return "approve"
 
 
+def _configure_human_node(node_name: str) -> dict | None:
+    """Try to configure a human node interactively. Return config or None."""
+    if not _is_human_node(node_name):
+        return None
+
+    htype = _detect_human_type(node_name)
+    default_system_prompt = (
+        "Provide your input" if htype == "input"
+        else "Review and approve"
+    )
+    use_human = click.prompt(
+        f"Detected human node. Use human://{htype}?",
+        type=click.Choice(["y", "n"]),
+        default="y",
+    )
+    if use_human != "y":
+        return None
+
+    system_prompt = click.prompt(
+        "System prompt",
+        default=default_system_prompt,
+    )
+    return {
+        "agent": f"human://{htype}",
+        "system_prompt": system_prompt,
+    }
+
+
+def _configure_llm_node(
+    provider_list: list,
+    prev_provider: object | None,
+    prev_model: str | None,
+) -> dict:
+    """Prompt user for provider/model/system_prompt for an LLM node.
+
+    Returns dict with keys: config, provider, model.
+    """
+    click.echo("Providers:")
+    for i, p in enumerate(provider_list, 1):
+        click.echo(f"  {i}. {p.name} ({p.default_model})")
+
+    hint = ""
+    if prev_provider is not None:
+        hint = f" [Enter = same as previous: {prev_provider.name}]"
+
+    raw = click.prompt(
+        f"Choose provider (1-{len(provider_list)}){hint}",
+        default="",
+        show_default=False,
+    )
+    if raw == "" and prev_provider is not None:
+        prov = prev_provider
+    else:
+        try:
+            idx = int(raw) - 1
+            prov = provider_list[idx]
+        except (ValueError, IndexError):
+            click.echo("Invalid choice, using first provider.")
+            prov = provider_list[0]
+
+    # Reset model default when provider changes
+    if prev_provider is not None and prov.name == prev_provider.name:
+        default_model = prev_model or prov.default_model
+    else:
+        default_model = prov.default_model
+
+    model = click.prompt("Model", default=default_model)
+    system_prompt = click.prompt("System prompt", default="Process input")
+
+    # Strip litellm provider prefix from model if agent_prefix
+    # already contains it (avoid llm://gemini/gemini/model)
+    prefix_provider = prov.agent_prefix.replace("llm://", "").rstrip("/")
+    if prefix_provider and model.startswith(f"{prefix_provider}/"):
+        model_stripped = model[len(prefix_provider) + 1:]
+        agent_uri = f"{prov.agent_prefix}{model_stripped}"
+    else:
+        agent_uri = f"{prov.agent_prefix}{model}"
+
+    return {
+        "config": {"agent": agent_uri, "system_prompt": system_prompt},
+        "provider": prov,
+        "model": model,
+    }
+
+
 def _interactive_node_config(parsed: ParsedDSL) -> dict[str, dict]:
     """Prompt user for provider/model/system_prompt per node."""
     provider_list = list(PROVIDERS.values())
@@ -273,72 +369,15 @@ def _interactive_node_config(parsed: ParsedDSL) -> dict[str, dict]:
         click.echo(f"\n--- Node: {node_name} ---")
 
         # Auto-detect human nodes
-        if _is_human_node(node_name):
-            htype = _detect_human_type(node_name)
-            default_system_prompt = (
-                "Provide your input" if htype == "input"
-                else "Review and approve"
-            )
-            use_human = click.prompt(
-                f"Detected human node. Use human://{htype}?",
-                type=click.Choice(["y", "n"]),
-                default="y",
-            )
-            if use_human == "y":
-                system_prompt = click.prompt(
-                    "System prompt",
-                    default=default_system_prompt,
-                )
-                configs[node_name] = {
-                    "agent": f"human://{htype}",
-                    "system_prompt": system_prompt,
-                }
-                continue
+        human_cfg = _configure_human_node(node_name)
+        if human_cfg is not None:
+            configs[node_name] = human_cfg
+            continue
 
-        click.echo("Providers:")
-        for i, p in enumerate(provider_list, 1):
-            click.echo(f"  {i}. {p.name} ({p.default_model})")
-
-        hint = ""
-        if prev_provider is not None:
-            hint = f" [Enter = same as previous: {prev_provider.name}]"
-
-        raw = click.prompt(
-            f"Choose provider (1-{len(provider_list)}){hint}",
-            default="",
-            show_default=False,
-        )
-        if raw == "" and prev_provider is not None:
-            prov = prev_provider
-        else:
-            try:
-                idx = int(raw) - 1
-                prov = provider_list[idx]
-            except (ValueError, IndexError):
-                click.echo("Invalid choice, using first provider.")
-                prov = provider_list[0]
-
-        # Reset model default when provider changes
-        if prev_provider is not None and prov.name == prev_provider.name:
-            default_model = prev_model or prov.default_model
-        else:
-            default_model = prov.default_model
-
-        model = click.prompt("Model", default=default_model)
-        system_prompt = click.prompt("System prompt", default="Process input")
-
-        # Strip litellm provider prefix from model if agent_prefix
-        # already contains it (avoid llm://gemini/gemini/model)
-        prefix_provider = prov.agent_prefix.replace("llm://", "").rstrip("/")
-        if prefix_provider and model.startswith(f"{prefix_provider}/"):
-            model_stripped = model[len(prefix_provider) + 1:]
-            agent_uri = f"{prov.agent_prefix}{model_stripped}"
-        else:
-            agent_uri = f"{prov.agent_prefix}{model}"
-
-        configs[node_name] = {"agent": agent_uri, "system_prompt": system_prompt}
-        prev_provider = prov
-        prev_model = model
+        result = _configure_llm_node(provider_list, prev_provider, prev_model)
+        configs[node_name] = result["config"]
+        prev_provider = result["provider"]
+        prev_model = result["model"]
 
     return configs
 
