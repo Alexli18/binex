@@ -205,6 +205,12 @@ Create a full research pipeline from a template in seconds:
   <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-start.gif" alt="binex start" width="800">
 </div>
 
+Or build your own workflow node-by-node with the custom constructor:
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-custom.gif" alt="binex start custom" width="800">
+</div>
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
