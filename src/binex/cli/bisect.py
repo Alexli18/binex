@@ -97,6 +97,10 @@ def _node_word(status: str, bad_status: str | None = None) -> str:
     is_flag=True, help="Output as JSON",
 )
 @click.option(
+    "--diff", "show_diff",
+    is_flag=True, help="Show full unified diffs instead of preview",
+)
+@click.option(
     "--rich/--no-rich", "rich_out",
     default=None, help="Rich output (auto-detected)",
 )
@@ -105,6 +109,7 @@ def bisect_cmd(
     bad_run_id: str,
     threshold: float,
     json_out: bool,
+    show_diff: bool,
     rich_out: bool | None,
 ) -> None:
     """Find the first node where two runs diverge."""
@@ -125,9 +130,9 @@ def bisect_cmd(
     if json_out:
         click.echo(json.dumps(result, default=str, indent=2))
     elif rich_out:
-        _print_rich(report)
+        _print_rich(report, show_diff)
     else:
-        _print_plain(report)
+        _print_plain(report, show_diff)
 
 
 async def _run_bisect(
@@ -149,205 +154,308 @@ async def _run_bisect(
 # Plain text output
 # ---------------------------------------------------------------------------
 
-def _print_plain(report) -> None:
-    """Print plain text bisect output."""
-    click.echo(f"Good Run: {report.good_run_id}")
-    click.echo(f"Bad Run:  {report.bad_run_id}")
-    click.echo(f"Workflow: {report.workflow_name}")
-
-    # Summary
-    match_count = sum(
-        1 for nc in report.node_map if nc.status == "match"
-    )
-    diff_count = len(report.node_map) - match_count
+def _print_plain(report, show_diff: bool = False) -> None:
+    """Print intuitive plain text bisect output."""
+    # Header
+    click.echo(f"Bisect: {report.workflow_name}")
     click.echo(
-        f"Nodes: {match_count} match, {diff_count} differ"
+        f"good {report.good_run_id}  vs  bad {report.bad_run_id}"
     )
+    click.echo()
 
     dp = report.divergence_point
+    downstream_set = set(report.downstream_impact)
+
+    # Verdict
     if dp is None:
-        click.echo("\nNo divergence found — runs are identical.")
-        return
-
-    # Divergence point
-    click.echo(f"\nDivergence at: {dp.node_id}")
-    click.echo(f"  Type: {dp.divergence_type}")
-    if dp.similarity is not None:
-        click.echo(f"  Similarity: {dp.similarity:.1%}")
-    click.echo(f"  Good status: {dp.good_status}")
-    click.echo(f"  Bad status:  {dp.bad_status}")
-    if dp.upstream_context:
         click.echo(
-            f"  Upstream: {', '.join(dp.upstream_context)}"
+            "\u2713 No differences found "
+            "\u2014 runs are identical."
+        )
+    elif dp.divergence_type == "status":
+        pattern = ""
+        if report.error_context:
+            pattern = f" ({report.error_context.pattern})"
+        click.echo(
+            f"\u2717 Node \"{dp.node_id}\" "
+            f"{dp.bad_status}{pattern}"
+        )
+        if report.downstream_impact:
+            n = len(report.downstream_impact)
+            word = "node" if n == 1 else "nodes"
+            click.echo(
+                f"  Caused {n} downstream {word} to cancel."
+            )
+    else:
+        desc = _describe_change(dp.similarity)
+        click.echo(f"\u26a0 Node \"{dp.node_id}\" output {desc}")
+
+    click.echo()
+
+    # Pipeline
+    click.echo("Pipeline")
+    total = len(report.node_map)
+    for i, nc in enumerate(report.node_map):
+        is_last = i == total - 1
+        connector = "\u2514\u2500\u2500" if is_last else "\u251c\u2500\u2500"
+        cont = "   " if is_last else "\u2502  "
+
+        icon = _node_icon(nc.status)
+        word = _node_word(nc.status, nc.bad_status)
+        lat_g = _format_latency(nc.latency_good_ms)
+        lat_b = _format_latency(nc.latency_bad_ms)
+
+        marker = ""
+        if dp and nc.node_id == dp.node_id:
+            marker = "  \u2190 root cause"
+        elif nc.node_id in downstream_set:
+            marker = "  \u2190 affected"
+
+        click.echo(
+            f"{connector} {nc.node_id:<12} "
+            f"{icon} {word:<10} "
+            f"{lat_g} \u2192 {lat_b}"
+            f"{marker}"
         )
 
-    # Error context
-    if report.error_context:
-        ec = report.error_context
-        click.echo(f"\nError: {ec.error_message}")
-        click.echo(f"  Pattern: {ec.pattern}")
+        # Nested details
+        _print_node_details_plain(nc, report, cont, show_diff)
 
-    # Per-node content diffs
-    for nc in report.node_map:
-        if nc.content_diff:
-            click.echo(f"\nContent Diff [{nc.node_id}]:")
+    # Footer
+    click.echo()
+    _print_footer_plain(report)
+
+
+def _print_node_details_plain(
+    nc, report, cont: str, show_diff: bool,
+) -> None:
+    """Print nested details under a pipeline node (plain)."""
+    # Error message for failed nodes
+    if (
+        report.error_context
+        and report.error_context.node_id == nc.node_id
+    ):
+        click.echo(
+            f"{cont}\u2514\u2500\u2500 "
+            f"{report.error_context.error_message}"
+        )
+
+    # Content diff or preview for changed nodes
+    if nc.content_diff and nc.status == "content_diff":
+        if show_diff:
             for line in nc.content_diff:
-                click.echo(f"  {line}")
+                click.echo(f"{cont}{line}")
+        else:
+            good_lines, bad_lines = _extract_preview(
+                nc.content_diff,
+            )
+            if good_lines:
+                preview = _content_preview(
+                    "\n".join(good_lines), 100,
+                )
+                click.echo(
+                    f"{cont}\u251c\u2500\u2500 "
+                    f"good: \"{preview}\""
+                )
+            if bad_lines:
+                preview = _content_preview(
+                    "\n".join(bad_lines), 100,
+                )
+                click.echo(
+                    f"{cont}\u2514\u2500\u2500 "
+                    f"bad:  \"{preview}\""
+                )
 
-    # Downstream impact
-    if report.downstream_impact:
-        click.echo(
-            f"\nDownstream Impact: "
-            f"{', '.join(report.downstream_impact)} "
-            f"({len(report.downstream_impact)} nodes)"
-        )
 
-    # Node map
-    click.echo("\nNode Map:")
+def _extract_preview(
+    diff_lines: list[str],
+) -> tuple[list[str], list[str]]:
+    """Extract removed/added lines from unified diff."""
+    good: list[str] = []
+    bad: list[str] = []
+    for line in diff_lines:
+        if line.startswith("-") and not line.startswith("---"):
+            good.append(line[1:])
+        elif line.startswith("+") and not line.startswith("+++"):
+            bad.append(line[1:])
+    return good, bad
+
+
+def _print_footer_plain(report) -> None:
+    """Print summary footer line."""
+    counts: dict[str, int] = {}
     for nc in report.node_map:
-        icon = "+" if nc.status == "match" else "!"
-        lat_good = (
-            f"{nc.latency_good_ms}ms" if nc.latency_good_ms else "-"
-        )
-        lat_bad = (
-            f"{nc.latency_bad_ms}ms" if nc.latency_bad_ms else "-"
-        )
-        click.echo(
-            f"  {icon} {nc.node_id:<20} "
-            f"{nc.status:<15} {lat_good} / {lat_bad}"
-        )
+        word = _node_word(nc.status, nc.bad_status)
+        counts[word] = counts.get(word, 0) + 1
+    parts = [f"{v} {k}" for k, v in counts.items()]
+    click.echo(" \u00b7 ".join(parts))
 
 
 # ---------------------------------------------------------------------------
 # Rich output
 # ---------------------------------------------------------------------------
 
-def _print_rich(report) -> None:
+def _print_rich(report, show_diff: bool = False) -> None:
     """Print rich formatted bisect output."""
-    from rich.table import Table
-
     from binex.cli.ui import get_console, make_panel
 
     console = get_console()
 
-    # Summary header
-    match_count = sum(
-        1 for nc in report.node_map if nc.status == "match"
-    )
-    diff_count = len(report.node_map) - match_count
-    console.print(make_panel(
-        f"[bold]Good Run:[/bold] [cyan]{report.good_run_id}[/cyan]\n"
-        f"[bold]Bad Run:[/bold]  [cyan]{report.bad_run_id}[/cyan]\n"
-        f"[bold]Workflow:[/bold] {report.workflow_name}\n"
-        f"[bold]Nodes:[/bold] "
-        f"[green]{match_count} match[/green], "
-        f"[yellow]{diff_count} differ[/yellow]",
-        title="Run Bisect",
-    ))
-
     dp = report.divergence_point
+    downstream_set = set(report.downstream_impact)
+
+    # Header
+    console.print(
+        f"[bold]Bisect:[/bold] {report.workflow_name}"
+    )
+    console.print(
+        f"[cyan]good[/cyan] {report.good_run_id}  vs  "
+        f"[cyan]bad[/cyan] {report.bad_run_id}"
+    )
+    console.print()
+
+    # Verdict panel
     if dp is None:
         console.print(make_panel(
-            "[green]No divergence found — runs are identical.[/green]",
-            title="Result",
+            "[green]\u2713 No differences found "
+            "\u2014 runs are identical.[/green]",
+            title="Verdict",
         ))
-        return
-
-    # Divergence point
-    sim_text = ""
-    if dp.similarity is not None:
-        sim_text = (
-            f"\n[bold]Similarity:[/bold] {dp.similarity:.1%}"
+    elif dp.divergence_type == "status":
+        pattern = ""
+        if report.error_context:
+            pattern = f" ({report.error_context.pattern})"
+        lines = (
+            f"[red bold]\u2717 Node \"{dp.node_id}\" "
+            f"{dp.bad_status}{pattern}[/red bold]"
         )
-    upstream_text = ""
-    if dp.upstream_context:
-        upstream_text = (
-            f"\n[bold]Upstream:[/bold] "
-            f"{', '.join(dp.upstream_context)}"
+        if report.downstream_impact:
+            n = len(report.downstream_impact)
+            word = "node" if n == 1 else "nodes"
+            lines += (
+                f"\n  Caused {n} downstream "
+                f"{word} to cancel."
+            )
+        console.print(make_panel(lines, title="Verdict"))
+    else:
+        desc = _describe_change(dp.similarity)
+        lines = (
+            f"[yellow bold]\u26a0 Node \"{dp.node_id}\" "
+            f"output {desc}[/yellow bold]"
         )
-    style = (
-        "red" if dp.divergence_type == "status" else "yellow"
-    )
-    console.print(make_panel(
-        f"[bold]Node:[/bold] [{style}]{dp.node_id}[/{style}]\n"
-        f"[bold]Type:[/bold] {dp.divergence_type}\n"
-        f"[bold]Good:[/bold] {dp.good_status}\n"
-        f"[bold]Bad:[/bold]  {dp.bad_status}"
-        f"{sim_text}{upstream_text}",
-        title="Divergence Point",
-    ))
+        console.print(make_panel(lines, title="Verdict"))
 
-    # Error context
-    if report.error_context:
-        ec = report.error_context
-        console.print(make_panel(
-            f"[bold]Error:[/bold] {ec.error_message}\n"
-            f"[bold]Pattern:[/bold] {ec.pattern}",
-            title="Error Context",
-        ))
+    console.print()
 
-    # Per-node content diffs
-    for nc in report.node_map:
-        if nc.content_diff:
-            diff_lines = []
-            for line in nc.content_diff:
-                if line.startswith("+") and not line.startswith("+++"):
-                    diff_lines.append(f"[green]{line}[/green]")
-                elif line.startswith("-") and not line.startswith("---"):
-                    diff_lines.append(f"[red]{line}[/red]")
-                elif line.startswith("@@"):
-                    diff_lines.append(f"[cyan]{line}[/cyan]")
-                else:
-                    diff_lines.append(line)
-            console.print(make_panel(
-                "\n".join(diff_lines),
-                title=f"Content Diff — {nc.node_id}",
-            ))
-
-    # Downstream impact
-    if report.downstream_impact:
-        console.print(make_panel(
-            ", ".join(report.downstream_impact),
-            title=(
-                f"Downstream Impact "
-                f"({len(report.downstream_impact)} nodes)"
-            ),
-        ))
-
-    # Node map table
-    table = Table(title="Node Map")
-    table.add_column("Node", style="bold")
-    table.add_column("Status", justify="center")
-    table.add_column("Good", justify="center")
-    table.add_column("Bad", justify="center")
-    table.add_column("Latency Good", justify="right")
-    table.add_column("Latency Bad", justify="right")
-
-    status_styles = {
+    # Pipeline
+    rich_colors = {
         "match": "green",
-        "status_diff": "red",
         "content_diff": "yellow",
-        "missing_in_good": "magenta",
+        "status_diff": "red",
+        "missing_in_good": "cyan",
         "missing_in_bad": "magenta",
     }
 
-    for nc in report.node_map:
-        st_style = status_styles.get(nc.status, "dim")
-        lat_g = (
-            f"{nc.latency_good_ms}ms"
-            if nc.latency_good_ms is not None else "-"
+    console.print("[bold]Pipeline[/bold]")
+    total = len(report.node_map)
+    for i, nc in enumerate(report.node_map):
+        is_last = i == total - 1
+        connector = (
+            "\u2514\u2500\u2500" if is_last
+            else "\u251c\u2500\u2500"
         )
-        lat_b = (
-            f"{nc.latency_bad_ms}ms"
-            if nc.latency_bad_ms is not None else "-"
-        )
-        table.add_row(
-            nc.node_id,
-            f"[{st_style}]{nc.status}[/{st_style}]",
-            nc.good_status or "-",
-            nc.bad_status or "-",
-            lat_g,
-            lat_b,
+        cont = "   " if is_last else "\u2502  "
+
+        icon = _node_icon(nc.status)
+        word = _node_word(nc.status, nc.bad_status)
+        color = rich_colors.get(nc.status, "dim")
+        lat_g = _format_latency(nc.latency_good_ms)
+        lat_b = _format_latency(nc.latency_bad_ms)
+
+        marker = ""
+        if dp and nc.node_id == dp.node_id:
+            marker = (
+                "  [red bold]\u2190 root cause[/red bold]"
+            )
+        elif nc.node_id in downstream_set:
+            marker = "  [dim]\u2190 affected[/dim]"
+
+        console.print(
+            f"{connector} [bold]{nc.node_id:<12}[/bold] "
+            f"[{color}]{icon} {word:<10}[/{color}] "
+            f"{lat_g} \u2192 {lat_b}"
+            f"{marker}"
         )
 
-    console.print(table)
+        # Error nested
+        if (
+            report.error_context
+            and report.error_context.node_id == nc.node_id
+        ):
+            console.print(
+                f"{cont}\u2514\u2500\u2500 "
+                f"[red]{report.error_context.error_message}"
+                f"[/red]"
+            )
+
+        # Content diff/preview
+        if nc.content_diff and nc.status == "content_diff":
+            if show_diff:
+                for line in nc.content_diff:
+                    if (
+                        line.startswith("+")
+                        and not line.startswith("+++")
+                    ):
+                        console.print(
+                            f"{cont}[green]{line}[/green]"
+                        )
+                    elif (
+                        line.startswith("-")
+                        and not line.startswith("---")
+                    ):
+                        console.print(
+                            f"{cont}[red]{line}[/red]"
+                        )
+                    elif line.startswith("@@"):
+                        console.print(
+                            f"{cont}[cyan]{line}[/cyan]"
+                        )
+                    else:
+                        console.print(f"{cont}{line}")
+            else:
+                good_lines, bad_lines = _extract_preview(
+                    nc.content_diff,
+                )
+                if good_lines:
+                    preview = _content_preview(
+                        "\n".join(good_lines), 100,
+                    )
+                    console.print(
+                        f"{cont}\u251c\u2500\u2500 "
+                        f"[green]good: \"{preview}\"[/green]"
+                    )
+                if bad_lines:
+                    preview = _content_preview(
+                        "\n".join(bad_lines), 100,
+                    )
+                    console.print(
+                        f"{cont}\u2514\u2500\u2500 "
+                        f"[red]bad:  \"{preview}\"[/red]"
+                    )
+
+    # Footer
+    console.print()
+    footer_colors = {
+        "ok": "green", "changed": "yellow",
+        "failed": "red", "cancelled": "dim",
+        "new": "cyan", "missing": "magenta",
+    }
+    counts: dict[str, int] = {}
+    for nc in report.node_map:
+        word = _node_word(nc.status, nc.bad_status)
+        counts[word] = counts.get(word, 0) + 1
+    parts = []
+    for k, v in counts.items():
+        c = footer_colors.get(k, "")
+        parts.append(f"[{c}]{v} {k}[/{c}]")
+    console.print(" \u00b7 ".join(parts))

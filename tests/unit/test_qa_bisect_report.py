@@ -389,7 +389,7 @@ class TestCLIBisectReport:
         for nm in data["node_map"]:
             assert "content_diff" in nm
 
-    def test_plain_output_shows_all_sections(self, runner):
+    def test_plain_status_divergence(self, runner):
         import asyncio
 
         es, a_s = asyncio.run(_setup_divergent())
@@ -405,15 +405,19 @@ class TestCLIBisectReport:
             )
         assert result.exit_code == 0
         out = result.output
-        assert "Workflow: wf" in out
-        assert "Divergence at: B" in out
-        assert "Error:" in out
+        # Header
+        assert "wf" in out
+        # Verdict
+        assert "failed" in out
+        assert "timeout" in out
+        # Pipeline markers
+        assert "root cause" in out
+        # Error nested
         assert "timed out" in out
-        assert "Pattern: timeout" in out
-        assert "Downstream Impact:" in out
-        assert "Node Map:" in out
+        # Footer
+        assert "1 ok" in out
 
-    def test_identical_runs_plain(self, runner):
+    def test_plain_identical(self, runner):
         import asyncio
 
         es, a_s = asyncio.run(_setup_identical())
@@ -428,8 +432,66 @@ class TestCLIBisectReport:
                 ["bisect", "good", "bad", "--no-rich"],
             )
         assert result.exit_code == 0
-        assert "No divergence" in result.output
-        assert "2 match" in result.output
+        out = result.output
+        assert "No differences" in out or "identical" in out
+        assert "2 ok" in out
+
+    def test_plain_content_divergence_preview(self, runner):
+        import asyncio
+
+        es, a_s = asyncio.run(_setup_content_diff())
+        with (
+            __import__("unittest.mock", fromlist=["patch"]).patch(
+                "binex.cli.bisect._get_stores",
+                return_value=(es, a_s),
+            )
+        ):
+            result = runner.invoke(
+                cli,
+                ["bisect", "good", "bad", "--no-rich"],
+            )
+        assert result.exit_code == 0
+        out = result.output
+        assert "changed" in out
+        assert "good:" in out
+        assert "bad:" in out
+        assert "SEO" in out
+
+    def test_diff_flag_shows_full_diff(self, runner):
+        import asyncio
+
+        es, a_s = asyncio.run(_setup_content_diff())
+        with (
+            __import__("unittest.mock", fromlist=["patch"]).patch(
+                "binex.cli.bisect._get_stores",
+                return_value=(es, a_s),
+            )
+        ):
+            result = runner.invoke(
+                cli,
+                ["bisect", "good", "bad", "--no-rich", "--diff"],
+            )
+        assert result.exit_code == 0
+        out = result.output
+        assert "---" in out
+        assert "+++" in out
+
+    def test_rich_output_runs(self, runner):
+        import asyncio
+
+        es, a_s = asyncio.run(_setup_divergent())
+        with (
+            __import__("unittest.mock", fromlist=["patch"]).patch(
+                "binex.cli.bisect._get_stores",
+                return_value=(es, a_s),
+            )
+        ):
+            result = runner.invoke(
+                cli,
+                ["bisect", "good", "bad", "--rich"],
+            )
+        assert result.exit_code == 0
+        assert len(result.output) > 0
 
     def test_json_content_diff_present(self, runner):
         import asyncio
