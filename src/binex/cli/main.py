@@ -9,9 +9,11 @@ from dotenv import load_dotenv
 
 from binex.cli import BinexGroup
 from binex.cli.artifacts import artifacts_cmd
+from binex.cli.bisect import bisect_cmd
 from binex.cli.cost import cost_group
 from binex.cli.debug import debug_cmd
 from binex.cli.dev import dev_cmd
+from binex.cli.diagnose import diagnose_cmd
 from binex.cli.diff import diff_cmd
 from binex.cli.doctor import doctor_cmd
 from binex.cli.explore import explore_cmd
@@ -65,6 +67,8 @@ cli.add_command(init_cmd, "init")
 cli.add_command(start_cmd, "start")
 cli.add_command(explore_cmd, "explore")
 cli.add_command(cost_group, "cost")
+cli.add_command(diagnose_cmd, "diagnose")
+cli.add_command(bisect_cmd, "bisect")
 
 
 def main() -> None:
