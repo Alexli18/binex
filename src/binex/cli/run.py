@@ -41,8 +41,10 @@ Examples:
 @click.option("--var", multiple=True, help="Variable substitution key=value")
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
 @click.option("--verbose", "-v", is_flag=True, help="Show artifact contents after each step")
+@click.option("--stream/--no-stream", "stream_out", default=None, help="Stream LLM output tokens")
 def run_cmd(
     workflow_file: str, var: tuple[str, ...], json_out: bool, verbose: bool,
+    stream_out: bool | None,
 ) -> None:
     """Execute a workflow definition."""
     user_vars = _parse_vars(var)
@@ -54,7 +56,7 @@ def run_cmd(
             click.echo(f"Error: {err}", err=True)
         sys.exit(2)
 
-    summary, node_errors, artifacts = asyncio.run(_run(spec, verbose))
+    summary, node_errors, artifacts = asyncio.run(_run(spec, verbose, stream_out=stream_out))
 
     # Identify terminal nodes (no downstream dependents)
     all_deps = {dep for node in spec.nodes.values() for dep in node.depends_on}
@@ -176,12 +178,23 @@ def _print_rich_output(summary, spec, artifacts, terminal_nodes):
         )
 
 
-async def _run(spec, verbose: bool = False):
+async def _run(spec, verbose: bool = False, *, stream_out: bool | None = None):
     execution_store, artifact_store = _get_stores()
+
+    # Determine streaming: explicit flag, or auto-detect from TTY
+    is_tty = sys.stdout.isatty()
+    use_stream = stream_out if stream_out is not None else is_tty
+
+    stream_callback = None
+    if use_stream:
+        def stream_callback(token: str) -> None:
+            click.echo(token, nl=False)
 
     orch = Orchestrator(
         artifact_store=artifact_store,
         execution_store=execution_store,
+        stream=use_stream,
+        stream_callback=stream_callback,
     )
 
     all_artifacts: list[Artifact] = []
@@ -286,6 +299,30 @@ def _install_live_wrapper(orch, live_table, live, all_artifacts):
     orch._execute_node = _live_execute
 
 
+def _verbose_print_header(node_id: str, counter: int, total: int, spec) -> None:
+    """Print verbose progress line and dependency info for a node."""
+    click.echo(f"\n  [{counter}/{total}] {node_id} ...", err=True)
+    node_spec = spec.nodes.get(node_id)
+    if node_spec and node_spec.depends_on:
+        for dep in node_spec.depends_on:
+            click.echo(f"        <- {dep}", err=True)
+
+
+def _verbose_collect_artifacts(
+    node_id: str, node_artifacts: dict, all_artifacts: list[Artifact],
+) -> None:
+    """Collect artifacts from a node and print truncated content."""
+    if node_id not in node_artifacts:
+        return
+    for art in node_artifacts[node_id]:
+        all_artifacts.append(art)
+        content = art.content
+        if isinstance(content, str) and len(content) > VERBOSE_CONTENT_MAX_LEN:
+            content = content[:VERBOSE_CONTENT_MAX_LEN] + "..."
+        click.echo(f"  [{node_id}] -> {art.type}:", err=True)
+        click.echo(f"{content}\n", err=True)
+
+
 def _install_verbose_wrapper(orch: Orchestrator, all_artifacts: list[Artifact]) -> None:
     """Monkey-patch orchestrator to print progress for each node execution."""
     original_execute = orch._execute_node
@@ -296,26 +333,13 @@ def _install_verbose_wrapper(orch: Orchestrator, all_artifacts: list[Artifact]) 
         accumulated_cost_=0.0, node_artifacts_history_=None,
     ):
         counter[0] += 1
-        total = len(spec_.nodes)
-        click.echo(f"\n  [{counter[0]}/{total}] {node_id_} ...", err=True)
-
-        node_spec = spec_.nodes.get(node_id_)
-        if node_spec and node_spec.depends_on:
-            for dep in node_spec.depends_on:
-                click.echo(f"        <- {dep}", err=True)
+        _verbose_print_header(node_id_, counter[0], len(spec_.nodes), spec_)
 
         await original_execute(
             spec_, dag_, scheduler_, run_id_, trace_id_,
             node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
         )
-        if node_id_ in node_artifacts_:
-            for art in node_artifacts_[node_id_]:
-                all_artifacts.append(art)
-                content = art.content
-                if isinstance(content, str) and len(content) > VERBOSE_CONTENT_MAX_LEN:
-                    content = content[:VERBOSE_CONTENT_MAX_LEN] + "..."
-                click.echo(f"  [{node_id_}] -> {art.type}:", err=True)
-                click.echo(f"{content}\n", err=True)
+        _verbose_collect_artifacts(node_id_, node_artifacts_, all_artifacts)
 
     orch._execute_node = _verbose_execute
 
