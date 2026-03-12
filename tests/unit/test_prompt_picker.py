@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from binex.cli.start import _select_prompt_variant
+from binex.cli.start_templates import _select_prompt_variant
 
 
 def test_shows_variants_for_role():

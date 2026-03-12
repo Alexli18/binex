@@ -35,6 +35,7 @@ dependencies = [
     "click",
     "aiosqlite",
     "python-dotenv",
+    "jsonschema>=4.0",
 ]
 
 [project.urls]

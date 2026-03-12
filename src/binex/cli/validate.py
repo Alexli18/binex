@@ -11,41 +11,23 @@ from binex.workflow_spec.loader import load_workflow
 from binex.workflow_spec.validator import validate_workflow
 
 
-@click.command("validate", epilog="""\b
-Examples:
-  binex validate workflow.yaml          Check for errors
-  binex validate workflow.yaml --json   Machine-readable output
-""")
-@click.argument("workflow_file", type=click.Path(exists=True))
-@click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
-def validate_cmd(workflow_file: str, json_out: bool) -> None:
-    """Validate a workflow definition (YAML syntax, DAG structure, agent refs)."""
-    # Phase 1: load and parse
-    try:
-        spec = load_workflow(workflow_file)
-    except ValueError as exc:
-        errors = [str(exc)]
-        if json_out:
-            click.echo(json.dumps({"valid": False, "errors": errors}, indent=2))
-        else:
-            click.echo(f"Error: {errors[0]}", err=True)
-        sys.exit(2)
-
-    # Phase 2: structural validation
-    errors = validate_workflow(spec)
-    if errors:
-        if json_out:
-            click.echo(json.dumps({"valid": False, "errors": errors}, indent=2))
-        else:
-            for err in errors:
-                click.echo(f"Error: {err}", err=True)
+def _output_errors(errors: list[str], json_out: bool, *, show_tip: bool = False) -> None:
+    """Output validation errors and exit."""
+    if json_out:
+        click.echo(json.dumps({"valid": False, "errors": errors}, indent=2))
+    else:
+        for err in errors:
+            click.echo(f"Error: {err}", err=True)
+        if show_tip:
             click.echo(
                 "\nTip: use 'binex scaffold workflow --list-patterns' for valid examples.",
                 err=True,
             )
-        sys.exit(2)
+    sys.exit(2)
 
-    # Phase 3: success summary
+
+def _output_success(spec, json_out: bool) -> None:
+    """Output validation success summary."""
     node_count = len(spec.nodes)
     edge_count = sum(len(n.depends_on) for n in spec.nodes.values())
     agents = sorted({n.agent for n in spec.nodes.values()})
@@ -78,3 +60,27 @@ def validate_cmd(workflow_file: str, json_out: bool) -> None:
             click.echo(f"  Agents: {', '.join(agents)}")
 
     sys.exit(0)
+
+
+@click.command("validate", epilog="""\b
+Examples:
+  binex validate workflow.yaml          Check for errors
+  binex validate workflow.yaml --json   Machine-readable output
+""")
+@click.argument("workflow_file", type=click.Path(exists=True))
+@click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
+def validate_cmd(workflow_file: str, json_out: bool) -> None:
+    """Validate a workflow definition (YAML syntax, DAG structure, agent refs)."""
+    # Phase 1: load and parse
+    try:
+        spec = load_workflow(workflow_file)
+    except ValueError as exc:
+        _output_errors([str(exc)], json_out)
+
+    # Phase 2: structural validation
+    errors = validate_workflow(spec)
+    if errors:
+        _output_errors(errors, json_out, show_tip=True)
+
+    # Phase 3: success summary
+    _output_success(spec, json_out)

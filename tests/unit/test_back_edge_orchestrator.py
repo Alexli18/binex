@@ -9,7 +9,8 @@ from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
 from binex.models.artifact import Artifact, Lineage
 from binex.models.workflow import BackEdge, NodeSpec, WorkflowSpec
-from binex.runtime.orchestrator import Orchestrator, evaluate_when
+from binex.runtime.back_edge import evaluate_back_edge, evaluate_when
+from binex.runtime.orchestrator import Orchestrator
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 
 
@@ -43,15 +44,15 @@ class TestEvaluateBackEdge:
                 "a": NodeSpec(agent="x", outputs=["o"]),
             },
         )
-        orch = Orchestrator(InMemoryArtifactStore(), InMemoryExecutionStore())
         dag = DAG.from_workflow(spec)
         sched = Scheduler(dag)
         sched.mark_running("a")
         sched.mark_completed("a")
         node_artifacts = {"a": []}
         history: dict[str, list[list[Artifact]]] = {}
-        await orch._evaluate_back_edge(
-            spec, sched, dag, "a", node_artifacts, history,
+        pending_feedback: dict[str, list[Artifact]] = {}
+        await evaluate_back_edge(
+            spec, sched, dag, "a", node_artifacts, history, pending_feedback,
         )
         # Nothing changed — a still completed
         assert "a" in sched._completed
@@ -59,7 +60,6 @@ class TestEvaluateBackEdge:
     @pytest.mark.asyncio
     async def test_condition_not_met_continues_forward(self) -> None:
         spec = _make_spec_with_back_edge()
-        orch = Orchestrator(InMemoryArtifactStore(), InMemoryExecutionStore())
         dag = DAG.from_workflow(spec)
         sched = Scheduler(dag)
 
@@ -78,8 +78,9 @@ class TestEvaluateBackEdge:
             "review": [approved_art],
         }
         history: dict[str, list[list[Artifact]]] = {}
-        await orch._evaluate_back_edge(
-            spec, sched, dag, "review", node_artifacts, history,
+        pending_feedback: dict[str, list[Artifact]] = {}
+        await evaluate_back_edge(
+            spec, sched, dag, "review", node_artifacts, history, pending_feedback,
         )
         # No reset — generate stays completed
         assert "generate" in sched._completed
@@ -87,7 +88,6 @@ class TestEvaluateBackEdge:
     @pytest.mark.asyncio
     async def test_condition_met_resets_chain(self) -> None:
         spec = _make_spec_with_back_edge()
-        orch = Orchestrator(InMemoryArtifactStore(), InMemoryExecutionStore())
         dag = DAG.from_workflow(spec)
         sched = Scheduler(dag)
 
@@ -112,8 +112,9 @@ class TestEvaluateBackEdge:
             "review": [rejected_art, feedback_art],
         }
         history: dict[str, list[list[Artifact]]] = {}
-        await orch._evaluate_back_edge(
-            spec, sched, dag, "review", node_artifacts, history,
+        pending_feedback: dict[str, list[Artifact]] = {}
+        await evaluate_back_edge(
+            spec, sched, dag, "review", node_artifacts, history, pending_feedback,
         )
         # Both nodes reset
         assert "generate" not in sched._completed
@@ -121,12 +122,11 @@ class TestEvaluateBackEdge:
         # Old artifacts moved to history
         assert len(history.get("generate", [])) == 1
         # Feedback injected for generate
-        assert "generate" in orch._pending_feedback
+        assert "generate" in pending_feedback
 
     @pytest.mark.asyncio
     async def test_max_iterations_prompts_user_accept(self) -> None:
         spec = _make_spec_with_back_edge(max_iter=1)
-        orch = Orchestrator(InMemoryArtifactStore(), InMemoryExecutionStore())
         dag = DAG.from_workflow(spec)
         sched = Scheduler(dag)
 
@@ -143,10 +143,11 @@ class TestEvaluateBackEdge:
         )
         node_artifacts = {"review": [rejected_art], "generate": []}
         history: dict[str, list[list[Artifact]]] = {}
+        pending_feedback: dict[str, list[Artifact]] = {}
 
-        with patch("binex.runtime.orchestrator.click.prompt", return_value="a"):
-            await orch._evaluate_back_edge(
-                spec, sched, dag, "review", node_artifacts, history,
+        with patch("binex.runtime.back_edge.click.prompt", return_value="a"):
+            await evaluate_back_edge(
+                spec, sched, dag, "review", node_artifacts, history, pending_feedback,
             )
         # Accepted — stays completed, no reset
         assert "review" in sched._completed
@@ -154,7 +155,6 @@ class TestEvaluateBackEdge:
     @pytest.mark.asyncio
     async def test_max_iterations_prompts_user_fail(self) -> None:
         spec = _make_spec_with_back_edge(max_iter=1)
-        orch = Orchestrator(InMemoryArtifactStore(), InMemoryExecutionStore())
         dag = DAG.from_workflow(spec)
         sched = Scheduler(dag)
 
@@ -170,9 +170,10 @@ class TestEvaluateBackEdge:
         )
         node_artifacts = {"review": [rejected_art], "generate": []}
         history: dict[str, list[list[Artifact]]] = {}
+        pending_feedback: dict[str, list[Artifact]] = {}
 
-        with patch("binex.runtime.orchestrator.click.prompt", return_value="f"):
-            await orch._evaluate_back_edge(
-                spec, sched, dag, "review", node_artifacts, history,
+        with patch("binex.runtime.back_edge.click.prompt", return_value="f"):
+            await evaluate_back_edge(
+                spec, sched, dag, "review", node_artifacts, history, pending_feedback,
             )
         assert "review" in sched._failed

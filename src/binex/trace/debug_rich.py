@@ -48,33 +48,46 @@ def _render_node_rich(node) -> Panel:
     if node.latency_ms:
         title += f" {node.latency_ms}ms"
 
-    parts: list[Text | Markdown] = []
-    meta = Text()
     if node.status == "skipped":
-        if node.blocked_by:
-            meta.append(f"  Blocked by: {', '.join(node.blocked_by)}", style="dim")
-        parts.append(meta)
+        parts = _render_skipped_node_parts(node)
     else:
-        meta.append(f"  Agent:  {node.agent_id}\n")
-        if node.prompt:
-            meta.append(f"  Prompt: {_truncate(node.prompt)}\n")
-        for art in node.input_artifacts:
-            meta.append(f"  Input:  {art.id} <- {art.lineage.produced_by}\n")
-        for art in node.output_artifacts:
-            meta.append(f"  Output: {art.id} ({art.type})\n")
-        if node.error:
-            meta.append(f"  ERROR:  {node.error}", style="bold red")
-        parts.append(meta)
-
-        for art in node.output_artifacts:
-            content_str = art.content if art.content is not None else ""
-            if not isinstance(content_str, str):
-                import json
-                content_str = json.dumps(content_str, default=str, indent=2)
-            if content_str:
-                parts.append(Markdown(content_str))
+        parts = _render_active_node_parts(node)
 
     return Panel(Group(*parts), title=title, border_style=color)
+
+
+def _render_skipped_node_parts(node) -> list[Text | Markdown]:
+    """Build renderable parts for a skipped node."""
+    meta = Text()
+    if node.blocked_by:
+        meta.append(f"  Blocked by: {', '.join(node.blocked_by)}", style="dim")
+    return [meta]
+
+
+def _render_active_node_parts(node) -> list[Text | Markdown]:
+    """Build renderable parts for an active (non-skipped) node."""
+    parts: list[Text | Markdown] = []
+    meta = Text()
+    meta.append(f"  Agent:  {node.agent_id}\n")
+    if node.prompt:
+        meta.append(f"  Prompt: {_truncate(node.prompt)}\n")
+    for art in node.input_artifacts:
+        meta.append(f"  Input:  {art.id} <- {art.lineage.produced_by}\n")
+    for art in node.output_artifacts:
+        meta.append(f"  Output: {art.id} ({art.type})\n")
+    if node.error:
+        meta.append(f"  ERROR:  {node.error}", style="bold red")
+    parts.append(meta)
+
+    for art in node.output_artifacts:
+        content_str = art.content if art.content is not None else ""
+        if not isinstance(content_str, str):
+            import json
+            content_str = json.dumps(content_str, default=str, indent=2)
+        if content_str:
+            parts.append(Markdown(content_str))
+
+    return parts
 
 
 __all__ = ["format_debug_report_rich"]

@@ -157,15 +157,23 @@ def init_cmd(project_name: str | None) -> None:
         env_var = None
 
     # ---- generate files ----
+    created = _generate_project_files(cwd, project_name, agent_prefix, model, env_var, mode)
 
-    # Always: workflow.yaml, .env.example, .gitignore
+    # ---- summary ----
+    _print_init_summary(project_name, created)
+
+
+def _generate_project_files(
+    cwd: Path, project_name: str, agent_prefix: str,
+    model: str, env_var: str | None, mode: int,
+) -> list[str]:
+    """Generate all project files based on mode. Returns list of created paths."""
     (cwd / "workflow.yaml").write_text(_workflow_yaml(project_name, agent_prefix, model))
     (cwd / ".env.example").write_text(_env_example(env_var))
     (cwd / ".gitignore").write_text(_GITIGNORE)
 
     created = ["workflow.yaml", ".env.example", ".gitignore"]
 
-    # Agent mode (2 or 3): create agents/<project_name>/
     if mode >= 2:
         agents_dir = cwd / "agents" / project_name
         agents_dir.mkdir(parents=True, exist_ok=True)
@@ -175,21 +183,22 @@ def init_cmd(project_name: str | None) -> None:
         )
         created.append(f"agents/{project_name}/")
 
-    # Full mode (3): workflows/, tests/, docker-compose.yml
     if mode == 3:
         (cwd / "workflows").mkdir(exist_ok=True)
         created.append("workflows/")
-
         tests_dir = cwd / "tests"
         tests_dir.mkdir(exist_ok=True)
         (tests_dir / "__init__.py").write_text("")
         (tests_dir / "test_workflow.py").write_text(_test_workflow_py())
         created.append("tests/")
-
         (cwd / "docker-compose.yml").write_text(_docker_compose_yml())
         created.append("docker-compose.yml")
 
-    # ---- summary ----
+    return created
+
+
+def _print_init_summary(project_name: str, created: list[str]) -> None:
+    """Print initialization summary (Rich or plain)."""
     from binex.cli import has_rich
 
     if has_rich():

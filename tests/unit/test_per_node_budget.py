@@ -8,7 +8,8 @@ from binex.models.cost import BudgetConfig, CostRecord, ExecutionResult
 from binex.models.execution import RunSummary
 from binex.models.task import RetryPolicy
 from binex.models.workflow import NodeSpec, WorkflowSpec
-from binex.runtime.orchestrator import Orchestrator, get_effective_policy, get_node_max_cost
+from binex.runtime.budget import get_effective_policy, get_node_max_cost
+from binex.runtime.orchestrator import Orchestrator
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 
 
@@ -105,7 +106,7 @@ class TestPostCheckNodeBudget:
             },
         )
 
-        async def mock_dispatch(task, inputs, trace_id):
+        async def mock_dispatch(task, inputs, trace_id, **kwargs):
             return ExecutionResult(
                 artifacts=[Artifact(id="a1", run_id=task.run_id,
                                     type="r", content="data",
@@ -137,7 +138,7 @@ class TestPostCheckNodeBudget:
             budget=BudgetConfig(max_cost=100.0, policy="warn"),
         )
 
-        async def mock_dispatch(task, inputs, trace_id):
+        async def mock_dispatch(task, inputs, trace_id, **kwargs):
             return ExecutionResult(
                 artifacts=[Artifact(id="a1", run_id=task.run_id,
                                     type="r", content="data",
@@ -168,7 +169,7 @@ class TestPostCheckNodeBudget:
             },
         )
 
-        async def mock_dispatch(task, inputs, trace_id):
+        async def mock_dispatch(task, inputs, trace_id, **kwargs):
             return ExecutionResult(
                 artifacts=[Artifact(id="a1", run_id=task.run_id,
                                     type="r", content="data",
@@ -198,7 +199,7 @@ class TestPostCheckNodeBudget:
             },
         )
 
-        async def mock_dispatch(task, inputs, trace_id):
+        async def mock_dispatch(task, inputs, trace_id, **kwargs):
             return ExecutionResult(
                 artifacts=[Artifact(id="a1", run_id=task.run_id,
                                     type="r", content="data",
@@ -233,7 +234,7 @@ class TestPreCheckNodeBudget:
 
         call_count = 0
 
-        async def mock_dispatch(task, inputs, trace_id):
+        async def mock_dispatch(task, inputs, trace_id, **kwargs):
             nonlocal call_count
             call_count += 1
             cost = CostRecord(
@@ -275,7 +276,7 @@ class TestPreCheckNodeBudget:
 
         call_count = 0
 
-        async def mock_dispatch(task, inputs, trace_id):
+        async def mock_dispatch(task, inputs, trace_id, **kwargs):
             nonlocal call_count
             call_count += 1
             cost = CostRecord(
@@ -320,7 +321,7 @@ class TestPreCheckNodeBudget:
 
         call_count = 0
 
-        async def mock_dispatch(task, inputs, trace_id):
+        async def mock_dispatch(task, inputs, trace_id, **kwargs):
             nonlocal call_count
             call_count += 1
             if call_count == 1:
@@ -375,7 +376,7 @@ class TestPreCheckNodeBudget:
 
         captured_task = None
 
-        async def mock_dispatch(task, inputs, trace_id):
+        async def mock_dispatch(task, inputs, trace_id, **kwargs):
             nonlocal captured_task
             captured_task = task
             return ExecutionResult(
@@ -411,7 +412,7 @@ class TestOrchestratorSetsNodeBudget:
             },
         )
 
-        async def mock_dispatch(task, inputs, trace_id):
+        async def mock_dispatch(task, inputs, trace_id, **kwargs):
             return ExecutionResult(
                 artifacts=[Artifact(id="a1", run_id=task.run_id,
                                     type="r", content="data",
@@ -442,7 +443,7 @@ class TestOrchestratorSetsNodeBudget:
             },
         )
 
-        async def mock_dispatch(task, inputs, trace_id):
+        async def mock_dispatch(task, inputs, trace_id, **kwargs):
             return ExecutionResult(
                 artifacts=[Artifact(id="a1", run_id=task.run_id,
                                     type="r", content="data",

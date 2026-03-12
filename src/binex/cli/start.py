@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import importlib.resources
-import shutil
 import sys
 from pathlib import Path
 
@@ -17,175 +15,25 @@ from binex.cli.prompt_roles import (
     CATEGORY_ICONS,
     CATEGORY_ORDER,
     TEMPLATE_CATEGORIES,
-    get_role,
 )
 from binex.cli.providers import PROVIDERS, ProviderConfig
-
-# ---------------------------------------------------------------------------
-# Template registry
-# ---------------------------------------------------------------------------
-
-# Maps node names to prompt .md filenames in binex/prompts/
-_NODE_PROMPT_FILES: dict[str, str] = {
-    # Research pipeline
-    "planner": "gen-research-planner.md",
-    "researcher1": "gen-researcher.md",
-    "researcher2": "gen-researcher.md",
-    "validator": "gen-research-validator.md",
-    "summarizer": "gen-research-synthesizer.md",
-    # Content review pipeline
-    "draft": "gen-draft-writer.md",
-    "review": "gen-content-reviewer.md",
-    "revise": "gen-content-reviser.md",
-    "finalize": "gen-content-editor.md",
-    # Data processing pipeline
-    "splitter": "gen-chunk-splitter.md",
-    "processor": "gen-chunk-processor.md",
-    "merger": "gen-chunk-merger.md",
-    # Map-reduce pipeline
-    "mapper": "gen-data-processor.md",
-    "reducer": "gen-data-aggregator.md",
-    # Generic fallbacks
-    "analyzer": "gen-data-refiner.md",
-    "reviewer": "gen-content-reviewer.md",
-}
-
-
-def _get_prompts_dir() -> Path:
-    """Resolve the bundled prompts directory (src/binex/prompts/)."""
-    ref = importlib.resources.files("binex") / "prompts"
-    return Path(str(ref))
-
-
-def _copy_prompts_to_project(
-    project_dir: Path,
-    needed_files: set[str],
-) -> None:
-    """Copy needed prompt .md files into project_dir/prompts/."""
-    src_dir = _get_prompts_dir()
-    dst_dir = project_dir / "prompts"
-    dst_dir.mkdir(exist_ok=True)
-    for filename in sorted(needed_files):
-        src = src_dir / filename
-        if src.exists():
-            shutil.copy2(src, dst_dir / filename)
-
-
-
-# ---------------------------------------------------------------------------
-# Rich output helpers
-# ---------------------------------------------------------------------------
-
-def _print_banner() -> None:
-    """Print a welcome banner."""
-    if has_rich():
-        from rich.text import Text
-
-        from binex.cli.ui import get_console, make_panel
-
-        console = get_console(stderr=True)
-        title = Text()
-        title.append("Welcome to ", style="bold")
-        title.append("Binex", style="bold cyan")
-        title.append("!", style="bold")
-        subtitle = Text("Let's set up your agent network.", style="dim")
-        content = Text.assemble(title, "\n", subtitle)
-        console.print()
-        console.print(make_panel(content))
-        console.print()
-    else:
-        click.echo("\nWelcome to Binex! Let's set up your agent network.\n")
-
-
-def _print_step(step: int, total: int, label: str) -> None:
-    """Print a step header."""
-    if has_rich():
-        from rich.text import Text
-
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-        header = Text()
-        header.append(f"Step {step} of {total}", style="bold cyan")
-        header.append(f" \u00b7 {label}", style="bold")
-        console.print(header)
-    else:
-        click.echo(f"\nStep {step} of {total} \u00b7 {label}", err=True)
-
-
-def _print_confirm(message: str) -> None:
-    """Print a confirmation/success message."""
-    if has_rich():
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-        console.print(f"  [green]\u2713[/green] {message}")
-    else:
-        click.echo(f"  \u2713 {message}", err=True)
-
-
-def _print_dsl_preview(dsl: str) -> None:
-    """Print a visual preview of the workflow DAG."""
-    if has_rich():
-        from rich.text import Text
-
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-        preview = Text()
-        preview.append("  Pipeline: ", style="dim")
-        # Color node names cyan and arrows dim
-        parts = dsl.replace(",", " ,").split()
-        for part in parts:
-            part_stripped = part.strip()
-            if part_stripped == "->":
-                preview.append(" \u2192 ", style="dim")
-            elif part_stripped == ",":
-                preview.append(", ", style="dim")
-            else:
-                preview.append(part_stripped, style="bold magenta")
-        console.print(preview)
-        console.print()
-    else:
-        click.echo(f"  Pipeline: {dsl}\n", err=True)
-
-
-def _print_file_created(filename: str) -> None:
-    """Print a file creation confirmation."""
-    if has_rich():
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-        console.print(f"  [green]\u2713[/green] [bold]{filename}[/bold]")
-    else:
-        click.echo(f"  \u2713 {filename}", err=True)
-
-
-def _print_done_panel(project_name: str) -> None:
-    """Print a completion panel with next steps."""
-    if has_rich():
-        from rich.text import Text
-
-        from binex.cli.ui import get_console, make_panel
-
-        console = get_console(stderr=True)
-        content = Text()
-        content.append(f"Project saved in ./{project_name}/\n\n", style="bold green")
-        content.append("Next steps:\n", style="bold")
-        content.append(f"  cd {project_name}\n", style="cyan")
-        content.append("  binex run workflow.yaml", style="cyan")
-        content.append("    \u2014 run your workflow\n", style="dim")
-        content.append("  code workflow.yaml", style="cyan")
-        content.append("         \u2014 edit your workflow", style="dim")
-        console.print()
-        console.print(make_panel(content, title="Done!"))
-    else:
-        click.echo(f"\nDone! Your project is saved in ./{project_name}/\n")
-        click.echo("Next steps:")
-        click.echo(f"  cd {project_name}")
-        click.echo("  binex run workflow.yaml                \u2014 run your workflow")
-        click.echo("  code workflow.yaml                     \u2014 edit your workflow")
-
+from binex.cli.start_config import (
+    _configure_all_nodes,
+    _step_choose_provider,
+)
+from binex.cli.start_templates import (
+    _NODE_PROMPT_FILES,
+    _copy_prompts_to_project,
+)
+from binex.cli.start_ui import (
+    _preview_yaml,
+    _print_banner,
+    _print_confirm,
+    _print_done_panel,
+    _print_dsl_preview,
+    _print_file_created,
+    _print_step,
+)
 
 # ---------------------------------------------------------------------------
 # YAML generation
@@ -251,6 +99,30 @@ def build_start_workflow(
     return yaml_str, needed_prompts
 
 
+_OPTIONAL_NODE_KEYS = (
+    "depends_on", "back_edge", "budget", "retry_policy", "deadline_ms", "config",
+)
+
+
+def _build_node_dict(cfg: dict, needed_prompts: set[str]) -> dict:
+    """Build a single node dict from config, collecting needed prompts."""
+    node: dict = {"agent": cfg["agent"]}
+
+    if cfg.get("system_prompt"):
+        node["system_prompt"] = cfg["system_prompt"]
+        sp = cfg["system_prompt"]
+        if sp.startswith("file://prompts/") and sp.endswith(".md"):
+            needed_prompts.add(sp.removeprefix("file://prompts/"))
+
+    node["outputs"] = cfg.get("outputs", ["result"])
+
+    for key in _OPTIONAL_NODE_KEYS:
+        if cfg.get(key):
+            node[key] = cfg[key]
+
+    return node
+
+
 def build_custom_workflow(*, name: str, nodes_config: dict[str, dict]) -> tuple[str, set[str]]:
     """Generate workflow YAML from per-node configuration dicts.
 
@@ -260,53 +132,11 @@ def build_custom_workflow(*, name: str, nodes_config: dict[str, dict]) -> tuple[
     nodes: dict[str, dict] = {}
 
     for node_id, cfg in nodes_config.items():
-        node: dict = {}
-        node["agent"] = cfg["agent"]
-
-        if cfg.get("system_prompt"):
-            node["system_prompt"] = cfg["system_prompt"]
-            sp = cfg["system_prompt"]
-            if sp.startswith("file://prompts/") and sp.endswith(".md"):
-                needed_prompts.add(sp.removeprefix("file://prompts/"))
-
-        node["outputs"] = cfg.get("outputs", ["result"])
-
-        if cfg.get("depends_on"):
-            node["depends_on"] = cfg["depends_on"]
-        if cfg.get("back_edge"):
-            node["back_edge"] = cfg["back_edge"]
-        if cfg.get("budget"):
-            node["budget"] = cfg["budget"]
-        if cfg.get("retry_policy"):
-            node["retry_policy"] = cfg["retry_policy"]
-        if cfg.get("deadline_ms"):
-            node["deadline_ms"] = cfg["deadline_ms"]
-        if cfg.get("config"):
-            node["config"] = cfg["config"]
-
-        nodes[node_id] = node
+        nodes[node_id] = _build_node_dict(cfg, needed_prompts)
 
     workflow = {"name": name, "nodes": nodes}
     yaml_str = yaml.dump(workflow, default_flow_style=False, sort_keys=False)
     return yaml_str, needed_prompts
-
-
-def _preview_yaml(yaml_content: str) -> None:
-    """Display YAML with syntax highlighting if Rich is available."""
-    if has_rich():
-        from rich.syntax import Syntax
-
-        from binex.cli.ui import get_console, make_panel
-
-        console = get_console(stderr=True)
-        syntax = Syntax(yaml_content, "yaml", theme="monokai", line_numbers=False)
-        console.print()
-        console.print(make_panel(syntax, title="Workflow Preview"))
-        console.print()
-    else:
-        click.echo("\n--- Workflow Preview ---")
-        click.echo(yaml_content)
-        click.echo("--- End Preview ---\n")
 
 
 # ---------------------------------------------------------------------------
@@ -397,7 +227,6 @@ def _run_workflow(workflow_path: str) -> None:
 # Category navigation (Phase 3 — US1)
 # ---------------------------------------------------------------------------
 
-
 def _step_choose_category(*, input_fn=None) -> str | None:
     """Display 8 categories. Returns category name, 'c' for constructor, or None for quit."""
     _prompt = input_fn or (lambda p: click.prompt(p))
@@ -451,47 +280,56 @@ def _step_choose_category(*, input_fn=None) -> str | None:
     return None
 
 
+def _template_dag_str(t) -> str:
+    """Build an ASCII DAG string from a template's DSL."""
+    from binex.cli.ui import render_dag_ascii
+
+    parsed = parse_dsl([t.dsl])
+    nodes = list(parsed.nodes)
+    edges = []
+    for n, deps in parsed.depends_on.items():
+        for d in deps:
+            edges.append((d, n))
+    return render_dag_ascii(nodes, edges)
+
+
+def _render_template_list_rich(label: str, templates: list) -> None:
+    """Render template list in Rich format."""
+    from rich.text import Text
+
+    from binex.cli.ui import get_console
+
+    console = get_console(stderr=True)
+    console.print(f"\n  [bold cyan]{label}:[/bold cyan]")
+    for i, t in enumerate(templates, 1):
+        dag_str = _template_dag_str(t)
+        line = Text()
+        line.append(f"    {i}) ", style="dim")
+        line.append(f"{t.label:20s}", style="bold")
+        line.append(f" {dag_str}", style="dim")
+        console.print(line)
+    console.print("\n  [dim][b] Back to categories[/dim]")
+
+
+def _render_template_list_plain(label: str, templates: list) -> None:
+    """Render template list in plain text."""
+    click.echo(f"\n  {label}:")
+    for i, t in enumerate(templates, 1):
+        dag_str = _template_dag_str(t)
+        click.echo(f"    {i}) {t.label:20s} {dag_str}")
+    click.echo("\n  [b] Back to categories")
+
+
 def _step_pick_template(category: str, *, input_fn=None):
     """Display templates in a category. Returns TemplateConfig or None for back."""
     _prompt = input_fn or (lambda p: click.prompt(p))
     templates = TEMPLATE_CATEGORIES.get(category, [])
 
-    from binex.cli.ui import render_dag_ascii
-
     label = category.capitalize()
     if has_rich():
-        from rich.text import Text
-
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-        console.print(f"\n  [bold cyan]{label}:[/bold cyan]")
-        for i, t in enumerate(templates, 1):
-            parsed = parse_dsl([t.dsl])
-            nodes = list(parsed.nodes)
-            edges = []
-            for n, deps in parsed.depends_on.items():
-                for d in deps:
-                    edges.append((d, n))
-            dag_str = render_dag_ascii(nodes, edges)
-            line = Text()
-            line.append(f"    {i}) ", style="dim")
-            line.append(f"{t.label:20s}", style="bold")
-            line.append(f" {dag_str}", style="dim")
-            console.print(line)
-        console.print("\n  [dim][b] Back to categories[/dim]")
+        _render_template_list_rich(label, templates)
     else:
-        click.echo(f"\n  {label}:")
-        for i, t in enumerate(templates, 1):
-            parsed = parse_dsl([t.dsl])
-            nodes = list(parsed.nodes)
-            edges = []
-            for n, deps in parsed.depends_on.items():
-                for d in deps:
-                    edges.append((d, n))
-            dag_str = render_dag_ascii(nodes, edges)
-            click.echo(f"    {i}) {t.label:20s} {dag_str}")
-        click.echo("\n  [b] Back to categories")
+        _render_template_list_plain(label, templates)
 
     choice = _prompt("Choose")
     choice = choice.strip().lower()
@@ -509,398 +347,6 @@ def _step_pick_template(category: str, *, input_fn=None):
 
 
 # ---------------------------------------------------------------------------
-# Variant picker (Phase 4 — US2)
-# ---------------------------------------------------------------------------
-
-
-def _select_prompt_variant(
-    *, role_name: str, input_fn=None,
-) -> str:
-    """Pick a prompt variant for a role. Returns system_prompt string.
-
-    For known roles: shows role-specific variants.
-    For unknown roles: falls back to full bundled prompt list.
-    """
-    _prompt = input_fn or (lambda p: click.prompt(p))
-    role = get_role(role_name)
-
-    if role is None:
-        # Fallback to generic prompt picker
-        return _select_prompt(node_id=role_name, input_fn=_prompt)
-
-    variants = role.variants
-
-    while True:
-        if has_rich():
-            from rich.text import Text
-
-            from binex.cli.ui import get_console
-
-            console = get_console(stderr=True)
-            console.print(
-                f"  Prompt variants for [bold]{role_name}[/bold]:"
-            )
-            for i, v in enumerate(variants, 1):
-                line = Text()
-                line.append(f"    {i}) ", style="dim")
-                if v.is_default:
-                    line.append("\u2605 ", style="yellow")
-                else:
-                    line.append("  ", style="dim")
-                line.append(f"{v.label:12s}", style="bold")
-                line.append(f" \u2014 {v.description}", style="dim")
-                if v.is_default:
-                    line.append(" (recommended)", style="green")
-                console.print(line)
-            console.print()
-            console.print(
-                "  [dim][v N] Preview  [custom] Custom text  "
-                "[edit] $EDITOR  [file] From file[/dim]"
-            )
-        else:
-            click.echo(f"  Prompt variants for {role_name}:")
-            for i, v in enumerate(variants, 1):
-                star = "\u2605 " if v.is_default else "  "
-                rec = " (recommended)" if v.is_default else ""
-                click.echo(
-                    f"    {i}) {star}{v.label:12s}"
-                    f" \u2014 {v.description}{rec}"
-                )
-            click.echo()
-            click.echo(
-                "  [v N] Preview  [custom] Custom text  "
-                "[edit] $EDITOR  [file] From file"
-            )
-
-        choice = _prompt("Choose")
-        choice = choice.strip()
-
-        # Preview
-        if choice.lower().startswith("v "):
-            try:
-                preview_idx = int(choice.split()[1])
-                if 1 <= preview_idx <= len(variants):
-                    _preview_prompt_file(variants[preview_idx - 1].filename)
-            except (ValueError, IndexError):
-                pass
-            continue
-
-        if choice.lower() == "custom":
-            text = _prompt("Enter system prompt text")
-            return text
-
-        if choice.lower() == "edit":
-            content = click.edit()
-            if content and content.strip():
-                return content.strip()
-            # Editor cancelled — fall back to text
-            text = _prompt("Editor cancelled. Enter prompt text")
-            return text
-
-        if choice.lower() == "file":
-            path = _prompt("Enter path to prompt file")
-            if not path.startswith("file://"):
-                path = f"file://{path}"
-            return path
-
-        # Numeric selection
-        try:
-            idx = int(choice)
-            if 1 <= idx <= len(variants):
-                return f"file://prompts/{variants[idx - 1].filename}"
-        except ValueError:
-            pass
-
-        # Default: pick the default variant
-        return f"file://prompts/{role.default_variant.filename}"
-
-
-def _preview_prompt_file(filename: str) -> None:
-    """Display prompt file content."""
-    prompts_dir = _get_prompts_dir()
-    path = prompts_dir / filename
-    if not path.exists():
-        click.echo(f"  (File not found: {filename})")
-        return
-    content = path.read_text()
-    if has_rich():
-        from binex.cli.ui import get_console, make_panel
-
-        console = get_console(stderr=True)
-        console.print(make_panel(content, title=filename))
-    else:
-        click.echo(f"\n--- {filename} ---")
-        click.echo(content)
-        click.echo("--- end ---\n")
-
-
-# ---------------------------------------------------------------------------
-# Constructor (Phase 5 — US3)
-# ---------------------------------------------------------------------------
-
-
-def _constructor_loop(
-    nodes_config: dict[str, dict],
-    edges: list[tuple[str, str]],
-    *,
-    input_fn=None,
-    node_roles: dict[str, str] | None = None,
-) -> dict[str, dict]:
-    """Main constructor loop: display DAG, menu for add/delete/edit/move/preview/done."""
-    _prompt = input_fn or (lambda p: click.prompt(p))
-
-    from binex.cli.ui import render_dag_ascii
-
-    while True:
-        # Display current graph
-        node_names = list(nodes_config.keys())
-        dag_str = render_dag_ascii(node_names, edges)
-
-        if has_rich():
-            from binex.cli.ui import get_console
-
-            console = get_console(stderr=True)
-            console.print("\n[bold cyan]\u2500\u2500 Constructor "
-                          "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
-                          "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
-                          "\u2500\u2500\u2500\u2500[/bold cyan]")
-            console.print(f"Current graph: [bold]{dag_str}[/bold]")
-            console.print(
-                f"Nodes: {len(nodes_config)} | Edges: {len(edges)}"
-            )
-            console.print()
-            console.print("  [bold][a][/bold] Add node")
-            console.print("  [bold][d][/bold] Delete node")
-            console.print("  [bold][e][/bold] Edit node")
-            console.print("  [bold][m][/bold] Move node")
-            console.print("  [bold][p][/bold] Preview YAML")
-            console.print("  [bold][done][/bold] Finish")
-        else:
-            click.echo("\n\u2500\u2500 Constructor "
-                        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
-                        "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
-                        "\u2500\u2500\u2500\u2500")
-            click.echo(f"Current graph: {dag_str}")
-            click.echo(f"Nodes: {len(nodes_config)} | Edges: {len(edges)}")
-            click.echo()
-            click.echo("  [a] Add node")
-            click.echo("  [d] Delete node")
-            click.echo("  [e] Edit node")
-            click.echo("  [m] Move node")
-            click.echo("  [p] Preview YAML")
-            click.echo("  [done] Finish")
-
-        action = _prompt("Action").strip().lower()
-
-        if action == "done":
-            return nodes_config
-        elif action == "a":
-            nodes_config, edges = _constructor_add_node(
-                nodes_config, edges, input_fn=_prompt,
-            )
-        elif action == "d":
-            nodes_config, edges = _constructor_delete_node(
-                nodes_config, edges, input_fn=_prompt,
-            )
-        elif action == "e":
-            nodes_config = _constructor_edit_node(
-                nodes_config, edges, input_fn=_prompt,
-                node_roles=node_roles,
-            )
-        elif action == "m":
-            nodes_config, edges = _constructor_move_node(
-                nodes_config, edges, input_fn=_prompt,
-            )
-        elif action == "p":
-            yaml_content, _ = build_custom_workflow(
-                name="constructor-preview", nodes_config=nodes_config,
-            )
-            _preview_yaml(yaml_content)
-
-
-def _constructor_add_node(
-    nodes_config: dict[str, dict],
-    edges: list[tuple[str, str]],
-    *,
-    input_fn=None,
-) -> tuple[dict[str, dict], list[tuple[str, str]]]:
-    """Add a new node to the graph."""
-    _prompt = input_fn or (lambda p: click.prompt(p))
-
-    name = _prompt("Node name")
-    if name in nodes_config:
-        click.echo(f"  Node '{name}' already exists.")
-        return nodes_config, edges
-
-    # Select prompt
-    prompt_str = _select_prompt_variant(
-        role_name=name, input_fn=_prompt,
-    )
-
-    # Select agent
-    provider, model = _select_provider(input_fn=_prompt)
-    agent_uri = f"{provider.agent_prefix}{model}"
-
-    # Dependencies
-    dep_str = _prompt("Depends on (comma-separated, or empty)")
-    deps = [d.strip() for d in dep_str.split(",") if d.strip()] \
-        if dep_str else []
-
-    cfg: dict = {
-        "agent": agent_uri,
-        "system_prompt": prompt_str,
-        "outputs": ["result"],
-    }
-    if deps:
-        cfg["depends_on"] = deps
-        for d in deps:
-            if d in nodes_config:
-                edges.append((d, name))
-
-    nodes_config[name] = cfg
-    click.echo(f"  Added node '{name}'")
-    return nodes_config, edges
-
-
-def _constructor_delete_node(
-    nodes_config: dict[str, dict],
-    edges: list[tuple[str, str]],
-    *,
-    input_fn=None,
-) -> tuple[dict[str, dict], list[tuple[str, str]]]:
-    """Delete a node and its edges."""
-    _prompt = input_fn or (lambda p: click.prompt(p))
-
-    node_list = list(nodes_config.keys())
-    for i, name in enumerate(node_list, 1):
-        click.echo(f"    {i}) {name}")
-
-    try:
-        choice = int(_prompt("Delete which node?"))
-    except ValueError:
-        click.echo("  Invalid choice.")
-        return nodes_config, edges
-    if choice < 1 or choice > len(node_list):
-        click.echo("  Invalid choice.")
-        return nodes_config, edges
-
-    target = node_list[choice - 1]
-    del nodes_config[target]
-    edges = [(s, d) for s, d in edges if s != target and d != target]
-
-    # Remove from depends_on of other nodes
-    for cfg in nodes_config.values():
-        deps = cfg.get("depends_on", [])
-        if target in deps:
-            deps.remove(target)
-
-    click.echo(f"  Deleted node '{target}'")
-    return nodes_config, edges
-
-
-def _constructor_edit_node(
-    nodes_config: dict[str, dict],
-    edges: list[tuple[str, str]],
-    *,
-    input_fn=None,
-    node_roles: dict[str, str] | None = None,
-) -> dict[str, dict]:
-    """Edit a node's prompt, agent, or config."""
-    _prompt = input_fn or (lambda p: click.prompt(p))
-
-    node_list = list(nodes_config.keys())
-    for i, name in enumerate(node_list, 1):
-        click.echo(f"    {i}) {name}")
-
-    try:
-        choice = int(_prompt("Edit which node?"))
-    except ValueError:
-        click.echo("  Invalid choice.")
-        return nodes_config
-    if choice < 1 or choice > len(node_list):
-        click.echo("  Invalid choice.")
-        return nodes_config
-
-    target = node_list[choice - 1]
-    cfg = nodes_config[target]
-
-    click.echo(f"  Editing '{target}':")
-    click.echo("    [p] Prompt")
-    click.echo("    [a] Agent (provider/model)")
-    click.echo("    [c] Config (advanced params)")
-    click.echo("    [b] Back")
-
-    sub = _prompt("Choose").strip().lower()
-
-    if sub == "p":
-        # Look up role from node_roles mapping, fallback to node name
-        role_name = (node_roles or {}).get(target, target)
-        cfg["system_prompt"] = _select_prompt_variant(
-            role_name=role_name, input_fn=_prompt,
-        )
-    elif sub == "a":
-        provider, model = _select_provider(input_fn=_prompt)
-        cfg["agent"] = f"{provider.agent_prefix}{model}"
-    elif sub == "c":
-        advanced = _configure_advanced_params(input_fn=_prompt)
-        cfg.update(advanced)
-
-    nodes_config[target] = cfg
-    return nodes_config
-
-
-def _constructor_move_node(
-    nodes_config: dict[str, dict],
-    edges: list[tuple[str, str]],
-    *,
-    input_fn=None,
-) -> tuple[dict[str, dict], list[tuple[str, str]]]:
-    """Move a node by changing its edges."""
-    _prompt = input_fn or (lambda p: click.prompt(p))
-
-    node_list = list(nodes_config.keys())
-    for i, name in enumerate(node_list, 1):
-        click.echo(f"    {i}) {name}")
-
-    try:
-        choice = int(_prompt("Move which node?"))
-    except ValueError:
-        click.echo("  Invalid choice.")
-        return nodes_config, edges
-    if choice < 1 or choice > len(node_list):
-        click.echo("  Invalid choice.")
-        return nodes_config, edges
-
-    target = node_list[choice - 1]
-
-    # Remove old edges for this node
-    edges = [(s, d) for s, d in edges if s != target and d != target]
-
-    # New parents
-    parent_str = _prompt(f"New parents for '{target}' (comma-separated, or empty)")
-    parents = [p.strip() for p in parent_str.split(",") if p.strip()] \
-        if parent_str else []
-
-    # New children
-    child_str = _prompt(f"New children of '{target}' (comma-separated, or empty)")
-    children = [c.strip() for c in child_str.split(",") if c.strip()] \
-        if child_str else []
-
-    for p in parents:
-        if p in nodes_config:
-            edges.append((p, target))
-    for c in children:
-        if c in nodes_config:
-            edges.append((target, c))
-
-    # Update depends_on
-    nodes_config[target]["depends_on"] = parents if parents else []
-
-    click.echo(f"  Moved node '{target}'")
-    return nodes_config, edges
-
-
-# ---------------------------------------------------------------------------
 # Wizard steps
 # ---------------------------------------------------------------------------
 
@@ -908,7 +354,7 @@ TOTAL_STEPS = 5
 
 
 def _step_choose_template() -> tuple[str, str, str]:
-    """Step 1: Two-level category → template selection.
+    """Step 1: Two-level category -> template selection.
 
     Returns (dsl, default_name, user_prompt_text).
     """
@@ -931,6 +377,63 @@ def _step_choose_template() -> tuple[str, str, str]:
         return tpl.dsl, tpl.default_name, f"Input for {tpl.label}:"
 
 
+def _collect_env_vars(nodes_config: dict[str, dict]) -> str:
+    """Collect env vars from node agents and return .env content."""
+    env_lines: list[str] = []
+    seen_vars: set[str] = set()
+    for cfg in nodes_config.values():
+        agent = cfg.get("agent", "")
+        for prov in PROVIDERS.values():
+            if agent.startswith(prov.agent_prefix) and prov.env_var:
+                if prov.env_var not in seen_vars:
+                    env_lines.append(f"{prov.env_var}=\n")
+                    seen_vars.add(prov.env_var)
+    return "".join(env_lines)
+
+
+def _resolve_project_dir(project_name: str) -> Path:
+    """Resolve and validate project directory. Exits on error."""
+    try:
+        project_dir = Path.cwd() / project_name
+    except FileNotFoundError:
+        click.echo(
+            "Error: current directory does not exist. "
+            "Please cd to a valid directory and try again.",
+            err=True,
+        )
+        sys.exit(1)
+
+    if project_dir.exists() and any(project_dir.iterdir()):
+        click.echo(
+            f"Error: directory '{project_name}' already exists and is not empty.",
+            err=True,
+        )
+        sys.exit(1)
+
+    return project_dir
+
+
+def _write_custom_project_files(
+    project_dir: Path, yaml_content: str,
+    needed_prompts: set[str], nodes_config: dict[str, dict],
+) -> None:
+    """Write all project files for the custom wizard."""
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    (project_dir / "workflow.yaml").write_text(yaml_content)
+    _print_file_created("workflow.yaml")
+
+    if needed_prompts:
+        _copy_prompts_to_project(project_dir, needed_prompts)
+        _print_file_created(f"prompts/ ({len(needed_prompts)} files)")
+
+    (project_dir / ".env").write_text(_collect_env_vars(nodes_config))
+    _print_file_created(".env")
+
+    (project_dir / ".gitignore").write_text(".binex/\n.env\n__pycache__/\n*.pyc\n")
+    _print_file_created(".gitignore")
+
+
 def _custom_interactive_wizard(dsl: str) -> None:
     """Full custom wizard: configure each node, preview, save project.
 
@@ -941,7 +444,6 @@ def _custom_interactive_wizard(dsl: str) -> None:
     parsed = parse_dsl([dsl])
 
     # Phase 1 — per-node configuration (with 'back' support)
-    nodes_config: dict[str, dict] = {}
     node_list = list(parsed.nodes)
     nodes_config = _configure_all_nodes(node_list, parsed.depends_on)
 
@@ -971,52 +473,8 @@ def _custom_interactive_wizard(dsl: str) -> None:
 
     # Phase 4 — project name & generation
     project_name = click.prompt("Project name", default="my-project")
-
-    try:
-        project_dir = Path.cwd() / project_name
-    except FileNotFoundError:
-        click.echo(
-            "Error: current directory does not exist. "
-            "Please cd to a valid directory and try again.",
-            err=True,
-        )
-        sys.exit(1)
-
-    if project_dir.exists() and any(project_dir.iterdir()):
-        click.echo(
-            f"Error: directory '{project_name}' already exists and is not empty.",
-            err=True,
-        )
-        sys.exit(1)
-
-    project_dir.mkdir(parents=True, exist_ok=True)
-
-    workflow_path = project_dir / "workflow.yaml"
-    workflow_path.write_text(yaml_content)
-    _print_file_created("workflow.yaml")
-
-    if needed_prompts:
-        _copy_prompts_to_project(project_dir, needed_prompts)
-        _print_file_created(f"prompts/ ({len(needed_prompts)} files)")
-
-    # Collect env vars from node agents for .env
-    env_lines: list[str] = []
-    seen_vars: set[str] = set()
-    for cfg in nodes_config.values():
-        agent = cfg.get("agent", "")
-        for prov in PROVIDERS.values():
-            if agent.startswith(prov.agent_prefix) and prov.env_var:
-                if prov.env_var not in seen_vars:
-                    env_lines.append(f"{prov.env_var}=\n")
-                    seen_vars.add(prov.env_var)
-
-    env_path = project_dir / ".env"
-    env_path.write_text("".join(env_lines))
-    _print_file_created(".env")
-
-    gitignore_path = project_dir / ".gitignore"
-    gitignore_path.write_text(".binex/\n.env\n__pycache__/\n*.pyc\n")
-    _print_file_created(".gitignore")
+    project_dir = _resolve_project_dir(project_name)
+    _write_custom_project_files(project_dir, yaml_content, needed_prompts, nodes_config)
 
     click.echo()
 
@@ -1027,7 +485,7 @@ def _custom_interactive_wizard(dsl: str) -> None:
     )
 
     if run_now.lower() == "y":
-        _run_workflow(str(workflow_path))
+        _run_workflow(str(project_dir / "workflow.yaml"))
     else:
         _print_done_panel(project_name)
 
@@ -1047,15 +505,18 @@ def _step_custom_template() -> tuple[str, str, str]:
         console = get_console(stderr=True)
         console.print()
         console.print(
-            "  [bold]1)[/bold] [cyan]DSL[/cyan] — write topology as arrows"
+            "  [bold]1)[/bold] [cyan]DSL[/cyan] \u2014 write topology as arrows"
             " (e.g. A -> B, C -> D)"
         )
-        console.print("  [bold]2)[/bold] [cyan]Step-by-step[/cyan] — build nodes one at a time")
+        console.print(
+            "  [bold]2)[/bold] [cyan]Step-by-step[/cyan]"
+            " \u2014 build nodes one at a time"
+        )
         console.print()
     else:
         click.echo()
-        click.echo("  1) DSL — write topology as arrows (e.g. A -> B, C -> D)")
-        click.echo("  2) Step-by-step — build nodes one at a time")
+        click.echo("  1) DSL \u2014 write topology as arrows (e.g. A -> B, C -> D)")
+        click.echo("  2) Step-by-step \u2014 build nodes one at a time")
         click.echo()
 
     mode = click.prompt("Choose mode", type=click.Choice(["1", "2"]), default="1")
@@ -1138,286 +599,24 @@ def _step_custom_dsl_topology() -> str:
     return dsl
 
 
-def _get_bundled_prompt_list() -> list[tuple[str, str]]:
-    """Return list of (filename, description) for bundled prompts."""
-    prompts_dir = _get_prompts_dir()
-    result = []
-    for md_file in sorted(prompts_dir.glob("*.md")):
-        first_line = md_file.read_text().strip().split("\n")[0][:60]
-        result.append((md_file.name, first_line))
-    return result
+def _print_topology_preview_rich(levels: list[str]) -> None:
+    """Print a styled Rich preview of the current topology."""
+    from rich.text import Text
 
+    from binex.cli.ui import get_console
 
-def _select_prompt(*, node_id: str, input_fn=None) -> str:
-    """Interactive prompt picker. Returns system_prompt string.
-
-    Options: bundled prompts (file:// ref), custom text, file path.
-    """
-    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
-    bundled = _get_bundled_prompt_list()
-
-    # Find recommended prompt
-    recommended_idx = None
-    for i, (filename, _desc) in enumerate(bundled):
-        stem = filename.removesuffix(".md")
-        if stem == node_id or node_id in stem or stem in node_id:
-            recommended_idx = i
-            break
-
-    if has_rich():
-        from rich.text import Text
-
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-        console.print("  System prompt:")
-        for i, (filename, desc) in enumerate(bundled, 1):
-            line = Text()
-            line.append(f"    {i}) ", style="dim")
-            line.append(filename, style="cyan")
-            if i - 1 == recommended_idx:
-                line.append(" (recommended)", style="green")
-            line.append(f" \u2014 {desc}", style="dim")
-            console.print(line)
-        custom_text_n = len(bundled) + 1
-        file_path_n = len(bundled) + 2
-        line = Text()
-        line.append(f"    {custom_text_n}) ", style="dim")
-        line.append("Write custom text", style="bold")
-        console.print(line)
-        line = Text()
-        line.append(f"    {file_path_n}) ", style="dim")
-        line.append("Provide file path", style="bold")
-        console.print(line)
-    else:
-        click.echo("  System prompt:")
-        for i, (filename, desc) in enumerate(bundled, 1):
-            tag = " (recommended)" if i - 1 == recommended_idx else ""
-            click.echo(f"    {i}) {filename}{tag} — {desc}")
-        custom_text_n = len(bundled) + 1
-        file_path_n = len(bundled) + 2
-        click.echo(f"    {custom_text_n}) Write custom text")
-        click.echo(f"    {file_path_n}) Provide file path")
-
-    choice = _prompt("Choose prompt")
-
-    # Support both number and filename input
-    try:
-        choice_int = int(choice)
-    except ValueError:
-        # User typed a filename — match against bundled list
-        matched = [f for f, _ in bundled if f == choice or f.removesuffix(".md") == choice]
-        if matched:
-            return f"file://prompts/{matched[0]}"
-        # Treat as custom text
-        return choice
-
-    if choice_int <= len(bundled):
-        filename = bundled[choice_int - 1][0]
-        return f"file://prompts/{filename}"
-    elif choice_int == custom_text_n:
-        text = _prompt("Enter system prompt text")
-        return text
-    else:
-        path = _prompt("Enter path to prompt file")
-        if not path.startswith("file://"):
-            path = f"file://{path}"
-        return path
-
-
-def _configure_back_edge(*, node_id: str, upstream_nodes: list[str], input_fn=None) -> dict:
-    """Configure a back-edge for review loops. Returns back_edge dict."""
-    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
-
-    if has_rich():
-        from rich.text import Text
-
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-        console.print("  Return to which node on reject?")
-        for i, name in enumerate(upstream_nodes, 1):
-            line = Text()
-            line.append(f"    {i}) ", style="dim")
-            line.append(name, style="bold cyan")
-            console.print(line)
-    else:
-        click.echo("  Return to which node on reject?")
-        for i, name in enumerate(upstream_nodes, 1):
-            click.echo(f"    {i}) {name}")
-
-    choice = int(_prompt("Choose target"))
-    target = upstream_nodes[choice - 1]
-
-    max_iter_str = _prompt("Max iterations [3]") or "3"
-    max_iterations = int(max_iter_str)
-
-    return {
-        "target": target,
-        "when": f"${{{node_id}.decision}} == rejected",
-        "max_iterations": max_iterations,
-    }
-
-
-def _select_provider(*, input_fn=None) -> tuple:
-    """Select provider and model. Returns (ProviderConfig, model_string)."""
-    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
-
-    provider_names = list(PROVIDERS.keys())
-    if has_rich():
-        from rich.text import Text
-
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-        console.print("  Provider:")
-        for i, name in enumerate(provider_names, 1):
-            p = PROVIDERS[name]
-            suffix = "free, local" if p.env_var is None else "API key required"
-            line = Text()
-            line.append(f"    {i}) ", style="dim")
-            line.append(f"{name:12s}", style="bold")
-            line.append(f" \u2014 {suffix}", style="dim")
-            console.print(line)
-    else:
-        click.echo("  Provider:")
-        for i, name in enumerate(provider_names, 1):
-            p = PROVIDERS[name]
-            suffix = "free, local" if p.env_var is None else "API key required"
-            click.echo(f"    {i}) {name} — {suffix}")
-
-    choice = int(_prompt("Choose provider"))
-    provider = PROVIDERS[provider_names[choice - 1]]
-
-    model_input = _prompt(f"Model [{provider.default_model}]")
-    model = model_input if model_input else provider.default_model
-
-    # Deduplicate provider prefix
-    prefix_provider = provider.agent_prefix.split("://")[-1].rstrip("/")
-    if prefix_provider and model.startswith(f"{prefix_provider}/"):
-        model = model[len(prefix_provider) + 1:]
-
-    return provider, model
-
-
-_BACK = object()  # sentinel for "go back to previous node"
-
-
-def _configure_all_nodes(
-    node_list: list[str],
-    depends_on: dict[str, list[str]],
-) -> dict[str, dict]:
-    """Configure all nodes with support for 'back' to return to previous node."""
-    nodes_config: dict[str, dict] = {}
-    i = 0
-    while i < len(node_list):
-        node_id = node_list[i]
-        deps = depends_on.get(node_id, [])
-        if has_rich():
-            from binex.cli.ui import get_console
-
-            console = get_console(stderr=True)
-            console.print(
-                f"\n[bold cyan]── Node {i + 1}/{len(node_list)}: {node_id} ──[/bold cyan]"
-            )
+    console = get_console(stderr=True)
+    parts = " -> ".join(levels).replace(",", " ,").split()
+    preview = Text("  Current graph: ", style="dim")
+    for part in parts:
+        ps = part.strip()
+        if ps == "->":
+            preview.append(" \u2192 ", style="dim")
+        elif ps == ",":
+            preview.append(", ", style="dim")
         else:
-            click.echo(f"\n── Node {i + 1}/{len(node_list)}: {node_id} ──")
-        cfg = _configure_node(node_id=node_id, dependencies=deps)
-        if cfg is _BACK:
-            if i > 0:
-                i -= 1
-                if has_rich():
-                    from binex.cli.ui import get_console
-
-                    console = get_console(stderr=True)
-                    console.print(
-                        f"  [yellow]↩[/yellow] Returning to "
-                        f"'[bold]{node_list[i]}[/bold]'"
-                    )
-                else:
-                    click.echo(f"  ↩ Returning to '{node_list[i]}'")
-            else:
-                if has_rich():
-                    from binex.cli.ui import get_console
-
-                    console = get_console(stderr=True)
-                    console.print("  [dim]Already at the first node.[/dim]")
-                else:
-                    click.echo("  Already at the first node.")
-            continue
-        nodes_config[node_id] = cfg
-        i += 1
-    return nodes_config
-
-
-def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> dict | object:
-    """Interactively configure a single node.
-
-    Returns dict for YAML generation, or _BACK sentinel.
-    """
-    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
-
-    if has_rich():
-        from rich.text import Text
-
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-        console.print(f"  Agent type for '[bold]{node_id}[/bold]':")
-        for num, label in [
-            ("1", "LLM (language model)"),
-            ("2", "Human review (approve/reject)"),
-            ("3", "Human input (free text)"),
-            ("4", "A2A (external agent)"),
-        ]:
-            line = Text()
-            line.append(f"    {num}) ", style="dim")
-            line.append(label, style="bold")
-            console.print(line)
-        console.print("    [dim]Type 'back' to return to previous node[/dim]")
-    else:
-        click.echo(f"  Agent type for '{node_id}':")
-        click.echo("    1) LLM (language model)")
-        click.echo("    2) Human review (approve/reject)")
-        click.echo("    3) Human input (free text)")
-        click.echo("    4) A2A (external agent)")
-        click.echo("    Type 'back' to return to previous node")
-    agent_type = _prompt("Choose")
-
-    if agent_type.lower() == "back":
-        return _BACK
-
-    config: dict = {"outputs": ["result"]}
-    if dependencies:
-        config["depends_on"] = dependencies
-
-    if agent_type == "1":
-        provider, model = _select_provider(input_fn=_prompt)
-        config["agent"] = f"{provider.agent_prefix}{model}"
-        config["system_prompt"] = _select_prompt(node_id=node_id, input_fn=_prompt)
-    elif agent_type == "2":
-        config["agent"] = "human://review"
-    elif agent_type == "3":
-        config["agent"] = "human://input"
-        config["system_prompt"] = _prompt("Prompt text for user")
-    elif agent_type == "4":
-        endpoint = _prompt("Endpoint URL")
-        config["agent"] = f"a2a://{endpoint}"
-
-    # Back-edge
-    add_back_edge = _prompt("Add review loop (back-edge)? (y/n)")
-    if add_back_edge.lower() == "y":
-        config["back_edge"] = _configure_back_edge(
-            node_id=node_id, upstream_nodes=dependencies, input_fn=_prompt,
-        )
-
-    # Advanced params
-    add_advanced = _prompt("Configure advanced parameters? (y/n)")
-    if add_advanced.lower() == "y":
-        advanced = _configure_advanced_params()
-        config.update(advanced)
-
-    return config
+            preview.append(ps, style="bold magenta")
+    console.print(preview)
 
 
 def _step_mode_topology(*, input_fn=None) -> str:
@@ -1442,113 +641,9 @@ def _step_mode_topology(*, input_fn=None) -> str:
             break
         levels.append(answer.strip())
         if has_rich():
-            from binex.cli.ui import get_console
-
-            console = get_console(stderr=True)
-            # Build styled graph preview
-            parts = " -> ".join(levels).replace(",", " ,").split()
-            from rich.text import Text
-
-            preview = Text("  Current graph: ", style="dim")
-            for part in parts:
-                ps = part.strip()
-                if ps == "->":
-                    preview.append(" \u2192 ", style="dim")
-                elif ps == ",":
-                    preview.append(", ", style="dim")
-                else:
-                    preview.append(ps, style="bold magenta")
-            console.print(preview)
+            _print_topology_preview_rich(levels)
 
     return " -> ".join(levels)
-
-
-def _configure_advanced_params(*, input_fn=None) -> dict:
-    """Collect optional advanced parameters. Returns dict of extra YAML keys.
-
-    Empty input or non-numeric input skips each parameter.
-    """
-    _prompt = input_fn or (lambda prompt: click.prompt(prompt, default=""))
-    result: dict = {}
-
-    if has_rich():
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-
-        console.print("  [bold]Budget[/bold] [dim](Enter to skip)[/dim]")
-        budget_str = _prompt("Budget max_cost in $ (Enter to skip)")
-        if _is_number(budget_str):
-            result["budget"] = {"max_cost": float(budget_str)}
-
-        console.print("  [bold]Retry policy[/bold] [dim](Enter to skip)[/dim]")
-        retry_str = _prompt("Max retries (Enter to skip)")
-        if _is_int(retry_str):
-            backoff = _prompt("Backoff strategy [fixed/exponential]") or "exponential"
-            result["retry_policy"] = {"max_retries": int(retry_str), "backoff": backoff}
-
-        console.print("  [bold]Deadline[/bold] [dim](Enter to skip)[/dim]")
-        deadline_str = _prompt("Deadline in seconds (Enter to skip)")
-        if _is_number(deadline_str):
-            result["deadline_ms"] = int(float(deadline_str) * 1000)
-
-        console.print("  [bold]LLM config[/bold] [dim](Enter to skip)[/dim]")
-        temp_str = _prompt("Temperature (Enter to skip)")
-        config: dict = {}
-        if _is_number(temp_str):
-            config["temperature"] = float(temp_str)
-        tokens_str = _prompt("Max tokens (Enter to skip)")
-        if _is_int(tokens_str):
-            config["max_tokens"] = int(tokens_str)
-        if config:
-            result["config"] = config
-    else:
-        budget_str = _prompt("Budget max_cost in $ (Enter to skip)")
-        if _is_number(budget_str):
-            result["budget"] = {"max_cost": float(budget_str)}
-
-        retry_str = _prompt("Max retries (Enter to skip)")
-        if _is_int(retry_str):
-            backoff = _prompt("Backoff strategy [fixed/exponential]") or "exponential"
-            result["retry_policy"] = {"max_retries": int(retry_str), "backoff": backoff}
-
-        deadline_str = _prompt("Deadline in seconds (Enter to skip)")
-        if _is_number(deadline_str):
-            result["deadline_ms"] = int(float(deadline_str) * 1000)
-
-        temp_str = _prompt("Temperature (Enter to skip)")
-        config: dict = {}
-        if _is_number(temp_str):
-            config["temperature"] = float(temp_str)
-        tokens_str = _prompt("Max tokens (Enter to skip)")
-        if _is_int(tokens_str):
-            config["max_tokens"] = int(tokens_str)
-        if config:
-            result["config"] = config
-
-    return result
-
-
-def _is_number(s: str) -> bool:
-    """Check if string is a valid number (int or float)."""
-    if not s:
-        return False
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-
-
-def _is_int(s: str) -> bool:
-    """Check if string is a valid integer."""
-    if not s:
-        return False
-    try:
-        int(s)
-        return True
-    except ValueError:
-        return False
 
 
 def _step_user_input() -> bool:
@@ -1566,70 +661,6 @@ def _step_user_input() -> bool:
     else:
         _print_confirm("No user prompt")
     return want_user_input
-
-
-def _step_choose_provider() -> tuple[ProviderConfig, str, str]:
-    """Step 3: Provider selection. Returns (provider, model, api_key)."""
-    _print_step(3, TOTAL_STEPS, "Choose your LLM")
-    click.echo()
-
-    top_providers = ["ollama", "openai", "anthropic"]
-    if has_rich():
-        from rich.text import Text
-
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-        for i, pname in enumerate(top_providers, 1):
-            p = PROVIDERS[pname]
-            suffix = "free, runs locally" if p.env_var is None else "requires API key"
-            line = Text()
-            line.append(f"  {i}) ", style="dim")
-            line.append(f"{pname:12s}", style="bold")
-            line.append(f" \u2014 {suffix}", style="dim")
-            if p.env_var is None:
-                line.append(" \u2b50", style="yellow")
-            console.print(line)
-        line = Text()
-        line.append(f"  {len(top_providers) + 1}) ", style="dim")
-        line.append("Other providers...", style="bold")
-        console.print(line)
-    else:
-        for i, pname in enumerate(top_providers, 1):
-            p = PROVIDERS[pname]
-            suffix = "free, runs locally" if p.env_var is None else "requires API key"
-            click.echo(f"  {i}) {pname:12s} \u2014 {suffix}")
-        click.echo(f"  {len(top_providers) + 1}) {'Other providers...':12s}")
-    click.echo()
-
-    prov_choice = click.prompt("Choose", default=1, type=int)
-
-    if prov_choice < 1 or prov_choice > len(top_providers) + 1:
-        click.echo(f"Error: invalid choice {prov_choice}.", err=True)
-        sys.exit(1)
-
-    if prov_choice <= len(top_providers):
-        provider: ProviderConfig = PROVIDERS[top_providers[prov_choice - 1]]
-    else:
-        all_names = list(PROVIDERS.keys())
-        click.echo("\nAll providers:")
-        for i, pname in enumerate(all_names, 1):
-            click.echo(f"  {i}) {pname}")
-        click.echo()
-        sub_choice = click.prompt("Choose", type=int)
-        if sub_choice < 1 or sub_choice > len(all_names):
-            click.echo(f"Error: invalid choice {sub_choice}.", err=True)
-            sys.exit(1)
-        provider = PROVIDERS[all_names[sub_choice - 1]]
-
-    model = click.prompt("Model", default=provider.default_model)
-    _print_confirm(f"{provider.name} / {model}")
-
-    api_key = ""
-    if provider.env_var:
-        api_key = click.prompt(provider.env_var)
-
-    return provider, model, api_key
 
 
 def _step_project_name(default_name: str) -> tuple[str, Path]:

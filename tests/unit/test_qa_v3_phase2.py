@@ -16,7 +16,8 @@ from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
 from binex.models.task import TaskNode
 from binex.models.workflow import NodeSpec, WorkflowSpec
-from binex.runtime.orchestrator import Orchestrator, evaluate_when
+from binex.runtime.back_edge import evaluate_when
+from binex.runtime.orchestrator import Orchestrator
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 from binex.tools import (
     ToolDefinition,

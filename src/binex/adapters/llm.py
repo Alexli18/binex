@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import uuid
+from collections.abc import Callable
 from typing import Any
 
 import click
@@ -142,11 +143,39 @@ class LLMAdapter:
             model=model,
         )
 
+    async def _streaming_completion(
+        self,
+        kwargs: dict[str, Any],
+        callback: Callable[[str], None] | None = None,
+    ) -> tuple[Any, str]:
+        """Call litellm with streaming, return (reconstructed_response, full_content)."""
+        stream_kwargs = {**kwargs, "stream": True}
+        chunks: list[Any] = []
+        content_parts: list[str] = []
+
+        response = await litellm.acompletion(**stream_kwargs)
+        async for chunk in response:
+            chunks.append(chunk)
+            delta = chunk.choices[0].delta if chunk.choices else None
+            if delta and getattr(delta, "content", None):
+                token = delta.content
+                content_parts.append(token)
+                if callback:
+                    callback(token)
+
+        full_content = "".join(content_parts)
+        # Rebuild response for cost calculation
+        rebuilt = litellm.stream_chunk_builder(chunks)
+        return rebuilt, full_content
+
     async def execute(
         self,
         task: TaskNode,
         input_artifacts: list[Artifact],
         trace_id: str,
+        *,
+        stream: bool = False,
+        stream_callback: Callable[[str], None] | None = None,
     ) -> ExecutionResult:
         prompt = self._build_prompt(task, input_artifacts)
 
@@ -164,6 +193,28 @@ class LLMAdapter:
             resolved_tools = resolve_tools(task.tools, workflow_dir=self._workflow_dir)
             kwargs["tools"] = [t.to_openai_schema() for t in resolved_tools]
 
+        # Streaming mode (only for non-tool-calling initial request)
+        if stream and not resolved_tools:
+            try:
+                response, content = await self._streaming_completion(kwargs, stream_callback)
+                artifacts = [
+                    Artifact(
+                        id=f"art_{uuid.uuid4().hex[:12]}",
+                        run_id=task.run_id,
+                        type="llm_response",
+                        content=content,
+                        lineage=Lineage(
+                            produced_by=task.node_id,
+                            derived_from=[a.id for a in input_artifacts],
+                        ),
+                    )
+                ]
+                cost_record = self._accumulate_cost([response], task, self._model)
+                return ExecutionResult(artifacts=artifacts, cost=cost_record)
+            except Exception as exc:
+                logger.warning("Streaming failed, falling back to non-streaming: %s", exc)
+
+        # Non-streaming path (original code)
         response = await self._completion_with_retry(**kwargs)
         message = response.choices[0].message
         all_responses = [response]

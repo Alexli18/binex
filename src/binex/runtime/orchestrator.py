@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import re
-import time
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -15,34 +14,22 @@ import click
 from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
 from binex.models.artifact import Artifact
-from binex.models.execution import ExecutionRecord, RunSummary
+from binex.models.execution import RunSummary
 from binex.models.task import TaskNode
 from binex.models.workflow import NodeSpec, WorkflowSpec
+from binex.runtime._node_executor import collect_input_artifacts, now_ms, record_execution
+from binex.runtime.back_edge import evaluate_back_edge, evaluate_when
+from binex.runtime.budget import (
+    check_batch_budget,
+    get_effective_policy,
+    get_node_max_cost,
+    skip_all_remaining,
+)
 from binex.runtime.dispatcher import Dispatcher, _backoff_delay
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
 
 logger = logging.getLogger(__name__)
-
-
-def get_effective_policy(spec: WorkflowSpec) -> str:
-    """Return the effective budget policy — from workflow or default 'stop'."""
-    if spec.budget:
-        return spec.budget.policy
-    return "stop"
-
-
-def get_node_max_cost(
-    node: NodeSpec, spec: WorkflowSpec, accumulated_workflow_cost: float
-) -> float | None:
-    """Return effective max_cost for a node, considering workflow budget."""
-    if node.budget is None:
-        return None
-    node_max = node.budget.max_cost
-    if spec.budget:
-        remaining = spec.budget.max_cost - accumulated_workflow_cost
-        return min(node_max, remaining)
-    return node_max
 
 
 class Orchestrator:
@@ -52,11 +39,16 @@ class Orchestrator:
         self,
         artifact_store: ArtifactStore,
         execution_store: ExecutionStore,
+        *,
+        stream: bool = False,
+        stream_callback: Callable[[str], None] | None = None,
     ) -> None:
         self.artifact_store = artifact_store
         self.execution_store = execution_store
         self.dispatcher = Dispatcher()
         self._pending_feedback: dict[str, list[Artifact]] = {}
+        self._stream = stream
+        self._stream_callback = stream_callback
 
     async def run_workflow(
         self,
@@ -96,10 +88,10 @@ class Orchestrator:
                 continue
 
             # Budget check before scheduling next batch
-            budget_action = self._check_batch_budget(spec, accumulated_cost)
+            budget_action = check_batch_budget(spec, accumulated_cost)
             if budget_action == "stop":
                 budget_exceeded = True
-                self._skip_all_remaining(scheduler, ready)
+                skip_all_remaining(scheduler, ready)
                 break
             if budget_action == "warn":
                 msg = (
@@ -133,34 +125,6 @@ class Orchestrator:
 
         await self.execution_store.update_run(summary)
         return summary
-
-    @staticmethod
-    def _check_batch_budget(
-        spec: WorkflowSpec, accumulated_cost: float,
-    ) -> str | None:
-        """Check budget before scheduling a batch.
-
-        Returns "stop", "warn", or None (no budget issue).
-        """
-        if not spec.budget or spec.budget.max_cost <= 0:
-            return None
-        if accumulated_cost <= spec.budget.max_cost:
-            return None
-        return spec.budget.policy  # "stop" or "warn"
-
-    @staticmethod
-    def _skip_all_remaining(
-        scheduler: Scheduler, initial_ready: list[str],
-    ) -> None:
-        """Skip all ready and subsequently unblocked nodes."""
-        for node_id in initial_ready:
-            scheduler.mark_skipped(node_id)
-        while not scheduler.is_complete() and not scheduler.is_blocked():
-            remaining = scheduler.ready_nodes()
-            if not remaining:
-                break
-            for node_id in remaining:
-                scheduler.mark_skipped(node_id)
 
     def _schedule_ready_nodes(
         self,
@@ -305,13 +269,12 @@ class Orchestrator:
             spec, run_id, node_id, node_spec, retry_policy, node_max,
         )
 
-        input_artifacts: list[Artifact] = []
-        for dep_id in dag.dependencies(node_id):
-            input_artifacts.extend(node_artifacts.get(dep_id, []))
-        # Inject pending feedback from back-edge
-        input_artifacts.extend(self._pending_feedback.pop(node_id, []))
+        input_artifacts = collect_input_artifacts(
+            dag, node_id, node_artifacts,
+            self._pending_feedback.pop(node_id, []),
+        )
 
-        start_ms = _now_ms()
+        start_ms = now_ms()
         succeeded, error_msg, output_artifacts = await self._retry_loop(
             spec, run_id, node_id, task, input_artifacts, trace_id,
             node_max, max_retries, retry_policy, node_artifacts,
@@ -321,28 +284,28 @@ class Orchestrator:
             scheduler.mark_completed(node_id)
             status = task.status.__class__("completed")
             # Evaluate back-edge after successful completion
-            await self._evaluate_back_edge(
+            await evaluate_back_edge(
                 spec, scheduler, dag, node_id,
                 node_artifacts, node_artifacts_history,
+                self._pending_feedback,
             )
         else:
             scheduler.mark_failed(node_id)
             status = task.status.__class__("failed")
 
-        latency_ms = _now_ms() - start_ms
-        record = ExecutionRecord(
-            id=f"rec_{uuid.uuid4().hex[:12]}",
+        latency_ms = now_ms() - start_ms
+        await record_execution(
+            self.execution_store,
             run_id=run_id,
-            task_id=node_id,
+            node_id=node_id,
             agent_id=node_spec.agent,
             status=status,
-            input_artifact_refs=[a.id for a in input_artifacts],
-            output_artifact_refs=[a.id for a in output_artifacts],
+            input_artifacts=input_artifacts,
+            output_artifacts=output_artifacts,
             latency_ms=latency_ms,
             trace_id=trace_id,
             error=error_msg,
         )
-        await self.execution_store.record(record)
 
     @staticmethod
     def _build_task_node(
@@ -365,6 +328,11 @@ class Orchestrator:
             max_retries = 1  # single attempt, dispatcher handles retry
             task_retry_policy = retry_policy
 
+        # Build config dict, injecting output_schema if present
+        config = dict(node_spec.config)
+        if node_spec.output_schema is not None:
+            config["output_schema"] = node_spec.output_schema
+
         task = TaskNode(
             id=f"{run_id}_{node_id}",
             run_id=run_id,
@@ -377,9 +345,52 @@ class Orchestrator:
             deadline_ms=node_spec.deadline_ms or (
                 spec.defaults.deadline_ms if spec.defaults else None
             ),
-            config=node_spec.config,
+            config=config,
         )
         return task, max_retries
+
+    async def _execute_single_attempt(
+        self,
+        spec: WorkflowSpec,
+        run_id: str,
+        node_id: str,
+        task: TaskNode,
+        input_artifacts: list[Artifact],
+        trace_id: str,
+        node_max: float | None,
+        node_artifacts: dict[str, list[Artifact]],
+    ) -> tuple[bool, str | None, list[Artifact]]:
+        """Execute a single dispatch attempt with cost recording and artifact storage.
+
+        Returns (succeeded, error_msg, output_artifacts).
+        Raises on dispatch failure so the caller can handle retries.
+        """
+        result = await self.dispatcher.dispatch(
+            task, input_artifacts, trace_id,
+            stream=self._stream,
+            stream_callback=self._stream_callback,
+        )
+        output_artifacts = result.artifacts
+
+        if result.cost:
+            if node_max is not None:
+                result.cost.node_budget = node_max
+            await self.execution_store.record_cost(result.cost)
+
+        if node_max is not None and result.cost:
+            if await self._budget_post_check(
+                spec, run_id, node_id, node_max,
+            ):
+                error_msg = (
+                    f"Node '{node_id}': exceeded budget "
+                    f"(stop policy)"
+                )
+                return False, error_msg, []
+
+        for art in output_artifacts:
+            await self.artifact_store.store(art)
+        node_artifacts[node_id] = output_artifacts
+        return True, None, output_artifacts
 
     async def _retry_loop(
         self,
@@ -410,31 +421,10 @@ class Orchestrator:
                     return False, pre_check_err, output_artifacts
 
             try:
-                result = await self.dispatcher.dispatch(
-                    task, input_artifacts, trace_id,
+                return await self._execute_single_attempt(
+                    spec, run_id, node_id, task, input_artifacts,
+                    trace_id, node_max, node_artifacts,
                 )
-                output_artifacts = result.artifacts
-
-                if result.cost:
-                    if node_max is not None:
-                        result.cost.node_budget = node_max
-                    await self.execution_store.record_cost(result.cost)
-
-                if node_max is not None and result.cost:
-                    if await self._budget_post_check(
-                        spec, run_id, node_id, node_max,
-                    ):
-                        error_msg = (
-                            f"Node '{node_id}': exceeded budget "
-                            f"(stop policy)"
-                        )
-                        return False, error_msg, []
-
-                for art in output_artifacts:
-                    await self.artifact_store.store(art)
-                node_artifacts[node_id] = output_artifacts
-                return True, None, output_artifacts
-
             except Exception as exc:
                 error_msg = str(exc)
                 if attempt < max_retries:
@@ -445,80 +435,3 @@ class Orchestrator:
                     await asyncio.sleep(delay)
 
         return False, error_msg, output_artifacts
-
-
-    async def _evaluate_back_edge(
-        self,
-        spec: WorkflowSpec,
-        scheduler: Scheduler,
-        dag: DAG,
-        node_id: str,
-        node_artifacts: dict[str, list[Artifact]],
-        node_artifacts_history: dict[str, list[list[Artifact]]],
-    ) -> None:
-        """Evaluate back_edge after successful node execution. Resets chain if triggered."""
-        back_edge = spec.nodes[node_id].back_edge
-        if back_edge is None:
-            return
-
-        if not evaluate_when(back_edge.when, node_artifacts):
-            return
-
-        iteration = scheduler.get_execution_count(node_id)
-        if iteration >= back_edge.max_iterations:
-            decision = click.prompt(
-                f"  Max iterations ({back_edge.max_iterations}) reached for '{node_id}'. "
-                f"[a]ccept last draft · [f]ail workflow",
-                type=click.Choice(["a", "f"]),
-                show_choices=False,
-            )
-            if decision == "f":
-                scheduler.mark_failed(node_id)
-            return
-
-        # Collect feedback artifacts for injection into target node
-        feedback_arts = [
-            a for a in node_artifacts.get(node_id, [])
-            if a.type == "feedback"
-        ]
-        if feedback_arts:
-            self._pending_feedback[back_edge.target] = feedback_arts
-
-        # Reset chain and archive old artifacts
-        reset_nodes = scheduler.reset_chain(back_edge.target, node_id, dag)
-        for nid in reset_nodes:
-            old = node_artifacts.pop(nid, [])
-            node_artifacts_history.setdefault(nid, []).append(old)
-
-
-_WHEN_RE = re.compile(r"^\$\{([\w-]+)\.([\w-]+)\}\s*(==|!=)\s*(.+)$")
-
-
-def evaluate_when(when_str: str, node_artifacts: dict[str, list[Artifact]]) -> bool:
-    """Evaluate a when-condition string against collected node artifacts.
-
-    Returns True if the condition is satisfied, False otherwise.
-    Raises ValueError for malformed when strings.
-    """
-    m = _WHEN_RE.match(when_str.strip())
-    if not m:
-        raise ValueError(f"Invalid when condition syntax: {when_str!r}")
-
-    node_id, output_name, operator, value = m.group(1), m.group(2), m.group(3), m.group(4).strip()
-
-    artifacts = node_artifacts.get(node_id)
-    if not artifacts:
-        return False
-
-    # Match artifact by type (output_name), fall back to first artifact
-    matching = [a for a in artifacts if a.type == output_name]
-    actual = str(matching[0].content) if matching else str(artifacts[0].content)
-
-    if operator == "==":
-        return actual == value
-    else:  # !=
-        return actual != value
-
-
-def _now_ms() -> int:
-    return int(time.monotonic() * 1000)

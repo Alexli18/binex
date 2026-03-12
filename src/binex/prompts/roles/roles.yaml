@@ -1,0 +1,967 @@
+# Prompt role registry — all roles across 8 categories.
+# Loaded by binex.cli.prompt_roles at import time.
+
+# -- General --
+- name: research-planner
+  category: general
+  phase: input
+  pairs_with: [researcher]
+  variants:
+    - filename: gen-research-planner.md
+      label: Default
+      description: Plan research goals and approach
+      is_default: true
+
+- name: researcher
+  category: general
+  phase: process
+  pairs_with: [research-planner, research-validator]
+  variants:
+    - filename: gen-researcher.md
+      label: Default
+      description: Conduct deep research on assigned topic
+      is_default: true
+
+- name: research-validator
+  category: general
+  phase: review
+  pairs_with: [researcher]
+  variants:
+    - filename: gen-research-validator.md
+      label: Default
+      description: Validate research quality
+      is_default: true
+
+- name: research-synthesizer
+  category: general
+  phase: output
+  pairs_with: [research-validator]
+  variants:
+    - filename: gen-research-synthesizer.md
+      label: Default
+      description: Synthesize findings into summary
+      is_default: true
+
+- name: draft-writer
+  category: general
+  phase: process
+  pairs_with: [content-reviewer]
+  variants:
+    - filename: gen-draft-writer.md
+      label: Default
+      description: Write initial content draft
+      is_default: true
+
+- name: content-reviewer
+  category: general
+  phase: review
+  pairs_with: [draft-writer, content-reviser]
+  variants:
+    - filename: gen-content-reviewer.md
+      label: Default
+      description: Review content for quality
+      is_default: true
+
+- name: content-reviser
+  category: general
+  phase: process
+  pairs_with: [content-reviewer]
+  variants:
+    - filename: gen-content-reviser.md
+      label: Default
+      description: Revise content based on review
+      is_default: true
+
+- name: content-editor
+  category: general
+  phase: output
+  pairs_with: [content-reviser]
+  variants:
+    - filename: gen-content-editor.md
+      label: Default
+      description: Final editing and polish
+      is_default: true
+
+- name: chunk-splitter
+  category: general
+  phase: input
+  pairs_with: [chunk-processor]
+  variants:
+    - filename: gen-chunk-splitter.md
+      label: Default
+      description: Split data into chunks
+      is_default: true
+
+- name: chunk-processor
+  category: general
+  phase: process
+  pairs_with: [chunk-splitter, chunk-merger]
+  variants:
+    - filename: gen-chunk-processor.md
+      label: Default
+      description: Process individual chunks
+      is_default: true
+
+- name: chunk-merger
+  category: general
+  phase: output
+  pairs_with: [chunk-processor]
+  variants:
+    - filename: gen-chunk-merger.md
+      label: Default
+      description: Merge processed chunks
+      is_default: true
+
+- name: data-processor
+  category: general
+  phase: process
+  pairs_with: [data-aggregator]
+  variants:
+    - filename: gen-data-processor.md
+      label: Default
+      description: Process data records
+      is_default: true
+
+- name: data-aggregator
+  category: general
+  phase: process
+  pairs_with: [data-processor, data-refiner]
+  variants:
+    - filename: gen-data-aggregator.md
+      label: Default
+      description: Aggregate processed data
+      is_default: true
+
+- name: data-refiner
+  category: general
+  phase: output
+  pairs_with: [data-aggregator]
+  variants:
+    - filename: gen-data-refiner.md
+      label: Default
+      description: Refine and polish aggregated data
+      is_default: true
+
+# -- Development --
+- name: test-planner
+  category: development
+  phase: input
+  pairs_with: [test-writer]
+  variants:
+    - filename: dev-test-planner.md
+      label: Default
+      description: Plan test strategy and cases
+      is_default: true
+
+- name: test-writer
+  category: development
+  phase: process
+  pairs_with: [test-planner, test-reviewer]
+  variants:
+    - filename: dev-test-writer.md
+      label: Default
+      description: Write test cases from plan
+      is_default: true
+
+- name: edge-case-finder
+  category: development
+  phase: process
+  pairs_with: [test-planner, test-reviewer]
+  variants:
+    - filename: dev-edge-case-finder.md
+      label: Default
+      description: Find boundary and edge cases
+      is_default: true
+
+- name: test-reviewer
+  category: development
+  phase: review
+  pairs_with: [test-writer, edge-case-finder]
+  variants:
+    - filename: dev-test-reviewer-strict.md
+      label: Strict
+      description: Hard pass/fail verdict
+      is_default: true
+    - filename: dev-test-reviewer-balanced.md
+      label: Balanced
+      description: Pragmatic review with priorities
+    - filename: dev-test-reviewer-mentor.md
+      label: Mentor
+      description: Educational tone, explain why
+
+- name: task-planner
+  category: development
+  phase: input
+  pairs_with: [coder]
+  variants:
+    - filename: dev-task-planner.md
+      label: Default
+      description: Break task into implementation steps
+      is_default: true
+
+- name: coder
+  category: development
+  phase: process
+  pairs_with: [task-planner, code-reviewer]
+  variants:
+    - filename: dev-coder.md
+      label: Default
+      description: Write production code from plan
+      is_default: true
+
+- name: code-reviewer
+  category: development
+  phase: review
+  pairs_with: [coder, refactorer]
+  variants:
+    - filename: dev-code-reviewer-strict.md
+      label: Strict
+      description: Focus on bugs, security, hard verdict
+      is_default: true
+    - filename: dev-code-reviewer-mentor.md
+      label: Mentor
+      description: Educational tone, explain why
+    - filename: dev-code-reviewer-security.md
+      label: Security
+      description: OWASP-focused, vulnerability hunting
+
+- name: refactorer
+  category: development
+  phase: process
+  pairs_with: [code-reviewer]
+  variants:
+    - filename: dev-refactorer.md
+      label: Default
+      description: Refactor code for clarity
+      is_default: true
+
+- name: code-analyzer
+  category: development
+  phase: input
+  pairs_with: [security-auditor, performance-checker]
+  variants:
+    - filename: dev-code-analyzer.md
+      label: Default
+      description: Static analysis and code structure review
+      is_default: true
+
+- name: security-auditor
+  category: development
+  phase: review
+  pairs_with: [code-analyzer, verdict-writer]
+  variants:
+    - filename: dev-security-auditor-strict.md
+      label: Strict
+      description: Zero-tolerance security review
+      is_default: true
+    - filename: dev-security-auditor-balanced.md
+      label: Balanced
+      description: Risk-weighted security assessment
+    - filename: dev-security-auditor-pentest.md
+      label: Pentest
+      description: Offensive security perspective
+
+- name: performance-checker
+  category: development
+  phase: review
+  pairs_with: [code-analyzer, verdict-writer]
+  variants:
+    - filename: dev-performance-checker.md
+      label: Default
+      description: Performance and efficiency analysis
+      is_default: true
+
+- name: verdict-writer
+  category: development
+  phase: output
+  pairs_with: [security-auditor, performance-checker]
+  variants:
+    - filename: dev-verdict-writer.md
+      label: Default
+      description: Synthesize review into final verdict
+      is_default: true
+
+- name: bug-reproducer
+  category: development
+  phase: input
+  pairs_with: [root-cause-analyzer]
+  variants:
+    - filename: dev-bug-reproducer.md
+      label: Default
+      description: Reproduce and isolate bug
+      is_default: true
+
+- name: root-cause-analyzer
+  category: development
+  phase: process
+  pairs_with: [bug-reproducer, fix-suggester]
+  variants:
+    - filename: dev-root-cause-analyzer.md
+      label: Default
+      description: Identify root cause of bug
+      is_default: true
+
+- name: fix-suggester
+  category: development
+  phase: process
+  pairs_with: [root-cause-analyzer, impact-assessor]
+  variants:
+    - filename: dev-fix-suggester.md
+      label: Default
+      description: Suggest fix approaches
+      is_default: true
+
+- name: impact-assessor
+  category: development
+  phase: output
+  pairs_with: [fix-suggester]
+  variants:
+    - filename: dev-impact-assessor.md
+      label: Default
+      description: Assess fix impact and risk
+      is_default: true
+
+- name: requirements-extractor
+  category: development
+  phase: input
+  pairs_with: [schema-drafter]
+  variants:
+    - filename: dev-requirements-extractor.md
+      label: Default
+      description: Extract API requirements
+      is_default: true
+
+- name: schema-drafter
+  category: development
+  phase: process
+  pairs_with: [requirements-extractor, schema-reviewer]
+  variants:
+    - filename: dev-schema-drafter.md
+      label: Default
+      description: Draft API schema from requirements
+      is_default: true
+
+- name: schema-reviewer
+  category: development
+  phase: review
+  pairs_with: [schema-drafter, docs-generator]
+  variants:
+    - filename: dev-schema-reviewer.md
+      label: Default
+      description: Review schema for correctness
+      is_default: true
+
+- name: docs-generator
+  category: development
+  phase: output
+  pairs_with: [schema-reviewer]
+  variants:
+    - filename: dev-docs-generator.md
+      label: Default
+      description: Generate API documentation
+      is_default: true
+
+# -- Business --
+- name: data-collector
+  category: business
+  phase: input
+  pairs_with: [competitor-analyzer]
+  variants:
+    - filename: biz-data-collector.md
+      label: Default
+      description: Collect business data from sources
+      is_default: true
+
+- name: competitor-analyzer
+  category: business
+  phase: process
+  pairs_with: [data-collector, swot-writer]
+  variants:
+    - filename: biz-competitor-analyzer.md
+      label: Default
+      description: Analyze competitor strengths
+      is_default: true
+
+- name: swot-writer
+  category: business
+  phase: process
+  pairs_with: [competitor-analyzer, recommender]
+  variants:
+    - filename: biz-swot-writer.md
+      label: Default
+      description: Write SWOT analysis
+      is_default: true
+
+- name: recommender
+  category: business
+  phase: output
+  pairs_with: [swot-writer]
+  variants:
+    - filename: biz-recommender.md
+      label: Default
+      description: Generate strategic recommendations
+      is_default: true
+
+- name: metrics-collector
+  category: business
+  phase: input
+  pairs_with: [visualizer, narrative-writer]
+  variants:
+    - filename: biz-metrics-collector.md
+      label: Default
+      description: Collect and organize business metrics
+      is_default: true
+
+- name: visualizer
+  category: business
+  phase: process
+  pairs_with: [metrics-collector, executive-summarizer]
+  variants:
+    - filename: biz-visualizer.md
+      label: Default
+      description: Create data visualizations
+      is_default: true
+
+- name: narrative-writer
+  category: business
+  phase: process
+  pairs_with: [metrics-collector, executive-summarizer]
+  variants:
+    - filename: biz-narrative-writer-formal.md
+      label: Formal
+      description: Business-formal narrative style
+      is_default: true
+    - filename: biz-narrative-writer-casual.md
+      label: Casual
+      description: Conversational narrative style
+
+- name: executive-summarizer
+  category: business
+  phase: output
+  pairs_with: [visualizer, narrative-writer]
+  variants:
+    - filename: biz-executive-summarizer-brief.md
+      label: Brief
+      description: One-page executive summary
+      is_default: true
+    - filename: biz-executive-summarizer-detailed.md
+      label: Detailed
+      description: Full executive report
+
+- name: brief-analyzer
+  category: business
+  phase: input
+  pairs_with: [proposal-draft-writer]
+  variants:
+    - filename: biz-brief-analyzer.md
+      label: Default
+      description: Analyze client brief and requirements
+      is_default: true
+
+- name: proposal-draft-writer
+  category: business
+  phase: process
+  pairs_with: [brief-analyzer, pricing-estimator]
+  variants:
+    - filename: biz-proposal-draft-writer.md
+      label: Default
+      description: Draft proposal from brief
+      is_default: true
+
+- name: pricing-estimator
+  category: business
+  phase: process
+  pairs_with: [proposal-draft-writer, proposal-finalizer]
+  variants:
+    - filename: biz-pricing-estimator.md
+      label: Default
+      description: Estimate project pricing
+      is_default: true
+
+- name: proposal-finalizer
+  category: business
+  phase: output
+  pairs_with: [pricing-estimator]
+  variants:
+    - filename: biz-proposal-finalizer.md
+      label: Default
+      description: Finalize and format proposal
+      is_default: true
+
+# -- Content --
+- name: keyword-researcher
+  category: content
+  phase: input
+  pairs_with: [outline-writer]
+  variants:
+    - filename: cnt-keyword-researcher.md
+      label: Default
+      description: Research SEO keywords and trends
+      is_default: true
+
+- name: outline-writer
+  category: content
+  phase: process
+  pairs_with: [keyword-researcher, content-drafter]
+  variants:
+    - filename: cnt-outline-writer.md
+      label: Default
+      description: Create content outline from keywords
+      is_default: true
+
+- name: content-drafter
+  category: content
+  phase: process
+  pairs_with: [outline-writer, seo-optimizer]
+  variants:
+    - filename: cnt-content-drafter-formal.md
+      label: Formal
+      description: Professional tone content
+      is_default: true
+    - filename: cnt-content-drafter-casual.md
+      label: Casual
+      description: Conversational and engaging tone
+
+- name: seo-optimizer
+  category: content
+  phase: output
+  pairs_with: [content-drafter]
+  variants:
+    - filename: cnt-seo-optimizer.md
+      label: Default
+      description: Optimize content for search engines
+      is_default: true
+
+- name: topic-analyzer
+  category: content
+  phase: input
+  pairs_with: [platform-adapter]
+  variants:
+    - filename: cnt-topic-analyzer.md
+      label: Default
+      description: Analyze topic for social media angles
+      is_default: true
+
+- name: platform-adapter
+  category: content
+  phase: process
+  pairs_with: [topic-analyzer, tone-checker]
+  variants:
+    - filename: cnt-platform-adapter.md
+      label: Default
+      description: Adapt content per social platform
+      is_default: true
+
+- name: tone-checker
+  category: content
+  phase: review
+  pairs_with: [platform-adapter]
+  variants:
+    - filename: cnt-tone-checker-brand.md
+      label: Brand
+      description: Check brand voice consistency
+      is_default: true
+    - filename: cnt-tone-checker-professional.md
+      label: Professional
+      description: Professional tone verification
+
+- name: audience-segmenter
+  category: content
+  phase: input
+  pairs_with: [personalizer]
+  variants:
+    - filename: cnt-audience-segmenter.md
+      label: Default
+      description: Segment audience for targeting
+      is_default: true
+
+- name: personalizer
+  category: content
+  phase: process
+  pairs_with: [audience-segmenter, variant-writer]
+  variants:
+    - filename: cnt-personalizer.md
+      label: Default
+      description: Personalize content per segment
+      is_default: true
+
+- name: variant-writer
+  category: content
+  phase: process
+  pairs_with: [personalizer, campaign-finalizer]
+  variants:
+    - filename: cnt-variant-writer.md
+      label: Default
+      description: Write A/B test variants
+      is_default: true
+
+- name: campaign-finalizer
+  category: content
+  phase: output
+  pairs_with: [variant-writer]
+  variants:
+    - filename: cnt-campaign-finalizer.md
+      label: Default
+      description: Finalize email campaign
+      is_default: true
+
+# -- Education --
+- name: edu-topic-analyzer
+  category: education
+  phase: input
+  pairs_with: [lesson-structurer]
+  variants:
+    - filename: edu-topic-analyzer.md
+      label: Default
+      description: Analyze educational topic and objectives
+      is_default: true
+
+- name: lesson-structurer
+  category: education
+  phase: process
+  pairs_with: [edu-topic-analyzer, materials-creator]
+  variants:
+    - filename: edu-lesson-structurer.md
+      label: Default
+      description: Structure lesson plan
+      is_default: true
+
+- name: materials-creator
+  category: education
+  phase: process
+  pairs_with: [lesson-structurer, quiz-generator]
+  variants:
+    - filename: edu-materials-creator.md
+      label: Default
+      description: Create learning materials
+      is_default: true
+
+- name: quiz-generator
+  category: education
+  phase: output
+  pairs_with: [materials-creator]
+  variants:
+    - filename: edu-quiz-generator.md
+      label: Default
+      description: Generate assessment questions
+      is_default: true
+
+- name: criteria-extractor
+  category: education
+  phase: input
+  pairs_with: [essay-evaluator]
+  variants:
+    - filename: edu-criteria-extractor.md
+      label: Default
+      description: Extract grading criteria
+      is_default: true
+
+- name: essay-evaluator
+  category: education
+  phase: process
+  pairs_with: [criteria-extractor, feedback-writer]
+  variants:
+    - filename: edu-essay-evaluator-strict.md
+      label: Strict
+      description: Rigorous academic evaluation
+      is_default: true
+    - filename: edu-essay-evaluator-encouraging.md
+      label: Encouraging
+      description: Growth-focused evaluation
+    - filename: edu-essay-evaluator-rubric.md
+      label: Rubric
+      description: Rubric-based systematic evaluation
+
+- name: feedback-writer
+  category: education
+  phase: process
+  pairs_with: [essay-evaluator, improvement-suggester]
+  variants:
+    - filename: edu-feedback-writer.md
+      label: Default
+      description: Write constructive feedback
+      is_default: true
+
+- name: improvement-suggester
+  category: education
+  phase: output
+  pairs_with: [feedback-writer]
+  variants:
+    - filename: edu-improvement-suggester.md
+      label: Default
+      description: Suggest specific improvements
+      is_default: true
+
+# -- Legal --
+- name: clause-extractor
+  category: legal
+  phase: input
+  pairs_with: [risk-analyzer]
+  variants:
+    - filename: leg-clause-extractor.md
+      label: Default
+      description: Extract key clauses from contracts
+      is_default: true
+
+- name: risk-analyzer
+  category: legal
+  phase: process
+  pairs_with: [clause-extractor, compliance-checker]
+  variants:
+    - filename: leg-risk-analyzer-risk.md
+      label: Risk
+      description: Focus on financial and legal risk
+      is_default: true
+    - filename: leg-risk-analyzer-compliance.md
+      label: Compliance
+      description: Regulatory compliance focus
+    - filename: leg-risk-analyzer-full.md
+      label: Full
+      description: Comprehensive risk assessment
+
+- name: compliance-checker
+  category: legal
+  phase: review
+  pairs_with: [risk-analyzer, contract-summarizer]
+  variants:
+    - filename: leg-compliance-checker.md
+      label: Default
+      description: Check regulatory compliance
+      is_default: true
+
+- name: contract-summarizer
+  category: legal
+  phase: output
+  pairs_with: [compliance-checker]
+  variants:
+    - filename: leg-contract-summarizer.md
+      label: Default
+      description: Summarize contract terms
+      is_default: true
+
+- name: policy-parser
+  category: legal
+  phase: input
+  pairs_with: [policy-impact-assessor]
+  variants:
+    - filename: leg-policy-parser.md
+      label: Default
+      description: Parse policy document structure
+      is_default: true
+
+- name: policy-impact-assessor
+  category: legal
+  phase: process
+  pairs_with: [policy-parser, recommendation-writer]
+  variants:
+    - filename: leg-policy-impact-assessor.md
+      label: Default
+      description: Assess policy impact
+      is_default: true
+
+- name: recommendation-writer
+  category: legal
+  phase: output
+  pairs_with: [policy-impact-assessor]
+  variants:
+    - filename: leg-recommendation-writer.md
+      label: Default
+      description: Write policy recommendations
+      is_default: true
+
+# -- Data --
+- name: data-validator
+  category: data
+  phase: input
+  pairs_with: [data-normalizer]
+  variants:
+    - filename: dat-data-validator.md
+      label: Default
+      description: Validate data integrity and format
+      is_default: true
+
+- name: data-normalizer
+  category: data
+  phase: process
+  pairs_with: [data-validator, data-deduplicator]
+  variants:
+    - filename: dat-data-normalizer.md
+      label: Default
+      description: Normalize data formats
+      is_default: true
+
+- name: data-deduplicator
+  category: data
+  phase: process
+  pairs_with: [data-normalizer, quality-reporter]
+  variants:
+    - filename: dat-data-deduplicator.md
+      label: Default
+      description: Deduplicate data records
+      is_default: true
+
+- name: quality-reporter
+  category: data
+  phase: output
+  pairs_with: [data-deduplicator]
+  variants:
+    - filename: dat-quality-reporter.md
+      label: Default
+      description: Generate data quality report
+      is_default: true
+
+- name: baseline-writer
+  category: data
+  phase: input
+  pairs_with: [variation-writer]
+  variants:
+    - filename: dat-baseline-writer.md
+      label: Default
+      description: Write baseline prompt version
+      is_default: true
+
+- name: variation-writer
+  category: data
+  phase: process
+  pairs_with: [baseline-writer, prompt-evaluator]
+  variants:
+    - filename: dat-variation-writer.md
+      label: Default
+      description: Write prompt variations
+      is_default: true
+
+- name: prompt-evaluator
+  category: data
+  phase: review
+  pairs_with: [variation-writer, best-picker]
+  variants:
+    - filename: dat-prompt-evaluator.md
+      label: Default
+      description: Evaluate prompt quality metrics
+      is_default: true
+
+- name: best-picker
+  category: data
+  phase: output
+  pairs_with: [prompt-evaluator]
+  variants:
+    - filename: dat-best-picker.md
+      label: Default
+      description: Select best performing prompt
+      is_default: true
+
+# -- Support --
+- name: query-classifier
+  category: support
+  phase: input
+  pairs_with: [response-generator]
+  variants:
+    - filename: sup-query-classifier.md
+      label: Default
+      description: Classify customer query type
+      is_default: true
+
+- name: response-generator
+  category: support
+  phase: process
+  pairs_with: [query-classifier, support-tone-checker]
+  variants:
+    - filename: sup-response-generator.md
+      label: Default
+      description: Generate support response
+      is_default: true
+
+- name: support-tone-checker
+  category: support
+  phase: review
+  pairs_with: [response-generator]
+  variants:
+    - filename: sup-support-tone-checker-brand.md
+      label: Brand
+      description: Check brand voice in responses
+      is_default: true
+    - filename: sup-support-tone-checker-friendly.md
+      label: Friendly
+      description: Ensure warm, friendly tone
+
+- name: translator
+  category: support
+  phase: process
+  pairs_with: [accuracy-checker]
+  variants:
+    - filename: sup-translator-literal.md
+      label: Literal
+      description: Word-for-word accurate translation
+      is_default: true
+    - filename: sup-translator-adaptive.md
+      label: Adaptive
+      description: Context-adapted natural translation
+    - filename: sup-translator-creative.md
+      label: Creative
+      description: Creative localization translation
+
+- name: accuracy-checker
+  category: support
+  phase: review
+  pairs_with: [translator, cultural-adapter]
+  variants:
+    - filename: sup-accuracy-checker.md
+      label: Default
+      description: Verify translation accuracy
+      is_default: true
+
+- name: cultural-adapter
+  category: support
+  phase: process
+  pairs_with: [translator, translation-finalizer]
+  variants:
+    - filename: sup-cultural-adapter.md
+      label: Default
+      description: Adapt content for cultural context
+      is_default: true
+
+- name: translation-finalizer
+  category: support
+  phase: output
+  pairs_with: [accuracy-checker, cultural-adapter]
+  variants:
+    - filename: sup-translation-finalizer.md
+      label: Default
+      description: Finalize translated content
+      is_default: true
+
+- name: key-fact-extractor
+  category: support
+  phase: input
+  pairs_with: [summarizer]
+  variants:
+    - filename: sup-key-fact-extractor.md
+      label: Default
+      description: Extract key facts from documents
+      is_default: true
+
+- name: summarizer
+  category: support
+  phase: process
+  pairs_with: [key-fact-extractor, summary-synthesizer]
+  variants:
+    - filename: sup-summarizer-brief.md
+      label: Brief
+      description: Short executive summary
+      is_default: true
+    - filename: sup-summarizer-detailed.md
+      label: Detailed
+      description: Comprehensive detailed summary
+    - filename: sup-summarizer-executive.md
+      label: Executive
+      description: C-level focused summary
+
+- name: summary-synthesizer
+  category: support
+  phase: output
+  pairs_with: [summarizer]
+  variants:
+    - filename: sup-summary-synthesizer.md
+      label: Default
+      description: Synthesize multiple summaries
+      is_default: true

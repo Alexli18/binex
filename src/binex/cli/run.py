@@ -5,12 +5,12 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
-import time as _time
 
 import click
 
 from binex.cli import get_stores, render_terminal_artifacts
 from binex.cli.adapter_registry import register_workflow_adapters
+from binex.cli.run_progress import can_use_live, install_live_wrapper, install_verbose_wrapper
 from binex.models.artifact import Artifact
 from binex.runtime.orchestrator import Orchestrator
 from binex.workflow_spec.loader import load_workflow
@@ -24,12 +24,6 @@ def _get_stores():
     return get_stores()
 
 
-def _can_use_live() -> bool:
-    """Return True when rich live display is available and output is a TTY."""
-    from binex.cli import has_rich
-    return has_rich() and sys.stderr.isatty()
-
-
 @click.command("run", epilog="""\b
 Examples:
   binex run workflow.yaml                       Run a workflow
@@ -41,8 +35,10 @@ Examples:
 @click.option("--var", multiple=True, help="Variable substitution key=value")
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
 @click.option("--verbose", "-v", is_flag=True, help="Show artifact contents after each step")
+@click.option("--stream/--no-stream", "stream_out", default=None, help="Stream LLM output tokens")
 def run_cmd(
     workflow_file: str, var: tuple[str, ...], json_out: bool, verbose: bool,
+    stream_out: bool | None,
 ) -> None:
     """Execute a workflow definition."""
     user_vars = _parse_vars(var)
@@ -54,7 +50,7 @@ def run_cmd(
             click.echo(f"Error: {err}", err=True)
         sys.exit(2)
 
-    summary, node_errors, artifacts = asyncio.run(_run(spec, verbose))
+    summary, node_errors, artifacts = asyncio.run(_run(spec, verbose, stream_out=stream_out))
 
     # Identify terminal nodes (no downstream dependents)
     all_deps = {dep for node in spec.nodes.values() for dep in node.depends_on}
@@ -176,18 +172,29 @@ def _print_rich_output(summary, spec, artifacts, terminal_nodes):
         )
 
 
-async def _run(spec, verbose: bool = False):
+async def _run(spec, verbose: bool = False, *, stream_out: bool | None = None):
     execution_store, artifact_store = _get_stores()
+
+    # Determine streaming: explicit flag, or auto-detect from TTY
+    is_tty = sys.stdout.isatty()
+    use_stream = stream_out if stream_out is not None else is_tty
+
+    stream_callback = None
+    if use_stream:
+        def stream_callback(token: str) -> None:
+            click.echo(token, nl=False)
 
     orch = Orchestrator(
         artifact_store=artifact_store,
         execution_store=execution_store,
+        stream=use_stream,
+        stream_callback=stream_callback,
     )
 
     all_artifacts: list[Artifact] = []
 
     # Determine output mode: live table (TTY + rich), plain verbose, or quiet
-    use_live = verbose and _can_use_live()
+    use_live = verbose and can_use_live()
 
     if use_live:
         return await _run_with_live(
@@ -195,7 +202,10 @@ async def _run(spec, verbose: bool = False):
         )
 
     if verbose:
-        _install_verbose_wrapper(orch, all_artifacts)
+        install_verbose_wrapper(
+            orch,
+            on_node_done=lambda nid, na: _verbose_collect_artifacts(nid, na, all_artifacts),
+        )
 
     register_workflow_adapters(orch.dispatcher, spec)
 
@@ -228,13 +238,18 @@ async def _run_with_live(orch, spec, execution_store, artifact_store, all_artifa
 
     register_workflow_adapters(orch.dispatcher, spec)
 
+    def _collect(node_id, node_artifacts_):
+        if node_id in node_artifacts_:
+            for art in node_artifacts_[node_id]:
+                all_artifacts.append(art)
+
     try:
         with Live(
             live_table.build(),
             console=get_console(stderr=True),
             refresh_per_second=4,
         ) as live:
-            _install_live_wrapper(orch, live_table, live, all_artifacts)
+            install_live_wrapper(orch, live_table, live, on_node_done=_collect)
             summary = await orch.run_workflow(spec)
 
         errors = _collect_errors(
@@ -249,75 +264,19 @@ async def _run_with_live(orch, spec, execution_store, artifact_store, all_artifa
         await execution_store.close()
 
 
-def _install_live_wrapper(orch, live_table, live, all_artifacts):
-    """Monkey-patch orchestrator to update LiveRunTable on each node."""
-    original_execute = orch._execute_node
-
-    async def _live_execute(
-        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-        accumulated_cost_=0.0, node_artifacts_history_=None,
-    ):
-        live_table.update_node(node_id_, "running")
-        live.update(live_table.build())
-        t0 = _time.monotonic()
-        try:
-            await original_execute(
-                spec_, dag_, scheduler_, run_id_, trace_id_,
-                node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
-            )
-            elapsed = _time.monotonic() - t0
-            live_table.update_node(
-                node_id_, "completed", latency=f"{elapsed:.2f}s",
-            )
-        except Exception as exc:
-            elapsed = _time.monotonic() - t0
-            live_table.update_node(
-                node_id_, "failed",
-                latency=f"{elapsed:.2f}s",
-                error=str(exc)[:50],
-            )
-            raise
-        finally:
-            if node_id_ in node_artifacts_:
-                for art in node_artifacts_[node_id_]:
-                    all_artifacts.append(art)
-            live.update(live_table.build())
-
-    orch._execute_node = _live_execute
-
-
-def _install_verbose_wrapper(orch: Orchestrator, all_artifacts: list[Artifact]) -> None:
-    """Monkey-patch orchestrator to print progress for each node execution."""
-    original_execute = orch._execute_node
-    counter = [0]
-
-    async def _verbose_execute(
-        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-        accumulated_cost_=0.0, node_artifacts_history_=None,
-    ):
-        counter[0] += 1
-        total = len(spec_.nodes)
-        click.echo(f"\n  [{counter[0]}/{total}] {node_id_} ...", err=True)
-
-        node_spec = spec_.nodes.get(node_id_)
-        if node_spec and node_spec.depends_on:
-            for dep in node_spec.depends_on:
-                click.echo(f"        <- {dep}", err=True)
-
-        await original_execute(
-            spec_, dag_, scheduler_, run_id_, trace_id_,
-            node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
-        )
-        if node_id_ in node_artifacts_:
-            for art in node_artifacts_[node_id_]:
-                all_artifacts.append(art)
-                content = art.content
-                if isinstance(content, str) and len(content) > VERBOSE_CONTENT_MAX_LEN:
-                    content = content[:VERBOSE_CONTENT_MAX_LEN] + "..."
-                click.echo(f"  [{node_id_}] -> {art.type}:", err=True)
-                click.echo(f"{content}\n", err=True)
-
-    orch._execute_node = _verbose_execute
+def _verbose_collect_artifacts(
+    node_id: str, node_artifacts: dict, all_artifacts: list[Artifact],
+) -> None:
+    """Collect artifacts from a node and print truncated content."""
+    if node_id not in node_artifacts:
+        return
+    for art in node_artifacts[node_id]:
+        all_artifacts.append(art)
+        content = art.content
+        if isinstance(content, str) and len(content) > VERBOSE_CONTENT_MAX_LEN:
+            content = content[:VERBOSE_CONTENT_MAX_LEN] + "..."
+        click.echo(f"  [{node_id}] -> {art.type}:", err=True)
+        click.echo(f"{content}\n", err=True)
 
 
 def _collect_errors(records) -> list[tuple[str, str]]:

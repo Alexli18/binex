@@ -81,6 +81,28 @@ def tool(
 # Schema generation
 # ---------------------------------------------------------------------------
 
+def _build_param_property(
+    param_name: str,
+    param: inspect.Parameter,
+    hints: dict[str, Any],
+    param_descs: dict[str, str],
+) -> tuple[dict[str, Any], bool]:
+    """Build a single JSON Schema property for a function parameter.
+
+    Returns ``(property_dict, is_required)``.
+    """
+    prop: dict[str, Any] = {}
+    hint = hints.get(param_name)
+    if hint and hint in _TYPE_MAP:
+        prop["type"] = _TYPE_MAP[hint]
+    else:
+        prop["type"] = "string"
+    if param_name in param_descs:
+        prop["description"] = param_descs[param_name]
+    is_required = param.default is inspect.Parameter.empty
+    return prop, is_required
+
+
 def build_tool_schema(func: Callable[..., Any]) -> dict[str, Any]:
     """Generate an OpenAI-compatible function schema from a Python function.
 
@@ -103,16 +125,9 @@ def build_tool_schema(func: Callable[..., Any]) -> dict[str, Any]:
     for param_name, param in sig.parameters.items():
         if param_name in ("self", "cls"):
             continue
-        prop: dict[str, Any] = {}
-        hint = hints.get(param_name)
-        if hint and hint in _TYPE_MAP:
-            prop["type"] = _TYPE_MAP[hint]
-        else:
-            prop["type"] = "string"
-        if param_name in param_descs:
-            prop["description"] = param_descs[param_name]
+        prop, is_required = _build_param_property(param_name, param, hints, param_descs)
         properties[param_name] = prop
-        if param.default is inspect.Parameter.empty:
+        if is_required:
             required.append(param_name)
 
     schema: dict[str, Any] = {

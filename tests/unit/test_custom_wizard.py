@@ -6,10 +6,12 @@ import yaml
 from click.testing import CliRunner
 
 from binex.cli.start import (
-    _get_bundled_prompt_list,
-    _select_prompt,
     _step_mode_topology,
     start_cmd,
+)
+from binex.cli.start_templates import (
+    _get_bundled_prompt_list,
+    _select_prompt,
 )
 
 
@@ -126,7 +128,7 @@ class TestPromptSelection:
         assert result == "file://prompts/gen-researcher.md"
 
 
-from binex.cli.start import _configure_advanced_params
+from binex.cli.start_config import _configure_advanced_params
 
 
 class TestAdvancedParams:
@@ -155,7 +157,7 @@ class TestAdvancedParams:
         assert result == {}
 
 
-from binex.cli.start import _configure_back_edge
+from binex.cli.start_config import _configure_back_edge
 
 
 class TestConfigureBackEdge:
@@ -192,7 +194,7 @@ class TestConfigureBackEdge:
         assert result["max_iterations"] == 3
 
 
-from binex.cli.start import _configure_node
+from binex.cli.start_config import _configure_node
 
 
 class TestConfigureNode:
@@ -356,7 +358,7 @@ class TestBuildCustomWorkflow:
         assert "None" not in yaml_str
 
 
-from binex.cli.start import _preview_yaml
+from binex.cli.start_ui import _preview_yaml
 
 
 class TestPreviewYaml:

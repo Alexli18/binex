@@ -1,6 +1,6 @@
 """Tests for DAG constructor in binex start wizard."""
 
-from binex.cli.start import (
+from binex.cli.start_constructor import (
     _constructor_add_node,
     _constructor_delete_node,
     _constructor_edit_node,

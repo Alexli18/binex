@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import json
-import sys
-import time as _time
 
 import click
 
 from binex.adapters.local import LocalPythonAdapter
 from binex.cli import get_stores
+from binex.cli.run_progress import can_use_live, install_live_wrapper, install_verbose_wrapper
 from binex.models.artifact import Artifact, Lineage
 from binex.models.task import TaskNode
 from binex.models.workflow import NodeSpec, WorkflowSpec
@@ -20,12 +19,6 @@ from binex.runtime.orchestrator import Orchestrator
 def _get_stores():
     """Create default stores. Extracted for test patching."""
     return get_stores()
-
-
-def _can_use_live() -> bool:
-    """Return True when rich live display is available and output is a TTY."""
-    from binex.cli import has_rich
-    return has_rich() and sys.stderr.isatty()
 
 
 def _build_hello_workflow() -> WorkflowSpec:
@@ -145,13 +138,16 @@ async def _run_hello():
 
     node_outputs: dict[str, str] = {}
 
-    use_live = _can_use_live()
+    use_live = can_use_live()
 
     if use_live:
         return await _run_hello_live(orch, spec, execution_store, node_outputs)
 
     # Plain verbose fallback (used by CliRunner in tests)
-    _install_verbose_wrapper(orch, node_outputs)
+    install_verbose_wrapper(
+        orch,
+        on_node_done=lambda nid, na: _collect_hello_artifacts(nid, na, node_outputs),
+    )
     _register_hello_handler(orch)
 
     try:
@@ -161,34 +157,17 @@ async def _run_hello():
         await execution_store.close()
 
 
-def _install_verbose_wrapper(orch, node_outputs):
-    """Monkey-patch orchestrator to print per-node progress (plain text)."""
-    original_execute = orch._execute_node
-    counter = [0]
-
-    async def _verbose_execute(
-        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-        accumulated_cost_=0.0, node_artifacts_history_=None,
-    ):
-        counter[0] += 1
-        total = len(spec_.nodes)
-        click.echo(f"\n  [{counter[0]}/{total}] {node_id_} ...", err=True)
-
-        await original_execute(
-            spec_, dag_, scheduler_, run_id_, trace_id_,
-            node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
-        )
-
-        if node_id_ in node_artifacts_:
-            for art in node_artifacts_[node_id_]:
-                content = art.content
-                if isinstance(content, dict):
-                    content = json.dumps(content)
-                node_outputs[node_id_] = content
-                click.echo(f"  [{node_id_}] -> {art.type}:", err=True)
-                click.echo(f"{content}\n", err=True)
-
-    orch._execute_node = _verbose_execute
+def _collect_hello_artifacts(node_id, node_artifacts, node_outputs):
+    """Collect hello artifacts into node_outputs dict with verbose printing."""
+    if node_id not in node_artifacts:
+        return
+    for art in node_artifacts[node_id]:
+        content = art.content
+        if isinstance(content, dict):
+            content = json.dumps(content)
+        node_outputs[node_id] = content
+        click.echo(f"  [{node_id}] -> {art.type}:", err=True)
+        click.echo(f"{content}\n", err=True)
 
 
 async def _run_hello_live(orch, spec, execution_store, node_outputs):
@@ -203,42 +182,14 @@ async def _run_hello_live(orch, spec, execution_store, node_outputs):
     ]
     live_table = LiveRunTable(nodes_info)
 
-    original_execute = orch._execute_node
+    def _collect(node_id, node_artifacts_):
+        if node_id in node_artifacts_:
+            for art in node_artifacts_[node_id]:
+                content = art.content
+                if isinstance(content, dict):
+                    content = json.dumps(content)
+                node_outputs[node_id] = content
 
-    async def _live_execute(
-        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-        accumulated_cost_=0.0, node_artifacts_history_=None,
-    ):
-        live_table.update_node(node_id_, "running")
-        live.update(live_table.build())
-        t0 = _time.monotonic()
-        try:
-            await original_execute(
-                spec_, dag_, scheduler_, run_id_, trace_id_,
-                node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
-            )
-            elapsed = _time.monotonic() - t0
-            live_table.update_node(
-                node_id_, "completed", latency=f"{elapsed:.2f}s",
-            )
-        except Exception as exc:
-            elapsed = _time.monotonic() - t0
-            live_table.update_node(
-                node_id_, "failed",
-                latency=f"{elapsed:.2f}s",
-                error=str(exc)[:50],
-            )
-            raise
-        finally:
-            if node_id_ in node_artifacts_:
-                for art in node_artifacts_[node_id_]:
-                    content = art.content
-                    if isinstance(content, dict):
-                        content = json.dumps(content)
-                    node_outputs[node_id_] = content
-            live.update(live_table.build())
-
-    orch._execute_node = _live_execute
     _register_hello_handler(orch)
 
     try:
@@ -247,6 +198,7 @@ async def _run_hello_live(orch, spec, execution_store, node_outputs):
             console=get_console(stderr=True),
             refresh_per_second=4,
         ) as live:
+            install_live_wrapper(orch, live_table, live, on_node_done=_collect)
             summary = await orch.run_workflow(spec)
         return summary, node_outputs
     finally:

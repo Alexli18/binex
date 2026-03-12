@@ -42,6 +42,7 @@ class NodeSpec(BaseModel):
     cost: NodeCostHint | None = None
     budget: float | NodeBudget | None = None
     back_edge: BackEdge | None = None
+    output_schema: dict[str, Any] | None = None
 
     @model_validator(mode="after")
     def _normalize_budget(self) -> NodeSpec:
