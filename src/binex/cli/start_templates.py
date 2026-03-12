@@ -216,21 +216,13 @@ def _preview_prompt_file(filename: str) -> None:
         click.echo("--- end ---\n")
 
 
-def _select_prompt(*, node_id: str, input_fn=None) -> str:
-    """Interactive prompt picker. Returns system_prompt string.
-
-    Options: bundled prompts (file:// ref), custom text, file path.
-    """
-    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
-    bundled = _get_bundled_prompt_list()
-
-    # Find recommended prompt
-    recommended_idx = None
-    for i, (filename, _desc) in enumerate(bundled):
-        stem = filename.removesuffix(".md")
-        if stem == node_id or node_id in stem or stem in node_id:
-            recommended_idx = i
-            break
+def _render_prompt_menu(
+    bundled: list[tuple[str, str]],
+    recommended_idx: int | None,
+) -> None:
+    """Render the bundled-prompt selection menu (Rich or plain)."""
+    custom_text_n = len(bundled) + 1
+    file_path_n = len(bundled) + 2
 
     if has_rich():
         from rich.text import Text
@@ -247,8 +239,6 @@ def _select_prompt(*, node_id: str, input_fn=None) -> str:
                 line.append(" (recommended)", style="green")
             line.append(f" \u2014 {desc}", style="dim")
             console.print(line)
-        custom_text_n = len(bundled) + 1
-        file_path_n = len(bundled) + 2
         line = Text()
         line.append(f"    {custom_text_n}) ", style="dim")
         line.append("Write custom text", style="bold")
@@ -261,33 +251,55 @@ def _select_prompt(*, node_id: str, input_fn=None) -> str:
         click.echo("  System prompt:")
         for i, (filename, desc) in enumerate(bundled, 1):
             tag = " (recommended)" if i - 1 == recommended_idx else ""
-            click.echo(f"    {i}) {filename}{tag} — {desc}")
-        custom_text_n = len(bundled) + 1
-        file_path_n = len(bundled) + 2
+            click.echo(f"    {i}) {filename}{tag} \u2014 {desc}")
         click.echo(f"    {custom_text_n}) Write custom text")
         click.echo(f"    {file_path_n}) Provide file path")
 
+
+def _select_prompt(*, node_id: str, input_fn=None) -> str:
+    """Interactive prompt picker. Returns system_prompt string.
+
+    Options: bundled prompts (file:// ref), custom text, file path.
+    """
+    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
+    bundled = _get_bundled_prompt_list()
+
+    # Find recommended prompt
+    recommended_idx = None
+    for i, (filename, _desc) in enumerate(bundled):
+        stem = filename.removesuffix(".md")
+        if stem == node_id or node_id in stem or stem in node_id:
+            recommended_idx = i
+            break
+
+    _render_prompt_menu(bundled, recommended_idx)
+
     choice = _prompt("Choose prompt")
 
-    # Support both number and filename input
+    # Guard 1: numeric index
     try:
         choice_int = int(choice)
     except ValueError:
-        # User typed a filename — match against bundled list
-        matched = [f for f, _ in bundled if f == choice or f.removesuffix(".md") == choice]
-        if matched:
-            return f"file://prompts/{matched[0]}"
-        # Treat as custom text
-        return choice
+        choice_int = None
 
-    if choice_int <= len(bundled):
-        filename = bundled[choice_int - 1][0]
-        return f"file://prompts/{filename}"
-    elif choice_int == custom_text_n:
-        text = _prompt("Enter system prompt text")
-        return text
-    else:
+    if choice_int is not None:
+        if choice_int <= len(bundled):
+            return f"file://prompts/{bundled[choice_int - 1][0]}"
+        if choice_int == len(bundled) + 1:
+            return _prompt("Enter system prompt text")
+        # file path option (or any higher number)
         path = _prompt("Enter path to prompt file")
         if not path.startswith("file://"):
             path = f"file://{path}"
         return path
+
+    # Guard 2: filename match
+    matched = [
+        f for f, _ in bundled
+        if f == choice or f.removesuffix(".md") == choice
+    ]
+    if matched:
+        return f"file://prompts/{matched[0]}"
+
+    # Guard 3: treat as custom text
+    return choice
