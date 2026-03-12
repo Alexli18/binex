@@ -292,29 +292,29 @@ def _print_footer_plain(report) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Rich output
+# Rich output — helpers
 # ---------------------------------------------------------------------------
 
-def _print_rich(report, show_diff: bool = False) -> None:
-    """Print rich formatted bisect output."""
-    from binex.cli.ui import get_console, make_panel
+_RICH_COLORS = {
+    "match": "green",
+    "content_diff": "yellow",
+    "status_diff": "red",
+    "missing_in_good": "cyan",
+    "missing_in_bad": "magenta",
+}
 
-    console = get_console()
+_FOOTER_COLORS = {
+    "ok": "green", "changed": "yellow",
+    "failed": "red", "cancelled": "dim",
+    "new": "cyan", "missing": "magenta",
+    "differs": "red",
+}
 
-    dp = report.divergence_point
-    downstream_set = set(report.downstream_impact)
 
-    # Header
-    console.print(
-        f"[bold]Bisect:[/bold] {report.workflow_name}"
-    )
-    console.print(
-        f"[cyan]good[/cyan] {report.good_run_id}  vs  "
-        f"[cyan]bad[/cyan] {report.bad_run_id}"
-    )
-    console.print()
+def _render_verdict_rich(console, report, dp) -> None:
+    """Render the verdict panel in Rich format."""
+    from binex.cli.ui import make_panel
 
-    # Verdict panel
     if dp is None:
         console.print(make_panel(
             "[green]\u2713 No differences found "
@@ -345,17 +345,62 @@ def _print_rich(report, show_diff: bool = False) -> None:
         )
         console.print(make_panel(lines, title="Verdict"))
 
+
+def _format_diff_line_rich(line: str) -> str:
+    """Classify a unified diff line and return Rich-formatted string."""
+    if line.startswith("+") and not line.startswith("+++"):
+        return f"[green]{line}[/green]"
+    if line.startswith("-") and not line.startswith("---"):
+        return f"[red]{line}[/red]"
+    if line.startswith("@@"):
+        return f"[cyan]{line}[/cyan]"
+    return line
+
+
+def _render_footer_rich(console, report) -> None:
+    """Render footer statistics in Rich format."""
+    counts: dict[str, int] = {}
+    for nc in report.node_map:
+        word = _node_word(nc.status, nc.bad_status)
+        counts[word] = counts.get(word, 0) + 1
+    parts = []
+    for k, v in counts.items():
+        c = _FOOTER_COLORS.get(k, "")
+        if c:
+            parts.append(f"[{c}]{v} {k}[/{c}]")
+        else:
+            parts.append(f"{v} {k}")
+    console.print(" \u00b7 ".join(parts))
+
+
+# ---------------------------------------------------------------------------
+# Rich output
+# ---------------------------------------------------------------------------
+
+def _print_rich(report, show_diff: bool = False) -> None:
+    """Print rich formatted bisect output."""
+    from binex.cli.ui import get_console
+
+    console = get_console()
+
+    dp = report.divergence_point
+    downstream_set = set(report.downstream_impact)
+
+    # Header
+    console.print(
+        f"[bold]Bisect:[/bold] {report.workflow_name}"
+    )
+    console.print(
+        f"[cyan]good[/cyan] {report.good_run_id}  vs  "
+        f"[cyan]bad[/cyan] {report.bad_run_id}"
+    )
+    console.print()
+
+    # Verdict
+    _render_verdict_rich(console, report, dp)
     console.print()
 
     # Pipeline
-    rich_colors = {
-        "match": "green",
-        "content_diff": "yellow",
-        "status_diff": "red",
-        "missing_in_good": "cyan",
-        "missing_in_bad": "magenta",
-    }
-
     console.print("[bold]Pipeline[/bold]")
     total = len(report.node_map)
     for i, nc in enumerate(report.node_map):
@@ -368,7 +413,7 @@ def _print_rich(report, show_diff: bool = False) -> None:
 
         icon = _node_icon(nc.status)
         word = _node_word(nc.status, nc.bad_status)
-        color = rich_colors.get(nc.status, "dim")
+        color = _RICH_COLORS.get(nc.status, "dim")
         lat_g = _format_latency(nc.latency_good_ms)
         lat_b = _format_latency(nc.latency_bad_ms)
 
@@ -402,26 +447,8 @@ def _print_rich(report, show_diff: bool = False) -> None:
         if nc.content_diff and nc.status == "content_diff":
             if show_diff:
                 for line in nc.content_diff:
-                    if (
-                        line.startswith("+")
-                        and not line.startswith("+++")
-                    ):
-                        console.print(
-                            f"{cont}[green]{line}[/green]"
-                        )
-                    elif (
-                        line.startswith("-")
-                        and not line.startswith("---")
-                    ):
-                        console.print(
-                            f"{cont}[red]{line}[/red]"
-                        )
-                    elif line.startswith("@@"):
-                        console.print(
-                            f"{cont}[cyan]{line}[/cyan]"
-                        )
-                    else:
-                        console.print(f"{cont}{line}")
+                    formatted = _format_diff_line_rich(line)
+                    console.print(f"{cont}{formatted}")
             else:
                 good_lines, bad_lines = _extract_preview(
                     nc.content_diff,
@@ -445,21 +472,4 @@ def _print_rich(report, show_diff: bool = False) -> None:
 
     # Footer
     console.print()
-    footer_colors = {
-        "ok": "green", "changed": "yellow",
-        "failed": "red", "cancelled": "dim",
-        "new": "cyan", "missing": "magenta",
-        "differs": "red",
-    }
-    counts: dict[str, int] = {}
-    for nc in report.node_map:
-        word = _node_word(nc.status, nc.bad_status)
-        counts[word] = counts.get(word, 0) + 1
-    parts = []
-    for k, v in counts.items():
-        c = footer_colors.get(k, "")
-        if c:
-            parts.append(f"[{c}]{v} {k}[/{c}]")
-        else:
-            parts.append(f"{v} {k}")
-    console.print(" \u00b7 ".join(parts))
+    _render_footer_rich(console, report)
