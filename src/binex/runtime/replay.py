@@ -76,14 +76,17 @@ class ReplayEngine:
             )
             await self.execution_store.record(cached_record)
 
-    async def replay(
+    async def _validate_replay_params(
         self,
         original_run_id: str,
         workflow: dict[str, Any] | WorkflowSpec,
         from_step: str,
-        agent_swaps: dict[str, str] | None = None,
-    ) -> RunSummary:
-        """Create a new immutable run, caching steps before from_step."""
+    ) -> tuple[WorkflowSpec, DAG, list[str], set[str], set[str]]:
+        """Validate replay parameters and compute step partitions.
+
+        Returns (spec, dag, topo_order, cached_steps, re_execute_steps).
+        Raises ValueError if the original run or from_step is not found.
+        """
         original_run = await self.execution_store.get_run(original_run_id)
         if original_run is None:
             raise ValueError(f"Run '{original_run_id}' not found")
@@ -102,6 +105,44 @@ class ReplayEngine:
         from_index = topo_order.index(from_step)
         cached_steps = set(topo_order[:from_index])
         re_execute_steps = set(topo_order[from_index:])
+
+        return spec, dag, topo_order, cached_steps, re_execute_steps
+
+    def _determine_final_status(
+        self,
+        scheduler: Scheduler,
+        re_execute_steps: set[str],
+        cached_steps: set[str],
+        total_nodes: int,
+    ) -> tuple[str, int, int]:
+        """Determine final run status from scheduler state.
+
+        Returns (status, completed_nodes, failed_nodes).
+        """
+        if scheduler.is_complete():
+            return "completed", total_nodes, 0
+
+        completed_nodes = len(cached_steps) + len(
+            [n for n in re_execute_steps if n in scheduler._completed]
+        )
+        failed_nodes = len(
+            [n for n in re_execute_steps if n in scheduler._failed]
+        )
+        return "failed", completed_nodes, failed_nodes
+
+    async def replay(
+        self,
+        original_run_id: str,
+        workflow: dict[str, Any] | WorkflowSpec,
+        from_step: str,
+        agent_swaps: dict[str, str] | None = None,
+    ) -> RunSummary:
+        """Create a new immutable run, caching steps before from_step."""
+        spec, dag, topo_order, cached_steps, re_execute_steps = (
+            await self._validate_replay_params(
+                original_run_id, workflow, from_step,
+            )
+        )
         agent_swaps = agent_swaps or {}
 
         run_id = f"run_{uuid.uuid4().hex[:12]}"
@@ -154,17 +195,12 @@ class ReplayEngine:
 
         # Finalize
         summary.completed_at = datetime.now(UTC)
-        if scheduler.is_complete():
-            summary.status = "completed"
-            summary.completed_nodes = len(spec.nodes)
-        else:
-            summary.status = "failed"
-            summary.completed_nodes = len(cached_steps) + len(
-                [n for n in re_execute_steps if n in scheduler._completed]
-            )
-            summary.failed_nodes = len(
-                [n for n in re_execute_steps if n in scheduler._failed]
-            )
+        status, completed_nodes, failed_nodes = self._determine_final_status(
+            scheduler, re_execute_steps, cached_steps, len(spec.nodes),
+        )
+        summary.status = status
+        summary.completed_nodes = completed_nodes
+        summary.failed_nodes = failed_nodes
 
         await self.execution_store.update_run(summary)
         return summary
