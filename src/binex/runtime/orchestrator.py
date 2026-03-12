@@ -7,6 +7,7 @@ import logging
 import re
 import time
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -52,11 +53,16 @@ class Orchestrator:
         self,
         artifact_store: ArtifactStore,
         execution_store: ExecutionStore,
+        *,
+        stream: bool = False,
+        stream_callback: Callable[[str], None] | None = None,
     ) -> None:
         self.artifact_store = artifact_store
         self.execution_store = execution_store
         self.dispatcher = Dispatcher()
         self._pending_feedback: dict[str, list[Artifact]] = {}
+        self._stream = stream
+        self._stream_callback = stream_callback
 
     async def run_workflow(
         self,
@@ -365,6 +371,11 @@ class Orchestrator:
             max_retries = 1  # single attempt, dispatcher handles retry
             task_retry_policy = retry_policy
 
+        # Build config dict, injecting output_schema if present
+        config = dict(node_spec.config)
+        if node_spec.output_schema is not None:
+            config["output_schema"] = node_spec.output_schema
+
         task = TaskNode(
             id=f"{run_id}_{node_id}",
             run_id=run_id,
@@ -377,9 +388,52 @@ class Orchestrator:
             deadline_ms=node_spec.deadline_ms or (
                 spec.defaults.deadline_ms if spec.defaults else None
             ),
-            config=node_spec.config,
+            config=config,
         )
         return task, max_retries
+
+    async def _execute_single_attempt(
+        self,
+        spec: WorkflowSpec,
+        run_id: str,
+        node_id: str,
+        task: TaskNode,
+        input_artifacts: list[Artifact],
+        trace_id: str,
+        node_max: float | None,
+        node_artifacts: dict[str, list[Artifact]],
+    ) -> tuple[bool, str | None, list[Artifact]]:
+        """Execute a single dispatch attempt with cost recording and artifact storage.
+
+        Returns (succeeded, error_msg, output_artifacts).
+        Raises on dispatch failure so the caller can handle retries.
+        """
+        result = await self.dispatcher.dispatch(
+            task, input_artifacts, trace_id,
+            stream=self._stream,
+            stream_callback=self._stream_callback,
+        )
+        output_artifacts = result.artifacts
+
+        if result.cost:
+            if node_max is not None:
+                result.cost.node_budget = node_max
+            await self.execution_store.record_cost(result.cost)
+
+        if node_max is not None and result.cost:
+            if await self._budget_post_check(
+                spec, run_id, node_id, node_max,
+            ):
+                error_msg = (
+                    f"Node '{node_id}': exceeded budget "
+                    f"(stop policy)"
+                )
+                return False, error_msg, []
+
+        for art in output_artifacts:
+            await self.artifact_store.store(art)
+        node_artifacts[node_id] = output_artifacts
+        return True, None, output_artifacts
 
     async def _retry_loop(
         self,
@@ -410,31 +464,10 @@ class Orchestrator:
                     return False, pre_check_err, output_artifacts
 
             try:
-                result = await self.dispatcher.dispatch(
-                    task, input_artifacts, trace_id,
+                return await self._execute_single_attempt(
+                    spec, run_id, node_id, task, input_artifacts,
+                    trace_id, node_max, node_artifacts,
                 )
-                output_artifacts = result.artifacts
-
-                if result.cost:
-                    if node_max is not None:
-                        result.cost.node_budget = node_max
-                    await self.execution_store.record_cost(result.cost)
-
-                if node_max is not None and result.cost:
-                    if await self._budget_post_check(
-                        spec, run_id, node_id, node_max,
-                    ):
-                        error_msg = (
-                            f"Node '{node_id}': exceeded budget "
-                            f"(stop policy)"
-                        )
-                        return False, error_msg, []
-
-                for art in output_artifacts:
-                    await self.artifact_store.store(art)
-                node_artifacts[node_id] = output_artifacts
-                return True, None, output_artifacts
-
             except Exception as exc:
                 error_msg = str(exc)
                 if attempt < max_retries:
