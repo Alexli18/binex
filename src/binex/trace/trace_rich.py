@@ -112,51 +112,191 @@ async def format_trace_graph_rich(
     nodes: dict[str, str],
     edges: list[tuple[str, str]],
 ) -> None:
-    """Print DAG as a rich table directly to the terminal."""
+    """Print DAG as git-style graph with rich colors."""
     console = get_console()
-
     rec_map = {r.task_id: r for r in records}
 
-    # Build parent map (who depends on whom)
-    parents: dict[str, list[str]] = {n: [] for n in nodes}
+    # Build parent/children maps
+    children_map: dict[str, list[str]] = {n: [] for n in nodes}
+    parents_map: dict[str, list[str]] = {n: [] for n in nodes}
     for src, dst in edges:
-        parents.setdefault(dst, []).append(src)
+        children_map.setdefault(src, []).append(dst)
+        parents_map.setdefault(dst, []).append(src)
 
-    # Topological sort
     order = _topo_sort(nodes, edges)
 
-    table = make_table(
-        ("#", {"style": "dim", "width": 3}),
-        ("Node", {"style": "bold"}),
-        ("Agent", {}),
-        ("Status", {"justify": "center"}),
-        ("Depends On", {}),
-        title="DAG",
-    )
+    # Assign lanes: track which lane each node occupies
+    lanes: dict[str, int] = {}  # node_id -> lane index
+    active_lanes: list[str | None] = []  # lane index -> node_id or None
 
-    for i, node_id in enumerate(order, 1):
+    def _alloc_lane() -> int:
+        """Find first free lane or create new one."""
+        for i, occupant in enumerate(active_lanes):
+            if occupant is None:
+                return i
+        active_lanes.append(None)
+        return len(active_lanes) - 1
+
+    def _free_lane(lane: int) -> None:
+        active_lanes[lane] = None
+
+    # Status display helpers
+    status_icons: dict[str, tuple[str, str]] = {
+        "completed": ("\u2713", "green"),
+        "failed": ("\u2717", "red"),
+        "cancelled": ("-", "dim"),
+        "running": ("\u25cb", "yellow"),
+        "pending": ("\u25cb", "dim"),
+    }
+
+    def _format_latency(ms: int | None) -> str:
+        if ms is None or ms == 0:
+            return ""
+        if ms >= 10000:
+            return f"{ms / 1000:.1f}s"
+        return f"{ms}ms"
+
+    console.print("[bold]DAG[/bold]")
+    console.print()
+
+    for node_id in order:
         rec = rec_map.get(node_id)
-        if rec:
-            status = rec.status.value
-            _, style = STATUS_CONFIG.get(status, ("unknown", "dim"))
-            agent = rec.agent_id
+        status = rec.status.value if rec else "pending"
+        latency = rec.latency_ms if rec else None
+        icon, color = status_icons.get(status, ("?", "dim"))
+
+        node_parents = parents_map.get(node_id, [])
+        node_children = children_map.get(node_id, [])
+
+        # Determine this node's lane
+        if node_parents:
+            first_parent_lane = lanes.get(node_parents[0], 0)
+            lane = first_parent_lane
         else:
-            status = "-"
-            style = "dim"
-            agent = "-"
+            lane = _alloc_lane()
 
-        deps = parents.get(node_id, [])
-        deps_str = ", ".join(deps) if deps else "-"
+        lanes[node_id] = lane
+        # Keep lane active only if this node has children
+        if lane < len(active_lanes):
+            active_lanes[lane] = node_id if node_children else None
+        else:
+            while len(active_lanes) <= lane:
+                active_lanes.append(None)
+            active_lanes[lane] = node_id if node_children else None
 
-        table.add_row(
-            str(i),
-            node_id,
-            agent,
-            Text(status, style=style),
-            deps_str,
+        # --- Merge lines (if multiple parents) ---
+        if len(node_parents) > 1:
+            merge_lanes = sorted(
+                lanes.get(p, 0) for p in node_parents
+            )
+            min_lane = min(merge_lanes)
+            max_lane = max(merge_lanes)
+
+            line = ""
+            num_cols = max(len(active_lanes), max_lane + 1)
+            for col in range(num_cols):
+                if col == min_lane:
+                    line += "\u251c"  # ├
+                elif col == max_lane:
+                    line += "\u2518"  # ┘
+                elif min_lane < col < max_lane:
+                    if col in merge_lanes:
+                        line += "\u2534"  # ┴
+                    else:
+                        line += "\u2500"  # ─
+                elif col < len(active_lanes) and active_lanes[col] is not None:
+                    line += "\u2502"  # │
+                else:
+                    line += " "
+            console.print(f"  {_expand_lanes(line)}")
+
+            # Free merged parent lanes (except the node's own lane)
+            for p in node_parents:
+                p_lane = lanes.get(p, -1)
+                if p_lane != lane and 0 <= p_lane < len(active_lanes):
+                    _free_lane(p_lane)
+
+        # --- Node line ---
+        lat_str = _format_latency(latency)
+        if lat_str:
+            lat_str = f"  {lat_str}"
+
+        line_parts: list[str] = []
+        for col in range(len(active_lanes)):
+            if col == lane:
+                line_parts.append(f"[{color}]\u25cf[/{color}]")
+            elif active_lanes[col] is not None:
+                line_parts.append("\u2502")
+            else:
+                line_parts.append(" ")
+
+        node_text = " ".join(line_parts)
+        console.print(
+            f"  {node_text} "
+            f"[bold]{node_id:<14}[/bold] "
+            f"[{color}]{icon} {status:<10}[/{color}]"
+            f"[dim]{lat_str}[/dim]"
         )
 
-    console.print(table)
+        # --- Fork lines (if multiple children) ---
+        if len(node_children) > 1:
+            child_lanes = [lane]  # first child inherits parent lane
+            for child in node_children[1:]:
+                cl = _alloc_lane()
+                while len(active_lanes) <= cl:
+                    active_lanes.append(None)
+                active_lanes[cl] = child
+                lanes[child] = cl
+                child_lanes.append(cl)
+
+            min_lane = min(child_lanes)
+            max_lane = max(child_lanes)
+
+            line = ""
+            for col in range(len(active_lanes)):
+                if col == min_lane:
+                    line += "\u251c"  # ├
+                elif col == max_lane:
+                    line += "\u2510"  # ┐
+                elif min_lane < col < max_lane:
+                    if col in child_lanes:
+                        line += "\u252c"  # ┬
+                    else:
+                        line += "\u2500"  # ─
+                elif active_lanes[col] is not None:
+                    line += "\u2502"  # │
+                else:
+                    line += " "
+            console.print(f"  {_expand_lanes(line)}")
+        else:
+            # Continuation lines
+            if node_children:
+                child = node_children[0]
+                if child not in lanes:
+                    lanes[child] = lane
+                    if lane < len(active_lanes):
+                        active_lanes[lane] = child
+                    else:
+                        while len(active_lanes) <= lane:
+                            active_lanes.append(None)
+                        active_lanes[lane] = child
+
+            cont_parts: list[str] = []
+            for col in range(len(active_lanes)):
+                if active_lanes[col] is not None:
+                    cont_parts.append("\u2502")
+                else:
+                    cont_parts.append(" ")
+            cont_line = " ".join(cont_parts).rstrip()
+            if cont_line.strip():
+                console.print(f"  {cont_line}")
+
+    console.print()
+
+
+def _expand_lanes(line: str) -> str:
+    """Expand single-char lane columns to spaced format."""
+    return " ".join(line)
 
 
 def _topo_sort(
