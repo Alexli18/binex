@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import time
 import uuid
 from datetime import UTC, datetime
 from typing import Any
@@ -14,6 +13,7 @@ from binex.models.artifact import Artifact
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskNode, TaskStatus
 from binex.models.workflow import WorkflowSpec
+from binex.runtime._node_executor import collect_input_artifacts, now_ms, record_execution
 from binex.runtime.dispatcher import Dispatcher
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
@@ -236,11 +236,9 @@ class ReplayEngine:
             config=node_spec.config,
         )
 
-        input_artifacts: list[Artifact] = []
-        for dep_id in dag.dependencies(node_id):
-            input_artifacts.extend(node_artifacts.get(dep_id, []))
+        input_artifacts = collect_input_artifacts(dag, node_id, node_artifacts)
 
-        start_ms = int(time.monotonic() * 1000)
+        start_ms = now_ms()
         error_msg: str | None = None
         output_artifacts: list[Artifact] = []
 
@@ -263,17 +261,16 @@ class ReplayEngine:
             scheduler.mark_failed(node_id)
             status = TaskStatus.FAILED
 
-        latency_ms = int(time.monotonic() * 1000) - start_ms
-        record = ExecutionRecord(
-            id=f"rec_{uuid.uuid4().hex[:12]}",
+        latency_ms = now_ms() - start_ms
+        await record_execution(
+            self.execution_store,
             run_id=run_id,
-            task_id=node_id,
+            node_id=node_id,
             agent_id=agent,
             status=status,
-            input_artifact_refs=[a.id for a in input_artifacts],
-            output_artifact_refs=[a.id for a in output_artifacts],
+            input_artifacts=input_artifacts,
+            output_artifacts=output_artifacts,
             latency_ms=latency_ms,
             trace_id=trace_id,
             error=error_msg,
         )
-        await self.execution_store.record(record)

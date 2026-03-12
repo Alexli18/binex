@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import time
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -15,9 +14,10 @@ import click
 from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
 from binex.models.artifact import Artifact
-from binex.models.execution import ExecutionRecord, RunSummary
+from binex.models.execution import RunSummary
 from binex.models.task import TaskNode
 from binex.models.workflow import NodeSpec, WorkflowSpec
+from binex.runtime._node_executor import collect_input_artifacts, now_ms, record_execution
 from binex.runtime.back_edge import evaluate_back_edge, evaluate_when
 from binex.runtime.budget import (
     check_batch_budget,
@@ -269,13 +269,12 @@ class Orchestrator:
             spec, run_id, node_id, node_spec, retry_policy, node_max,
         )
 
-        input_artifacts: list[Artifact] = []
-        for dep_id in dag.dependencies(node_id):
-            input_artifacts.extend(node_artifacts.get(dep_id, []))
-        # Inject pending feedback from back-edge
-        input_artifacts.extend(self._pending_feedback.pop(node_id, []))
+        input_artifacts = collect_input_artifacts(
+            dag, node_id, node_artifacts,
+            self._pending_feedback.pop(node_id, []),
+        )
 
-        start_ms = _now_ms()
+        start_ms = now_ms()
         succeeded, error_msg, output_artifacts = await self._retry_loop(
             spec, run_id, node_id, task, input_artifacts, trace_id,
             node_max, max_retries, retry_policy, node_artifacts,
@@ -294,20 +293,19 @@ class Orchestrator:
             scheduler.mark_failed(node_id)
             status = task.status.__class__("failed")
 
-        latency_ms = _now_ms() - start_ms
-        record = ExecutionRecord(
-            id=f"rec_{uuid.uuid4().hex[:12]}",
+        latency_ms = now_ms() - start_ms
+        await record_execution(
+            self.execution_store,
             run_id=run_id,
-            task_id=node_id,
+            node_id=node_id,
             agent_id=node_spec.agent,
             status=status,
-            input_artifact_refs=[a.id for a in input_artifacts],
-            output_artifact_refs=[a.id for a in output_artifacts],
+            input_artifacts=input_artifacts,
+            output_artifacts=output_artifacts,
             latency_ms=latency_ms,
             trace_id=trace_id,
             error=error_msg,
         )
-        await self.execution_store.record(record)
 
     @staticmethod
     def _build_task_node(
@@ -437,8 +435,3 @@ class Orchestrator:
                     await asyncio.sleep(delay)
 
         return False, error_msg, output_artifacts
-
-
-
-def _now_ms() -> int:
-    return int(time.monotonic() * 1000)
