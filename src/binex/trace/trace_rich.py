@@ -357,7 +357,14 @@ def _topo_sort(
     nodes: dict[str, str],
     edges: list[tuple[str, str]],
 ) -> list[str]:
-    """Kahn's algorithm for topological sort."""
+    """Kahn's algorithm for topological sort.
+
+    NOTE: This duplicates the algorithm in ``DAG.topological_order()``
+    (src/binex/graph/dag.py).  A direct replacement is impractical because
+    DAG requires forward/backward adjacency sets and a node ``set[str]``,
+    whereas this call-site works with a label dict and an edge list.
+    Building a DAG just to sort would add complexity without benefit.
+    """
     in_degree: dict[str, int] = {n: 0 for n in nodes}
     children: dict[str, list[str]] = {n: [] for n in nodes}
     for src, dst in edges:
