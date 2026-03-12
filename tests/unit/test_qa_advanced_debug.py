@@ -20,7 +20,8 @@ from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskNode, TaskStatus
 from binex.runtime.dispatcher import Dispatcher
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
-from binex.trace.diff import _compute_summary, _content_similarity, diff_runs
+from binex.trace._compare import content_similarity as _content_similarity
+from binex.trace.diff import _compute_summary, diff_runs
 
 # ---------------------------------------------------------------------------
 # Fixtures

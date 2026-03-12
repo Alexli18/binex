@@ -7,6 +7,7 @@ from typing import Any
 
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
+from binex.trace._compare import content_similarity, get_artifact_content
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -169,13 +170,13 @@ async def _check_content_divergence(
     if good_status != "completed" or not good_rec or not bad_rec:
         return None
 
-    content_a = await _get_content(art_store, good_rec.output_artifact_refs)
-    content_b = await _get_content(art_store, bad_rec.output_artifact_refs)
+    content_a = await get_artifact_content(art_store, good_rec.output_artifact_refs)
+    content_b = await get_artifact_content(art_store, bad_rec.output_artifact_refs)
 
     if content_a is None or content_b is None:
         return None
 
-    similarity = difflib.SequenceMatcher(None, content_a, content_b).ratio()
+    similarity = content_similarity(content_a, content_b)
     if similarity < threshold:
         upstream = _get_upstream(task_id, good_by_task, bad_by_task)
         return DivergencePoint(
@@ -206,17 +207,6 @@ def _get_upstream(
                     upstream.append(tid)
     return upstream
 
-
-async def _get_content(art_store: ArtifactStore, refs: list[str]) -> str | None:
-    """Get concatenated artifact content."""
-    if not refs:
-        return None
-    parts: list[str] = []
-    for ref in refs:
-        art = await art_store.get(ref)
-        if art and art.content:
-            parts.append(str(art.content))
-    return "\n".join(parts) if parts else None
 
 
 def divergence_to_dict(
@@ -406,12 +396,12 @@ async def _check_content_similarity(
     if comp_status != "match" or g_status != "completed" or not good_rec or not bad_rec:
         return None, comp_status, None, None
 
-    ca = await _get_content(art_store, good_rec.output_artifact_refs)
-    cb = await _get_content(art_store, bad_rec.output_artifact_refs)
+    ca = await get_artifact_content(art_store, good_rec.output_artifact_refs)
+    cb = await get_artifact_content(art_store, bad_rec.output_artifact_refs)
     if ca is None or cb is None:
         return None, comp_status, ca, cb
 
-    similarity = difflib.SequenceMatcher(None, ca, cb).ratio()
+    similarity = content_similarity(ca, cb)
     if similarity < threshold:
         return similarity, "content_diff", ca, cb
     return round(similarity, 4), comp_status, ca, cb
@@ -430,9 +420,9 @@ async def _generate_content_diff(
         return None
 
     if ca is None and good_rec:
-        ca = await _get_content(art_store, good_rec.output_artifact_refs)
+        ca = await get_artifact_content(art_store, good_rec.output_artifact_refs)
     if cb is None and bad_rec:
-        cb = await _get_content(art_store, bad_rec.output_artifact_refs)
+        cb = await get_artifact_content(art_store, bad_rec.output_artifact_refs)
 
     if ca is None and cb is None:
         return None

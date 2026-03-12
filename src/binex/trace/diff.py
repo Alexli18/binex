@@ -2,32 +2,11 @@
 
 from __future__ import annotations
 
-import difflib
 from typing import Any
 
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
-
-
-async def _get_artifact_content(art_store: ArtifactStore, refs: list[str]) -> str | None:
-    """Get concatenated content from artifact refs."""
-    if not refs:
-        return None
-    parts = []
-    for ref in refs:
-        art = await art_store.get(ref)
-        if art and art.content:
-            parts.append(str(art.content))
-    return "\n".join(parts) if parts else None
-
-
-def _content_similarity(content_a: str | None, content_b: str | None) -> float:
-    """Compute similarity ratio between two content strings."""
-    if content_a is None and content_b is None:
-        return 1.0
-    if content_a is None or content_b is None:
-        return 0.0
-    return difflib.SequenceMatcher(None, content_a, content_b).ratio()
+from binex.trace._compare import content_similarity, get_artifact_content
 
 
 def _compute_summary(steps: list[dict]) -> dict:
@@ -74,9 +53,9 @@ async def _compare_single_task(
     refs_b = rec_b.output_artifact_refs if rec_b else []
 
     artifacts_changed = await _artifacts_differ(art_store, refs_a, refs_b)
-    content_a = await _get_artifact_content(art_store, refs_a)
-    content_b = await _get_artifact_content(art_store, refs_b)
-    similarity = _content_similarity(content_a, content_b)
+    content_a = await get_artifact_content(art_store, refs_a)
+    content_b = await get_artifact_content(art_store, refs_b)
+    similarity = content_similarity(content_a, content_b)
 
     return {
         "task_id": task_id,
