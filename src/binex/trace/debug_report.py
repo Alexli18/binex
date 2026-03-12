@@ -38,30 +38,14 @@ class DebugReport:
     nodes: list[NodeReport] = field(default_factory=list)
 
 
-async def build_debug_report(
-    exec_store,
-    art_store,
-    run_id: str,
-) -> DebugReport | None:
-    """Build a debug report from execution and artifact stores.
+def _build_node_reports(
+    records: list,
+    art_index: dict[str, Artifact],
+) -> tuple[list[NodeReport], list[str]]:
+    """Build NodeReport list from execution records.
 
-    Returns None if the run_id does not exist.
+    Returns a tuple of (node_reports, failed_node_ids).
     """
-    run = await exec_store.get_run(run_id)
-    if run is None:
-        return None
-
-    records = await exec_store.list_records(run_id)
-    artifacts = await art_store.list_by_run(run_id)
-    art_index: dict[str, Artifact] = {a.id: a for a in artifacts}
-
-    # Compute duration
-    duration_ms = 0
-    if run.started_at and run.completed_at:
-        delta = run.completed_at - run.started_at
-        duration_ms = int(delta.total_seconds() * 1000)
-
-    # Build node reports from execution records
     nodes: list[NodeReport] = []
     failed_node_ids: list[str] = []
     for rec in records:
@@ -86,18 +70,52 @@ async def build_debug_report(
         if rec.status in (TaskStatus.FAILED, TaskStatus.TIMED_OUT):
             failed_node_ids.append(rec.task_id)
 
-    # Infer skipped nodes
-    recorded_count = len(records)
-    skipped_count = max(0, run.total_nodes - recorded_count)
-    for i in range(skipped_count):
-        nodes.append(
-            NodeReport(
-                node_id=f"<skipped-{i + 1}>",
-                agent_id="",
-                status="skipped",
-                blocked_by=list(failed_node_ids),
-            )
+    return nodes, failed_node_ids
+
+
+def _infer_skipped_nodes(
+    recorded_count: int,
+    total_nodes: int,
+    failed_ids: list[str],
+) -> list[NodeReport]:
+    """Infer skipped nodes from the difference between total and recorded counts."""
+    skipped_count = max(0, total_nodes - recorded_count)
+    return [
+        NodeReport(
+            node_id=f"<skipped-{i + 1}>",
+            agent_id="",
+            status="skipped",
+            blocked_by=list(failed_ids),
         )
+        for i in range(skipped_count)
+    ]
+
+
+async def build_debug_report(
+    exec_store,
+    art_store,
+    run_id: str,
+) -> DebugReport | None:
+    """Build a debug report from execution and artifact stores.
+
+    Returns None if the run_id does not exist.
+    """
+    run = await exec_store.get_run(run_id)
+    if run is None:
+        return None
+
+    records = await exec_store.list_records(run_id)
+    artifacts = await art_store.list_by_run(run_id)
+    art_index: dict[str, Artifact] = {a.id: a for a in artifacts}
+
+    # Compute duration
+    duration_ms = 0
+    if run.started_at and run.completed_at:
+        delta = run.completed_at - run.started_at
+        duration_ms = int(delta.total_seconds() * 1000)
+
+    nodes, failed_node_ids = _build_node_reports(records, art_index)
+    nodes.extend(_infer_skipped_nodes(len(records), run.total_nodes, failed_node_ids))
 
     return DebugReport(
         run_id=run.run_id,
