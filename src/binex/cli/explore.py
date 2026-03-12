@@ -202,8 +202,14 @@ async def _dashboard(exec_store, art_store, run_id: str) -> None:
                 if k == "e":
                     run_id = new_run_id
                 continue
+        elif key == "i":
+            await _action_diagnose(exec_store, art_store, run_id)
+        elif key == "f":
+            await _action_diff(exec_store, art_store, run_id, run)
+        elif key == "b":
+            await _action_bisect(exec_store, art_store, run_id, run)
         else:
-            click.echo("  Unknown action. Use t/g/d/c/a/n/r/q.")
+            click.echo("  Unknown action. Use t/g/d/c/a/n/r/i/f/b/q.")
             continue
 
         if _wait_for_enter():
@@ -308,7 +314,8 @@ def _print_dashboard_menu() -> None:
         for key, label in [
             ("t", "trace"), ("g", "graph"), ("d", "debug"),
             ("c", "cost"), ("a", "artifacts"), ("n", "node"),
-            ("r", "replay"), ("q", "quit"),
+            ("r", "replay"), ("i", "diagnose"), ("f", "diff"),
+            ("b", "bisect"), ("q", "quit"),
         ]:
             hint.append("  [", style="dim")
             hint.append(key, style="cyan bold")
@@ -316,7 +323,8 @@ def _print_dashboard_menu() -> None:
         get_console().print(hint)
     else:
         click.echo(
-            "  [t]race [g]raph [d]ebug [c]ost [a]rtifacts [n]ode [r]eplay [q]uit"
+            "  [t]race [g]raph [d]ebug [c]ost [a]rtifacts [n]ode"
+            " [r]eplay [i] d[i]agnose [f] dif[f] [b]isect [q]uit"
         )
 
 
@@ -715,6 +723,184 @@ def _render_node_plain(rec, node_arts, node_total_cost: float) -> None:
             click.echo(f"    - {art.id} ({art.type}): {_preview(art.content)}")
     if node_total_cost > 0:
         click.echo(f"  Cost: ${node_total_cost:.4f}")
+
+
+async def _pick_other_run(exec_store, current_run_id: str, workflow_name: str) -> str | None:
+    """Let user pick another run of the same workflow. Returns run_id or None."""
+    all_runs = await exec_store.list_runs()
+    same_wf = [
+        r for r in all_runs
+        if r.workflow_name == workflow_name and r.run_id != current_run_id
+    ]
+    same_wf.sort(key=lambda r: r.started_at, reverse=True)
+    same_wf = same_wf[:10]
+
+    if not same_wf:
+        click.echo("  No other runs of this workflow found.")
+        manual = click.prompt("  Enter run_id manually (or q=cancel)", default="q")
+        return None if manual.strip().lower() == "q" else manual.strip()
+
+    click.echo()
+    if has_rich():
+        from binex.cli.ui import get_console, make_table, status_text
+
+        table = make_table(
+            ("#", {"style": "dim", "width": 4, "justify": "right"}),
+            ("Run ID", {"style": "cyan", "min_width": 16}),
+            ("Status", {"min_width": 10}),
+            ("When", {"style": "dim", "min_width": 8}),
+            title=f"Other runs of '{workflow_name}'",
+        )
+        for i, r in enumerate(same_wf, 1):
+            table.add_row(
+                str(i), _short_id(r.run_id),
+                status_text(r.status), _time_ago(r.started_at),
+            )
+        get_console().print(table)
+    else:
+        click.echo(f"  Other runs of '{workflow_name}':")
+        for i, r in enumerate(same_wf, 1):
+            click.echo(
+                f"  {i:>3})  {_short_id(r.run_id):<18} {r.status:<12} "
+                f"{_time_ago(r.started_at)}"
+            )
+    click.echo()
+
+    choice = click.prompt(
+        "  Select run # or enter run_id (q=cancel)", default="q",
+    )
+    if choice.strip().lower() == "q":
+        return None
+    try:
+        idx = int(choice) - 1
+        if 0 <= idx < len(same_wf):
+            return same_wf[idx].run_id
+    except ValueError:
+        pass
+    # Treat as manual run_id
+    return choice.strip() if choice.strip() else None
+
+
+async def _action_diagnose(exec_store, art_store, run_id: str) -> None:
+    """Run root-cause analysis on the current run."""
+    from binex.trace.diagnose import diagnose_run
+
+    try:
+        report = await diagnose_run(exec_store, art_store, run_id)
+    except ValueError as e:
+        click.echo(f"  Error: {e}")
+        return
+
+    if has_rich():
+        from rich.table import Table
+
+        from binex.cli.ui import get_console, make_panel
+
+        console = get_console()
+
+        status_style = "red bold" if report.status == "issues_found" else "green bold"
+        console.print(make_panel(
+            f"[bold]Run:[/bold] [cyan]{report.run_id}[/cyan]\n"
+            f"[bold]Status:[/bold] [{status_style}]{report.status}[/{status_style}]",
+            title="Diagnostic Report",
+        ))
+
+        if report.root_cause:
+            console.print(make_panel(
+                f"[bold]Node:[/bold] {report.root_cause.node_id}\n"
+                f"[bold]Error:[/bold] {report.root_cause.error_message}\n"
+                f"[bold]Pattern:[/bold] {report.root_cause.pattern}",
+                title="Root Cause",
+            ))
+
+        if report.affected_nodes:
+            console.print(make_panel(
+                ", ".join(report.affected_nodes),
+                title=f"Affected Nodes ({len(report.affected_nodes)})",
+            ))
+
+        if report.latency_anomalies:
+            table = Table(title="Latency Anomalies")
+            table.add_column("Node", style="bold")
+            table.add_column("Latency", justify="right")
+            table.add_column("Median", justify="right")
+            table.add_column("Ratio", justify="right")
+            for a in report.latency_anomalies:
+                table.add_row(
+                    a.node_id, f"{a.latency_ms:.0f}ms",
+                    f"{a.median_ms:.0f}ms", f"{a.ratio:.1f}x",
+                )
+            console.print(table)
+
+        if report.recommendations:
+            rec_text = "\n".join(f"\u2022 {r}" for r in report.recommendations)
+            console.print(make_panel(rec_text, title="Recommendations"))
+    else:
+        click.echo(f"  Run: {report.run_id}")
+        click.echo(f"  Status: {report.status}")
+        if report.root_cause:
+            click.echo(f"  Root Cause: {report.root_cause.node_id}")
+            click.echo(f"    Error: {report.root_cause.error_message}")
+            click.echo(f"    Pattern: {report.root_cause.pattern}")
+        if report.affected_nodes:
+            click.echo(f"  Affected: {', '.join(report.affected_nodes)}")
+        if report.latency_anomalies:
+            click.echo("  Latency Anomalies:")
+            for a in report.latency_anomalies:
+                click.echo(f"    {a.node_id}: {a.latency_ms:.0f}ms ({a.ratio:.1f}x median)")
+        if report.recommendations:
+            click.echo("  Recommendations:")
+            for r in report.recommendations:
+                click.echo(f"    - {r}")
+
+
+async def _action_diff(exec_store, art_store, run_id: str, run) -> None:
+    """Compare current run with another run."""
+    other_id = await _pick_other_run(exec_store, run_id, run.workflow_name)
+    if not other_id:
+        click.echo("  Diff cancelled.")
+        return
+
+    from binex.trace.diff import diff_runs
+
+    try:
+        result = await diff_runs(exec_store, art_store, run_id, other_id)
+    except ValueError as e:
+        click.echo(f"  Error: {e}")
+        return
+
+    if has_rich():
+        from binex.trace.diff_rich import format_diff_rich
+        format_diff_rich(result)
+    else:
+        from binex.trace.diff import format_diff
+        click.echo(format_diff(result))
+
+
+async def _action_bisect(exec_store, art_store, run_id: str, run) -> None:
+    """Find divergence point between current run (bad) and another run (good)."""
+    click.echo("  Current run = bad run. Select the good run:")
+    good_id = await _pick_other_run(exec_store, run_id, run.workflow_name)
+    if not good_id:
+        click.echo("  Bisect cancelled.")
+        return
+
+    from binex.trace.bisect import bisect_report as _bisect_report
+
+    try:
+        report = await _bisect_report(
+            exec_store, art_store, good_id, run_id,
+        )
+    except ValueError as e:
+        click.echo(f"  Error: {e}")
+        return
+
+    if has_rich():
+        from binex.cli.bisect import _print_rich
+        _print_rich(report)
+    else:
+        from binex.cli.bisect import _print_plain
+        _print_plain(report)
 
 
 async def _action_replay(exec_store, art_store, run_id: str, run, records) -> str | None:
