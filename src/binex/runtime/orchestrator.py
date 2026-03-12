@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import re
 import time
 import uuid
 from collections.abc import Callable
@@ -19,31 +18,18 @@ from binex.models.artifact import Artifact
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskNode
 from binex.models.workflow import NodeSpec, WorkflowSpec
+from binex.runtime.back_edge import evaluate_back_edge, evaluate_when
+from binex.runtime.budget import (
+    check_batch_budget,
+    get_effective_policy,
+    get_node_max_cost,
+    skip_all_remaining,
+)
 from binex.runtime.dispatcher import Dispatcher, _backoff_delay
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
 
 logger = logging.getLogger(__name__)
-
-
-def get_effective_policy(spec: WorkflowSpec) -> str:
-    """Return the effective budget policy — from workflow or default 'stop'."""
-    if spec.budget:
-        return spec.budget.policy
-    return "stop"
-
-
-def get_node_max_cost(
-    node: NodeSpec, spec: WorkflowSpec, accumulated_workflow_cost: float
-) -> float | None:
-    """Return effective max_cost for a node, considering workflow budget."""
-    if node.budget is None:
-        return None
-    node_max = node.budget.max_cost
-    if spec.budget:
-        remaining = spec.budget.max_cost - accumulated_workflow_cost
-        return min(node_max, remaining)
-    return node_max
 
 
 class Orchestrator:
@@ -102,10 +88,10 @@ class Orchestrator:
                 continue
 
             # Budget check before scheduling next batch
-            budget_action = self._check_batch_budget(spec, accumulated_cost)
+            budget_action = check_batch_budget(spec, accumulated_cost)
             if budget_action == "stop":
                 budget_exceeded = True
-                self._skip_all_remaining(scheduler, ready)
+                skip_all_remaining(scheduler, ready)
                 break
             if budget_action == "warn":
                 msg = (
@@ -139,34 +125,6 @@ class Orchestrator:
 
         await self.execution_store.update_run(summary)
         return summary
-
-    @staticmethod
-    def _check_batch_budget(
-        spec: WorkflowSpec, accumulated_cost: float,
-    ) -> str | None:
-        """Check budget before scheduling a batch.
-
-        Returns "stop", "warn", or None (no budget issue).
-        """
-        if not spec.budget or spec.budget.max_cost <= 0:
-            return None
-        if accumulated_cost <= spec.budget.max_cost:
-            return None
-        return spec.budget.policy  # "stop" or "warn"
-
-    @staticmethod
-    def _skip_all_remaining(
-        scheduler: Scheduler, initial_ready: list[str],
-    ) -> None:
-        """Skip all ready and subsequently unblocked nodes."""
-        for node_id in initial_ready:
-            scheduler.mark_skipped(node_id)
-        while not scheduler.is_complete() and not scheduler.is_blocked():
-            remaining = scheduler.ready_nodes()
-            if not remaining:
-                break
-            for node_id in remaining:
-                scheduler.mark_skipped(node_id)
 
     def _schedule_ready_nodes(
         self,
@@ -327,9 +285,10 @@ class Orchestrator:
             scheduler.mark_completed(node_id)
             status = task.status.__class__("completed")
             # Evaluate back-edge after successful completion
-            await self._evaluate_back_edge(
+            await evaluate_back_edge(
                 spec, scheduler, dag, node_id,
                 node_artifacts, node_artifacts_history,
+                self._pending_feedback,
             )
         else:
             scheduler.mark_failed(node_id)
@@ -479,78 +438,6 @@ class Orchestrator:
 
         return False, error_msg, output_artifacts
 
-
-    async def _evaluate_back_edge(
-        self,
-        spec: WorkflowSpec,
-        scheduler: Scheduler,
-        dag: DAG,
-        node_id: str,
-        node_artifacts: dict[str, list[Artifact]],
-        node_artifacts_history: dict[str, list[list[Artifact]]],
-    ) -> None:
-        """Evaluate back_edge after successful node execution. Resets chain if triggered."""
-        back_edge = spec.nodes[node_id].back_edge
-        if back_edge is None:
-            return
-
-        if not evaluate_when(back_edge.when, node_artifacts):
-            return
-
-        iteration = scheduler.get_execution_count(node_id)
-        if iteration >= back_edge.max_iterations:
-            decision = click.prompt(
-                f"  Max iterations ({back_edge.max_iterations}) reached for '{node_id}'. "
-                f"[a]ccept last draft · [f]ail workflow",
-                type=click.Choice(["a", "f"]),
-                show_choices=False,
-            )
-            if decision == "f":
-                scheduler.mark_failed(node_id)
-            return
-
-        # Collect feedback artifacts for injection into target node
-        feedback_arts = [
-            a for a in node_artifacts.get(node_id, [])
-            if a.type == "feedback"
-        ]
-        if feedback_arts:
-            self._pending_feedback[back_edge.target] = feedback_arts
-
-        # Reset chain and archive old artifacts
-        reset_nodes = scheduler.reset_chain(back_edge.target, node_id, dag)
-        for nid in reset_nodes:
-            old = node_artifacts.pop(nid, [])
-            node_artifacts_history.setdefault(nid, []).append(old)
-
-
-_WHEN_RE = re.compile(r"^\$\{([\w-]+)\.([\w-]+)\}\s*(==|!=)\s*(.+)$")
-
-
-def evaluate_when(when_str: str, node_artifacts: dict[str, list[Artifact]]) -> bool:
-    """Evaluate a when-condition string against collected node artifacts.
-
-    Returns True if the condition is satisfied, False otherwise.
-    Raises ValueError for malformed when strings.
-    """
-    m = _WHEN_RE.match(when_str.strip())
-    if not m:
-        raise ValueError(f"Invalid when condition syntax: {when_str!r}")
-
-    node_id, output_name, operator, value = m.group(1), m.group(2), m.group(3), m.group(4).strip()
-
-    artifacts = node_artifacts.get(node_id)
-    if not artifacts:
-        return False
-
-    # Match artifact by type (output_name), fall back to first artifact
-    matching = [a for a in artifacts if a.type == output_name]
-    actual = str(matching[0].content) if matching else str(artifacts[0].content)
-
-    if operator == "==":
-        return actual == value
-    else:  # !=
-        return actual != value
 
 
 def _now_ms() -> int:
