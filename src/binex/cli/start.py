@@ -99,6 +99,30 @@ def build_start_workflow(
     return yaml_str, needed_prompts
 
 
+_OPTIONAL_NODE_KEYS = (
+    "depends_on", "back_edge", "budget", "retry_policy", "deadline_ms", "config",
+)
+
+
+def _build_node_dict(cfg: dict, needed_prompts: set[str]) -> dict:
+    """Build a single node dict from config, collecting needed prompts."""
+    node: dict = {"agent": cfg["agent"]}
+
+    if cfg.get("system_prompt"):
+        node["system_prompt"] = cfg["system_prompt"]
+        sp = cfg["system_prompt"]
+        if sp.startswith("file://prompts/") and sp.endswith(".md"):
+            needed_prompts.add(sp.removeprefix("file://prompts/"))
+
+    node["outputs"] = cfg.get("outputs", ["result"])
+
+    for key in _OPTIONAL_NODE_KEYS:
+        if cfg.get(key):
+            node[key] = cfg[key]
+
+    return node
+
+
 def build_custom_workflow(*, name: str, nodes_config: dict[str, dict]) -> tuple[str, set[str]]:
     """Generate workflow YAML from per-node configuration dicts.
 
@@ -108,31 +132,7 @@ def build_custom_workflow(*, name: str, nodes_config: dict[str, dict]) -> tuple[
     nodes: dict[str, dict] = {}
 
     for node_id, cfg in nodes_config.items():
-        node: dict = {}
-        node["agent"] = cfg["agent"]
-
-        if cfg.get("system_prompt"):
-            node["system_prompt"] = cfg["system_prompt"]
-            sp = cfg["system_prompt"]
-            if sp.startswith("file://prompts/") and sp.endswith(".md"):
-                needed_prompts.add(sp.removeprefix("file://prompts/"))
-
-        node["outputs"] = cfg.get("outputs", ["result"])
-
-        if cfg.get("depends_on"):
-            node["depends_on"] = cfg["depends_on"]
-        if cfg.get("back_edge"):
-            node["back_edge"] = cfg["back_edge"]
-        if cfg.get("budget"):
-            node["budget"] = cfg["budget"]
-        if cfg.get("retry_policy"):
-            node["retry_policy"] = cfg["retry_policy"]
-        if cfg.get("deadline_ms"):
-            node["deadline_ms"] = cfg["deadline_ms"]
-        if cfg.get("config"):
-            node["config"] = cfg["config"]
-
-        nodes[node_id] = node
+        nodes[node_id] = _build_node_dict(cfg, needed_prompts)
 
     workflow = {"name": name, "nodes": nodes}
     yaml_str = yaml.dump(workflow, default_flow_style=False, sort_keys=False)
@@ -377,6 +377,63 @@ def _step_choose_template() -> tuple[str, str, str]:
         return tpl.dsl, tpl.default_name, f"Input for {tpl.label}:"
 
 
+def _collect_env_vars(nodes_config: dict[str, dict]) -> str:
+    """Collect env vars from node agents and return .env content."""
+    env_lines: list[str] = []
+    seen_vars: set[str] = set()
+    for cfg in nodes_config.values():
+        agent = cfg.get("agent", "")
+        for prov in PROVIDERS.values():
+            if agent.startswith(prov.agent_prefix) and prov.env_var:
+                if prov.env_var not in seen_vars:
+                    env_lines.append(f"{prov.env_var}=\n")
+                    seen_vars.add(prov.env_var)
+    return "".join(env_lines)
+
+
+def _resolve_project_dir(project_name: str) -> Path:
+    """Resolve and validate project directory. Exits on error."""
+    try:
+        project_dir = Path.cwd() / project_name
+    except FileNotFoundError:
+        click.echo(
+            "Error: current directory does not exist. "
+            "Please cd to a valid directory and try again.",
+            err=True,
+        )
+        sys.exit(1)
+
+    if project_dir.exists() and any(project_dir.iterdir()):
+        click.echo(
+            f"Error: directory '{project_name}' already exists and is not empty.",
+            err=True,
+        )
+        sys.exit(1)
+
+    return project_dir
+
+
+def _write_custom_project_files(
+    project_dir: Path, yaml_content: str,
+    needed_prompts: set[str], nodes_config: dict[str, dict],
+) -> None:
+    """Write all project files for the custom wizard."""
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    (project_dir / "workflow.yaml").write_text(yaml_content)
+    _print_file_created("workflow.yaml")
+
+    if needed_prompts:
+        _copy_prompts_to_project(project_dir, needed_prompts)
+        _print_file_created(f"prompts/ ({len(needed_prompts)} files)")
+
+    (project_dir / ".env").write_text(_collect_env_vars(nodes_config))
+    _print_file_created(".env")
+
+    (project_dir / ".gitignore").write_text(".binex/\n.env\n__pycache__/\n*.pyc\n")
+    _print_file_created(".gitignore")
+
+
 def _custom_interactive_wizard(dsl: str) -> None:
     """Full custom wizard: configure each node, preview, save project.
 
@@ -387,7 +444,6 @@ def _custom_interactive_wizard(dsl: str) -> None:
     parsed = parse_dsl([dsl])
 
     # Phase 1 — per-node configuration (with 'back' support)
-    nodes_config: dict[str, dict] = {}
     node_list = list(parsed.nodes)
     nodes_config = _configure_all_nodes(node_list, parsed.depends_on)
 
@@ -417,52 +473,8 @@ def _custom_interactive_wizard(dsl: str) -> None:
 
     # Phase 4 — project name & generation
     project_name = click.prompt("Project name", default="my-project")
-
-    try:
-        project_dir = Path.cwd() / project_name
-    except FileNotFoundError:
-        click.echo(
-            "Error: current directory does not exist. "
-            "Please cd to a valid directory and try again.",
-            err=True,
-        )
-        sys.exit(1)
-
-    if project_dir.exists() and any(project_dir.iterdir()):
-        click.echo(
-            f"Error: directory '{project_name}' already exists and is not empty.",
-            err=True,
-        )
-        sys.exit(1)
-
-    project_dir.mkdir(parents=True, exist_ok=True)
-
-    workflow_path = project_dir / "workflow.yaml"
-    workflow_path.write_text(yaml_content)
-    _print_file_created("workflow.yaml")
-
-    if needed_prompts:
-        _copy_prompts_to_project(project_dir, needed_prompts)
-        _print_file_created(f"prompts/ ({len(needed_prompts)} files)")
-
-    # Collect env vars from node agents for .env
-    env_lines: list[str] = []
-    seen_vars: set[str] = set()
-    for cfg in nodes_config.values():
-        agent = cfg.get("agent", "")
-        for prov in PROVIDERS.values():
-            if agent.startswith(prov.agent_prefix) and prov.env_var:
-                if prov.env_var not in seen_vars:
-                    env_lines.append(f"{prov.env_var}=\n")
-                    seen_vars.add(prov.env_var)
-
-    env_path = project_dir / ".env"
-    env_path.write_text("".join(env_lines))
-    _print_file_created(".env")
-
-    gitignore_path = project_dir / ".gitignore"
-    gitignore_path.write_text(".binex/\n.env\n__pycache__/\n*.pyc\n")
-    _print_file_created(".gitignore")
+    project_dir = _resolve_project_dir(project_name)
+    _write_custom_project_files(project_dir, yaml_content, needed_prompts, nodes_config)
 
     click.echo()
 
@@ -473,7 +485,7 @@ def _custom_interactive_wizard(dsl: str) -> None:
     )
 
     if run_now.lower() == "y":
-        _run_workflow(str(workflow_path))
+        _run_workflow(str(project_dir / "workflow.yaml"))
     else:
         _print_done_panel(project_name)
 
@@ -587,6 +599,26 @@ def _step_custom_dsl_topology() -> str:
     return dsl
 
 
+def _print_topology_preview_rich(levels: list[str]) -> None:
+    """Print a styled Rich preview of the current topology."""
+    from rich.text import Text
+
+    from binex.cli.ui import get_console
+
+    console = get_console(stderr=True)
+    parts = " -> ".join(levels).replace(",", " ,").split()
+    preview = Text("  Current graph: ", style="dim")
+    for part in parts:
+        ps = part.strip()
+        if ps == "->":
+            preview.append(" \u2192 ", style="dim")
+        elif ps == ",":
+            preview.append(", ", style="dim")
+        else:
+            preview.append(ps, style="bold magenta")
+    console.print(preview)
+
+
 def _step_mode_topology(*, input_fn=None) -> str:
     """Build workflow topology step by step. Returns DSL string like 'A -> B, C -> D'."""
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))
@@ -609,23 +641,7 @@ def _step_mode_topology(*, input_fn=None) -> str:
             break
         levels.append(answer.strip())
         if has_rich():
-            from binex.cli.ui import get_console
-
-            console = get_console(stderr=True)
-            # Build styled graph preview
-            parts = " -> ".join(levels).replace(",", " ,").split()
-            from rich.text import Text
-
-            preview = Text("  Current graph: ", style="dim")
-            for part in parts:
-                ps = part.strip()
-                if ps == "->":
-                    preview.append(" \u2192 ", style="dim")
-                elif ps == ",":
-                    preview.append(", ", style="dim")
-                else:
-                    preview.append(ps, style="bold magenta")
-            console.print(preview)
+            _print_topology_preview_rich(levels)
 
     return " -> ".join(levels)
 

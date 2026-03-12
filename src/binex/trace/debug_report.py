@@ -176,6 +176,22 @@ def _filter_nodes(
     return nodes
 
 
+def _format_active_node_plain(node: NodeReport, lines: list[str]) -> None:
+    """Append detail lines for a non-skipped node."""
+    lines.append(f"  Agent:  {node.agent_id}")
+    if node.prompt:
+        lines.append(f"  Prompt: {_truncate(node.prompt)}")
+    for art in node.input_artifacts:
+        lines.append(f"  Input:  {art.id} <- {art.lineage.produced_by}")
+    for art in node.output_artifacts:
+        content_str = _truncate(str(art.content)) if art.content else ""
+        lines.append(f"  Output: {art.id} ({art.type})")
+        if content_str:
+            lines.append(f"          {content_str}")
+    if node.error:
+        lines.append(f"  ERROR:  {node.error}")
+
+
 def _format_node_plain(node: NodeReport, lines: list[str]) -> None:
     """Append plain-text lines for a single node report."""
     latency_str = f" {node.latency_ms}ms" if node.latency_ms else ""
@@ -185,18 +201,7 @@ def _format_node_plain(node: NodeReport, lines: list[str]) -> None:
         if node.blocked_by:
             lines.append(f"  Blocked by: {', '.join(node.blocked_by)}")
     else:
-        lines.append(f"  Agent:  {node.agent_id}")
-        if node.prompt:
-            lines.append(f"  Prompt: {_truncate(node.prompt)}")
-        for art in node.input_artifacts:
-            lines.append(f"  Input:  {art.id} <- {art.lineage.produced_by}")
-        for art in node.output_artifacts:
-            content_str = _truncate(str(art.content)) if art.content else ""
-            lines.append(f"  Output: {art.id} ({art.type})")
-            if content_str:
-                lines.append(f"          {content_str}")
-        if node.error:
-            lines.append(f"  ERROR:  {node.error}")
+        _format_active_node_plain(node, lines)
 
     lines.append("")
 

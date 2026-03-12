@@ -49,6 +49,36 @@ class Dispatcher:
             )
         return await adapter.execute(task, input_artifacts, trace_id)
 
+    async def _attempt_dispatch(
+        self,
+        adapter: AgentAdapter,
+        task: TaskNode,
+        input_artifacts: list[Artifact],
+        trace_id: str,
+        stream: bool,
+        stream_callback: Callable[[str], None] | None,
+        output_schema: dict | None,
+        attempt: int,
+        max_retries: int,
+    ) -> tuple[ExecutionResult | None, list[Artifact]]:
+        """Execute a single dispatch attempt.
+
+        Returns (result, updated_artifacts). Result is None if schema retry needed.
+        """
+        result = await self._execute_with_timeout(
+            adapter, task, input_artifacts, trace_id,
+            stream, stream_callback,
+        )
+
+        if output_schema and result.artifacts:
+            retry_feedback = self._handle_schema_feedback(
+                result, output_schema, task, attempt, max_retries,
+            )
+            if retry_feedback is not None:
+                return None, list(input_artifacts) + [retry_feedback]
+
+        return result, input_artifacts
+
     async def dispatch(
         self,
         task: TaskNode,
@@ -66,21 +96,14 @@ class Dispatcher:
 
         for attempt in range(1, max_retries + 1):
             try:
-                result = await self._execute_with_timeout(
+                result, input_artifacts = await self._attempt_dispatch(
                     adapter, task, input_artifacts, trace_id,
-                    stream, stream_callback,
+                    stream, stream_callback, output_schema,
+                    attempt, max_retries,
                 )
-
-                if output_schema and result.artifacts:
-                    retry_feedback = self._handle_schema_feedback(
-                        result, output_schema, task, attempt, max_retries,
-                    )
-                    if retry_feedback is not None:
-                        input_artifacts = list(input_artifacts) + [retry_feedback]
-                        await asyncio.sleep(_backoff_delay(attempt, backoff))
-                        continue
-
-                return result
+                if result is not None:
+                    return result
+                await asyncio.sleep(_backoff_delay(attempt, backoff))
             except (TimeoutError, SchemaValidationError):
                 raise
             except Exception as exc:

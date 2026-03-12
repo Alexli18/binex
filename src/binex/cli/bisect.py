@@ -98,19 +98,8 @@ async def _run_bisect(
 # Plain text output
 # ---------------------------------------------------------------------------
 
-def _print_plain(report, show_diff: bool = False) -> None:
-    """Print intuitive plain text bisect output."""
-    # Header
-    click.echo(f"Bisect: {report.workflow_name}")
-    click.echo(
-        f"good {report.good_run_id}  vs  bad {report.bad_run_id}"
-    )
-    click.echo()
-
-    dp = report.divergence_point
-    downstream_set = set(report.downstream_impact)
-
-    # Verdict
+def _verdict_plain(dp, report) -> None:
+    """Print the verdict section in plain text."""
     if dp is None:
         click.echo(
             "\u2713 No differences found "
@@ -134,6 +123,29 @@ def _print_plain(report, show_diff: bool = False) -> None:
         desc = _describe_change(dp.similarity)
         click.echo(f"\u26a0 Node \"{dp.node_id}\" output {desc}")
 
+
+def _node_marker_plain(nc, dp, downstream_set) -> str:
+    """Return the marker suffix for a pipeline node."""
+    if dp and nc.node_id == dp.node_id:
+        return "  \u2190 root cause"
+    if nc.node_id in downstream_set:
+        return "  \u2190 affected"
+    return ""
+
+
+def _print_plain(report, show_diff: bool = False) -> None:
+    """Print intuitive plain text bisect output."""
+    # Header
+    click.echo(f"Bisect: {report.workflow_name}")
+    click.echo(
+        f"good {report.good_run_id}  vs  bad {report.bad_run_id}"
+    )
+    click.echo()
+
+    dp = report.divergence_point
+    downstream_set = set(report.downstream_impact)
+
+    _verdict_plain(dp, report)
     click.echo()
 
     # Pipeline
@@ -148,12 +160,7 @@ def _print_plain(report, show_diff: bool = False) -> None:
         word = _node_word(nc.status, nc.bad_status)
         lat_g = _format_latency(nc.latency_good_ms)
         lat_b = _format_latency(nc.latency_bad_ms)
-
-        marker = ""
-        if dp and nc.node_id == dp.node_id:
-            marker = "  \u2190 root cause"
-        elif nc.node_id in downstream_set:
-            marker = "  \u2190 affected"
+        marker = _node_marker_plain(nc, dp, downstream_set)
 
         click.echo(
             f"{connector} {nc.node_id:<12} "
@@ -173,6 +180,52 @@ def _print_plain(report, show_diff: bool = False) -> None:
 # ---------------------------------------------------------------------------
 # Rich output
 # ---------------------------------------------------------------------------
+
+def _node_marker_rich(nc, dp, downstream_set) -> str:
+    """Return the Rich marker suffix for a pipeline node."""
+    if dp and nc.node_id == dp.node_id:
+        return "  [red bold]\u2190 root cause[/red bold]"
+    if nc.node_id in downstream_set:
+        return "  [dim]\u2190 affected[/dim]"
+    return ""
+
+
+def _print_node_error_rich(console, nc, report, cont: str) -> None:
+    """Print error context for a node in Rich format."""
+    if (
+        report.error_context
+        and report.error_context.node_id == nc.node_id
+    ):
+        console.print(
+            f"{cont}\u2514\u2500\u2500 "
+            f"[red]{report.error_context.error_message}"
+            f"[/red]"
+        )
+
+
+def _print_node_diff_rich(console, nc, cont: str, show_diff: bool) -> None:
+    """Print content diff or preview for a node in Rich format."""
+    if not (nc.content_diff and nc.status == "content_diff"):
+        return
+    if show_diff:
+        for line in nc.content_diff:
+            formatted = _format_diff_line_rich(line)
+            console.print(f"{cont}{formatted}")
+    else:
+        good_lines, bad_lines = _extract_preview(nc.content_diff)
+        if good_lines:
+            preview = _content_preview("\n".join(good_lines), 100)
+            console.print(
+                f"{cont}\u251c\u2500\u2500 "
+                f"[green]good: \"{preview}\"[/green]"
+            )
+        if bad_lines:
+            preview = _content_preview("\n".join(bad_lines), 100)
+            console.print(
+                f"{cont}\u2514\u2500\u2500 "
+                f"[red]bad:  \"{preview}\"[/red]"
+            )
+
 
 def _print_rich(report, show_diff: bool = False) -> None:
     """Print rich formatted bisect output."""
@@ -213,14 +266,7 @@ def _print_rich(report, show_diff: bool = False) -> None:
         color = _RICH_COLORS.get(nc.status, "dim")
         lat_g = _format_latency(nc.latency_good_ms)
         lat_b = _format_latency(nc.latency_bad_ms)
-
-        marker = ""
-        if dp and nc.node_id == dp.node_id:
-            marker = (
-                "  [red bold]\u2190 root cause[/red bold]"
-            )
-        elif nc.node_id in downstream_set:
-            marker = "  [dim]\u2190 affected[/dim]"
+        marker = _node_marker_rich(nc, dp, downstream_set)
 
         console.print(
             f"{connector} [bold]{nc.node_id:<12}[/bold] "
@@ -229,43 +275,8 @@ def _print_rich(report, show_diff: bool = False) -> None:
             f"{marker}"
         )
 
-        # Error nested
-        if (
-            report.error_context
-            and report.error_context.node_id == nc.node_id
-        ):
-            console.print(
-                f"{cont}\u2514\u2500\u2500 "
-                f"[red]{report.error_context.error_message}"
-                f"[/red]"
-            )
-
-        # Content diff/preview
-        if nc.content_diff and nc.status == "content_diff":
-            if show_diff:
-                for line in nc.content_diff:
-                    formatted = _format_diff_line_rich(line)
-                    console.print(f"{cont}{formatted}")
-            else:
-                good_lines, bad_lines = _extract_preview(
-                    nc.content_diff,
-                )
-                if good_lines:
-                    preview = _content_preview(
-                        "\n".join(good_lines), 100,
-                    )
-                    console.print(
-                        f"{cont}\u251c\u2500\u2500 "
-                        f"[green]good: \"{preview}\"[/green]"
-                    )
-                if bad_lines:
-                    preview = _content_preview(
-                        "\n".join(bad_lines), 100,
-                    )
-                    console.print(
-                        f"{cont}\u2514\u2500\u2500 "
-                        f"[red]bad:  \"{preview}\"[/red]"
-                    )
+        _print_node_error_rich(console, nc, report, cont)
+        _print_node_diff_rich(console, nc, cont, show_diff)
 
     # Footer
     console.print()

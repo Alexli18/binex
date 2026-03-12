@@ -76,48 +76,54 @@ def _get_bundled_prompt_list() -> list[tuple[str, str]]:
     return result
 
 
+def _render_variant_menu_rich(role_name: str, variants: list) -> None:
+    """Render variant menu in Rich format."""
+    from rich.text import Text
+
+    from binex.cli.ui import get_console
+
+    console = get_console(stderr=True)
+    console.print(f"  Prompt variants for [bold]{role_name}[/bold]:")
+    for i, v in enumerate(variants, 1):
+        line = Text()
+        line.append(f"    {i}) ", style="dim")
+        line.append("\u2605 " if v.is_default else "  ",
+                     style="yellow" if v.is_default else "dim")
+        line.append(f"{v.label:12s}", style="bold")
+        line.append(f" \u2014 {v.description}", style="dim")
+        if v.is_default:
+            line.append(" (recommended)", style="green")
+        console.print(line)
+    console.print()
+    console.print(
+        "  [dim][v N] Preview  [custom] Custom text  "
+        "[edit] $EDITOR  [file] From file[/dim]"
+    )
+
+
+def _render_variant_menu_plain(role_name: str, variants: list) -> None:
+    """Render variant menu in plain text."""
+    click.echo(f"  Prompt variants for {role_name}:")
+    for i, v in enumerate(variants, 1):
+        star = "\u2605 " if v.is_default else "  "
+        rec = " (recommended)" if v.is_default else ""
+        click.echo(
+            f"    {i}) {star}{v.label:12s}"
+            f" \u2014 {v.description}{rec}"
+        )
+    click.echo()
+    click.echo(
+        "  [v N] Preview  [custom] Custom text  "
+        "[edit] $EDITOR  [file] From file"
+    )
+
+
 def _render_variant_menu(role_name: str, variants: list) -> None:
     """Render the variant selection menu (Rich or plain)."""
     if has_rich():
-        from rich.text import Text
-
-        from binex.cli.ui import get_console
-
-        console = get_console(stderr=True)
-        console.print(
-            f"  Prompt variants for [bold]{role_name}[/bold]:"
-        )
-        for i, v in enumerate(variants, 1):
-            line = Text()
-            line.append(f"    {i}) ", style="dim")
-            if v.is_default:
-                line.append("\u2605 ", style="yellow")
-            else:
-                line.append("  ", style="dim")
-            line.append(f"{v.label:12s}", style="bold")
-            line.append(f" \u2014 {v.description}", style="dim")
-            if v.is_default:
-                line.append(" (recommended)", style="green")
-            console.print(line)
-        console.print()
-        console.print(
-            "  [dim][v N] Preview  [custom] Custom text  "
-            "[edit] $EDITOR  [file] From file[/dim]"
-        )
+        _render_variant_menu_rich(role_name, variants)
     else:
-        click.echo(f"  Prompt variants for {role_name}:")
-        for i, v in enumerate(variants, 1):
-            star = "\u2605 " if v.is_default else "  "
-            rec = " (recommended)" if v.is_default else ""
-            click.echo(
-                f"    {i}) {star}{v.label:12s}"
-                f" \u2014 {v.description}{rec}"
-            )
-        click.echo()
-        click.echo(
-            "  [v N] Preview  [custom] Custom text  "
-            "[edit] $EDITOR  [file] From file"
-        )
+        _render_variant_menu_plain(role_name, variants)
 
 
 def _handle_preview(choice: str, variants: list) -> bool:

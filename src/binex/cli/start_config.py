@@ -16,11 +16,8 @@ def has_rich() -> bool:
     return sys.modules["binex.cli.start"].has_rich()
 
 
-def _select_provider(*, input_fn=None) -> tuple:
-    """Select provider and model. Returns (ProviderConfig, model_string)."""
-    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
-
-    provider_names = list(PROVIDERS.keys())
+def _render_provider_list(provider_names: list[str]) -> None:
+    """Render provider list (Rich or plain)."""
     if has_rich():
         from rich.text import Text
 
@@ -43,6 +40,14 @@ def _select_provider(*, input_fn=None) -> tuple:
             suffix = "free, local" if p.env_var is None else "API key required"
             click.echo(f"    {i}) {name} \u2014 {suffix}")
 
+
+def _select_provider(*, input_fn=None) -> tuple:
+    """Select provider and model. Returns (ProviderConfig, model_string)."""
+    _prompt = input_fn or (lambda prompt: click.prompt(prompt))
+
+    provider_names = list(PROVIDERS.keys())
+    _render_provider_list(provider_names)
+
     choice = int(_prompt("Choose provider"))
     provider = PROVIDERS[provider_names[choice - 1]]
 
@@ -60,6 +65,43 @@ def _select_provider(*, input_fn=None) -> tuple:
 _BACK = object()  # sentinel for "go back to previous node"
 
 
+def _print_node_header(i: int, total: int, node_id: str) -> None:
+    """Print the header for a node configuration step."""
+    if has_rich():
+        from binex.cli.ui import get_console
+
+        console = get_console(stderr=True)
+        console.print(
+            f"\n[bold cyan]\u2500\u2500 Node {i + 1}/{total}: "
+            f"{node_id} \u2500\u2500[/bold cyan]"
+        )
+    else:
+        click.echo(f"\n\u2500\u2500 Node {i + 1}/{total}: {node_id} \u2500\u2500")
+
+
+def _print_back_message(i: int, node_list: list[str]) -> int:
+    """Handle back navigation and print appropriate message. Returns new index."""
+    if i > 0:
+        i -= 1
+        if has_rich():
+            from binex.cli.ui import get_console
+
+            get_console(stderr=True).print(
+                f"  [yellow]\u21a9[/yellow] Returning to "
+                f"'[bold]{node_list[i]}[/bold]'"
+            )
+        else:
+            click.echo(f"  \u21a9 Returning to '{node_list[i]}'")
+    else:
+        if has_rich():
+            from binex.cli.ui import get_console
+
+            get_console(stderr=True).print("  [dim]Already at the first node.[/dim]")
+        else:
+            click.echo("  Already at the first node.")
+    return i
+
+
 def _configure_all_nodes(
     node_list: list[str],
     depends_on: dict[str, list[str]],
@@ -70,38 +112,10 @@ def _configure_all_nodes(
     while i < len(node_list):
         node_id = node_list[i]
         deps = depends_on.get(node_id, [])
-        if has_rich():
-            from binex.cli.ui import get_console
-
-            console = get_console(stderr=True)
-            console.print(
-                f"\n[bold cyan]\u2500\u2500 Node {i + 1}/{len(node_list)}: "
-                f"{node_id} \u2500\u2500[/bold cyan]"
-            )
-        else:
-            click.echo(f"\n\u2500\u2500 Node {i + 1}/{len(node_list)}: {node_id} \u2500\u2500")
+        _print_node_header(i, len(node_list), node_id)
         cfg = _configure_node(node_id=node_id, dependencies=deps)
         if cfg is _BACK:
-            if i > 0:
-                i -= 1
-                if has_rich():
-                    from binex.cli.ui import get_console
-
-                    console = get_console(stderr=True)
-                    console.print(
-                        f"  [yellow]\u21a9[/yellow] Returning to "
-                        f"'[bold]{node_list[i]}[/bold]'"
-                    )
-                else:
-                    click.echo(f"  \u21a9 Returning to '{node_list[i]}'")
-            else:
-                if has_rich():
-                    from binex.cli.ui import get_console
-
-                    console = get_console(stderr=True)
-                    console.print("  [dim]Already at the first node.[/dim]")
-                else:
-                    click.echo("  Already at the first node.")
+            i = _print_back_message(i, node_list)
             continue
         nodes_config[node_id] = cfg
         i += 1
@@ -336,12 +350,8 @@ def _show_other_providers_submenu() -> ProviderConfig:
     return PROVIDERS[all_names[sub_choice - 1]]
 
 
-def _step_choose_provider() -> tuple[ProviderConfig, str, str]:
-    """Step 3: Provider selection. Returns (provider, model, api_key)."""
-    _print_step(3, 5, "Choose your LLM")
-    click.echo()
-
-    top_providers = ["ollama", "openai", "anthropic"]
+def _render_top_providers(top_providers: list[str]) -> None:
+    """Render the top provider menu (Rich or plain)."""
     if has_rich():
         from rich.text import Text
 
@@ -368,6 +378,15 @@ def _step_choose_provider() -> tuple[ProviderConfig, str, str]:
             suffix = "free, runs locally" if p.env_var is None else "requires API key"
             click.echo(f"  {i}) {pname:12s} \u2014 {suffix}")
         click.echo(f"  {len(top_providers) + 1}) {'Other providers...':12s}")
+
+
+def _step_choose_provider() -> tuple[ProviderConfig, str, str]:
+    """Step 3: Provider selection. Returns (provider, model, api_key)."""
+    _print_step(3, 5, "Choose your LLM")
+    click.echo()
+
+    top_providers = ["ollama", "openai", "anthropic"]
+    _render_top_providers(top_providers)
     click.echo()
 
     prov_choice = click.prompt("Choose", default=1, type=int)

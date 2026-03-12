@@ -91,20 +91,35 @@ def _parse_layers(dsl: str) -> list[list[str]]:
     return layers
 
 
-def _collect_nodes_and_edges(
+def _register_layer_nodes(
     layers: list[list[str]],
     seen_nodes: dict[str, None],
-    all_edges: list[tuple[str, str]],
 ) -> None:
-    """Register nodes and create edges between adjacent layers."""
+    """Register all node names from layers into the seen set."""
     for layer in layers:
         for name in layer:
             if name not in seen_nodes:
                 seen_nodes[name] = None
 
+
+def _connect_adjacent_layers(
+    layers: list[list[str]],
+    all_edges: list[tuple[str, str]],
+) -> None:
+    """Create edges between each pair of adjacent layers."""
     for i in range(len(layers) - 1):
         for src in layers[i]:
             for dst in layers[i + 1]:
                 edge = (src, dst)
                 if edge not in all_edges:
                     all_edges.append(edge)
+
+
+def _collect_nodes_and_edges(
+    layers: list[list[str]],
+    seen_nodes: dict[str, None],
+    all_edges: list[tuple[str, str]],
+) -> None:
+    """Register nodes and create edges between adjacent layers."""
+    _register_layer_nodes(layers, seen_nodes)
+    _connect_adjacent_layers(layers, all_edges)

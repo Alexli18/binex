@@ -99,11 +99,33 @@ def _extract_preview(
 # Plain text helpers
 # ---------------------------------------------------------------------------
 
+def _print_diff_preview_plain(nc, cont: str, show_diff: bool) -> None:
+    """Print content diff or preview for changed nodes (plain)."""
+    if not (nc.content_diff and nc.status == "content_diff"):
+        return
+    if show_diff:
+        for line in nc.content_diff:
+            click.echo(f"{cont}{line}")
+    else:
+        good_lines, bad_lines = _extract_preview(nc.content_diff)
+        if good_lines:
+            preview = _content_preview("\n".join(good_lines), 100)
+            click.echo(
+                f"{cont}\u251c\u2500\u2500 "
+                f"good: \"{preview}\""
+            )
+        if bad_lines:
+            preview = _content_preview("\n".join(bad_lines), 100)
+            click.echo(
+                f"{cont}\u2514\u2500\u2500 "
+                f"bad:  \"{preview}\""
+            )
+
+
 def _print_node_details_plain(
     nc, report, cont: str, show_diff: bool,
 ) -> None:
     """Print nested details under a pipeline node (plain)."""
-    # Error message for failed nodes
     if (
         report.error_context
         and report.error_context.node_id == nc.node_id
@@ -112,32 +134,7 @@ def _print_node_details_plain(
             f"{cont}\u2514\u2500\u2500 "
             f"{report.error_context.error_message}"
         )
-
-    # Content diff or preview for changed nodes
-    if nc.content_diff and nc.status == "content_diff":
-        if show_diff:
-            for line in nc.content_diff:
-                click.echo(f"{cont}{line}")
-        else:
-            good_lines, bad_lines = _extract_preview(
-                nc.content_diff,
-            )
-            if good_lines:
-                preview = _content_preview(
-                    "\n".join(good_lines), 100,
-                )
-                click.echo(
-                    f"{cont}\u251c\u2500\u2500 "
-                    f"good: \"{preview}\""
-                )
-            if bad_lines:
-                preview = _content_preview(
-                    "\n".join(bad_lines), 100,
-                )
-                click.echo(
-                    f"{cont}\u2514\u2500\u2500 "
-                    f"bad:  \"{preview}\""
-                )
+    _print_diff_preview_plain(nc, cont, show_diff)
 
 
 def _print_footer_plain(report) -> None:
