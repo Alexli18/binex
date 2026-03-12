@@ -449,6 +449,7 @@ def _print_rich(report, show_diff: bool = False) -> None:
         "ok": "green", "changed": "yellow",
         "failed": "red", "cancelled": "dim",
         "new": "cyan", "missing": "magenta",
+        "differs": "red",
     }
     counts: dict[str, int] = {}
     for nc in report.node_map:
@@ -457,5 +458,8 @@ def _print_rich(report, show_diff: bool = False) -> None:
     parts = []
     for k, v in counts.items():
         c = footer_colors.get(k, "")
-        parts.append(f"[{c}]{v} {k}[/{c}]")
+        if c:
+            parts.append(f"[{c}]{v} {k}[/{c}]")
+        else:
+            parts.append(f"{v} {k}")
     console.print(" \u00b7 ".join(parts))
