@@ -386,14 +386,46 @@ def _show_full_preview(node_arts: list) -> None:
 # ---------------------------------------------------------------------------
 
 async def _action_trace(exec_store, run_id: str) -> None:
-    """Show execution timeline."""
+    """Show execution timeline with node drill-down."""
+    records = await exec_store.list_records(run_id)
+    if not records:
+        click.echo("  No records found.")
+        return
+    records.sort(key=lambda r: r.timestamp)
+
     if has_rich():
         try:
-            from binex.trace.trace_rich import format_trace_rich
+            from binex.trace.trace_rich import (
+                format_trace_node_rich,
+                format_trace_rich,
+            )
             await format_trace_rich(exec_store, run_id)
-            return
+
+            while True:
+                choice = click.prompt(
+                    "  Select node # (or Enter=back, q=quit)",
+                    default="",
+                )
+                key = choice.strip().lower()
+                if key in ("", "b"):
+                    return
+                if key == "q":
+                    raise SystemExit(0)
+                try:
+                    idx = int(key) - 1
+                    if 0 <= idx < len(records):
+                        await format_trace_node_rich(records[idx])
+                    else:
+                        click.echo(
+                            f"  Invalid: enter 1-{len(records)}"
+                        )
+                except ValueError:
+                    click.echo(
+                        f"  Invalid: enter 1-{len(records)}"
+                    )
         except ImportError:
             pass
+
     from binex.trace.tracer import generate_timeline
     output = await generate_timeline(exec_store, run_id)
     click.echo(output)
