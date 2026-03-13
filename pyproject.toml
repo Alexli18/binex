@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "binex"
-version = "0.2.5"
+version = "0.3.0"
 description = "Debuggable runtime for AI agent pipelines"
 readme = "README.md"
 license = {text = "MIT"}

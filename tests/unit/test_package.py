@@ -4,4 +4,4 @@ import binex
 
 
 def test_version():
-    assert binex.__version__ == "0.2.5"
+    assert binex.__version__ == "0.3.0"
