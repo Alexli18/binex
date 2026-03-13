@@ -69,6 +69,7 @@ class WebhookConfig(BaseModel):
 class WorkflowSpec(BaseModel):
     """Parsed representation of a YAML/JSON workflow definition."""
 
+    version: int = 1
     name: str
     description: str = ""
     nodes: dict[str, NodeSpec]
@@ -76,6 +77,13 @@ class WorkflowSpec(BaseModel):
     budget: BudgetConfig | None = None
     webhook: WebhookConfig | None = None
     source_path: str | None = None
+
+    @field_validator("version")
+    @classmethod
+    def version_must_be_positive(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError("version must be >= 1")
+        return v
 
     @model_validator(mode="after")
     def _set_node_ids(self) -> WorkflowSpec:

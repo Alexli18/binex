@@ -56,6 +56,11 @@ rich = ["rich"]
 langchain = ["langchain-core>=0.2"]
 crewai = ["crewai>=0.41"]
 autogen = ["autogen-agentchat>=0.4"]
+telemetry = [
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp>=1.20",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/binex"]

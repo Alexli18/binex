@@ -637,7 +637,7 @@ class TestWorkflowExtraFields:
         yaml_content = """\
 name: test-extra
 description: has extra fields
-version: "2.0"
+custom_tag: "2.0"
 author: alice
 nodes:
   step1:
@@ -649,7 +649,7 @@ nodes:
         assert spec.name == "test-extra"
         assert "step1" in spec.nodes
         # Extra fields not accessible as attributes
-        assert not hasattr(spec, "version")
+        assert not hasattr(spec, "custom_tag")
         assert not hasattr(spec, "author")
 
     def test_extra_node_field_ignored(self) -> None:

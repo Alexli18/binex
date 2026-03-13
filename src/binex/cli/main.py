@@ -28,6 +28,8 @@ from binex.cli.scaffold import scaffold_group
 from binex.cli.start import start_cmd
 from binex.cli.trace import trace_cmd
 from binex.cli.validate import validate_cmd
+from binex.cli.workflow_cmd import workflow_group
+from binex.telemetry import init_telemetry
 
 _EPILOG = """\b
 Examples:
@@ -75,8 +77,10 @@ cli.add_command(bisect_cmd, "bisect")
 cli.add_command(gateway, "gateway")
 cli.add_command(plugins_group, "plugins")
 cli.add_command(export_cmd, "export")
+cli.add_command(workflow_group, "workflow")
 
 
 def main() -> None:
     load_dotenv()
+    init_telemetry()
     cli()
