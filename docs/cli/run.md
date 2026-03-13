@@ -37,6 +37,7 @@ binex cancel RUN_ID
 | `--var` | `key=value` (repeatable) | Variable substitution for `${user.*}` placeholders. Can be specified multiple times. |
 | `--json-output` / `--json` | flag | Output run summary as JSON |
 | `--verbose` / `-v` | flag | Show step-by-step progress with `[N/total]` counters, input dependency arrows, artifact contents after each step, and skipped node indicators |
+| `--stream / --no-stream` | flag | Stream LLM output tokens in real-time. Auto-detected: enabled for TTY terminals, disabled when piping to a file |
 
 ### cancel
 
@@ -231,6 +232,24 @@ Spent: $5.23 / Budget: $5.00
 
 Use `binex cost show <run-id>` for a detailed per-node cost breakdown.
 
+## Streaming Output (`--stream`)
+
+When streaming is enabled, LLM tokens are printed to the terminal as they arrive:
+
+```bash
+$ binex run workflow.yaml --stream
+
+  [1/2] planner ...
+  Planning the research approach for quantum computing...▌
+
+  [2/2] summarizer ...
+  Quantum computing represents a fundamental shift in...▌
+```
+
+Streaming is auto-detected: it is enabled when the output is a TTY (interactive terminal) and disabled when piping to a file or another command. Use `--stream` or `--no-stream` to override.
+
+Streaming works with all LLM providers supported by LiteLLM. Non-LLM adapters (`local://`, `a2a://`, `human://`) are not affected.
+
 ## Validation Errors
 
 If the workflow YAML has structural problems, `binex run` exits with code `2` before executing anything:
@@ -342,6 +361,7 @@ All run data is persisted in the `.binex/` directory (gitignored by default):
 
 - [binex validate](validate.md) -- check workflow before running
 - [binex debug](debug.md) -- post-mortem inspection of a run
+- [binex diagnose](diagnose.md) -- automated root-cause analysis
 - [binex trace](trace.md) -- inspect execution after a run
 - [binex replay](replay.md) -- re-run from a specific step
 - [binex cost](cost.md) -- inspect cost data for a run

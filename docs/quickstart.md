@@ -147,6 +147,26 @@ The debug report shows every node's status, its agent, input artifact lineage, a
 | `--node <id>` | Focus on a single node |
 | `--rich` | Colored, formatted output (requires `pip install binex[rich]`) |
 
+## Step 3b: Diagnose Failures
+
+If a run fails, use `diagnose` to automatically identify the root cause:
+
+```bash
+binex diagnose <run-id>
+```
+
+This analyzes the failure, detects cascade effects, flags latency anomalies, and provides recommendations.
+
+## Step 3c: Bisect Two Runs
+
+Compare a good run against a bad run to find where they diverge:
+
+```bash
+binex bisect <good-run-id> <bad-run-id>
+```
+
+The output shows a node-by-node comparison and identifies the first divergence point.
+
 ## Step 4: Trace the Timeline
 
 ```bash
