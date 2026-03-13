@@ -8,13 +8,13 @@
 - [x] Improved `binex diff` with side-by-side artifact comparison
 - [x] Node output schema validation (`output_schema` in YAML) — fail fast on malformed data
 
-## v0.3 — Framework Adapters
+## v0.3 — Framework Adapters ✅
 
 - [x] A2A Gateway — standalone proxy with routing, auth, fallback, health checking
-- [ ] LangChain adapter — run LangChain chains as workflow nodes
-- [ ] CrewAI adapter — integrate CrewAI crews via A2A protocol
-- [ ] AutoGen adapter — bridge AutoGen agents into Binex pipelines
-- [ ] Plugin system for custom adapters
+- [x] LangChain adapter — run LangChain chains as workflow nodes
+- [x] CrewAI adapter — integrate CrewAI crews via A2A protocol
+- [x] AutoGen adapter — bridge AutoGen agents into Binex pipelines
+- [x] Plugin system for custom adapters
 
 ## v0.4 — Observability & Persistence
 
