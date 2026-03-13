@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from binex.adapters.local import LocalPythonAdapter
 from binex.models.artifact import Artifact, Lineage
 from binex.models.task import TaskNode
 from binex.models.workflow import WorkflowSpec
 from binex.runtime.dispatcher import Dispatcher
+
+_gateway_cache: dict[str, Any] = {}
 
 
 async def _default_handler(task: TaskNode, inputs: list[Artifact]) -> list[Artifact]:
@@ -32,12 +36,16 @@ def register_workflow_adapters(
     *,
     agent_swaps: dict[str, str] | None = None,
     workflow_dir: str | None = None,
+    gateway_url: str | None = None,
 ) -> None:
     """Register adapters for all agents in a workflow spec.
 
     Handles local://, llm://, human://, and a2a:// prefixes.
     Skips agents already registered in the dispatcher.
     """
+    # Reset gateway cache per call so tests stay isolated
+    _gateway_cache.clear()
+
     for node in spec.nodes.values():
         if agent_swaps:
             agent = agent_swaps.get(node.id, node.agent)
@@ -76,7 +84,47 @@ def register_workflow_adapters(
 
             dispatcher.register_adapter(agent, HumanApprovalAdapter())
         elif agent.startswith("a2a://"):
-            from binex.adapters.a2a import A2AAgentAdapter
-
             endpoint = agent.removeprefix("a2a://")
-            dispatcher.register_adapter(agent, A2AAgentAdapter(endpoint=endpoint))
+
+            # Parse routing hints from NodeSpec if present
+            routing_hints = None
+            if node.routing is not None:
+                from binex.gateway.router import RoutingHints
+
+                routing_hints = RoutingHints(**node.routing)
+
+            if gateway_url is not None:
+                # External gateway mode: route through standalone gateway
+                from binex.adapters.a2a import A2AExternalGatewayAdapter
+
+                dispatcher.register_adapter(
+                    agent,
+                    A2AExternalGatewayAdapter(
+                        endpoint=endpoint,
+                        gateway_url=gateway_url,
+                        routing_hints=routing_hints,
+                    ),
+                )
+            else:
+                # Embedded gateway mode (original behaviour)
+                from binex.adapters.a2a import A2AAgentAdapter
+
+                # Lazy-init gateway (once per register call)
+                if "instance" not in _gateway_cache:
+                    from binex.gateway import create_gateway
+
+                    gw = create_gateway(config_path=None)
+                    # Only use gateway if config was found
+                    _gateway_cache["instance"] = (
+                        gw if gw._config is not None else None
+                    )
+                gateway = _gateway_cache["instance"]
+
+                dispatcher.register_adapter(
+                    agent,
+                    A2AAgentAdapter(
+                        endpoint=endpoint,
+                        gateway=gateway,
+                        routing_hints=routing_hints,
+                    ),
+                )

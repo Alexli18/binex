@@ -1,0 +1,44 @@
+Test ID,Category,Description,Priority,Status,Result,Bug ID,Notes
+TC-CFG-001,Config,Multiple env vars in single value,P2,DONE,PASS,,test_cfg_001
+TC-CFG-002,Config,Whitespace-only API key rejected,P1,DONE,PASS,,test_cfg_002
+TC-CFG-003,Config,Empty YAML loads default config,P2,DONE,PASS,,test_cfg_003
+TC-CFG-004,Config,FallbackConfig retry_count=0 boundary,P2,DONE,PASS,,test_cfg_004
+TC-CFG-005,Config,HealthConfig boundary minimums,P2,DONE,PASS,,test_cfg_005
+TC-CFG-006,Config,Non-string types passthrough,P2,DONE,PASS,,test_cfg_006
+TC-CFG-007,Config,Config search fallback to ./gateway.yaml,P2,DONE,PASS,,test_cfg_007
+TC-CFG-008,Config,Invalid backoff literal rejected,P2,DONE,PASS,,test_cfg_008
+TC-AUTH-001,Auth,Duplicate keys last writer wins,P2,DONE,PASS,,test_auth_001
+TC-AUTH-002,Auth,Whitespace in API key not trimmed,P2,DONE,PASS,,test_auth_002
+TC-AUTH-003,Auth,NoAuth returns client_name=None,P3,DONE,PASS,,test_auth_003
+TC-REG-001,Registry,update_health unknown agent noop,P2,DONE,PASS,,test_reg_001
+TC-REG-002,Registry,Degraded increments failures,P2,DONE,PASS,,test_reg_002
+TC-REG-003,Registry,Multi-capability agent found,P2,DONE,PASS,,test_reg_003
+TC-HC-001,Health,start() twice idempotent,P1,DONE,PASS,,test_hc_001
+TC-HC-002,Health,stop() when task is None,P2,DONE,PASS,,test_hc_002
+TC-HC-003,Health,_check_loop survives exception,P1,DONE,PASS,,test_hc_003
+TC-HC-004,Health,check_all empty registry,P2,DONE,PASS,,test_hc_004
+TC-RTR-001,Router,health=None latency fallback,P2,DONE,PASS,,test_rtr_001
+TC-RTR-002,Router,Degraded None vs measured latency,P2,DONE,PASS,,test_rtr_002
+TC-FB-001,Fallback,No artifacts key defaults [],P2,DONE,PASS,,test_fb_001
+TC-FB-002,Fallback,No cost key defaults None,P2,DONE,PASS,,test_fb_002
+TC-FB-003,Fallback,timeout_ms override from hints,P2,DONE,PASS,,test_fb_003
+TC-FB-004,Fallback,Empty agents raises RuntimeError,P2,DONE,PASS,,test_fb_004
+TC-APP-001,App,/health unhealthy all down,P1,DONE,PASS,,test_app_001
+TC-APP-002,App,/health degraded some down,P1,DONE,PASS,,test_app_002
+TC-APP-003,App,/health no agents,P2,DONE,PASS,,test_app_003
+TC-APP-004,App,/agents/{name} no registry 404,P2,DONE,PASS,,test_app_004
+TC-APP-005,App,/agents/refresh no health_checker,P2,DONE,PASS,,test_app_005
+TC-APP-006,App,/route with routing hints,P2,DONE,PASS,,test_app_006
+TC-GW-001,Gateway,Pass-through properties,P2,DONE,PASS,,test_gw_001
+TC-GW-002,Gateway,route() uses shared client,P1,DONE,PASS,,test_gw_002
+TC-GW-003,Gateway,route() updates registry health,P2,DONE,PASS,,test_gw_003
+TC-GW-004,Gateway,stop() safe without start(),P2,DONE,PASS,,test_gw_004
+TC-A2A-001,A2A,_build_result empty artifacts,P2,DONE,PASS,,test_a2a_001
+TC-A2A-002,A2A,_build_result missing type unknown,P2,DONE,PASS,,test_a2a_002
+TC-A2A-003,A2A,_build_result cost=None source=unknown,P2,DONE,PASS,,test_a2a_003
+TC-A2A-004,A2A,A2AAgentAdapter.health() all branches,P1,DONE,PASS,,test_a2a_004
+TC-A2A-005,A2A,A2AExternalGatewayAdapter.health() all branches,P1,DONE,PASS,,test_a2a_005
+TC-A2A-006,A2A,A2AExternalGatewayAdapter.cancel() noop,P3,DONE,PASS,,test_a2a_006
+TC-CLI-001,CLI,agents_cmd no capabilities → none,P2,DONE,PASS,,test_cli_001
+TC-CLI-002,CLI,agents_cmd latency=None → n/a,P2,DONE,PASS,,test_cli_002
+TC-CLI-003,CLI,agents_cmd custom --gateway URL,P2,DONE,PASS,,test_cli_003

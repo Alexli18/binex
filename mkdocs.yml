@@ -58,6 +58,7 @@ nav:
     - explore: cli/explore.md
     - diagnose: cli/diagnose.md
     - bisect: cli/bisect.md
+    - gateway: cli/gateway.md
   - Architecture:
     - Overview: architecture/overview.md
     - Runtime: architecture/runtime.md
