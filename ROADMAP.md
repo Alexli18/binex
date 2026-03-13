@@ -1,15 +1,16 @@
 # Roadmap
 
-## v0.2 — Developer Experience
+## v0.2 — Developer Experience ✅
 
-- [ ] `binex diagnose <run-id>` — automated root-cause analysis for failed runs
-- [ ] `binex bisect <run-id>` — binary search for the node that introduced a regression
-- [ ] Streaming output for long-running LLM nodes
-- [ ] Improved `binex diff` with side-by-side artifact comparison
-- [ ] Node output schema validation (`output_schema` in YAML) — fail fast on malformed data
+- [x] `binex diagnose <run-id>` — automated root-cause analysis for failed runs
+- [x] `binex bisect <run-id>` — binary search for the node that introduced a regression
+- [x] Streaming output for long-running LLM nodes
+- [x] Improved `binex diff` with side-by-side artifact comparison
+- [x] Node output schema validation (`output_schema` in YAML) — fail fast on malformed data
 
 ## v0.3 — Framework Adapters
 
+- [x] A2A Gateway — standalone proxy with routing, auth, fallback, health checking
 - [ ] LangChain adapter — run LangChain chains as workflow nodes
 - [ ] CrewAI adapter — integrate CrewAI crews via A2A protocol
 - [ ] AutoGen adapter — bridge AutoGen agents into Binex pipelines
