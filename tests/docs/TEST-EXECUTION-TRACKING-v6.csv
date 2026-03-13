@@ -1,0 +1,23 @@
+TC_ID,Description,Priority,Status,Result,Bug_ID,Notes
+TC-E2E-P01,plugins list shows 4 built-in adapters,P0,DONE,PASS,,
+TC-E2E-P02,plugins list shows framework plugins,P0,DONE,PASS,,Required entry point reinstall
+TC-E2E-P03,plugins list --json returns valid JSON,P0,DONE,PASS,,
+TC-E2E-P04,JSON plugins contain prefix/package/version,P1,DONE,PASS,,
+TC-E2E-P05,plugins list exit code is 0,P2,DONE,PASS,,
+TC-E2E-P06,plugins check built-ins only exits 0,P0,DONE,PASS,,
+TC-E2E-P07,plugins check known plugin exits 0,P0,DONE,PASS,,
+TC-E2E-P08,plugins check unknown prefix exits 1,P0,DONE,PASS,,
+TC-E2E-P09,check shows checkmark/cross symbols,P1,DONE,PASS,,
+TC-E2E-P10,check mixed built-in + plugin exits 0,P1,DONE,PASS,,
+TC-E2E-P11,check empty workflow shows message,P2,DONE,PASS,,
+TC-E2E-P12,run local:// still works with plugin system,P0,DONE,PASS,,
+TC-E2E-P13,run unknown prefix gives clear error,P0,DONE,PASS,,
+TC-E2E-P14,run --json with local:// valid JSON,P1,DONE,PASS,,
+TC-E2E-P15,all 3 framework plugins in JSON,P0,DONE,PASS,,
+TC-E2E-P16,check resolves langchain:// as plugin,P1,DONE,PASS,,
+TC-E2E-P17,check resolves crewai:// as plugin,P1,DONE,PASS,,
+TC-E2E-P18,check resolves autogen:// as plugin,P1,DONE,PASS,,
+TC-E2E-P19,check nonexistent file gives error,P1,DONE,PASS,,
+TC-E2E-P20,check invalid YAML gives error,P2,DONE,PASS,,
+TC-E2E-P21,run local-only preserves JSON contract,P2,DONE,PASS,,Fixed: workflow_name not workflow
+TC-E2E-P22,plugins list and check registered as CLI commands,P2,DONE,PASS,,
