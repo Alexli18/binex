@@ -37,6 +37,7 @@ def register_workflow_adapters(
     agent_swaps: dict[str, str] | None = None,
     workflow_dir: str | None = None,
     gateway_url: str | None = None,
+    plugin_registry: Any | None = None,
 ) -> None:
     """Register adapters for all agents in a workflow spec.
 
@@ -127,4 +128,28 @@ def register_workflow_adapters(
                         gateway=gateway,
                         routing_hints=routing_hints,
                     ),
+                )
+        else:
+            # Plugin fallback: inline adapter_class, then entry point plugins
+            adapter = None
+
+            if plugin_registry is not None:
+                # Inline adapter_class takes priority (FR-004)
+                adapter_class = node.config.get("adapter_class") if node.config else None
+                if adapter_class:
+                    adapter = plugin_registry.resolve_inline(adapter_class, agent, node.config)
+                else:
+                    adapter = plugin_registry.resolve(agent, node.config)
+
+            if adapter is not None:
+                dispatcher.register_adapter(agent, adapter)
+            else:
+                available = ["local://", "llm://", "human://", "a2a://"]
+                if plugin_registry is not None:
+                    for p in plugin_registry.all_plugins():
+                        available.append(f"{p['prefix']}://")
+                raise ValueError(
+                    f"No adapter found for '{agent}'. "
+                    f"Available prefixes: {', '.join(available)}. "
+                    f"Install a plugin or use adapter_class in node config."
                 )

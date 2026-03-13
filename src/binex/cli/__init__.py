@@ -107,7 +107,7 @@ COMMAND_SECTIONS: list[tuple[str, list[str]]] = [
         "artifacts", "cost", "explore",
     ]),
     ("Setup & scaffold", ["init", "start", "scaffold", "hello"]),
-    ("System", ["dev", "doctor", "validate"]),
+    ("System", ["dev", "doctor", "validate", "plugins"]),
 ]
 
 
