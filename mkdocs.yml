@@ -56,6 +56,8 @@ nav:
     - cost: cli/cost.md
     - start: cli/start.md
     - explore: cli/explore.md
+    - diagnose: cli/diagnose.md
+    - bisect: cli/bisect.md
   - Architecture:
     - Overview: architecture/overview.md
     - Runtime: architecture/runtime.md

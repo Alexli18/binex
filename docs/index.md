@@ -9,7 +9,11 @@ Binex orchestrates multi-agent workflows defined in YAML. It executes DAG-based 
 - **YAML-defined workflows** — Describe multi-agent pipelines as directed acyclic graphs with a simple, declarative format. No code required.
 - **Multi-provider LLM support** — Mix OpenAI, Anthropic, Gemini, Ollama, Groq, Mistral, DeepSeek, Together, and OpenRouter in a single workflow via LiteLLM routing.
 - **Full run observability** — Every node execution is recorded. Trace timelines, inspect artifacts, debug failures, and replay past runs.
+- **Root-cause analysis** — Automatic failure diagnosis with cascade detection, latency anomaly flagging, and actionable recommendations.
+- **Run bisection** — Find the exact divergence point between two runs with content similarity analysis.
 - **Run diffing** — Compare two workflow runs side-by-side to understand what changed between executions.
+- **Output schema validation** — Define JSON Schema for node outputs with automatic retry on validation failure.
+- **Streaming LLM output** — Watch LLM tokens arrive in real-time with auto-detection for TTY terminals.
 - **Agent-to-Agent (A2A) protocol** — Connect to remote A2A-compatible agent servers alongside local and LLM-backed agents.
 - **Interactive CLI** — Project scaffolding, workflow validation, a built-in doctor command, and a start wizard to get you productive quickly.
 
@@ -34,7 +38,7 @@ See the [Quickstart](quickstart.md) for a full walkthrough.
 | Section | Description |
 |---------|-------------|
 | [Quickstart](quickstart.md) | Install Binex and run your first workflow in under 5 minutes |
-| [CLI Reference](cli/run.md) | All commands: `hello`, `init`, `run`, `debug`, `trace`, `replay`, `diff`, `artifacts`, `dev`, `doctor`, `validate`, `scaffold`, `cancel`, `start`, `explore` |
+| [CLI Reference](cli/run.md) | All commands: `hello`, `init`, `run`, `debug`, `trace`, `replay`, `diff`, `artifacts`, `dev`, `doctor`, `validate`, `scaffold`, `cancel`, `start`, `explore`, `diagnose`, `bisect` |
 | [Concepts](concepts/agents.md) | Core concepts: agents, workflows, artifacts, execution model, lineage tracking |
 | [Architecture](architecture/overview.md) | Runtime internals: orchestrator, stores, adapters, scheduler, DAG engine |
 | [Workflow Format](workflows/format.md) | YAML schema reference with node specs, variables, conditionals, and defaults |

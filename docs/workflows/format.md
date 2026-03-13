@@ -28,6 +28,7 @@ Complete schema reference for Binex workflow files.
 | `when` | `str` | no | Conditional execution expression (see below) |
 | `cost` | `NodeCostHint` | no | Optional cost estimate for planning (see below) |
 | `budget` | `float` or `NodeBudget` | no | Per-node budget limit (shorthand: `budget: 0.50`, full: `budget: { max_cost: 0.50 }`) |
+| `output_schema` | `dict` | no | JSON Schema for validating node output. Failed validation triggers auto-retry |
 
 ### `config` keys (LLM adapter)
 
@@ -219,6 +220,42 @@ nodes:
 ```
 
 If the planner costs $0.60 (exceeding its $0.50 limit), it is marked as failed and dependent nodes do not run.
+
+## Output Schema Validation
+
+Nodes can define a JSON Schema to validate their output. If the output fails validation and the node has retries remaining, Binex automatically retries the node.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `output_schema` | `dict` | `None` | Standard JSON Schema object |
+
+**Example:**
+
+```yaml
+nodes:
+  extractor:
+    agent: "llm://openai/gpt-4o"
+    system_prompt: "Extract structured data. Return valid JSON."
+    outputs: [result]
+    output_schema:
+      type: object
+      properties:
+        title:
+          type: string
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+      required:
+        - title
+        - score
+    retry_policy:
+      max_retries: 2
+```
+
+If the LLM returns output that doesn't match the schema (e.g., missing `title` field or `score` out of range), the node is retried automatically. After all retries are exhausted, the node fails with a validation error.
+
+The validator handles both JSON string output (parsed first) and dict output (validated directly).
 
 ## Variable Interpolation
 

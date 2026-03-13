@@ -116,5 +116,7 @@ Error: rich is not installed. Run: pip install binex[rich]
 ## See Also
 
 - [binex run](run.md) -- execute a workflow
+- [binex diagnose](diagnose.md) -- automated root-cause analysis
+- [binex bisect](bisect.md) -- find divergence between two runs
 - [binex trace](trace.md) -- inspect execution traces
 - [binex artifacts](artifacts.md) -- inspect artifact contents
