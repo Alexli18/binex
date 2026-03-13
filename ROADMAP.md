@@ -20,8 +20,8 @@
 
 - [ ] OpenTelemetry integration (traces, metrics, spans)
 - [ ] Workflow versioning and migration
-- [ ] Export runs to Parquet / CSV for analysis
-- [ ] Webhook notifications on run completion / failure
+- [x] Export runs to CSV / JSON for analysis
+- [x] Webhook notifications on run completion / failure / budget exceeded
 
 ## v1.0 — Production Ready
 
