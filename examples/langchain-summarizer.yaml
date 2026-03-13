@@ -6,26 +6,21 @@
 # Topology:  researcher (LLM) -> summarizer (LangChain) -> reviewer (LLM)
 #
 # Prerequisites:
-#   pip install binex[langchain]
+#   pip install binex[langchain] langchain-openai
 #   export OPENAI_API_KEY=sk-...
 #
-# Your LangChain object must be importable by Python path.
-# Create a file `myproject/chains.py`:
+# The LangChain object is defined in myproject/chains.py (included).
+# Agent prefix: langchain://<module.path.object>
 #
-#   from langchain_core.prompts import ChatPromptTemplate
-#   from langchain_openai import ChatOpenAI
+# Run (from examples/ directory):
+#   cd examples
+#   binex plugins check langchain-summarizer.yaml
+#   binex run langchain-summarizer.yaml query="Quantum computing advances"
 #
-#   summarizer = (
-#       ChatPromptTemplate.from_template("Summarize this research:\n\n{input}")
-#       | ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
-#   )
+# Or from project root:
+#   PYTHONPATH=examples binex run examples/langchain-summarizer.yaml query="Quantum computing"
 #
-# Agent prefix:  langchain://<module.path.object>
-# Example:       langchain://myproject.chains.summarizer
-#
-# Verify setup:  binex plugins check examples/langchain-summarizer.yaml
-# Run:           binex run examples/langchain-summarizer.yaml query="Quantum computing advances"
-# Debug:         binex debug <run_id>
+# Debug: binex debug <run_id>
 
 name: langchain-summarizer
 description: "Research pipeline with LangChain summarization step"

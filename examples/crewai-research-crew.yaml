@@ -9,38 +9,18 @@
 #   pip install binex[crewai]
 #   export OPENAI_API_KEY=sk-...
 #
-# Your CrewAI Crew must be importable by Python path.
-# Create a file `myproject/crews.py`:
+# The CrewAI Crew is defined in myproject/crews.py (included).
+# Agent prefix: crewai://<module.path.crew_object>
 #
-#   from crewai import Agent, Task, Crew
+# Run (from examples/ directory):
+#   cd examples
+#   binex plugins check crewai-research-crew.yaml
+#   binex run crewai-research-crew.yaml topic="AI in healthcare"
 #
-#   researcher = Agent(
-#       role="Researcher",
-#       goal="Find comprehensive information on the topic",
-#       backstory="Expert researcher with deep analytical skills",
-#   )
-#   writer = Agent(
-#       role="Writer",
-#       goal="Write a clear, well-structured report",
-#       backstory="Technical writer skilled at making complex topics accessible",
-#   )
+# Or from project root:
+#   PYTHONPATH=examples binex run examples/crewai-research-crew.yaml topic="AI in healthcare"
 #
-#   research_crew = Crew(
-#       agents=[researcher, writer],
-#       tasks=[
-#           Task(description="Research {input}", agent=researcher,
-#                expected_output="Detailed research findings"),
-#           Task(description="Write report from research", agent=writer,
-#                expected_output="Polished report"),
-#       ],
-#   )
-#
-# Agent prefix:  crewai://<module.path.crew_object>
-# Example:       crewai://myproject.crews.research_crew
-#
-# Verify setup:  binex plugins check examples/crewai-research-crew.yaml
-# Run:           binex run examples/crewai-research-crew.yaml topic="AI in healthcare"
-# Debug:         binex debug <run_id>
+# Debug: binex debug <run_id>
 
 name: crewai-research-crew
 description: "Research pipeline with CrewAI multi-agent crew"

@@ -6,40 +6,21 @@
 # Topology:  spec_writer (LLM) -> coding_team (AutoGen) -> tester (LLM)
 #
 # Prerequisites:
-#   pip install binex[autogen]
+#   pip install binex[autogen] autogen-ext[openai]
 #   export OPENAI_API_KEY=sk-...
 #
-# Your AutoGen Team must be importable by Python path.
-# Create a file `myproject/teams.py`:
+# The AutoGen Team is defined in myproject/teams.py (included).
+# Agent prefix: autogen://<module.path.team_object>
 #
-#   from autogen_agentchat.agents import AssistantAgent
-#   from autogen_agentchat.teams import RoundRobinGroupChat
-#   from autogen_ext.models.openai import OpenAIChatCompletionClient
+# Run (from examples/ directory):
+#   cd examples
+#   binex plugins check autogen-coding-team.yaml
+#   binex run autogen-coding-team.yaml task="Build a REST API client"
 #
-#   model = OpenAIChatCompletionClient(model="gpt-4o-mini")
+# Or from project root:
+#   PYTHONPATH=examples binex run examples/autogen-coding-team.yaml task="Build a REST API client"
 #
-#   coder = AssistantAgent(
-#       "coder",
-#       model_client=model,
-#       system_message="You write clean, well-documented Python code.",
-#   )
-#   reviewer = AssistantAgent(
-#       "reviewer",
-#       model_client=model,
-#       system_message="You review code for bugs, style, and best practices.",
-#   )
-#
-#   coding_team = RoundRobinGroupChat(
-#       participants=[coder, reviewer],
-#       max_turns=4,
-#   )
-#
-# Agent prefix:  autogen://<module.path.team_object>
-# Example:       autogen://myproject.teams.coding_team
-#
-# Verify setup:  binex plugins check examples/autogen-coding-team.yaml
-# Run:           binex run examples/autogen-coding-team.yaml task="Build a REST API client"
-# Debug:         binex debug <run_id>
+# Debug: binex debug <run_id>
 
 name: autogen-coding-team
 description: "Coding pipeline with AutoGen multi-agent team"

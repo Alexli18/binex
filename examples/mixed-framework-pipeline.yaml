@@ -11,18 +11,24 @@
 #                 └── coding_team (AutoGen)
 #
 # Prerequisites:
-#   pip install binex[langchain,crewai,autogen]
+#   pip install binex[langchain,crewai,autogen] langchain-openai autogen-ext[openai]
 #   export OPENAI_API_KEY=sk-...
 #
-# You need importable Python objects for each framework:
+# All framework objects are defined in myproject/ (included):
 #   - myproject.chains.researcher     (LangChain Runnable)
 #   - myproject.chains.fact_checker   (LangChain Runnable)
 #   - myproject.crews.synthesis_crew  (CrewAI Crew)
-#   - myproject.teams.coding_team    (AutoGen Team)
+#   - myproject.teams.coding_team     (AutoGen Team)
 #
-# Verify setup:  binex plugins check examples/mixed-framework-pipeline.yaml
-# Run:           binex run examples/mixed-framework-pipeline.yaml query="Build an AI chatbot"
-# Debug:         binex debug <run_id>
+# Run (from examples/ directory):
+#   cd examples
+#   binex plugins check mixed-framework-pipeline.yaml
+#   binex run mixed-framework-pipeline.yaml query="Build an AI chatbot"
+#
+# Or from project root:
+#   PYTHONPATH=examples binex run examples/mixed-framework-pipeline.yaml query="Build an AI chatbot"
+#
+# Debug: binex debug <run_id>
 
 name: mixed-framework-pipeline
 description: "End-to-end pipeline mixing LLM, LangChain, CrewAI, and AutoGen"
