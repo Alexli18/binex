@@ -1,0 +1,83 @@
+# AutoGen Coding Team
+# ====================
+# Demonstrates using an AutoGen Team/AgentChat as a workflow agent.
+# Binex imports your Team object and calls .a_run()/.run().
+#
+# Topology:  spec_writer (LLM) -> coding_team (AutoGen) -> tester (LLM)
+#
+# Prerequisites:
+#   pip install binex[autogen]
+#   export OPENAI_API_KEY=sk-...
+#
+# Your AutoGen Team must be importable by Python path.
+# Create a file `myproject/teams.py`:
+#
+#   from autogen_agentchat.agents import AssistantAgent
+#   from autogen_agentchat.teams import RoundRobinGroupChat
+#   from autogen_ext.models.openai import OpenAIChatCompletionClient
+#
+#   model = OpenAIChatCompletionClient(model="gpt-4o-mini")
+#
+#   coder = AssistantAgent(
+#       "coder",
+#       model_client=model,
+#       system_message="You write clean, well-documented Python code.",
+#   )
+#   reviewer = AssistantAgent(
+#       "reviewer",
+#       model_client=model,
+#       system_message="You review code for bugs, style, and best practices.",
+#   )
+#
+#   coding_team = RoundRobinGroupChat(
+#       participants=[coder, reviewer],
+#       max_turns=4,
+#   )
+#
+# Agent prefix:  autogen://<module.path.team_object>
+# Example:       autogen://myproject.teams.coding_team
+#
+# Verify setup:  binex plugins check examples/autogen-coding-team.yaml
+# Run:           binex run examples/autogen-coding-team.yaml task="Build a REST API client"
+# Debug:         binex debug <run_id>
+
+name: autogen-coding-team
+description: "Coding pipeline with AutoGen multi-agent team"
+
+nodes:
+  # Step 1: LLM writes a technical spec
+  spec_writer:
+    agent: "llm://gpt-4o-mini"
+    system_prompt: |
+      You are a software architect. Given a task description, produce
+      a brief technical specification: inputs, outputs, edge cases,
+      and suggested approach.
+    inputs:
+      task: "${user.task}"
+    outputs: [spec]
+    config:
+      temperature: 0.3
+
+  # Step 2: AutoGen team implements the code
+  coding_team:
+    agent: "autogen://myproject.teams.coding_team"
+    inputs:
+      spec: "${spec_writer.spec}"
+    outputs: [code]
+    depends_on: [spec_writer]
+
+  # Step 3: LLM generates test cases
+  tester:
+    agent: "llm://gpt-4o-mini"
+    system_prompt: |
+      You are a QA engineer. Given the code, write pytest test cases
+      covering happy path, edge cases, and error scenarios.
+    inputs:
+      code: "${coding_team.code}"
+    outputs: [tests]
+    depends_on: [coding_team]
+    config:
+      temperature: 0.2
+
+defaults:
+  deadline_ms: 180000          # 3 min — AutoGen teams do multiple rounds

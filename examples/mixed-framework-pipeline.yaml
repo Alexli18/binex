@@ -1,0 +1,81 @@
+# Mixed Framework Pipeline
+# =========================
+# Demonstrates combining multiple framework adapters in a single workflow.
+# Each node can use a different adapter: LLM, LangChain, CrewAI, or AutoGen.
+#
+# Topology:
+#   planner (LLM)
+#     ├── researcher (LangChain)    ── fan-out
+#     └── fact_checker (LangChain)  ──┘
+#           └── synthesis_crew (CrewAI)  ── fan-in
+#                 └── coding_team (AutoGen)
+#
+# Prerequisites:
+#   pip install binex[langchain,crewai,autogen]
+#   export OPENAI_API_KEY=sk-...
+#
+# You need importable Python objects for each framework:
+#   - myproject.chains.researcher     (LangChain Runnable)
+#   - myproject.chains.fact_checker   (LangChain Runnable)
+#   - myproject.crews.synthesis_crew  (CrewAI Crew)
+#   - myproject.teams.coding_team    (AutoGen Team)
+#
+# Verify setup:  binex plugins check examples/mixed-framework-pipeline.yaml
+# Run:           binex run examples/mixed-framework-pipeline.yaml query="Build an AI chatbot"
+# Debug:         binex debug <run_id>
+
+name: mixed-framework-pipeline
+description: "End-to-end pipeline mixing LLM, LangChain, CrewAI, and AutoGen"
+
+nodes:
+  # LLM: plan the project
+  planner:
+    agent: "llm://gpt-4o-mini"
+    system_prompt: |
+      You are a project planner. Break down the request into
+      a research phase and an implementation phase.
+    inputs:
+      query: "${user.query}"
+    outputs: [plan]
+    config:
+      temperature: 0.3
+
+  # LangChain: parallel research
+  researcher:
+    agent: "langchain://myproject.chains.researcher"
+    inputs:
+      plan: "${planner.plan}"
+    outputs: [research]
+    depends_on: [planner]
+
+  # LangChain: parallel fact-checking
+  fact_checker:
+    agent: "langchain://myproject.chains.fact_checker"
+    inputs:
+      plan: "${planner.plan}"
+    outputs: [facts]
+    depends_on: [planner]
+
+  # CrewAI: synthesize research and facts into a design doc
+  synthesis_crew:
+    agent: "crewai://myproject.crews.synthesis_crew"
+    inputs:
+      research: "${researcher.research}"
+      facts: "${fact_checker.facts}"
+    outputs: [design]
+    depends_on: [researcher, fact_checker]
+
+  # AutoGen: implement based on the design
+  coding_team:
+    agent: "autogen://myproject.teams.coding_team"
+    inputs:
+      design: "${synthesis_crew.design}"
+    outputs: [implementation]
+    depends_on: [synthesis_crew]
+
+defaults:
+  deadline_ms: 600000          # 10 min — multi-framework pipeline
+
+budget:
+  max_cost: 5.0
+  policy: warn
