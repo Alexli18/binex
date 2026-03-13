@@ -18,6 +18,7 @@ human-in-the-loop steps.
 | LocalPythonAdapter  | `adapters/local.py`| `local://`  | async Python callable|
 | HumanInputAdapter   | `adapters/human.py`| `human://input` | Terminal text prompt |
 | HumanApprovalAdapter| `adapters/human.py`| `human://approve`| Terminal y/n approval |
+| A2AExternalGatewayAdapter | `adapters/a2a.py` | `a2a://` + `--gateway` | HTTP POST /route (via Gateway) |
 
 ## Interfaces
 
@@ -66,11 +67,13 @@ class LLMAdapter:
 ### A2AAgentAdapter
 
 Communicates with remote agents over the A2A protocol. The remote agent must
-expose `POST /execute` and `GET /health`.
+expose `POST /execute` and `GET /health`. When an optional `gateway` parameter
+is provided, requests are routed through the Gateway instead of directly to the
+agent endpoint.
 
 ```python
 class A2AAgentAdapter:
-    def __init__(self, endpoint: str) -> None: ...
+    def __init__(self, endpoint: str, *, gateway: "Gateway | None" = None) -> None: ...
 
     async def execute(
         self,
@@ -150,3 +153,18 @@ Dispatcher.dispatch(task, artifacts, trace_id)
                     v
           returned to Dispatcher --> Orchestrator --> stores
 ```
+
+## Gateway Integration
+
+When a `gateway.yaml` file is detected in the project directory, `A2AAgentAdapter` routes requests through an embedded Gateway running in-process. This provides capability-based routing, automatic failover, and health checking without requiring a separate service.
+
+When the `--gateway URL` flag is passed to `binex run`, `A2AExternalGatewayAdapter` is used instead. It routes requests through a standalone Gateway service via `POST /route`, delegating agent selection and failover to the external process.
+
+The Gateway provides:
+
+- **Capability-based routing** — select agents based on declared skills and routing strategy
+- **Retry and failover** — automatic retries with configurable failover to alternative agents
+- **API key authentication** — forward per-agent credentials from Gateway configuration
+- **Health checking** — periodic health probes with automatic agent deregistration on failure
+
+See [binex gateway](../cli/gateway.md) for Gateway CLI and configuration details.

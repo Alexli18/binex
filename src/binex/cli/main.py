@@ -17,6 +17,7 @@ from binex.cli.diagnose import diagnose_cmd
 from binex.cli.diff import diff_cmd
 from binex.cli.doctor import doctor_cmd
 from binex.cli.explore import explore_cmd
+from binex.cli.gateway_cmd import gateway
 from binex.cli.hello import hello_cmd
 from binex.cli.init_cmd import init_cmd
 from binex.cli.replay import replay_cmd
@@ -69,6 +70,7 @@ cli.add_command(explore_cmd, "explore")
 cli.add_command(cost_group, "cost")
 cli.add_command(diagnose_cmd, "diagnose")
 cli.add_command(bisect_cmd, "bisect")
+cli.add_command(gateway, "gateway")
 
 
 def main() -> None:

@@ -38,6 +38,7 @@ binex cancel RUN_ID
 | `--json-output` / `--json` | flag | Output run summary as JSON |
 | `--verbose` / `-v` | flag | Show step-by-step progress with `[N/total]` counters, input dependency arrows, artifact contents after each step, and skipped node indicators |
 | `--stream / --no-stream` | flag | Stream LLM output tokens in real-time. Auto-detected: enabled for TTY terminals, disabled when piping to a file |
+| `--gateway` | `URL` | Route A2A agents through an external standalone Gateway |
 
 ### cancel
 
@@ -249,6 +250,15 @@ $ binex run workflow.yaml --stream
 Streaming is auto-detected: it is enabled when the output is a TTY (interactive terminal) and disabled when piping to a file or another command. Use `--stream` or `--no-stream` to override.
 
 Streaming works with all LLM providers supported by LiteLLM. Non-LLM adapters (`local://`, `a2a://`, `human://`) are not affected.
+
+## Gateway Integration
+
+The `--gateway` option controls how `a2a://` agents are routed:
+
+- **Without `--gateway`:** Binex auto-detects a `gateway.yaml` file in the project directory. If found, A2A agents are routed through an embedded Gateway running in-process. If no `gateway.yaml` exists, A2A agents connect directly to their endpoints.
+- **With `--gateway URL`:** A2A agents are routed through an external standalone Gateway via HTTP. The URL should point to a running `binex gateway serve` instance (e.g., `--gateway http://localhost:9100`).
+
+Per-node routing behavior can be customized using the `routing:` field in workflow YAML. See [Workflow Format — Routing Overrides](../workflows/format.md#routing-overrides) for details.
 
 ## Validation Errors
 

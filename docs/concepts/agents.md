@@ -32,7 +32,7 @@ An agent is a unit of work in a Binex workflow. Each agent is identified by a UR
 |---|---|---|
 | `local://` | `LocalPythonAdapter` | In-process async Python callable. Fastest option for custom logic that runs locally. |
 | `llm://` | `LLMAdapter` | Direct LLM call routed through litellm. The path after `llm://` specifies the model name (e.g., `gpt-4o`, `claude-3-opus`). |
-| `a2a://` | `A2AAgentAdapter` | Remote HTTP agent following the A2A contract: `POST /execute` for task execution, `GET /health` for availability checks. |
+| `a2a://` | `A2AAgentAdapter` | Remote HTTP agent following the A2A contract: `POST /execute` for task execution, `GET /health` for availability checks. When a Gateway is configured, requests are routed through it for capability-based selection, failover, and health monitoring. |
 | `human://input` | `HumanInputAdapter` | Prompts a human for free-text input via the terminal. The node's `system_prompt` is displayed as the prompt message. Returns an artifact of type `human_input`. |
 | `human://approve` | `HumanApprovalAdapter` | Pauses execution and prompts a human to approve (`y`) or reject (`n`). Returns an artifact of type `decision` with content `"approved"` or `"rejected"`. Use with `when` conditionals to branch the workflow. |
 

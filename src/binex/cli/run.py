@@ -36,9 +36,10 @@ Examples:
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
 @click.option("--verbose", "-v", is_flag=True, help="Show artifact contents after each step")
 @click.option("--stream/--no-stream", "stream_out", default=None, help="Stream LLM output tokens")
+@click.option("--gateway", "gateway_url", default=None, help="External A2A Gateway URL")
 def run_cmd(
     workflow_file: str, var: tuple[str, ...], json_out: bool, verbose: bool,
-    stream_out: bool | None,
+    stream_out: bool | None, gateway_url: str | None,
 ) -> None:
     """Execute a workflow definition."""
     user_vars = _parse_vars(var)
@@ -50,7 +51,9 @@ def run_cmd(
             click.echo(f"Error: {err}", err=True)
         sys.exit(2)
 
-    summary, node_errors, artifacts = asyncio.run(_run(spec, verbose, stream_out=stream_out))
+    summary, node_errors, artifacts = asyncio.run(
+        _run(spec, verbose, stream_out=stream_out, gateway_url=gateway_url),
+    )
 
     # Identify terminal nodes (no downstream dependents)
     all_deps = {dep for node in spec.nodes.values() for dep in node.depends_on}
@@ -172,7 +175,10 @@ def _print_rich_output(summary, spec, artifacts, terminal_nodes):
         )
 
 
-async def _run(spec, verbose: bool = False, *, stream_out: bool | None = None):
+async def _run(
+    spec, verbose: bool = False, *,
+    stream_out: bool | None = None, gateway_url: str | None = None,
+):
     execution_store, artifact_store = _get_stores()
 
     # Determine streaming: explicit flag, or auto-detect from TTY
@@ -207,7 +213,7 @@ async def _run(spec, verbose: bool = False, *, stream_out: bool | None = None):
             on_node_done=lambda nid, na: _verbose_collect_artifacts(nid, na, all_artifacts),
         )
 
-    register_workflow_adapters(orch.dispatcher, spec)
+    register_workflow_adapters(orch.dispatcher, spec, gateway_url=gateway_url)
 
     try:
         summary = await orch.run_workflow(spec)

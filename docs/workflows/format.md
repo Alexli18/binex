@@ -29,6 +29,7 @@ Complete schema reference for Binex workflow files.
 | `cost` | `NodeCostHint` | no | Optional cost estimate for planning (see below) |
 | `budget` | `float` or `NodeBudget` | no | Per-node budget limit (shorthand: `budget: 0.50`, full: `budget: { max_cost: 0.50 }`) |
 | `output_schema` | `dict` | no | JSON Schema for validating node output. Failed validation triggers auto-retry |
+| `routing` | `dict` | no | Per-node Gateway routing overrides (see below) |
 
 ### `config` keys (LLM adapter)
 
@@ -256,6 +257,30 @@ nodes:
 If the LLM returns output that doesn't match the schema (e.g., missing `title` field or `score` out of range), the node is retried automatically. After all retries are exhausted, the node fails with a validation error.
 
 The validator handles both JSON string output (parsed first) and dict output (validated directly).
+
+## Routing Overrides
+
+When a Gateway is configured (either embedded via `gateway.yaml` or standalone via `--gateway`), individual nodes can override the default routing behavior using the `routing` field:
+
+```yaml
+nodes:
+  critical_search:
+    agent: "a2a://research"
+    routing:
+      prefer: lowest_latency
+      timeout_ms: 10000
+      retry_count: 5
+      failover: true
+```
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `prefer` | `str` | `"highest_priority"` | Selection strategy (`highest_priority`, `lowest_latency`, `round_robin`) |
+| `timeout_ms` | `int` | `null` | Override request timeout for this node |
+| `retry_count` | `int` | `null` | Override retry count for this node |
+| `failover` | `bool` | `null` | Override failover setting for this node |
+
+Routing overrides only apply when a Gateway is configured. Without a Gateway, the `routing` field is ignored.
 
 ## Variable Interpolation
 
