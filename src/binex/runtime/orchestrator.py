@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -28,6 +29,7 @@ from binex.runtime.budget import (
 from binex.runtime.dispatcher import Dispatcher, _backoff_delay
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
+from binex.webhook import WebhookSender
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +126,16 @@ class Orchestrator:
         )
 
         await self.execution_store.update_run(summary)
+
+        # Fire webhook if configured
+        webhook_url = (
+            spec.webhook.url if spec.webhook
+            else os.environ.get("BINEX_WEBHOOK_URL")
+        )
+        sender = WebhookSender.from_config(url=webhook_url)
+        if sender is not None:
+            await self._fire_webhook(sender, spec, summary)
+
         return summary
 
     def _schedule_ready_nodes(
@@ -171,6 +183,46 @@ class Orchestrator:
         if scheduler.is_complete():
             return "completed"
         return "failed"
+
+    @staticmethod
+    async def _fire_webhook(
+        sender: WebhookSender,
+        spec: WorkflowSpec,
+        summary: RunSummary,
+    ) -> None:
+        """Send webhook notification for run lifecycle event."""
+        event_map = {
+            "completed": "run.completed",
+            "failed": "run.failed",
+            "over_budget": "run.budget_exceeded",
+        }
+        event = event_map.get(summary.status)
+        if event is None:
+            return
+
+        data: dict[str, Any] = {
+            "status": summary.status,
+            "total_cost": summary.total_cost,
+            "total_nodes": summary.total_nodes,
+            "completed_nodes": summary.completed_nodes,
+            "failed_nodes": summary.failed_nodes,
+            "skipped_nodes": summary.skipped_nodes,
+        }
+        if summary.status == "over_budget" and spec.budget:
+            data["max_cost"] = spec.budget.max_cost
+
+        payload = {
+            "event": event,
+            "timestamp": datetime.now(UTC).isoformat(),
+            "run_id": summary.run_id,
+            "workflow_name": spec.name,
+            "data": data,
+        }
+
+        try:
+            await sender.send(payload)
+        except Exception as exc:
+            logger.warning("Webhook delivery error: %s", exc)
 
     async def _budget_pre_check(
         self,

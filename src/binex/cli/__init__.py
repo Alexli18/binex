@@ -104,7 +104,7 @@ COMMAND_SECTIONS: list[tuple[str, list[str]]] = [
     ("Core commands", ["run", "cancel", "replay"]),
     ("Inspect & debug", [
         "debug", "diagnose", "bisect", "trace", "diff",
-        "artifacts", "cost", "explore",
+        "artifacts", "cost", "explore", "export",
     ]),
     ("Setup & scaffold", ["init", "start", "scaffold", "hello"]),
     ("System", ["dev", "doctor", "validate", "plugins"]),

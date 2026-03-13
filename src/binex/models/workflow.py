@@ -60,6 +60,12 @@ class DefaultsSpec(BaseModel):
     retry_policy: RetryPolicy = Field(default_factory=RetryPolicy)
 
 
+class WebhookConfig(BaseModel):
+    """Webhook notification target configuration."""
+
+    url: str
+
+
 class WorkflowSpec(BaseModel):
     """Parsed representation of a YAML/JSON workflow definition."""
 
@@ -68,6 +74,7 @@ class WorkflowSpec(BaseModel):
     nodes: dict[str, NodeSpec]
     defaults: DefaultsSpec | None = None
     budget: BudgetConfig | None = None
+    webhook: WebhookConfig | None = None
     source_path: str | None = None
 
     @model_validator(mode="after")
@@ -78,4 +85,4 @@ class WorkflowSpec(BaseModel):
         return self
 
 
-__all__ = ["BackEdge", "DefaultsSpec", "NodeSpec", "WorkflowSpec"]
+__all__ = ["BackEdge", "DefaultsSpec", "NodeSpec", "WebhookConfig", "WorkflowSpec"]

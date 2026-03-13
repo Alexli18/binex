@@ -53,6 +53,7 @@ tracks artifacts between steps, and allows replaying and inspecting runs.
 - **Budget & cost tracking** &mdash; per-node cost records, budget enforcement (stop/warn), CLI cost inspection
 - **Framework adapters** &mdash; plug in LangChain, CrewAI, or AutoGen agents with a single URI
 - **Plugin system** &mdash; extend Binex with custom adapter plugins via entry points
+- **Export & webhooks** &mdash; export runs to CSV/JSON, webhook notifications on run events
 - **CLI-first DX** &mdash; everything accessible from the terminal
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -333,6 +334,7 @@ nodes:
 | `binex cost show <run-id>` | Cost breakdown per node (`--json`) |
 | `binex cost history <run-id>` | Chronological cost events (`--json`) |
 | `binex explore` | Interactive browser for runs and artifacts |
+| `binex export <run-id>` | Export run data to CSV (`--format json`, `--last N`, `--include-artifacts`) |
 | `binex plugins list` | Show built-in adapters and installed plugins (`--json`) |
 | `binex plugins check <workflow>` | Validate all agent URIs are resolvable |
 | `binex hello` | Zero-config demo |
