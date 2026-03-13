@@ -60,11 +60,14 @@ nav:
     - bisect: cli/bisect.md
     - gateway: cli/gateway.md
     - plugins: cli/plugins.md
+    - export: cli/export.md
+    - workflow: cli/workflow.md
   - Architecture:
     - Overview: architecture/overview.md
     - Runtime: architecture/runtime.md
     - Stores: architecture/stores.md
     - Adapters: architecture/adapters.md
+    - Telemetry: architecture/telemetry.md
   - Workflows:
     - Format: workflows/format.md
     - Examples: workflows/examples.md

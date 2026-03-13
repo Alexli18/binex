@@ -54,6 +54,8 @@ tracks artifacts between steps, and allows replaying and inspecting runs.
 - **Framework adapters** &mdash; plug in LangChain, CrewAI, or AutoGen agents with a single URI
 - **Plugin system** &mdash; extend Binex with custom adapter plugins via entry points
 - **Export & webhooks** &mdash; export runs to CSV/JSON, webhook notifications on run events
+- **OpenTelemetry tracing** &mdash; optional run-level and node-level spans for external collectors (Jaeger, Tempo, etc.)
+- **Workflow versioning** &mdash; schema versioning with migration framework, workflow snapshots for reproducibility
 - **CLI-first DX** &mdash; everything accessible from the terminal
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -80,6 +82,7 @@ pip install binex[langchain,crewai,autogen]  # all three
 For rich colored output:
 
 ```bash
+pip install binex[telemetry]   # OpenTelemetry tracing
 pip install binex[rich]
 ```
 
@@ -337,6 +340,8 @@ nodes:
 | `binex export <run-id>` | Export run data to CSV (`--format json`, `--last N`, `--include-artifacts`) |
 | `binex plugins list` | Show built-in adapters and installed plugins (`--json`) |
 | `binex plugins check <workflow>` | Validate all agent URIs are resolvable |
+| `binex workflow version <file>` | Display workflow schema version |
+| `binex workflow diff <run1> <run2>` | Compare workflow definitions between runs |
 | `binex hello` | Zero-config demo |
 
 ### LLM Providers

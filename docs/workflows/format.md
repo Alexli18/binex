@@ -6,11 +6,13 @@ Complete schema reference for Binex workflow files.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `version` | `int` | no | Schema version (default: `1`, must be >= 1). See [Versioning](#versioning) below. |
 | `name` | `str` | yes | Workflow name |
 | `description` | `str` | no | Workflow description (default: `""`) |
 | `nodes` | `dict[str, NodeSpec]` | yes | Map of node\_id to node definition |
 | `defaults` | `DefaultsSpec` | no | Default settings applied to all nodes |
 | `budget` | `BudgetConfig` | no | Budget constraints for the run (see below) |
+| `webhook` | `WebhookConfig` | no | Webhook notification target (see below) |
 
 ## Node — `NodeSpec`
 
@@ -313,3 +315,57 @@ nodes:
 ```
 
 No `defaults`, `description`, `depends_on`, or `config` required.
+
+## Versioning
+
+Workflow files support schema versioning via the `version` field. This enables future schema changes with automatic migration.
+
+```yaml
+version: 1
+name: my-workflow
+nodes:
+  step1:
+    agent: "local://echo"
+    outputs: [result]
+```
+
+### Behavior
+
+- **Missing `version` field**: Defaults to version 1 (backward compatible with all existing workflows). A warning is logged.
+- **`version: 1`**: Current version — no migration needed.
+- **`version > CURRENT_VERSION`**: Raises `UnsupportedVersionError` at load time. Upgrade Binex to use newer workflows.
+
+### Migration framework
+
+When Binex upgrades its schema version, a migration chain transforms older workflow dicts step by step (v1 → v2 → ... → current). Migrations run in-memory at load time — the original YAML file is never modified.
+
+### Workflow snapshots
+
+Every `binex run` stores a normalized, SHA256-deduplicated snapshot of the workflow definition in SQLite. This lets you:
+
+- Inspect the exact workflow used in any past run via `binex debug <run-id>`
+- Compare workflows between runs via `binex workflow diff <run1> <run2>`
+- Reproduce runs even if the original YAML file has changed
+
+Check the workflow version of any file:
+
+```bash
+binex workflow version examples/simple.yaml
+
+## Webhook — `WebhookConfig`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | `str` | yes | Webhook endpoint URL |
+
+Webhook notifications are sent on run completion, failure, or budget exceeded. Can also be set via `BINEX_WEBHOOK_URL` environment variable.
+
+```yaml
+name: notified-pipeline
+webhook:
+  url: "https://hooks.example.com/binex"
+nodes:
+  step1:
+    agent: "local://echo"
+    outputs: [result]
+```

@@ -16,10 +16,10 @@
 - [x] AutoGen adapter — bridge AutoGen agents into Binex pipelines
 - [x] Plugin system for custom adapters
 
-## v0.4 — Observability & Persistence
+## v0.4 — Observability & Persistence ✅
 
-- [ ] OpenTelemetry integration (traces, metrics, spans)
-- [ ] Workflow versioning and migration
+- [x] OpenTelemetry integration (traces, metrics, spans)
+- [x] Workflow versioning and migration
 - [x] Export runs to CSV / JSON for analysis
 - [x] Webhook notifications on run completion / failure / budget exceeded
 
