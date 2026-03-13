@@ -68,8 +68,14 @@ async def _run_replay(
         artifact_store=artifact_store,
     )
 
+    from binex.plugins import PluginRegistry
+
+    plugin_registry = PluginRegistry()
+    plugin_registry.discover()
+
     register_workflow_adapters(
         engine.dispatcher, spec, agent_swaps=agent_swaps,
+        plugin_registry=plugin_registry,
     )
 
     try:

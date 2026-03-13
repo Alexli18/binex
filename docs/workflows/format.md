@@ -17,7 +17,7 @@ Complete schema reference for Binex workflow files.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | `str` | no | Auto-set from the dict key |
-| `agent` | `str` | yes | Agent URI — one of `local://`, `llm://`, `a2a://` |
+| `agent` | `str` | yes | Agent URI — `local://`, `llm://`, `a2a://`, `human://`, `langchain://`, `crewai://`, `autogen://`, or custom plugin prefix |
 | `system_prompt` | `str` | no | System prompt sent to the agent (supports `file://` prefix) |
 | `inputs` | `dict[str, Any]` | no | Input key-value pairs; supports variable interpolation |
 | `outputs` | `list[str]` | yes | Artifact names this node produces |

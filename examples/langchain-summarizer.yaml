@@ -1,0 +1,69 @@
+# LangChain Summarizer Pipeline
+# ==============================
+# Demonstrates using LangChain Runnables as workflow agents.
+# Binex imports your LangChain object by dotted path and calls .ainvoke()/.invoke().
+#
+# Topology:  researcher (LLM) -> summarizer (LangChain) -> reviewer (LLM)
+#
+# Prerequisites:
+#   pip install binex[langchain]
+#   export OPENAI_API_KEY=sk-...
+#
+# Your LangChain object must be importable by Python path.
+# Create a file `myproject/chains.py`:
+#
+#   from langchain_core.prompts import ChatPromptTemplate
+#   from langchain_openai import ChatOpenAI
+#
+#   summarizer = (
+#       ChatPromptTemplate.from_template("Summarize this research:\n\n{input}")
+#       | ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
+#   )
+#
+# Agent prefix:  langchain://<module.path.object>
+# Example:       langchain://myproject.chains.summarizer
+#
+# Verify setup:  binex plugins check examples/langchain-summarizer.yaml
+# Run:           binex run examples/langchain-summarizer.yaml query="Quantum computing advances"
+# Debug:         binex debug <run_id>
+
+name: langchain-summarizer
+description: "Research pipeline with LangChain summarization step"
+
+nodes:
+  # Step 1: LLM generates raw research
+  researcher:
+    agent: "llm://gpt-4o-mini"
+    system_prompt: |
+      You are a research assistant. Given a topic, produce a detailed
+      report covering key findings, current state, and future directions.
+    inputs:
+      query: "${user.query}"
+    outputs: [research]
+    config:
+      temperature: 0.7
+      max_tokens: 2000
+
+  # Step 2: LangChain Runnable summarizes the research
+  summarizer:
+    agent: "langchain://myproject.chains.summarizer"
+    inputs:
+      text: "${researcher.research}"
+    outputs: [summary]
+    depends_on: [researcher]
+
+  # Step 3: LLM reviews the summary for quality
+  reviewer:
+    agent: "llm://gpt-4o-mini"
+    system_prompt: |
+      You are a quality reviewer. Check the summary for accuracy,
+      completeness, and clarity. Provide a brief review with a score 1-10.
+    inputs:
+      summary: "${summarizer.summary}"
+    outputs: [review]
+    depends_on: [summarizer]
+    config:
+      temperature: 0.2
+
+defaults:
+  deadline_ms: 120000

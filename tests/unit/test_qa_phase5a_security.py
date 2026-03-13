@@ -420,8 +420,8 @@ class TestAllExampleYAMLsStrict:
     def test_exactly_20_example_files_exist(self) -> None:
         """Verify the expected number of example YAML files."""
         yaml_files = sorted(EXAMPLES_DIR.glob("*.yaml"))
-        assert len(yaml_files) == 25, (
-            f"Expected 25 example YAML files, found {len(yaml_files)}: "
+        assert len(yaml_files) == 29, (
+            f"Expected 29 example YAML files, found {len(yaml_files)}: "
             f"{[f.name for f in yaml_files]}"
         )
 
@@ -468,7 +468,8 @@ class TestAllExampleYAMLsStrict:
             "API_ENDPOINT": "http://localhost:4000",
             "STORAGE_KEY": "test-storage-key",
         }
-        known_prefixes = ("local://", "llm://", "a2a://", "human://")
+        known_prefixes = ("local://", "llm://", "a2a://", "human://",
+                          "langchain://", "crewai://", "autogen://")
         yaml_files = sorted(EXAMPLES_DIR.glob("*.yaml"))
         violations: list[str] = []
         original_env = os.environ.copy()

@@ -20,6 +20,7 @@ from binex.cli.explore import explore_cmd
 from binex.cli.gateway_cmd import gateway
 from binex.cli.hello import hello_cmd
 from binex.cli.init_cmd import init_cmd
+from binex.cli.plugins_cmd import plugins_group
 from binex.cli.replay import replay_cmd
 from binex.cli.run import cancel_cmd, run_cmd
 from binex.cli.scaffold import scaffold_group
@@ -71,6 +72,7 @@ cli.add_command(cost_group, "cost")
 cli.add_command(diagnose_cmd, "diagnose")
 cli.add_command(bisect_cmd, "bisect")
 cli.add_command(gateway, "gateway")
+cli.add_command(plugins_group, "plugins")
 
 
 def main() -> None:

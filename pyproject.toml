@@ -53,12 +53,20 @@ dev = [
     "mkdocs-material",
 ]
 rich = ["rich"]
+langchain = ["langchain-core>=0.2"]
+crewai = ["crewai>=0.41"]
+autogen = ["autogen-agentchat>=0.4"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/binex"]
 
 [project.scripts]
 binex = "binex.cli.main:main"
+
+[project.entry-points."binex.plugins"]
+langchain = "binex.adapters.langchain_adapter:LangChainPlugin"
+crewai = "binex.adapters.crewai_adapter:CrewAIPlugin"
+autogen = "binex.adapters.autogen_adapter:AutoGenPlugin"
 
 [tool.ruff]
 target-version = "py311"

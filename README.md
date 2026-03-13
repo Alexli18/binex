@@ -51,6 +51,8 @@ tracks artifacts between steps, and allows replaying and inspecting runs.
 - **Run diffing** &mdash; compare two executions side-by-side to spot regressions
 - **Human-in-the-loop** &mdash; approval gates and free-text input with conditional branching
 - **Budget & cost tracking** &mdash; per-node cost records, budget enforcement (stop/warn), CLI cost inspection
+- **Framework adapters** &mdash; plug in LangChain, CrewAI, or AutoGen agents with a single URI
+- **Plugin system** &mdash; extend Binex with custom adapter plugins via entry points
 - **CLI-first DX** &mdash; everything accessible from the terminal
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -63,6 +65,15 @@ Install from PyPI:
 
 ```bash
 pip install binex
+```
+
+With framework adapters:
+
+```bash
+pip install binex[langchain]    # LangChain Runnables
+pip install binex[crewai]       # CrewAI Crews
+pip install binex[autogen]      # AutoGen Teams
+pip install binex[langchain,crewai,autogen]  # all three
 ```
 
 For rich colored output:
@@ -300,6 +311,9 @@ nodes:
 | `a2a://` | A2AAgentAdapter | Remote agent via A2A protocol |
 | `human://input` | HumanInputAdapter | Terminal prompt for free-text input |
 | `human://approve` | HumanApprovalAdapter | Approval gate with conditional branching |
+| `langchain://` | LangChainAdapter | LangChain Runnable via plugin (requires `binex[langchain]`) |
+| `crewai://` | CrewAIAdapter | CrewAI Crew via plugin (requires `binex[crewai]`) |
+| `autogen://` | AutoGenAdapter | AutoGen Team via plugin (requires `binex[autogen]`) |
 
 ### CLI Commands
 
@@ -319,6 +333,8 @@ nodes:
 | `binex cost show <run-id>` | Cost breakdown per node (`--json`) |
 | `binex cost history <run-id>` | Chronological cost events (`--json`) |
 | `binex explore` | Interactive browser for runs and artifacts |
+| `binex plugins list` | Show built-in adapters and installed plugins (`--json`) |
+| `binex plugins check <workflow>` | Validate all agent URIs are resolvable |
 | `binex hello` | Zero-config demo |
 
 ### LLM Providers
@@ -343,6 +359,10 @@ Example workflows are available in the [`examples/`](examples/) directory:
 | `human-in-the-loop.yaml` | Approval gates and conditional branching |
 | `multi-provider-demo.yaml` | Multiple LLM providers in one workflow |
 | `a2a-multi-agent.yaml` | Remote agents via A2A protocol |
+| `langchain-summarizer.yaml` | LangChain Runnable in a pipeline |
+| `crewai-research-crew.yaml` | CrewAI Crew as a workflow node |
+| `autogen-coding-team.yaml` | AutoGen Team for code generation |
+| `mixed-framework-pipeline.yaml` | LLM + LangChain + CrewAI + AutoGen combined |
 | `conditional-routing.yaml` | Branch based on node output |
 | `map-reduce.yaml` | MapReduce-style aggregation |
 
@@ -368,13 +388,14 @@ Full documentation is available at **[alexli18.github.io/binex](https://alexli18
 
 ```
 src/binex/
-├── adapters/        # Agent execution backends (local, LLM, A2A, human)
+├── adapters/        # Agent backends (local, LLM, A2A, human, LangChain, CrewAI, AutoGen)
 ├── agents/          # Built-in agent implementations
 ├── cli/             # Click CLI commands
 ├── graph/           # DAG construction + topological scheduling
 ├── models/          # Pydantic v2 domain models
 ├── registry/        # FastAPI agent registry service
 ├── runtime/         # Orchestrator, dispatcher, lifecycle
+├── plugins/         # Plugin registry for custom adapter discovery
 ├── stores/          # SQLite execution + filesystem artifact persistence
 ├── trace/           # Debug reports, lineage, timeline, diffing
 ├── workflow_spec/   # YAML loader + validator + variable resolution

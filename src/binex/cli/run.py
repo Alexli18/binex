@@ -213,7 +213,15 @@ async def _run(
             on_node_done=lambda nid, na: _verbose_collect_artifacts(nid, na, all_artifacts),
         )
 
-    register_workflow_adapters(orch.dispatcher, spec, gateway_url=gateway_url)
+    from binex.plugins import PluginRegistry
+
+    plugin_registry = PluginRegistry()
+    plugin_registry.discover()
+
+    register_workflow_adapters(
+        orch.dispatcher, spec, gateway_url=gateway_url,
+        plugin_registry=plugin_registry,
+    )
 
     try:
         summary = await orch.run_workflow(spec)
@@ -242,7 +250,12 @@ async def _run_with_live(orch, spec, execution_store, artifact_store, all_artifa
     ]
     live_table = LiveRunTable(nodes_info)
 
-    register_workflow_adapters(orch.dispatcher, spec)
+    from binex.plugins import PluginRegistry
+
+    plugin_registry = PluginRegistry()
+    plugin_registry.discover()
+
+    register_workflow_adapters(orch.dispatcher, spec, plugin_registry=plugin_registry)
 
     def _collect(node_id, node_artifacts_):
         if node_id in node_artifacts_:
