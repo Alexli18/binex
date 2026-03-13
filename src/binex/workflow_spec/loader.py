@@ -47,6 +47,8 @@ def load_workflow_from_string(
 ) -> WorkflowSpec:
     """Parse a workflow from a YAML or JSON string."""
     data = _parse_raw(content, fmt)
+    from binex.workflow_spec.migrations import migrate_workflow
+    data = migrate_workflow(data)
     _resolve_env_vars(data)
     if user_vars:
         _interpolate(data, user_vars)

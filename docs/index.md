@@ -17,6 +17,9 @@ Binex orchestrates multi-agent workflows defined in YAML. It executes DAG-based 
 - **Agent-to-Agent (A2A) protocol** — Connect to remote A2A-compatible agent servers with built-in Gateway proxy for capability-based routing, automatic failover, and health monitoring.
 - **Framework adapters** — Integrate LangChain chains, CrewAI crews, and AutoGen teams as workflow nodes via thin-wrapper adapters. Install only what you need with optional extras.
 - **Plugin system** — Extend Binex with custom adapters using Python entry points or inline `adapter_class` configuration.
+- **OpenTelemetry tracing** — Optional run-level and node-level spans for external collectors (Jaeger, Tempo), with zero overhead when disabled.
+- **Workflow versioning** — Schema versioning with migration framework, plus workflow snapshots stored in SQLite for run reproducibility.
+- **Export & webhooks** — Export run data to CSV/JSON, webhook notifications on run lifecycle events.
 - **Interactive CLI** — Project scaffolding, workflow validation, a built-in doctor command, and a start wizard to get you productive quickly.
 
 ## Install
@@ -40,7 +43,7 @@ See the [Quickstart](quickstart.md) for a full walkthrough.
 | Section | Description |
 |---------|-------------|
 | [Quickstart](quickstart.md) | Install Binex and run your first workflow in under 5 minutes |
-| [CLI Reference](cli/run.md) | All commands: `hello`, `init`, `run`, `debug`, `trace`, `replay`, `diff`, `artifacts`, `dev`, `doctor`, `validate`, `scaffold`, `cancel`, `start`, `explore`, `diagnose`, `bisect`, `gateway`, `plugins` |
+| [CLI Reference](cli/run.md) | All commands: `hello`, `init`, `run`, `debug`, `trace`, `replay`, `diff`, `artifacts`, `dev`, `doctor`, `validate`, `scaffold`, `cancel`, `start`, `explore`, `diagnose`, `bisect`, `gateway`, `plugins`, `export`, `workflow` |
 | [Concepts](concepts/agents.md) | Core concepts: agents, workflows, artifacts, execution model, lineage tracking |
 | [Architecture](architecture/overview.md) | Runtime internals: orchestrator, stores, adapters, scheduler, DAG engine |
 | [Workflow Format](workflows/format.md) | YAML schema reference with node specs, variables, conditionals, and defaults |

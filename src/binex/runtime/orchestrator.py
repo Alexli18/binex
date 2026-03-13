@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import os
 import uuid
@@ -11,6 +12,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import click
+import yaml
 
 from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
@@ -29,6 +31,7 @@ from binex.runtime.budget import (
 from binex.runtime.dispatcher import Dispatcher, _backoff_delay
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
+from binex.telemetry import get_tracer
 from binex.webhook import WebhookSender
 
 logger = logging.getLogger(__name__)
@@ -63,15 +66,37 @@ class Orchestrator:
         else:
             spec = workflow
 
+        tracer = get_tracer()
+        with tracer.start_as_current_span("binex.run") as span:
+            span.set_attribute("workflow.name", spec.name)
+            return await self._run_workflow_inner(spec, span)
+
+    async def _run_workflow_inner(
+        self,
+        spec: WorkflowSpec,
+        span: Any,
+    ) -> RunSummary:
         dag = DAG.from_workflow(spec)
         scheduler = Scheduler(dag)
         run_id = f"run_{uuid.uuid4().hex[:12]}"
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
 
+        # Store workflow snapshot
+        workflow_yaml = yaml.dump(
+            spec.model_dump(exclude={"source_path"}), sort_keys=True,
+        )
+        if hasattr(self.execution_store, "store_workflow_snapshot"):
+            workflow_hash = await self.execution_store.store_workflow_snapshot(
+                workflow_yaml, version=spec.version,
+            )
+        else:
+            workflow_hash = hashlib.sha256(workflow_yaml.encode()).hexdigest()
+
         summary = RunSummary(
             run_id=run_id,
             workflow_name=spec.name,
             workflow_path=spec.source_path,
+            workflow_hash=workflow_hash,
             status="running",
             total_nodes=len(spec.nodes),
         )
@@ -124,6 +149,11 @@ class Orchestrator:
         summary.status = self._determine_final_status(
             budget_exceeded, scheduler,
         )
+
+        span.set_attribute("run.id", summary.run_id)
+        span.set_attribute("run.status", summary.status)
+        span.set_attribute("run.total_cost", summary.total_cost)
+        span.set_attribute("run.node_count", summary.total_nodes)
 
         await self.execution_store.update_run(summary)
 

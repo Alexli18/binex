@@ -10,6 +10,7 @@ from binex.adapters.base import AgentAdapter
 from binex.models.artifact import Artifact, Lineage
 from binex.models.cost import ExecutionResult
 from binex.models.task import TaskNode
+from binex.telemetry import get_tracer
 
 
 class SchemaValidationError(Exception):
@@ -80,6 +81,31 @@ class Dispatcher:
         return result, input_artifacts
 
     async def dispatch(
+        self,
+        task: TaskNode,
+        input_artifacts: list[Artifact],
+        trace_id: str,
+        *,
+        stream: bool = False,
+        stream_callback: Callable[[str], None] | None = None,
+    ) -> ExecutionResult:
+        tracer = get_tracer()
+        with tracer.start_as_current_span(f"binex.node.{task.node_id}") as span:
+            span.set_attribute("node.id", task.node_id)
+            span.set_attribute("node.agent", task.agent)
+            try:
+                result = await self._dispatch_inner(
+                    task, input_artifacts, trace_id,
+                    stream=stream, stream_callback=stream_callback,
+                )
+                span.set_attribute("node.status", "completed")
+                return result
+            except Exception as exc:
+                span.set_attribute("node.status", "failed")
+                span.record_exception(exc)
+                raise
+
+    async def _dispatch_inner(
         self,
         task: TaskNode,
         input_artifacts: list[Artifact],

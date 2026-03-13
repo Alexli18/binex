@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 
@@ -77,6 +78,12 @@ class SqliteExecutionStore:
                 model TEXT,
                 timestamp TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS workflow_snapshots (
+                hash TEXT PRIMARY KEY,
+                content TEXT NOT NULL,
+                version INTEGER NOT NULL,
+                created_at TEXT NOT NULL
+            );
         """)
         # Migration: add total_cost column to existing runs table
         try:
@@ -87,6 +94,12 @@ class SqliteExecutionStore:
         # Migration: add workflow_path column to existing runs table
         try:
             await self._db.execute("ALTER TABLE runs ADD COLUMN workflow_path TEXT")
+            await self._db.commit()
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add workflow_hash column to existing runs table
+        try:
+            await self._db.execute("ALTER TABLE runs ADD COLUMN workflow_hash TEXT")
             await self._db.commit()
         except Exception as exc:
             logger.debug("Migration already applied or failed: %s", exc)
@@ -104,8 +117,9 @@ class SqliteExecutionStore:
         await db.execute(
             """INSERT INTO runs (run_id, workflow_name, status, started_at,
                completed_at, total_nodes, completed_nodes, failed_nodes,
-               forked_from, forked_at_step, total_cost, workflow_path)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               forked_from, forked_at_step, total_cost, workflow_path,
+               workflow_hash)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 run_summary.run_id,
                 run_summary.workflow_name,
@@ -119,6 +133,7 @@ class SqliteExecutionStore:
                 run_summary.forked_at_step,
                 run_summary.total_cost,
                 run_summary.workflow_path,
+                run_summary.workflow_hash,
             ),
         )
         await db.commit()
@@ -136,7 +151,8 @@ class SqliteExecutionStore:
         await db.execute(
             """UPDATE runs SET workflow_name=?, status=?, started_at=?,
                completed_at=?, total_nodes=?, completed_nodes=?, failed_nodes=?,
-               forked_from=?, forked_at_step=?, total_cost=?, workflow_path=?
+               forked_from=?, forked_at_step=?, total_cost=?, workflow_path=?,
+               workflow_hash=?
                WHERE run_id=?""",
             (
                 run_summary.workflow_name,
@@ -150,6 +166,7 @@ class SqliteExecutionStore:
                 run_summary.forked_at_step,
                 run_summary.total_cost,
                 run_summary.workflow_path,
+                run_summary.workflow_hash,
                 run_summary.run_id,
             ),
         )
@@ -222,6 +239,7 @@ class SqliteExecutionStore:
             forked_at_step=row[9],
             total_cost=row[10] if len(row) > 10 else 0.0,
             workflow_path=row[11] if len(row) > 11 else None,
+            workflow_hash=row[12] if len(row) > 12 else None,
         )
 
     async def record_cost(self, cost_record: CostRecord) -> None:
@@ -300,6 +318,30 @@ class SqliteExecutionStore:
             trace_id=row[13],
             error=row[14],
         )
+
+    async def store_workflow_snapshot(self, content: str, version: int) -> str:
+        """Store workflow YAML content, deduplicated by SHA256 hash. Returns hash."""
+        db = await self._ensure_initialized()
+        content_hash = hashlib.sha256(content.encode()).hexdigest()
+        await db.execute(
+            """INSERT OR IGNORE INTO workflow_snapshots (hash, content, version, created_at)
+               VALUES (?, ?, ?, ?)""",
+            (content_hash, content, version, datetime.now(UTC).isoformat()),
+        )
+        await db.commit()
+        return content_hash
+
+    async def get_workflow_snapshot(self, content_hash: str) -> dict | None:
+        """Retrieve a workflow snapshot by hash."""
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
+            "SELECT hash, content, version, created_at FROM workflow_snapshots WHERE hash = ?",
+            (content_hash,),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            return None
+        return {"hash": row[0], "content": row[1], "version": row[2], "created_at": row[3]}
 
 
 __all__ = ["SqliteExecutionStore"]
