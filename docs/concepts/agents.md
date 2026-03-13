@@ -26,7 +26,7 @@ nodes:
     outputs: [report]
 ```
 
-An agent is a unit of work in a Binex workflow. Each agent is identified by a URI prefix that determines how it executes. Binex supports five agent types:
+An agent is a unit of work in a Binex workflow. Each agent is identified by a URI prefix that determines how it executes. Binex supports the following agent types:
 
 | Prefix | Adapter | Description |
 |---|---|---|
@@ -35,6 +35,9 @@ An agent is a unit of work in a Binex workflow. Each agent is identified by a UR
 | `a2a://` | `A2AAgentAdapter` | Remote HTTP agent following the A2A contract: `POST /execute` for task execution, `GET /health` for availability checks. When a Gateway is configured, requests are routed through it for capability-based selection, failover, and health monitoring. |
 | `human://input` | `HumanInputAdapter` | Prompts a human for free-text input via the terminal. The node's `system_prompt` is displayed as the prompt message. Returns an artifact of type `human_input`. |
 | `human://approve` | `HumanApprovalAdapter` | Pauses execution and prompts a human to approve (`y`) or reject (`n`). Returns an artifact of type `decision` with content `"approved"` or `"rejected"`. Use with `when` conditionals to branch the workflow. |
+| `langchain://` | `LangChainAdapter` | Runs a LangChain Runnable as a workflow node. Install with `pip install binex[langchain]`. Path is a dotted import to your Python object. |
+| `crewai://` | `CrewAIAdapter` | Runs a CrewAI Crew as a workflow node. Install with `pip install binex[crewai]`. Path is a dotted import to your Crew object. |
+| `autogen://` | `AutoGenAdapter` | Runs an AutoGen Team as a workflow node. Install with `pip install binex[autogen]`. Path is a dotted import to your Team object. |
 
 ## How It Works
 

@@ -3,11 +3,13 @@
 ## Overview
 
 Adapters bridge the Dispatcher to concrete agent implementations. The
-`AgentAdapter` protocol defines the contract; five implementations ship with
+`AgentAdapter` protocol defines the contract; several implementations ship with
 Binex. Adapter selection is driven by URI prefixes in workflow YAML:
 `llm://` for LLM calls via litellm, `a2a://` for remote A2A agents,
-`local://` for in-process Python handlers, and `human://` for interactive
-human-in-the-loop steps.
+`local://` for in-process Python handlers, `human://` for interactive
+human-in-the-loop steps, and `langchain://`, `crewai://`, `autogen://` for
+third-party framework integration. Custom adapters can be added via the
+plugin system.
 
 ## Components
 
@@ -19,6 +21,9 @@ human-in-the-loop steps.
 | HumanInputAdapter   | `adapters/human.py`| `human://input` | Terminal text prompt |
 | HumanApprovalAdapter| `adapters/human.py`| `human://approve`| Terminal y/n approval |
 | A2AExternalGatewayAdapter | `adapters/a2a.py` | `a2a://` + `--gateway` | HTTP POST /route (via Gateway) |
+| LangChainAdapter  | `adapters/langchain_adapter.py` | `langchain://` | LangChain Runnable `.invoke()` |
+| CrewAIAdapter     | `adapters/crewai_adapter.py` | `crewai://` | CrewAI Crew `.kickoff()` |
+| AutoGenAdapter    | `adapters/autogen_adapter.py` | `autogen://` | AutoGen Team `.run()` |
 
 ## Interfaces
 
@@ -168,3 +173,88 @@ The Gateway provides:
 - **Health checking** — periodic health probes with automatic agent deregistration on failure
 
 See [binex gateway](../cli/gateway.md) for Gateway CLI and configuration details.
+
+## Framework Adapters
+
+Binex includes thin-wrapper adapters for popular AI frameworks. These are installed as optional extras and registered through the plugin system.
+
+### Installation
+
+```bash
+pip install binex[langchain]   # LangChain support
+pip install binex[crewai]      # CrewAI support
+pip install binex[autogen]     # AutoGen support
+```
+
+### How They Work
+
+Each framework adapter imports a user-provided Python object by dotted path and calls its framework-specific method:
+
+| Framework | Prefix | Async Method | Sync Fallback | Expected Object |
+|-----------|--------|-------------|---------------|-----------------|
+| LangChain | `langchain://` | `.ainvoke()` | `.invoke()` | Runnable |
+| CrewAI | `crewai://` | `.kickoff_async()` | `.kickoff()` | Crew |
+| AutoGen | `autogen://` | `.a_run()` | `.run()` | Team / AgentChat |
+
+The URI after `://` is the dotted import path to the Python object:
+
+```yaml
+nodes:
+  summarize:
+    agent: "langchain://myproject.chains.summarizer"
+```
+
+**Data mapping**: single input artifact's `content` is passed directly; multiple artifacts are merged into a `{"artifact_id": content}` dict. Output is wrapped into an artifact (dicts are JSON-serialized).
+
+**Sync/async**: if the object has the async method, it's called directly. Otherwise, the sync method is run in a thread via `asyncio.to_thread()`.
+
+## Plugin System
+
+Binex supports custom adapters via a plugin system based on Python entry points.
+
+### Plugin Contract
+
+A plugin is a class with a `prefix` attribute and a `create_adapter()` factory method:
+
+```python
+class MyPlugin:
+    prefix = "custom"  # → custom:// in workflow YAML
+
+    def create_adapter(self, uri: str, node_config: dict):
+        return MyAdapter(uri=uri, **node_config)
+```
+
+### Registration
+
+**Via entry points** (for pip packages):
+
+```toml
+[project.entry-points."binex.plugins"]
+custom = "my_package:MyPlugin"
+```
+
+**Via inline `adapter_class`** (for one-off adapters):
+
+```yaml
+nodes:
+  step_a:
+    agent: "custom://my-handler"
+    config:
+      adapter_class: "myproject.adapters.CustomPlugin"
+```
+
+### Resolution Order
+
+When the dispatcher encounters an unknown agent prefix:
+
+1. Built-in adapters (`local://`, `llm://`, `human://`, `a2a://`)
+2. Inline `adapter_class` from node config
+3. Entry point plugins
+4. Error with actionable message
+
+### CLI Commands
+
+- `binex plugins list [--json]` — show installed plugins
+- `binex plugins check <workflow.yaml>` — verify all adapters are available (exit code 1 if missing)
+
+See [binex plugins](../cli/plugins.md) for details.
