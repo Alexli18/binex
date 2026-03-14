@@ -8,9 +8,9 @@
   </h1>
 
   <p align="center">
-    <strong>Debuggable runtime for AI agent pipelines</strong>
+    <strong>Open-source visual orchestrator for AI agent workflows</strong>
     <br>
-    Orchestrate multi-agent workflows. Trace every step. Replay and diff runs.
+    Build, run, debug, and replay multi-agent pipelines — 100% locally.
   </p>
 
   <p>
@@ -19,13 +19,15 @@
     <a href="https://github.com/Alexli18/binex/blob/master/LICENSE"><img src="https://img.shields.io/github/license/Alexli18/binex?style=flat-square" alt="License"></a>
     <a href="https://github.com/Alexli18/binex/actions"><img src="https://img.shields.io/github/actions/workflow/status/Alexli18/binex/ci.yml?style=flat-square&label=CI" alt="CI"></a>
     <a href="https://alexli18.github.io/binex/"><img src="https://img.shields.io/badge/docs-online-blue?style=flat-square" alt="Docs"></a>
+    <a href="https://github.com/Alexli18/binex/stargazers"><img src="https://img.shields.io/github/stars/Alexli18/binex?style=flat-square" alt="Stars"></a>
   </p>
 
   <p>
-    <a href="#installation">Installation</a> &middot;
-    <a href="#quickstart">Quickstart</a> &middot;
     <a href="#demo">Demo</a> &middot;
-    <a href="https://alexli18.github.io/binex/">Documentation</a> &middot;
+    <a href="#installation">Install</a> &middot;
+    <a href="#web-ui">Web UI</a> &middot;
+    <a href="#features">Features</a> &middot;
+    <a href="https://alexli18.github.io/binex/">Docs</a> &middot;
     <a href="https://github.com/Alexli18/binex/issues">Issues</a>
   </p>
 </div>
@@ -34,29 +36,36 @@
 
 ---
 
+## Demo
+
+Full workflow: drag & drop nodes, configure models and prompts, run with human input, see results, debug, trace, and lineage — all in the browser.
+
+https://github.com/user-attachments/assets/YOUR_VIDEO_ID
+
+> Upload `docs/demo/binex_EN.mp4` to GitHub and replace the link above.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
 ## What is Binex?
 
-Binex is a debuggable runtime for AI agent workflows.
+Binex is an **open-source, fully local** runtime for AI agent workflows. No cloud. No telemetry. No vendor lock-in.
 
-It executes DAG-based pipelines of agents (LLM, local, remote A2A, or human),
-tracks artifacts between steps, and allows replaying and inspecting runs.
+```
+pip install binex
+binex ui
+```
 
-**Key features:**
+That's it. Browser opens. You're building AI workflows.
 
-- **DAG-based execution** &mdash; define agent pipelines as readable YAML, not tangled code
-- **Artifact lineage** &mdash; every input and output tracked across the entire pipeline
-- **Replayable workflows** &mdash; re-run with agent swaps, compare results
-- **Full tracing** &mdash; every node call, every artifact, every millisecond recorded
-- **Post-mortem debugging** &mdash; inspect any run after the fact with rich reports
-- **Run diffing** &mdash; compare two executions side-by-side to spot regressions
-- **Human-in-the-loop** &mdash; approval gates and free-text input with conditional branching
-- **Budget & cost tracking** &mdash; per-node cost records, budget enforcement (stop/warn), CLI cost inspection
-- **Framework adapters** &mdash; plug in LangChain, CrewAI, or AutoGen agents with a single URI
-- **Plugin system** &mdash; extend Binex with custom adapter plugins via entry points
-- **Export & webhooks** &mdash; export runs to CSV/JSON, webhook notifications on run events
-- **OpenTelemetry tracing** &mdash; optional run-level and node-level spans for external collectors (Jaeger, Tempo, etc.)
-- **Workflow versioning** &mdash; schema versioning with migration framework, workflow snapshots for reproducibility
-- **CLI-first DX** &mdash; everything accessible from the terminal
+### Why Binex?
+
+- **100% local** — your data never leaves your machine
+- **100% open source** — MIT licensed, audit every line
+- **Zero telemetry** — no tracking, no analytics, no surprises
+- **Full debuggability** — every input, output, prompt, and cost is visible
+- **Any model** — OpenAI, Anthropic, Google, Ollama, OpenRouter, DeepSeek, and 40+ more via LiteLLM
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -64,27 +73,58 @@ tracks artifacts between steps, and allows replaying and inspecting runs.
 
 ## Installation
 
-Install from PyPI:
-
 ```bash
 pip install binex
 ```
 
-With framework adapters:
+With extras:
 
 ```bash
 pip install binex[langchain]    # LangChain Runnables
 pip install binex[crewai]       # CrewAI Crews
 pip install binex[autogen]      # AutoGen Teams
-pip install binex[langchain,crewai,autogen]  # all three
+pip install binex[telemetry]    # OpenTelemetry tracing
+pip install binex[rich]         # Rich colored CLI output
 ```
 
-For rich colored output:
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## Web UI
+
+Launch the visual workflow editor:
 
 ```bash
-pip install binex[telemetry]   # OpenTelemetry tracing
-pip install binex[rich]
+binex ui
 ```
+
+### Visual Drag & Drop Editor
+
+Build workflows visually — drag nodes from the palette, connect them, configure models and prompts inline.
+
+6 node types: **LLM Agent**, **Local Script**, **Human Input**, **Human Approve**, **Human Output**, **A2A Agent**
+
+- 20+ preset models including 8 free OpenRouter models
+- Built-in prompt library (Planner, Researcher, Analyzer, Writer, Reviewer, Summarizer)
+- Switch between Visual and YAML modes — changes sync both ways
+- Real-time cost estimation as you build
+- Custom model input — use any litellm-compatible model
+
+### 18 Pages — Full CLI Parity
+
+| Category | Pages |
+|----------|-------|
+| **Workflows** | Browse, Visual Editor, Scaffold Wizard |
+| **Runs** | Dashboard, RunLive (SSE), RunDetail |
+| **Analysis** | Debug (input/output artifacts), Trace (Gantt timeline), Diagnose (root-cause), Lineage (artifact graph) |
+| **Comparison** | Diff (side-by-side), Bisect (find divergence) |
+| **Costs** | Cost Dashboard (charts), Budget Management |
+| **System** | Doctor (health), Plugins, Gateway, Export |
+
+### Replay
+
+Debug any node → click Replay → swap the model or prompt → re-run just that node. No re-running the entire pipeline.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -92,213 +132,52 @@ pip install binex[rich]
 
 ## Quickstart
 
-Run the built-in demo (no config needed):
+### CLI
 
 ```bash
+# Zero-config demo
 binex hello
-```
 
-Create a workflow file `workflow.yaml`:
+# Run a workflow
+binex run examples/simple.yaml
 
-```yaml
-name: hello
-nodes:
-  greet:
-    agent: "local://echo"
-    inputs:
-      msg: "hello world"
-    outputs: [response]
-
-  respond:
-    agent: "local://echo"
-    inputs:
-      greeting: "${greet.response}"
-    depends_on: [greet]
-```
-
-Run it:
-
-```bash
-binex run workflow.yaml
-```
-
-Inspect the run:
-
-```bash
+# Inspect the run
 binex debug latest
 binex trace latest
 ```
 
-<details>
-<summary><strong>See it in action</strong></summary>
+### Web UI
 
-```
-$ binex hello
-
-Running built-in hello-world workflow...
-
-  [1/2] greeter ...
-  [greeter] -> result:
-Hello from Binex!
-
-  [2/2] responder ...
-  [responder] -> result:
-{"greeter": "Hello from Binex!"}
-
-Run completed (2/2 nodes)
-Run ID: run_d71c9a50
-
-Next steps:
-  binex debug run_d71c9a50    — inspect the run
-  binex init                  — create your own project
-  binex run examples/simple.yaml — try a workflow file
+```bash
+binex ui
 ```
 
-</details>
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Demo
-
-A multi-provider research pipeline: **Ollama** runs locally for planning and summarization, **OpenRouter** calls cloud models for parallel research &mdash; all in one YAML file.
-
-<details>
-<summary><strong>Requirements to run this demo</strong></summary>
-
-- [Ollama](https://ollama.com/) installed and running locally
-- Model pulled: `ollama pull gemma3:4b`
-- Free [OpenRouter](https://openrouter.ai/) API key (set `OPENROUTER_API_KEY` in `.env`)
-- Binex installed: `pip install binex`
-
-</details>
-
-```yaml
-# examples/multi-provider-demo.yaml
-name: multi-provider-research
-
-nodes:
-  user_input:
-    agent: "human://input"
-
-  planner:
-    agent: "llm://ollama/gemma3:4b"
-    system_prompt: "Create a structured research plan with 3 subtopics..."
-    inputs: { topic: "${user_input.result}" }
-    depends_on: [user_input]
-
-  researcher1:
-    agent: "llm://openrouter/nvidia/nemotron-3-super-120b-a12b:free"
-    inputs: { plan: "${planner.result}" }
-    depends_on: [planner]
-
-  researcher2:
-    agent: "llm://openrouter/nvidia/nemotron-3-super-120b-a12b:free"
-    inputs: { plan: "${planner.result}" }
-    depends_on: [planner]
-
-  summarizer:
-    agent: "llm://ollama/gemma3:4b"
-    inputs: { research1: "${researcher1.result}", research2: "${researcher2.result}" }
-    depends_on: [researcher1, researcher2]
-```
-
-<div align="center">
-  <img src="https://mermaid.ink/img/Z3JhcGggTFIKICAgIEFbInVzZXJfaW5wdXQ8YnIvPjxzdWI+aHVtYW46Ly9pbnB1dDwvc3ViPiJdIC0tPiBCWyJwbGFubmVyPGJyLz48c3ViPm9sbGFtYS9nZW1tYTM6NGI8L3N1Yj4iXQogICAgQiAtLT4gQ1sicmVzZWFyY2hlcjE8YnIvPjxzdWI+b3BlbnJvdXRlci9uZW1vdHJvbi0zLXN1cGVyPC9zdWI+Il0KICAgIEIgLS0+IERbInJlc2VhcmNoZXIyPGJyLz48c3ViPm9wZW5yb3V0ZXIvbmVtb3Ryb24tMy1zdXBlcjwvc3ViPiJdCiAgICBDIC0tPiBFWyJzdW1tYXJpemVyPGJyLz48c3ViPm9sbGFtYS9nZW1tYTM6NGI8L3N1Yj4iXQogICAgRCAtLT4gRQ==?type=png&bgColor=white" alt="Demo DAG" width="700">
-</div>
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Start Wizard
-
-Create a full research pipeline from a template in seconds:
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-start.gif" alt="binex start" width="800">
-</div>
-
-Or build your own workflow node-by-node with the custom constructor:
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-custom.gif" alt="binex start custom" width="800">
-</div>
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Explore Dashboard
-
-Interactive run inspector &mdash; trace, graph, cost, artifacts, node detail, debug &mdash; all in one place:
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-explore.gif" alt="binex explore" width="800">
-</div>
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## How It Works
-
-Define a workflow in YAML. Binex builds a DAG, schedules nodes respecting dependencies, dispatches each to the right agent adapter, and records everything.
+### Create a Workflow
 
 ```yaml
 name: research-pipeline
-description: "Fan-out research with human approval"
-
 nodes:
+  input:
+    agent: "human://input"
+    outputs: [output]
+
   planner:
-    agent: "llm://openai/gpt-4"
-    system_prompt: "Break this topic into 3 research questions"
-    inputs:
-      topic: "${user.topic}"
-    outputs: [questions]
+    agent: "llm://gemini/gemini-2.5-flash"
+    system_prompt: "Break this topic into research questions"
+    depends_on: [input]
+    outputs: [output]
 
-  researcher_1:
-    agent: "llm://anthropic/claude-sonnet-4-20250514"
-    inputs: { question: "${planner.questions}" }
-    outputs: [findings]
+  researcher:
+    agent: "llm://openrouter/google/gemma-3-27b-it:free"
+    system_prompt: "Investigate and report findings"
     depends_on: [planner]
+    outputs: [output]
 
-  researcher_2:
-    agent: "a2a://localhost:8001"
-    inputs: { question: "${planner.questions}" }
-    outputs: [findings]
-    depends_on: [planner]
-
-  reviewer:
-    agent: "human://approve"
-    inputs:
-      draft: "${researcher_1.findings}"
-    outputs: [decision]
-    depends_on: [researcher_1, researcher_2]
-
-  summarizer:
-    agent: "llm://openai/gpt-4"
-    inputs:
-      research: "${researcher_1.findings}"
-    outputs: [summary]
-    depends_on: [reviewer]
-    when: "${reviewer.decision} == approved"
+  output:
+    agent: "human://output"
+    depends_on: [researcher]
+    outputs: [output]
 ```
-
-<div align="center">
-  <img src="https://mermaid.ink/img/Z3JhcGggVEQKICAgIEFbcGxhbm5lcl0gLS0-IEJbcmVzZWFyY2hlcl8xXQogICAgQSAtLT4gQ1tyZXNlYXJjaGVyXzJdCiAgICBCIC0tPiBEWyJyZXZpZXdlciAoaHVtYW4gYXBwcm92YWwpIl0KICAgIEMgLS0-IEQKICAgIEQgLS0-fGFwcHJvdmVkfCBFW3N1bW1hcml6ZXJd?type=png&bgColor=white" alt="Workflow DAG" width="300">
-</div>
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Architecture
-
-<div align="center">
-  <img src="https://mermaid.ink/img/YmxvY2stYmV0YQogICAgY29sdW1ucyAzCiAgICBDTElbIkNMSQpydW4gwrcgZGVidWcgwrcgdHJhY2UgwrcgcmVwbGF5IMK3IGRpZmYgwrcgZGV2Il06MwogICAgUnVudGltZVsiUnVudGltZQpPcmNoZXN0cmF0b3IgKyBEaXNwYXRjaGVyIl06MwogICAgQWRhcHRlcnNbIkFkYXB0ZXJzCmxvY2FsOi8vIMK3IGxsbTovLyDCtyBhMmE6Ly8gwrcgaHVtYW46Ly8iXSBHcmFwaFsiR3JhcGgKREFHIMK3IHRvcG8tc29ydCDCtyBjeWNsZSBkZXRlY3QiXSBTcGVjWyJXb3JrZmxvdyBTcGVjCllBTUwgbG9hZGVyIMK3IHZhbGlkYXRpb24iXQogICAgU3RvcmVzWyJTdG9yZXMKU1FMaXRlIGV4ZWN1dGlvbnMgKyBGUyBhcnRpZmFjdHMiXTozCiAgICBNb2RlbHNbIk1vZGVscwpXb3JrZmxvdyDCtyBOb2RlIMK3IEFydGlmYWN0IMK3IEV4ZWN1dGlvbiJdOjM=?type=png&bgColor=white" alt="Architecture" width="600">
-</div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -308,55 +187,52 @@ nodes:
 
 ### Agent Adapters
 
-| Prefix | Adapter | Description |
-|--------|---------|-------------|
-| `local://` | LocalPythonAdapter | In-process Python callable |
-| `llm://` | LLMAdapter | LLM completion via LiteLLM (40+ providers) |
-| `a2a://` | A2AAgentAdapter | Remote agent via A2A protocol |
-| `human://input` | HumanInputAdapter | Terminal prompt for free-text input |
-| `human://approve` | HumanApprovalAdapter | Approval gate with conditional branching |
-| `langchain://` | LangChainAdapter | LangChain Runnable via plugin (requires `binex[langchain]`) |
-| `crewai://` | CrewAIAdapter | CrewAI Crew via plugin (requires `binex[crewai]`) |
-| `autogen://` | AutoGenAdapter | AutoGen Team via plugin (requires `binex[autogen]`) |
+| Prefix | Description |
+|--------|-------------|
+| `local://` | In-process Python callable |
+| `llm://` | LLM via LiteLLM (40+ providers) |
+| `a2a://` | Remote agent via A2A protocol |
+| `human://input` | Free-text input from user |
+| `human://approve` | Approval gate with conditional branching |
+| `human://output` | Display results to user |
+| `langchain://` | LangChain Runnable (plugin) |
+| `crewai://` | CrewAI Crew (plugin) |
+| `autogen://` | AutoGen Team (plugin) |
 
 ### CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `binex run <workflow.yaml>` | Execute a workflow |
-| `binex debug <run-id\|latest>` | Post-mortem inspection (`--json`, `--errors`, `--node`, `--rich`) |
-| `binex trace <run-id>` | Execution timeline, node details, or DAG graph |
-| `binex replay <run-id>` | Re-run with optional agent swaps |
-| `binex diff <run1> <run2>` | Compare two runs side-by-side |
-| `binex artifacts list <run-id>` | List artifacts with lineage tracking |
-| `binex validate <workflow.yaml>` | Validate YAML before execution |
-| `binex scaffold workflow "A -> B"` | Generate workflow from DSL shorthand |
-| `binex init` | Interactive project setup |
-| `binex dev up` | Start Docker dev stack |
-| `binex doctor` | Check system health |
-| `binex cost show <run-id>` | Cost breakdown per node (`--json`) |
-| `binex cost history <run-id>` | Chronological cost events (`--json`) |
-| `binex explore` | Interactive browser for runs and artifacts |
-| `binex export <run-id>` | Export run data to CSV (`--format json`, `--last N`, `--include-artifacts`) |
-| `binex plugins list` | Show built-in adapters and installed plugins (`--json`) |
-| `binex plugins check <workflow>` | Validate all agent URIs are resolvable |
-| `binex workflow version <file>` | Display workflow schema version |
-| `binex workflow diff <run1> <run2>` | Compare workflow definitions between runs |
+| `binex run` | Execute a workflow |
+| `binex ui` | Launch Web UI |
+| `binex debug` | Post-mortem inspection |
+| `binex trace` | Execution timeline |
+| `binex replay` | Re-run with agent swaps |
+| `binex diff` | Compare two runs |
+| `binex cost show` | Cost breakdown per node |
+| `binex explore` | Interactive TUI dashboard |
+| `binex scaffold` | Generate workflow from DSL |
+| `binex export` | Export to CSV/JSON |
+| `binex doctor` | System health check |
 | `binex hello` | Zero-config demo |
 
 ### LLM Providers
 
-Out-of-the-box support for 9 providers via LiteLLM:
-
 **OpenAI** &middot; **Anthropic** &middot; **Google Gemini** &middot; **Ollama** &middot; **OpenRouter** &middot; **Groq** &middot; **Mistral** &middot; **DeepSeek** &middot; **Together AI**
+
+### Built With
+
+[![Python][Python-badge]][Python-url]
+[![React][React-badge]][React-url]
+[![FastAPI][FastAPI-badge]][FastAPI-url]
+[![TypeScript][TypeScript-badge]][TypeScript-url]
+[![Tailwind][Tailwind-badge]][Tailwind-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
 ## Examples
-
-Example workflows are available in the [`examples/`](examples/) directory:
 
 | Example | What it demonstrates |
 |---------|---------------------|
@@ -365,13 +241,33 @@ Example workflows are available in the [`examples/`](examples/) directory:
 | `fan-out-fan-in.yaml` | Parallel execution with aggregation |
 | `human-in-the-loop.yaml` | Approval gates and conditional branching |
 | `multi-provider-demo.yaml` | Multiple LLM providers in one workflow |
-| `a2a-multi-agent.yaml` | Remote agents via A2A protocol |
+| `ollama-research.yaml` | Full research pipeline with Ollama + OpenRouter |
 | `langchain-summarizer.yaml` | LangChain Runnable in a pipeline |
 | `crewai-research-crew.yaml` | CrewAI Crew as a workflow node |
 | `autogen-coding-team.yaml` | AutoGen Team for code generation |
-| `mixed-framework-pipeline.yaml` | LLM + LangChain + CrewAI + AutoGen combined |
-| `conditional-routing.yaml` | Branch based on node output |
-| `map-reduce.yaml` | MapReduce-style aggregation |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## Architecture
+
+```
+src/binex/
+├── adapters/        # Agent backends (local, LLM, A2A, human, frameworks)
+├── cli/             # Click CLI commands
+├── graph/           # DAG construction + topological scheduling
+├── models/          # Pydantic v2 domain models
+├── plugins/         # Plugin registry for custom adapters
+├── prompts/         # 121 built-in prompt templates
+├── runtime/         # Orchestrator, dispatcher, replay engine
+├── stores/          # SQLite execution + filesystem artifacts
+├── trace/           # Debug, lineage, timeline, diffing
+├── ui/              # FastAPI backend + React frontend
+│   ├── api/         # 20 REST endpoints
+│   └── static/      # Pre-built React app
+└── workflow_spec/   # YAML loader + validator
+```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -379,43 +275,7 @@ Example workflows are available in the [`examples/`](examples/) directory:
 
 ## Documentation
 
-Full documentation is available at **[alexli18.github.io/binex](https://alexli18.github.io/binex/)**:
-
-- [Quickstart](https://alexli18.github.io/binex/quickstart/) &mdash; install and run your first workflow
-- [Concepts](https://alexli18.github.io/binex/concepts/agents/) &mdash; agents, workflows, artifacts, execution model
-- [CLI Reference](https://alexli18.github.io/binex/cli/run/) &mdash; every command with options and examples
-- [Architecture](https://alexli18.github.io/binex/architecture/overview/) &mdash; runtime internals and design decisions
-- [Workflow Format](https://alexli18.github.io/binex/workflows/format/) &mdash; complete YAML schema reference
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Project Structure
-
-```
-src/binex/
-├── adapters/        # Agent backends (local, LLM, A2A, human, LangChain, CrewAI, AutoGen)
-├── agents/          # Built-in agent implementations
-├── cli/             # Click CLI commands
-├── graph/           # DAG construction + topological scheduling
-├── models/          # Pydantic v2 domain models
-├── registry/        # FastAPI agent registry service
-├── runtime/         # Orchestrator, dispatcher, lifecycle
-├── plugins/         # Plugin registry for custom adapter discovery
-├── stores/          # SQLite execution + filesystem artifact persistence
-├── trace/           # Debug reports, lineage, timeline, diffing
-├── workflow_spec/   # YAML loader + validator + variable resolution
-└── tools.py         # Tool calling support (@tool decorator)
-```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Roadmap
-
-See [`ROADMAP.md`](ROADMAP.md) for upcoming features.
+Full docs at **[alexli18.github.io/binex](https://alexli18.github.io/binex/)**
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -423,7 +283,19 @@ See [`ROADMAP.md`](ROADMAP.md) for upcoming features.
 
 ## Contributing
 
-Contributions are welcome! See [`CONTRIBUTING.md`](CONTRIBUTING.md) for development setup and guidelines.
+Contributions are welcome! If you find this useful:
+
+- **Star the repo** — it takes 1 second and helps more than you know
+- **Open issues** — tell me what's broken or what you need
+- **Submit PRs** — let's build this together
+
+I'm a solo developer building this in the open. Every star, issue, and PR makes a real difference.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -438,5 +310,19 @@ Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information
 ---
 
 <div align="center">
-  <sub>Built with focus on debuggability, because AI agents shouldn't be black boxes.</sub>
+  <sub>Built by a solo dev who believes AI agents shouldn't be black boxes.</sub>
+  <br>
+  <sub>No cloud. No telemetry. No surprises. Just debuggable AI workflows.</sub>
 </div>
+
+<!-- MARKDOWN LINKS -->
+[Python-badge]: https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white
+[Python-url]: https://python.org
+[React-badge]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
+[React-url]: https://reactjs.org/
+[FastAPI-badge]: https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white
+[FastAPI-url]: https://fastapi.tiangolo.com/
+[TypeScript-badge]: https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white
+[TypeScript-url]: https://www.typescriptlang.org/
+[Tailwind-badge]: https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white
+[Tailwind-url]: https://tailwindcss.com/
