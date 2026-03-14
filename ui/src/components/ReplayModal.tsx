@@ -49,8 +49,10 @@ export function ReplayModal({
         workflow_path: workflowPath,
         agent_swaps: agentSwaps,
       });
+      // Wait a moment for run to be created in store, then navigate
+      await new Promise((r) => setTimeout(r, 3000));
       onClose();
-      navigate(`/runs/${result.run_id}/live`);
+      navigate(`/runs/${result.run_id}`);
     } catch (err) {
       setError((err as Error).message);
     } finally {
