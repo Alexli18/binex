@@ -122,7 +122,7 @@ async def cost_estimate(body: EstimateRequest) -> JSONResponse:
             has_unknown = True
 
     return JSONResponse({
-        "total_estimate": round(total_estimate, 6) if not has_unknown else None,
+        "total_estimate": round(total_estimate, 6),
         "nodes": nodes,
         "warnings": all_warnings,
     })
