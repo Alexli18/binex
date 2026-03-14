@@ -9,15 +9,15 @@ import type { RunEvent } from '../lib/types';
 function EventLogItem({ event }: { event: RunEvent }) {
   const time = new Date(event.timestamp).toLocaleTimeString();
   return (
-    <div className="flex items-start gap-3 py-2 px-3 border-b border-gray-100 text-sm">
-      <span className="text-gray-400 font-mono text-xs shrink-0">{time}</span>
+    <div className="flex items-start gap-3 py-2 px-3 border-b border-slate-700 text-sm">
+      <span className="text-slate-400 font-mono text-xs shrink-0">{time}</span>
       <StatusBadge status={event.type.split(':')[1] || event.type} />
       {event.node_id && (
-        <span className="font-mono text-xs text-gray-700">{event.node_id}</span>
+        <span className="font-mono text-xs text-slate-200">{event.node_id}</span>
       )}
-      {event.error && <span className="text-red-600 text-xs">{event.error}</span>}
+      {event.error && <span className="text-red-400 text-xs">{event.error}</span>}
       {event.cost !== undefined && event.cost > 0 && (
-        <span className="text-gray-500 text-xs ml-auto">${event.cost.toFixed(4)}</span>
+        <span className="text-slate-400 text-xs ml-auto">${event.cost.toFixed(4)}</span>
       )}
     </div>
   );
@@ -67,7 +67,7 @@ export default function RunLive() {
   if (isLoading) {
     return (
       <div className="p-6">
-        <p className="text-gray-500">Loading run...</p>
+        <p className="text-slate-400">Loading run...</p>
       </div>
     );
   }
@@ -131,16 +131,16 @@ export default function RunLive() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Node status summary */}
         <div className="lg:col-span-2">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Node Status</h3>
+          <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-slate-200 mb-3">Node Status</h3>
             {Object.keys(nodeStatuses).length === 0 ? (
-              <p className="text-gray-400 text-sm">Waiting for events...</p>
+              <p className="text-slate-400 text-sm">Waiting for events...</p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {Object.entries(nodeStatuses).map(([nodeId, status]) => (
                   <div
                     key={nodeId}
-                    className="flex items-center gap-2 bg-gray-50 rounded px-3 py-2"
+                    className="flex items-center gap-2 bg-slate-700 rounded px-3 py-2"
                   >
                     <StatusBadge status={status} />
                     <span className="font-mono text-xs truncate">{nodeId}</span>
@@ -153,15 +153,15 @@ export default function RunLive() {
 
         {/* Event log */}
         <div className="lg:col-span-1">
-          <div className="bg-white border border-gray-200 rounded-lg">
-            <div className="px-4 py-3 border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-700">
+          <div className="bg-slate-800 border border-slate-700 rounded-lg">
+            <div className="px-4 py-3 border-b border-slate-700">
+              <h3 className="text-sm font-semibold text-slate-200">
                 Event Log ({events.length})
               </h3>
             </div>
             <div ref={logRef} className="max-h-[500px] overflow-y-auto">
               {events.length === 0 ? (
-                <p className="text-gray-400 text-sm p-4">No events yet...</p>
+                <p className="text-slate-400 text-sm p-4">No events yet...</p>
               ) : (
                 events.map((event, i) => <EventLogItem key={i} event={event} />)
               )}
