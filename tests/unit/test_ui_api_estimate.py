@@ -74,8 +74,9 @@ nodes:
     assert nodes["a2a_node"]["estimated_cost"] is None
     assert nodes["llm_node"]["estimated_cost"] is not None
 
-    # total_estimate is None because a2a cost is unknown
-    assert data["total_estimate"] is None
+    # total_estimate sums known costs (a2a unknown is excluded, not None)
+    assert data["total_estimate"] is not None
+    assert data["total_estimate"] > 0
 
     # Warnings for a2a
     assert any("a2a" in w for w in data["warnings"])
