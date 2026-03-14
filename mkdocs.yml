@@ -35,6 +35,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Demo: demo.md
   - Quickstart: quickstart.md
   - Concepts:
     - Agents: concepts/agents.md

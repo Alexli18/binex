@@ -41,7 +41,7 @@
 Full workflow: drag & drop nodes, configure models and prompts, run with human input, see results, debug, trace, and lineage — all in the browser.
 
 <div align="center">
-  <a href="https://github.com/Alexli18/binex/blob/master/docs/demo/binex_EN.mp4">
+  <a href="https://alexli18.github.io/binex/demo/">
     <img src="https://github.com/Alexli18/binex/blob/master/docs/demo/binex-demo.gif?raw=true" alt="Binex Demo" width="800">
   </a>
   <br>
