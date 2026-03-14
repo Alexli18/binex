@@ -271,6 +271,13 @@ export default function WorkflowEditor() {
     }, 500);
   }, [rfNodes, rfEdges]);
 
+  // Listen for node data changes (from EditableNode inline editing)
+  useEffect(() => {
+    const handler = () => syncVisualToYaml();
+    window.addEventListener('binex:node-data-change', handler);
+    return () => window.removeEventListener('binex:node-data-change', handler);
+  }, [syncVisualToYaml]);
+
   // Switch mode: YAML → Visual
   const switchToVisual = useCallback(() => {
     try {

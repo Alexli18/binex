@@ -31,18 +31,24 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
   const Icon = ICONS[data.nodeType] || Bot;
   const model = agent.includes('://') ? agent.split('://')[1] : agent;
 
+  const notifyChange = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('binex:node-data-change'));
+  }, []);
+
   const updateConfig = useCallback((key: string, value: unknown) => {
     setConfig((prev) => {
       const next = { ...prev, [key]: value };
       data.config = next;
       return next;
     });
-  }, [data]);
+    notifyChange();
+  }, [data, notifyChange]);
 
   const updateAgent = useCallback((newAgent: string) => {
     setAgent(newAgent);
     data.agent = newAgent;
-  }, [data]);
+    notifyChange();
+  }, [data, notifyChange]);
 
   const updateLabel = useCallback((newLabel: string) => {
     setLabel(newLabel);
