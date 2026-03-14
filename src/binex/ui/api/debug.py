@@ -35,19 +35,39 @@ async def get_debug(
 
         # Try to load workflow spec for system_prompt info
         workflow_specs: dict[str, dict] = {}
-        if run.workflow_path:
-            try:
-                import yaml as _yaml
-                from pathlib import Path
-                wf_path = Path(run.workflow_path)
-                if not wf_path.is_absolute():
-                    wf_path = Path.cwd() / wf_path
-                if wf_path.exists():
-                    wf_data = _yaml.safe_load(wf_path.read_text())
-                    if isinstance(wf_data, dict) and "nodes" in wf_data:
-                        workflow_specs = wf_data["nodes"]
-            except Exception:
-                pass
+        try:
+            import yaml as _yaml
+            from pathlib import Path
+
+            wf_path = None
+            # Try workflow_path first
+            if run.workflow_path:
+                p = Path(run.workflow_path)
+                if not p.is_absolute():
+                    p = Path.cwd() / p
+                if p.exists():
+                    wf_path = p
+
+            # Fallback: search by workflow_name in cwd and examples
+            if not wf_path and run.workflow_name:
+                for search_dir in [Path.cwd(), Path.cwd() / "examples"]:
+                    for f in search_dir.rglob("*.yaml"):
+                        try:
+                            d = _yaml.safe_load(f.read_text())
+                            if isinstance(d, dict) and d.get("name") == run.workflow_name:
+                                wf_path = f
+                                break
+                        except Exception:
+                            continue
+                    if wf_path:
+                        break
+
+            if wf_path:
+                wf_data = _yaml.safe_load(wf_path.read_text())
+                if isinstance(wf_data, dict) and "nodes" in wf_data:
+                    workflow_specs = wf_data["nodes"]
+        except Exception:
+            pass
 
         # Index artifacts by produced_by node and by id
         arts_by_node: dict[str, list[dict]] = {}
