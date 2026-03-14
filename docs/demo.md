@@ -5,7 +5,7 @@
 Build a research pipeline from scratch using the Visual Editor, run it with human input, and explore the results.
 
 <video controls width="100%" style="border-radius: 8px; margin: 16px 0;">
-  <source src="demo/binex_EN.mp4" type="video/mp4">
+  <source src="binex_EN.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
