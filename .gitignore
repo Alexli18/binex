@@ -31,7 +31,8 @@ docs/plans/
 specs/
 
 # Web UI
-src/binex/ui/static/
+src/binex/ui/static/*
+!src/binex/ui/static/.gitkeep
 ui/node_modules/
 ui/dist/
 .playwright-mcp/
