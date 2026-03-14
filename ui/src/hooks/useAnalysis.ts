@@ -15,6 +15,9 @@ export interface DebugNode {
   completed_at: string | null;
   duration_s: number | null;
   error: string | null;
+  agent?: string;
+  system_prompt?: string;
+  model?: string;
   artifacts: DebugArtifact[];
 }
 

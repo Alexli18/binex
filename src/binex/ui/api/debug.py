@@ -57,6 +57,9 @@ async def get_debug(
                 "completed_at": None,
                 "duration_s": round(duration_s, 3),
                 "error": rec.error,
+                "agent": rec.agent_id,
+                "system_prompt": rec.prompt,
+                "model": rec.model,
                 "artifacts": arts_by_node.get(rec.task_id, []),
             }
             nodes.append(node_data)

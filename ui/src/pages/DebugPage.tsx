@@ -69,6 +69,32 @@ function NodeDetail({ node }: { node: DebugNode }) {
         </div>
       </div>
 
+      {/* Agent / Model / Prompt */}
+      {(node.agent || node.model || node.system_prompt) && (
+        <div className="space-y-2 border-t border-slate-700 pt-3">
+          {node.agent && (
+            <div>
+              <span className="text-sm text-slate-500">Agent</span>
+              <p className="mt-0.5 text-xs font-mono text-slate-300">{node.agent}</p>
+            </div>
+          )}
+          {node.model && (
+            <div>
+              <span className="text-sm text-slate-500">Model</span>
+              <p className="mt-0.5 text-xs font-mono text-blue-400">{node.model}</p>
+            </div>
+          )}
+          {node.system_prompt && (
+            <div>
+              <span className="text-sm text-slate-500">System Prompt</span>
+              <pre className="mt-0.5 text-xs text-slate-400 bg-slate-900 rounded p-2 whitespace-pre-wrap max-h-24 overflow-y-auto">
+                {node.system_prompt}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Error */}
       {node.error && (
         <div>
@@ -332,15 +358,20 @@ export default function DebugPage() {
         </div>
       </div>
 
-      {replayNode && data && (
-        <ReplayModal
-          runId={runId!}
-          nodeId={replayNode}
-          currentAgent="llm://unknown"
-          workflowPath={data.workflow_path || data.workflow_name}
-          onClose={() => setReplayNode(null)}
-        />
-      )}
+      {replayNode && data && (() => {
+        const nodeData = data.nodes.find((n) => n.node_id === replayNode);
+        return (
+          <ReplayModal
+            runId={runId!}
+            nodeId={replayNode}
+            currentAgent={nodeData?.agent || 'llm://unknown'}
+            currentPrompt={nodeData?.system_prompt}
+            workflowPath={data.workflow_path || data.workflow_name}
+            artifacts={nodeData?.artifacts}
+            onClose={() => setReplayNode(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
