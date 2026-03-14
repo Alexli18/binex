@@ -342,7 +342,19 @@ export default function WorkflowEditor() {
 
     createRun.mutate(
       { workflow_path: pathToRun },
-      { onSuccess: (data) => navigate(`/runs/${data.run_id}/live`) },
+      {
+        onSuccess: (data) => {
+          if (data.status === 'running') {
+            navigate(`/runs/${data.run_id}/live`);
+          } else {
+            // Completed synchronously (non-human workflow)
+            navigate(`/runs/${data.run_id}`);
+          }
+        },
+        onError: (err) => {
+          alert(`Run failed: ${(err as Error).message}`);
+        },
+      },
     );
   }, [selectedPath, content, isDirty, createRun, navigate]);
 
