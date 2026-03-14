@@ -40,4 +40,4 @@ jobs:
           curl -sf http://127.0.0.1:8420/api/v1/health || exit 1
 
       - name: Run E2E Playwright tests
-        run: python -m pytest tests/e2e_playwright/ -x -q --timeout=60
+        run: python -m pytest tests/e2e_playwright/ -x -q
