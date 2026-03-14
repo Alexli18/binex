@@ -76,11 +76,14 @@ async def test_trace_basic(client, stores):
     exec_store, art_store = stores
     start = datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC)
     await exec_store.create_run(_make_run(started_at=start, completed_at=start + timedelta(seconds=10)))
+    # timestamp = end time (when record was created), offset = end - duration - run_start
+    # node_a: started at +1s, ran for 2s, ended at +3s
     await exec_store.record(
-        _make_record(task_id="node_a", latency_ms=2000, timestamp=start + timedelta(seconds=1), rec_id="r1"),
+        _make_record(task_id="node_a", latency_ms=2000, timestamp=start + timedelta(seconds=3), rec_id="r1"),
     )
+    # node_b: started at +4s, ran for 3s, ended at +7s
     await exec_store.record(
-        _make_record(task_id="node_b", latency_ms=3000, timestamp=start + timedelta(seconds=4), rec_id="r2"),
+        _make_record(task_id="node_b", latency_ms=3000, timestamp=start + timedelta(seconds=7), rec_id="r2"),
     )
 
     with patch("binex.ui.api.trace._get_stores", return_value=(exec_store, art_store)):
