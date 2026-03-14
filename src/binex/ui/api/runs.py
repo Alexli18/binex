@@ -227,27 +227,22 @@ async def replay_run(body: ReplayRequest) -> JSONResponse:
     if not workflow.exists():
         return JSONResponse({"error": f"Workflow '{body.workflow_path}' not found"}, status_code=404)
 
-    new_run_id = f"run_{uuid4().hex[:12]}"
-
-    async def _bg():
-        exec_store, artifact_store = _get_stores()
-        try:
-            _ensure_valid_spec(workflow)
-            spec = load_workflow(str(workflow))
-            engine = ReplayEngine(execution_store=exec_store, artifact_store=artifact_store)
-            plugin_registry = PluginRegistry()
-            plugin_registry.discover()
-            register_workflow_adapters(engine.dispatcher, spec, agent_swaps=body.agent_swaps, plugin_registry=plugin_registry, web_mode=True)
-            summary = await engine.replay(original_run_id=body.run_id, workflow=spec, from_step=body.from_step, agent_swaps=body.agent_swaps)
-            await event_bus.publish(new_run_id, {"type": "run:completed", "status": summary.status, "timestamp": _now_iso()})
-        except Exception as exc:
-            logger.exception("Replay failed")
-            await event_bus.publish(new_run_id, {"type": "run:completed", "status": "failed", "error": str(exc), "timestamp": _now_iso()})
-        finally:
-            await exec_store.close()
-
-    asyncio.create_task(_bg())
-    return JSONResponse({"run_id": new_run_id, "status": "running", "replaying_from": body.from_step}, status_code=201)
+    # Run replay synchronously — it's typically fast (single node re-run)
+    exec_store, artifact_store = _get_stores()
+    try:
+        _ensure_valid_spec(workflow)
+        spec = load_workflow(str(workflow))
+        engine = ReplayEngine(execution_store=exec_store, artifact_store=artifact_store)
+        plugin_registry = PluginRegistry()
+        plugin_registry.discover()
+        register_workflow_adapters(engine.dispatcher, spec, agent_swaps=body.agent_swaps, plugin_registry=plugin_registry)
+        summary = await engine.replay(original_run_id=body.run_id, workflow=spec, from_step=body.from_step, agent_swaps=body.agent_swaps)
+        return JSONResponse({"run_id": summary.run_id, "status": summary.status}, status_code=201)
+    except Exception as exc:
+        logger.exception("Replay failed")
+        return JSONResponse({"error": f"Replay failed: {exc}"}, status_code=422)
+    finally:
+        await exec_store.close()
 
 
 @router.get("")
