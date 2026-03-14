@@ -20,7 +20,7 @@ from binex.ui.api.export import router as export_router
 from binex.ui.api.lineage import router as lineage_router
 from binex.ui.api.prompt_templates import router as prompt_templates_router
 from binex.ui.api.prompts import router as prompts_router
-from binex.ui.api.replay import router as replay_router
+# replay endpoint is now in runs.py (POST /runs/replay)
 from binex.ui.api.runs import router as runs_router
 from binex.ui.api.scaffold import router as scaffold_router
 from binex.ui.api.system import router as system_router
@@ -47,7 +47,7 @@ def create_app() -> FastAPI:
     app.include_router(lineage_router, prefix="/api/v1")
     app.include_router(prompt_templates_router, prefix="/api/v1")
     app.include_router(prompts_router, prefix="/api/v1")
-    app.include_router(replay_router, prefix="/api/v1")
+    # replay_router removed — endpoint now in runs_router
     app.include_router(runs_router, prefix="/api/v1")
     app.include_router(scaffold_router, prefix="/api/v1")
     app.include_router(system_router, prefix="/api/v1")

@@ -206,6 +206,50 @@ async def create_run(body: CreateRunRequest) -> JSONResponse:
     )
 
 
+class ReplayRequest(BaseModel):
+    run_id: str
+    from_step: str
+    workflow_path: str
+    agent_swaps: dict[str, str] = {}
+
+
+@router.post("/replay")
+async def replay_run(body: ReplayRequest) -> JSONResponse:
+    """Replay a run from a specific step with optional agent swaps."""
+    from binex.cli.adapter_registry import register_workflow_adapters
+    from binex.plugins import PluginRegistry
+    from binex.runtime.replay import ReplayEngine
+    from binex.workflow_spec.loader import load_workflow
+
+    workflow = Path(body.workflow_path)
+    if not workflow.is_absolute():
+        workflow = Path.cwd() / workflow
+    if not workflow.exists():
+        return JSONResponse({"error": f"Workflow '{body.workflow_path}' not found"}, status_code=404)
+
+    new_run_id = f"run_{uuid4().hex[:12]}"
+
+    async def _bg():
+        exec_store, artifact_store = _get_stores()
+        try:
+            _ensure_valid_spec(workflow)
+            spec = load_workflow(str(workflow))
+            engine = ReplayEngine(execution_store=exec_store, artifact_store=artifact_store)
+            plugin_registry = PluginRegistry()
+            plugin_registry.discover()
+            register_workflow_adapters(engine.dispatcher, spec, agent_swaps=body.agent_swaps, plugin_registry=plugin_registry, web_mode=True)
+            summary = await engine.replay(original_run_id=body.run_id, workflow=spec, from_step=body.from_step, agent_swaps=body.agent_swaps)
+            await event_bus.publish(new_run_id, {"type": "run:completed", "status": summary.status, "timestamp": _now_iso()})
+        except Exception as exc:
+            logger.exception("Replay failed")
+            await event_bus.publish(new_run_id, {"type": "run:completed", "status": "failed", "error": str(exc), "timestamp": _now_iso()})
+        finally:
+            await exec_store.close()
+
+    asyncio.create_task(_bg())
+    return JSONResponse({"run_id": new_run_id, "status": "running", "replaying_from": body.from_step}, status_code=201)
+
+
 @router.get("")
 async def list_runs() -> JSONResponse:
     """List all workflow runs."""
