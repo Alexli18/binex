@@ -40,9 +40,13 @@
 
 Full workflow: drag & drop nodes, configure models and prompts, run with human input, see results, debug, trace, and lineage — all in the browser.
 
-https://github.com/user-attachments/assets/YOUR_VIDEO_ID
-
-> Upload `docs/demo/binex_EN.mp4` to GitHub and replace the link above.
+<div align="center">
+  <a href="https://github.com/Alexli18/binex/blob/master/docs/demo/binex_EN.mp4">
+    <img src="https://github.com/Alexli18/binex/blob/master/docs/demo/binex-demo.gif?raw=true" alt="Binex Demo" width="800">
+  </a>
+  <br>
+  <sub>Click to watch full demo video</sub>
+</div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
