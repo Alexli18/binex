@@ -31,11 +31,12 @@ class CreateRunRequest(BaseModel):
     variables: dict[str, str] = {}
 
 
-def _ensure_outputs(workflow_path: Path) -> None:
-    """Ensure all nodes in a workflow YAML have 'outputs' field.
+def _ensure_valid_spec(workflow_path: Path) -> None:
+    """Patch workflow YAML to ensure it passes WorkflowSpec validation.
 
-    The visual editor may generate YAML without outputs.
-    WorkflowSpec requires this field, so we patch the file before loading.
+    Fixes common issues from the visual editor:
+    - Missing 'outputs' field (required by WorkflowSpec)
+    - 'inputs' as string instead of dict
     """
     import yaml as _yaml
 
@@ -46,8 +47,15 @@ def _ensure_outputs(workflow_path: Path) -> None:
             return
         patched = False
         for node_name, node_spec in data.get("nodes", {}).items():
-            if isinstance(node_spec, dict) and "outputs" not in node_spec:
+            if not isinstance(node_spec, dict):
+                continue
+            if "outputs" not in node_spec:
                 node_spec["outputs"] = ["output"]
+                patched = True
+            # Fix inputs: must be dict, not string
+            inputs = node_spec.get("inputs")
+            if isinstance(inputs, str):
+                node_spec["inputs"] = {"input": inputs}
                 patched = True
         if patched:
             workflow_path.write_text(
@@ -69,7 +77,7 @@ async def _execute_workflow(
     from binex.workflow_spec.loader import load_workflow
     from binex.workflow_spec.validator import validate_workflow
 
-    _ensure_outputs(workflow_path)
+    _ensure_valid_spec(workflow_path)
     spec = load_workflow(str(workflow_path), user_vars=variables or None)
 
     errors = validate_workflow(spec)

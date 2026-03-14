@@ -31,10 +31,21 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
     if (Object.keys(config).length > 0) entry.config = config;
 
     if (deps[node.id]?.length) {
-      entry.depends_on = deps[node.id].map((depId) => {
+      const depLabels = deps[node.id].map((depId) => {
         const depNode = nodes.find((n) => n.id === depId);
         return depNode?.data?.label || depId;
       });
+      entry.depends_on = depLabels;
+
+      // Generate inputs dict from dependencies
+      const inputs: Record<string, string> = {};
+      for (const dep of depLabels) {
+        inputs[dep] = `\${${dep}.output}`;
+      }
+      entry.inputs = inputs;
+    } else {
+      // Root nodes get user input
+      entry.inputs = { query: '${user.query}' };
     }
 
     const nodeLabel = d.label || node.id;
