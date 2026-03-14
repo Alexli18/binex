@@ -130,7 +130,6 @@ async def cost_estimate(body: EstimateRequest) -> JSONResponse:
     nodes = []
     all_warnings: list[str] = []
     total_estimate = 0.0
-    has_unknown = False
 
     for node_id, node_data in nodes_data.items():
         if not isinstance(node_data, dict):
@@ -141,8 +140,6 @@ async def cost_estimate(body: EstimateRequest) -> JSONResponse:
         nodes.append(result)
         if result["estimated_cost"] is not None:
             total_estimate += result["estimated_cost"]
-        else:
-            has_unknown = True
 
     return JSONResponse({
         "total_estimate": round(total_estimate, 6),

@@ -20,6 +20,7 @@ from binex.ui.api.export import router as export_router
 from binex.ui.api.lineage import router as lineage_router
 from binex.ui.api.prompt_templates import router as prompt_templates_router
 from binex.ui.api.prompts import router as prompts_router
+
 # replay endpoint is now in runs.py (POST /runs/replay)
 from binex.ui.api.runs import router as runs_router
 from binex.ui.api.scaffold import router as scaffold_router

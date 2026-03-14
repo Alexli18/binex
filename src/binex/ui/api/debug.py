@@ -36,8 +36,9 @@ async def get_debug(
         # Try to load workflow spec for system_prompt info
         workflow_specs: dict[str, dict] = {}
         try:
-            import yaml as _yaml
             from pathlib import Path
+
+            import yaml as _yaml
 
             wf_path = None
             # Try workflow_path first

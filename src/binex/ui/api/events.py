@@ -49,7 +49,7 @@ async def stream_events(run_id: str) -> StreamingResponse:
             while True:
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=30.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # Send keepalive comment to detect broken connections
                     yield ": keepalive\n\n"
                     continue

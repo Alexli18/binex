@@ -30,7 +30,6 @@ async def bisect_runs(body: BisectRequest) -> JSONResponse:
     exec_store, art_store = _get_stores()
     try:
         from binex.trace.bisect import bisect_report
-        from binex.trace.bisect_format import bisect_report_to_dict
 
         try:
             report = await bisect_report(
@@ -39,8 +38,6 @@ async def bisect_runs(body: BisectRequest) -> JSONResponse:
             )
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=404)
-
-        result = bisect_report_to_dict(report)
 
         # Reshape to match the API contract
         dp = report.divergence_point

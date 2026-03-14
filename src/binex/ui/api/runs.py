@@ -225,19 +225,36 @@ async def replay_run(body: ReplayRequest) -> JSONResponse:
     if not workflow.is_absolute():
         workflow = Path.cwd() / workflow
     if not workflow.exists():
-        return JSONResponse({"error": f"Workflow '{body.workflow_path}' not found"}, status_code=404)
+        return JSONResponse(
+            {"error": f"Workflow '{body.workflow_path}' not found"},
+            status_code=404,
+        )
 
     # Run replay synchronously — it's typically fast (single node re-run)
     exec_store, artifact_store = _get_stores()
     try:
         _ensure_valid_spec(workflow)
         spec = load_workflow(str(workflow))
-        engine = ReplayEngine(execution_store=exec_store, artifact_store=artifact_store)
+        engine = ReplayEngine(
+            execution_store=exec_store, artifact_store=artifact_store,
+        )
         plugin_registry = PluginRegistry()
         plugin_registry.discover()
-        register_workflow_adapters(engine.dispatcher, spec, agent_swaps=body.agent_swaps, plugin_registry=plugin_registry)
-        summary = await engine.replay(original_run_id=body.run_id, workflow=spec, from_step=body.from_step, agent_swaps=body.agent_swaps)
-        return JSONResponse({"run_id": summary.run_id, "status": summary.status}, status_code=201)
+        register_workflow_adapters(
+            engine.dispatcher, spec,
+            agent_swaps=body.agent_swaps,
+            plugin_registry=plugin_registry,
+        )
+        summary = await engine.replay(
+            original_run_id=body.run_id,
+            workflow=spec,
+            from_step=body.from_step,
+            agent_swaps=body.agent_swaps,
+        )
+        return JSONResponse(
+            {"run_id": summary.run_id, "status": summary.status},
+            status_code=201,
+        )
     except Exception as exc:
         logger.exception("Replay failed")
         return JSONResponse({"error": f"Replay failed: {exc}"}, status_code=422)

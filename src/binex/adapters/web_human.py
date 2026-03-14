@@ -60,7 +60,7 @@ class WebHumanApprovalAdapter:
             "prompt_id": prompt_id,
             "prompt_type": "approval",
             "node_id": task.node_id,
-            "message": f"Review and approve output from upstream nodes",
+            "message": "Review and approve output from upstream nodes",
             "artifacts": artifacts_data,
         })
 
