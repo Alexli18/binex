@@ -219,7 +219,7 @@ export default function Dashboard() {
                     ${run.total_cost.toFixed(4)}
                   </td>
                   <td className="px-4 py-2.5 text-slate-500 text-xs">
-                    {new Date(run.created_at).toLocaleString()}
+                    {new Date(run.started_at).toLocaleString()}
                   </td>
                 </tr>
               ))}

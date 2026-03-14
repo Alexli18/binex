@@ -19,7 +19,7 @@ export default function ExportPage() {
     if (!runs) return [];
     return [...runs].sort(
       (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        new Date(b.started_at).getTime() - new Date(a.started_at).getTime(),
     );
   }, [runs]);
 
@@ -192,7 +192,7 @@ export default function ExportPage() {
                           </span>
                         </td>
                         <td className="px-3 py-2 text-xs text-slate-500">
-                          {new Date(run.created_at).toLocaleString()}
+                          {new Date(run.started_at).toLocaleString()}
                         </td>
                       </tr>
                     ))}
