@@ -41,14 +41,15 @@ async def get_trace(run_id: str) -> JSONResponse:
             )
 
         # Build timeline with offsets
+        # rec.timestamp is when the record was created (end time),
+        # so start_offset = (timestamp - started_at) - duration
         timeline = []
         for rec in records:
             duration_s = rec.latency_ms / 1000.0 if rec.latency_ms else 0.0
             offset_s = 0.0
             if run.started_at and rec.timestamp:
-                offset_s = round(
-                    (rec.timestamp - run.started_at).total_seconds(), 3,
-                )
+                end_offset = (rec.timestamp - run.started_at).total_seconds()
+                offset_s = round(max(end_offset - duration_s, 0), 3)
 
             status_str = rec.status.value if hasattr(rec.status, "value") else str(rec.status)
             timeline.append({
