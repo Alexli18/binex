@@ -33,18 +33,23 @@ interface ModelSelectProps {
 
 export function ModelSelect({ value, onChange }: ModelSelectProps) {
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
-    >
-      {MODEL_TIERS.map((tier) => (
-        <optgroup key={tier.label} label={tier.label}>
-          {tier.models.map((m) => (
-            <option key={m} value={m}>{m}</option>
-          ))}
-        </optgroup>
-      ))}
-    </select>
+    <div className="relative">
+      <input
+        type="text"
+        list="model-options"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Type or select a model..."
+        className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+        onClick={(e) => e.stopPropagation()}
+      />
+      <datalist id="model-options">
+        {MODEL_TIERS.map((tier) =>
+          tier.models.map((m) => (
+            <option key={m} value={m} label={`${tier.label}: ${m}`} />
+          ))
+        )}
+      </datalist>
+    </div>
   );
 }
