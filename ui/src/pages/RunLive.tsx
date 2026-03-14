@@ -38,14 +38,15 @@ export default function RunLive() {
     }
   }, [events]);
 
-  // Auto-redirect when run completes or is cancelled
+  // Auto-redirect when run completes or is cancelled (but not if output modal is showing)
   useEffect(() => {
     const lastEvent = events[events.length - 1];
     if (lastEvent && (lastEvent.type === 'run:completed' || lastEvent.type === 'run:cancelled')) {
+      if (outputResult) return; // Don't redirect while user is viewing output
       const timer = setTimeout(() => navigate(`/runs/${runId}`), 1500);
       return () => clearTimeout(timer);
     }
-  }, [events, navigate, runId]);
+  }, [events, navigate, runId, outputResult]);
 
   // Build node status map from events
   const nodeStatuses = useMemo(() => {
