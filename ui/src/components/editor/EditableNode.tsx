@@ -1,11 +1,11 @@
 import { memo, useState, useCallback } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
-import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, X } from 'lucide-react';
+import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X } from 'lucide-react';
 import { ModelSelect } from './ModelSelect';
 
 const ICONS: Record<string, React.ElementType> = {
   llm: Bot, local: Monitor, 'human-approve': ShieldCheck,
-  'human-input': MessageSquare, a2a: Globe,
+  'human-input': MessageSquare, 'human-output': Eye, a2a: Globe,
 };
 
 interface EditableNodeData {
@@ -194,6 +194,18 @@ function EditableNodeInner({ data }: NodeProps<EditableNodeData>) {
               placeholder="my_module.my_function"
               className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 font-mono"
               onClick={(e) => e.stopPropagation()} />
+          </div>
+        )}
+
+        {data.nodeType === 'human-output' && (
+          <div>
+            <label className="text-slate-400 block mb-0.5">Display Label</label>
+            <input value={(config.display_label as string) || ''}
+              onChange={(e) => updateConfig('display_label', e.target.value)}
+              placeholder="Final Result"
+              className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200"
+              onClick={(e) => e.stopPropagation()} />
+            <p className="text-slate-500 mt-1">Shows the output of connected nodes to the user when workflow completes.</p>
           </div>
         )}
 

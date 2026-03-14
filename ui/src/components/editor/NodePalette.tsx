@@ -1,4 +1,4 @@
-import { Bot, Monitor, ShieldCheck, MessageSquare, Globe } from 'lucide-react';
+import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye } from 'lucide-react';
 
 export interface NodeTypeConfig {
   type: string;
@@ -15,6 +15,7 @@ export const NODE_TYPES: NodeTypeConfig[] = [
   { type: 'local', label: 'Local Script', icon: Monitor, color: '#22c55e', agentPrefix: 'local://', defaultAgent: 'local://echo' },
   { type: 'human-approve', subtype: 'approve', label: 'Human Approve', icon: ShieldCheck, color: '#f97316', agentPrefix: 'human://', defaultAgent: 'human://approve' },
   { type: 'human-input', subtype: 'input', label: 'Human Input', icon: MessageSquare, color: '#a855f7', agentPrefix: 'human://', defaultAgent: 'human://input' },
+  { type: 'human-output', subtype: 'output', label: 'Human Output', icon: Eye, color: '#10b981', agentPrefix: 'human://', defaultAgent: 'human://output' },
   { type: 'a2a', label: 'A2A Agent', icon: Globe, color: '#06b6d4', agentPrefix: 'a2a://', defaultAgent: 'a2a://localhost:8001' },
 ];
 
