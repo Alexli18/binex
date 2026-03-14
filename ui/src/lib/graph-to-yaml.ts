@@ -19,13 +19,15 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
       outputs: ['output'],
     };
 
+    // system_prompt is top-level in YAML (used by LLM and Human adapters)
+    const promptText = d.config?.system_prompt || d.config?.prompt_message;
+    if (promptText) entry.system_prompt = promptText;
+
     const config: Record<string, unknown> = {};
     if (d.config?.max_tokens) config.max_tokens = d.config.max_tokens;
     if (d.config?.temperature != null) config.temperature = d.config.temperature;
-    if (d.config?.system_prompt) config.system_prompt = d.config.system_prompt;
     if (d.config?.budget_limit) config.budget_limit = d.config.budget_limit;
     if (d.config?.skill) config.skill = d.config.skill;
-    if (d.config?.prompt_message) config.prompt_message = d.config.prompt_message;
     if (Object.keys(config).length > 0) entry.config = config;
 
     if (deps[node.id]?.length) {
