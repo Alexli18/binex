@@ -33,6 +33,22 @@ async def get_debug(
         records = await exec_store.list_records(run_id)
         artifacts = await art_store.list_by_run(run_id)
 
+        # Try to load workflow spec for system_prompt info
+        workflow_specs: dict[str, dict] = {}
+        if run.workflow_path:
+            try:
+                import yaml as _yaml
+                from pathlib import Path
+                wf_path = Path(run.workflow_path)
+                if not wf_path.is_absolute():
+                    wf_path = Path.cwd() / wf_path
+                if wf_path.exists():
+                    wf_data = _yaml.safe_load(wf_path.read_text())
+                    if isinstance(wf_data, dict) and "nodes" in wf_data:
+                        workflow_specs = wf_data["nodes"]
+            except Exception:
+                pass
+
         # Index artifacts by produced_by node and by id
         arts_by_node: dict[str, list[dict]] = {}
         arts_by_id: dict[str, dict] = {}
@@ -68,7 +84,10 @@ async def get_debug(
                 "duration_s": round(duration_s, 3),
                 "error": rec.error,
                 "agent": rec.agent_id,
-                "system_prompt": rec.prompt,
+                "system_prompt": rec.prompt or (
+                    workflow_specs.get(rec.task_id, {}).get("system_prompt")
+                    if isinstance(workflow_specs.get(rec.task_id), dict) else None
+                ),
                 "model": rec.model,
                 "input_artifacts": input_arts,
                 "artifacts": arts_by_node.get(rec.task_id, []),
