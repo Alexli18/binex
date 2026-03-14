@@ -27,7 +27,7 @@ export default function RunLive() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { data: run, isLoading } = useRun(runId);
-  const { events, connected, pendingPrompt, clearPrompt } = useSSE(runId);
+  const { events, connected, pendingPrompt, clearPrompt, outputResult, clearOutput } = useSSE(runId);
   const cancelRun = useCancelRun();
   const logRef = useRef<HTMLDivElement>(null);
 
@@ -177,6 +177,44 @@ export default function RunLive() {
           runId={runId}
           onDone={clearPrompt}
         />
+      )}
+
+      {/* Workflow output display */}
+      {outputResult && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={clearOutput}>
+          <div
+            className="bg-slate-800 rounded-lg shadow-xl border border-slate-700 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
+              <h3 className="text-lg font-semibold text-emerald-400">{outputResult.label}</h3>
+              <button onClick={clearOutput} className="text-slate-400 hover:text-slate-200 text-xl">&times;</button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-4">
+              {outputResult.artifacts.map((art, i) => (
+                <div key={i} className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs text-slate-500">{art.type}</span>
+                    {art.produced_by && (
+                      <span className="text-xs text-slate-600">from {art.produced_by}</span>
+                    )}
+                  </div>
+                  <pre className="text-sm text-slate-200 whitespace-pre-wrap break-words font-mono">
+                    {art.content}
+                  </pre>
+                </div>
+              ))}
+            </div>
+            <div className="px-6 py-3 border-t border-slate-700 flex justify-end">
+              <button
+                onClick={clearOutput}
+                className="px-4 py-1.5 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-500"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
