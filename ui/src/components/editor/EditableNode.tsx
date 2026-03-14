@@ -106,9 +106,63 @@ function EditableNodeInner({ data }: NodeProps<EditableNodeData>) {
             </div>
             <div>
               <label className="text-slate-400 block mb-0.5">System Prompt</label>
+              <select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) {
+                    fetch(`/api/v1/prompts/templates/${e.target.value}`)
+                      .then(r => r.json())
+                      .then(data => {
+                        if (data.content) updateConfig('system_prompt', data.content);
+                      });
+                  }
+                }}
+                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 mb-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <option value="">Choose built-in prompt...</option>
+                <optgroup label="Development">
+                  <option value="dev-coder">Coder</option>
+                  <option value="dev-code-reviewer-strict">Code Reviewer (Strict)</option>
+                  <option value="dev-code-reviewer-mentor">Code Reviewer (Mentor)</option>
+                  <option value="dev-test-writer">Test Writer</option>
+                  <option value="dev-docs-generator">Docs Generator</option>
+                  <option value="dev-refactorer">Refactorer</option>
+                  <option value="dev-bug-reproducer">Bug Reproducer</option>
+                  <option value="dev-security-auditor-strict">Security Auditor</option>
+                </optgroup>
+                <optgroup label="Content">
+                  <option value="cnt-content-drafter-formal">Content Drafter (Formal)</option>
+                  <option value="cnt-content-drafter-casual">Content Drafter (Casual)</option>
+                  <option value="cnt-seo-optimizer">SEO Optimizer</option>
+                  <option value="cnt-outline-writer">Outline Writer</option>
+                </optgroup>
+                <optgroup label="Data">
+                  <option value="dat-data-validator">Data Validator</option>
+                  <option value="dat-data-normalizer">Data Normalizer</option>
+                  <option value="dat-quality-reporter">Quality Reporter</option>
+                </optgroup>
+                <optgroup label="Business">
+                  <option value="biz-executive-summarizer-brief">Executive Summary (Brief)</option>
+                  <option value="biz-executive-summarizer-detailed">Executive Summary (Detailed)</option>
+                  <option value="biz-swot-writer">SWOT Analysis</option>
+                  <option value="biz-recommender">Recommender</option>
+                </optgroup>
+                <optgroup label="General">
+                  <option value="gen-researcher">Researcher</option>
+                  <option value="gen-draft-writer">Draft Writer</option>
+                  <option value="gen-content-reviewer">Content Reviewer</option>
+                  <option value="gen-data-processor">Data Processor</option>
+                </optgroup>
+                <optgroup label="Support">
+                  <option value="sup-response-generator">Response Generator</option>
+                  <option value="sup-translator-adaptive">Translator (Adaptive)</option>
+                  <option value="sup-summarizer-brief">Summarizer (Brief)</option>
+                </optgroup>
+              </select>
               <textarea value={(config.system_prompt as string) || ''}
                 onChange={(e) => updateConfig('system_prompt', e.target.value)}
-                placeholder="You are a helpful assistant..."
+                placeholder="Or write your own prompt..."
                 rows={3}
                 className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 resize-none"
                 onClick={(e) => e.stopPropagation()} />

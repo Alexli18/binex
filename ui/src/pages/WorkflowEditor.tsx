@@ -15,6 +15,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import yaml from 'js-yaml';
+import { FolderOpen, DollarSign } from 'lucide-react';
 import { WorkflowGraph } from '../components/dag/WorkflowGraph';
 import { CostEstimatePanel } from '../components/CostEstimatePanel';
 import { SaveAsModal } from '../components/SaveAsModal';
@@ -24,6 +25,7 @@ import { useWorkflows, useWorkflow, useSaveWorkflow } from '../hooks/useWorkflow
 import { useCreateRun } from '../hooks/useRuns';
 import { parseWorkflowYaml, type WorkflowNode, type WorkflowEdge } from '../lib/yaml-to-graph';
 import { graphToYaml } from '../lib/graph-to-yaml';
+import { api } from '../lib/api';
 
 const rfNodeTypes = { editable: EditableNode };
 
@@ -191,6 +193,8 @@ export default function WorkflowEditor() {
   const [graphEdges, setGraphEdges] = useState<WorkflowEdge[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
   const [showSaveAs, setShowSaveAs] = useState(false);
+  const [showFiles, setShowFiles] = useState(true);
+  const [showCost, setShowCost] = useState(true);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const syncDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -311,13 +315,36 @@ export default function WorkflowEditor() {
     [content, saveMutation],
   );
 
-  const handleRun = useCallback(() => {
-    if (!selectedPath) return;
+  const handleRun = useCallback(async () => {
+    let pathToRun = selectedPath;
+
+    // If no path, need to save first
+    if (!pathToRun) {
+      // Auto-save as temp workflow
+      const tempPath = `_temp_workflow_${Date.now()}.yaml`;
+      try {
+        await api.put(`/workflows/${tempPath}`, { content });
+        pathToRun = tempPath;
+        setSelectedPath(tempPath);
+        setOriginalContent(content);
+      } catch {
+        return;
+      }
+    } else if (isDirty) {
+      // Save current changes before running
+      try {
+        await api.put(`/workflows/${pathToRun}`, { content });
+        setOriginalContent(content);
+      } catch {
+        return;
+      }
+    }
+
     createRun.mutate(
-      { workflow_path: selectedPath },
+      { workflow_path: pathToRun },
       { onSuccess: (data) => navigate(`/runs/${data.run_id}/live`) },
     );
-  }, [selectedPath, createRun, navigate]);
+  }, [selectedPath, content, isDirty, createRun, navigate]);
 
   const handleEditorChange = useCallback((value: string | undefined) => {
     setContent(value ?? '');
@@ -336,6 +363,24 @@ export default function WorkflowEditor() {
           <span className="text-xs text-amber-400 font-medium">(unsaved changes)</span>
         )}
         <div className="flex-1" />
+
+        {/* Panel toggles */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setShowFiles(!showFiles)}
+            className={`p-1.5 rounded text-xs ${showFiles ? 'text-blue-400 bg-slate-700' : 'text-slate-500 hover:text-slate-300'}`}
+            title="Toggle file browser"
+          >
+            <FolderOpen size={14} />
+          </button>
+          <button
+            onClick={() => setShowCost(!showCost)}
+            className={`p-1.5 rounded text-xs ${showCost ? 'text-blue-400 bg-slate-700' : 'text-slate-500 hover:text-slate-300'}`}
+            title="Toggle cost estimate"
+          >
+            <DollarSign size={14} />
+          </button>
+        </div>
 
         {/* Mode toggle */}
         <div className="flex rounded overflow-hidden border border-slate-600">
@@ -374,7 +419,7 @@ export default function WorkflowEditor() {
         </button>
         <button
           onClick={handleRun}
-          disabled={!selectedPath || createRun.isPending}
+          disabled={!content.trim() || createRun.isPending}
           className="px-3 py-1.5 text-sm font-medium rounded bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {createRun.isPending ? 'Starting...' : 'Run'}
@@ -391,6 +436,7 @@ export default function WorkflowEditor() {
       {/* Main content */}
       <div className="flex flex-1 min-h-0">
         {/* File sidebar */}
+        {showFiles && (
         <div className="w-48 border-r border-slate-700 bg-slate-900 overflow-y-auto flex-shrink-0">
           <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             Workflows
@@ -416,6 +462,7 @@ export default function WorkflowEditor() {
             ))
           )}
         </div>
+        )}
 
         {mode === 'visual' ? (
           /* ── Visual Mode ── */
@@ -480,7 +527,7 @@ export default function WorkflowEditor() {
       </div>
 
       {/* Cost estimate (both modes) */}
-      {content.trim() && <CostEstimatePanel yamlContent={content} />}
+      {showCost && content.trim() && <CostEstimatePanel yamlContent={content} />}
 
       {showSaveAs && (
         <SaveAsModal
