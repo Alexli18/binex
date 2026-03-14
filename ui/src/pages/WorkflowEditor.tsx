@@ -202,7 +202,7 @@ export default function WorkflowEditor() {
               </div>
             )}
           </div>
-          <CostEstimatePanel yamlContent={content} />
+          {content.trim() && <CostEstimatePanel yamlContent={content} />}
         </div>
       </div>
     </div>

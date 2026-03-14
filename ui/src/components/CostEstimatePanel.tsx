@@ -58,10 +58,10 @@ export function CostEstimatePanel({ yamlContent }: CostEstimatePanelProps) {
     : 1;
 
   return (
-    <div className="border-t border-gray-200 p-4">
+    <div className="border-t border-slate-700 p-4 bg-slate-800">
       <div className="flex items-center gap-2 mb-3">
-        <DollarSign className="w-4 h-4 text-green-600" />
-        <h3 className="text-sm font-semibold text-gray-700">Cost Estimate</h3>
+        <DollarSign className="w-4 h-4 text-green-400" />
+        <h3 className="text-sm font-semibold text-slate-200">Cost Estimate</h3>
         {estimate.isPending && (
           <Loader2 className="w-3 h-3 text-gray-400 animate-spin" />
         )}
@@ -75,9 +75,9 @@ export function CostEstimatePanel({ yamlContent }: CostEstimatePanelProps) {
         <div className="space-y-3">
           {/* Total */}
           <div className="flex items-baseline justify-between">
-            <span className="text-xs text-gray-500">Total estimate</span>
-            <span className="text-lg font-bold font-mono text-gray-900">
-              ${estimate.data.total_estimate.toFixed(4)}
+            <span className="text-xs text-slate-400">Total estimate</span>
+            <span className="text-lg font-bold font-mono text-slate-100">
+              ${(estimate.data.total_estimate ?? 0).toFixed(4)}
             </span>
           </div>
 
@@ -94,16 +94,16 @@ export function CostEstimatePanel({ yamlContent }: CostEstimatePanelProps) {
                     className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${color}`}
                     title={TYPE_LABELS[node.type] ?? node.type}
                   />
-                  <span className="text-xs text-gray-600 w-20 truncate flex-shrink-0" title={node.node_id}>
+                  <span className="text-xs text-slate-300 w-20 truncate flex-shrink-0" title={node.node_id}>
                     {node.node_id}
                   </span>
-                  <div className="flex-1 bg-gray-100 rounded-full h-2">
+                  <div className="flex-1 bg-slate-700 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full ${color} transition-all`}
                       style={{ width: `${Math.max(widthPct, 2)}%` }}
                     />
                   </div>
-                  <span className="text-xs font-mono text-gray-500 w-16 text-right flex-shrink-0">
+                  <span className="text-xs font-mono text-slate-400 w-16 text-right flex-shrink-0">
                     {cost > 0 ? `$${cost.toFixed(4)}` : 'N/A'}
                   </span>
                 </div>
@@ -117,21 +117,21 @@ export function CostEstimatePanel({ yamlContent }: CostEstimatePanelProps) {
               {estimate.data.warnings.map((w, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-1.5 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"
+                  className="flex items-start gap-1.5 bg-amber-900/30 border border-amber-700 rounded px-2 py-1.5"
                 >
                   <AlertTriangle className="w-3 h-3 text-amber-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-xs text-amber-700">{w}</span>
+                  <span className="text-xs text-amber-300">{w}</span>
                 </div>
               ))}
             </div>
           )}
 
           {/* Legend */}
-          <div className="flex gap-3 pt-1 border-t border-gray-100">
+          <div className="flex gap-3 pt-1 border-t border-slate-700">
             {Object.entries(TYPE_LABELS).map(([type, label]) => (
               <div key={type} className="flex items-center gap-1">
                 <span className={`w-2 h-2 rounded-full ${TYPE_COLORS[type]}`} />
-                <span className="text-[10px] text-gray-400">{label}</span>
+                <span className="text-[10px] text-slate-500">{label}</span>
               </div>
             ))}
           </div>
@@ -139,7 +139,7 @@ export function CostEstimatePanel({ yamlContent }: CostEstimatePanelProps) {
       )}
 
       {!estimate.data && !estimate.isPending && !estimate.isError && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-slate-500">
           Edit workflow YAML to see cost estimates
         </p>
       )}
