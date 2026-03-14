@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Loader2 } from 'lucide-react';
 import { ModelSelect } from './editor/ModelSelect';
 import { api } from '../lib/api';
 import type { DebugArtifact } from '../hooks/useAnalysis';
@@ -59,11 +59,20 @@ export function ReplayModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={submitting ? undefined : onClose}>
       <div
-        className="bg-slate-800 rounded-lg shadow-xl border border-slate-700 w-full max-w-lg max-h-[85vh] overflow-y-auto p-6"
+        className="bg-slate-800 rounded-lg shadow-xl border border-slate-700 w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Loading overlay */}
+        {submitting && (
+          <div className="absolute inset-0 bg-slate-900/80 rounded-lg flex flex-col items-center justify-center z-10 gap-3">
+            <Loader2 size={32} className="text-blue-400 animate-spin" />
+            <p className="text-sm text-slate-300">Replaying node...</p>
+            <p className="text-xs text-slate-500">This may take a few seconds</p>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 mb-4">
           <RotateCcw size={18} className="text-blue-400" />
           <h3 className="text-lg font-semibold text-slate-100">Replay Node</h3>
