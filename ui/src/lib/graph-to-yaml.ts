@@ -16,6 +16,7 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
     const d = node.data;
     const entry: Record<string, unknown> = {
       agent: d.agent || 'local://echo',
+      outputs: ['output'],
     };
 
     const config: Record<string, unknown> = {};

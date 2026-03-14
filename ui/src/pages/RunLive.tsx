@@ -73,6 +73,26 @@ export default function RunLive() {
   }
 
   if (!run) {
+    // Check if we received an error event via SSE before run was created
+    const failEvent = events.find(
+      (e) => e.type === 'run:completed' && e.status === 'failed',
+    );
+    if (failEvent) {
+      return (
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-red-400 mb-2">Run Failed</h2>
+          <p className="text-slate-300 bg-red-900/30 border border-red-700 rounded p-3 text-sm font-mono whitespace-pre-wrap">
+            {failEvent.error || 'Unknown error'}
+          </p>
+          <button
+            onClick={() => navigate('/editor')}
+            className="mt-4 px-4 py-2 text-sm bg-slate-700 text-slate-200 rounded hover:bg-slate-600"
+          >
+            Back to Editor
+          </button>
+        </div>
+      );
+    }
     return (
       <div className="p-6">
         <p className="text-slate-400">Waiting for run to start...</p>
