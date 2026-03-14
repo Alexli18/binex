@@ -121,6 +121,14 @@ function EditableNodeInner({ data }: NodeProps<EditableNodeData>) {
                 onClick={(e) => e.stopPropagation()}
               >
                 <option value="">Choose built-in prompt...</option>
+                <optgroup label="⭐ Workflow Roles">
+                  <option value="wf-planner">Planner — break goal into steps</option>
+                  <option value="gen-researcher">Researcher — investigate & report</option>
+                  <option value="wf-analyzer">Analyzer — find patterns & insights</option>
+                  <option value="gen-draft-writer">Writer — produce first draft</option>
+                  <option value="gen-content-reviewer">Reviewer — evaluate & give feedback</option>
+                  <option value="sup-summarizer-brief">Summarizer — distill to essentials</option>
+                </optgroup>
                 <optgroup label="Development">
                   <option value="dev-coder">Coder</option>
                   <option value="dev-code-reviewer-strict">Code Reviewer (Strict)</option>
