@@ -337,7 +337,7 @@ export default function DebugPage() {
           runId={runId!}
           nodeId={replayNode}
           currentAgent="llm://unknown"
-          workflowPath={data.workflow_name}
+          workflowPath={data.workflow_path || data.workflow_name}
           onClose={() => setReplayNode(null)}
         />
       )}

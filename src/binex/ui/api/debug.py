@@ -71,6 +71,7 @@ async def get_debug(
             "run_id": run.run_id,
             "status": run.status,
             "workflow_name": run.workflow_name,
+            "workflow_path": run.workflow_path,
             "nodes": nodes,
         })
     finally:

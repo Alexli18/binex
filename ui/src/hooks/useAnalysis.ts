@@ -22,6 +22,7 @@ export interface DebugData {
   run_id: string;
   status: string;
   workflow_name: string | null;
+  workflow_path: string | null;
   nodes: DebugNode[];
 }
 
