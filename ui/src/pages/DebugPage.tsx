@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { CheckCircle2, XCircle, Clock, SkipForward, Search } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, SkipForward, Search, RotateCcw } from 'lucide-react';
 import { useDebug } from '../hooks/useAnalysis';
 import type { DebugNode } from '../hooks/useAnalysis';
+import { ReplayModal } from '../components/ReplayModal';
 
 const statusIcon = (status: string) => {
   switch (status) {
@@ -130,6 +131,7 @@ export default function DebugPage() {
   const [errorsOnly, setErrorsOnly] = useState(false);
   const [filter, setFilter] = useState('');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [replayNode, setReplayNode] = useState<string | null>(null);
 
   const { data, isLoading, error } = useDebug(runId, errorsOnly);
 
@@ -304,10 +306,20 @@ export default function DebugPage() {
                 <h3 className="font-bold font-mono text-sm">
                   {selectedNode.node_id}
                 </h3>
-                <div
-                  className={`px-2 py-0.5 rounded text-xs border ${statusColor(selectedNode.status)}`}
-                >
-                  {selectedNode.status}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setReplayNode(selectedNode.node_id)}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded text-xs border border-blue-500/40 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
+                    title="Replay from this node"
+                  >
+                    <RotateCcw size={12} />
+                    Replay
+                  </button>
+                  <div
+                    className={`px-2 py-0.5 rounded text-xs border ${statusColor(selectedNode.status)}`}
+                  >
+                    {selectedNode.status}
+                  </div>
                 </div>
               </div>
               <NodeDetail node={selectedNode} />
@@ -319,6 +331,16 @@ export default function DebugPage() {
           )}
         </div>
       </div>
+
+      {replayNode && data && (
+        <ReplayModal
+          runId={runId!}
+          nodeId={replayNode}
+          currentAgent="llm://unknown"
+          workflowPath={data.workflow_name}
+          onClose={() => setReplayNode(null)}
+        />
+      )}
     </div>
   );
 }
