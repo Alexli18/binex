@@ -56,7 +56,6 @@ export default function WorkflowEditor() {
         setGraphEdges(edges);
         setParseError(null);
       } catch (err) {
-        // Keep last-valid graph on error, only show error banner
         setParseError(err instanceof Error ? err.message : String(err));
       }
     }, 500);
@@ -102,27 +101,27 @@ export default function WorkflowEditor() {
   }, [workflows]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-52px)]">
+    <div className="flex flex-col h-screen">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-4 py-2 bg-white border-b border-gray-200">
-        <span className="text-sm font-medium text-gray-700">
+      <div className="flex items-center gap-3 px-4 py-2 bg-slate-900 border-b border-slate-700">
+        <span className="text-sm font-medium text-slate-200">
           {selectedPath ?? 'No file selected'}
         </span>
         {isDirty && (
-          <span className="text-xs text-amber-600 font-medium">(unsaved changes)</span>
+          <span className="text-xs text-amber-400 font-medium">(unsaved changes)</span>
         )}
         <div className="flex-1" />
         <button
           onClick={handleSave}
           disabled={!selectedPath || !isDirty || saveMutation.isPending}
-          className="px-3 py-1.5 text-sm font-medium rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1.5 text-sm font-medium rounded bg-slate-700 text-slate-200 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-600"
         >
           {saveMutation.isPending ? 'Saving...' : 'Save'}
         </button>
         <button
           onClick={handleRun}
           disabled={!selectedPath || createRun.isPending}
-          className="px-3 py-1.5 text-sm font-medium rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1.5 text-sm font-medium rounded bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {createRun.isPending ? 'Starting...' : 'Run'}
         </button>
@@ -130,7 +129,7 @@ export default function WorkflowEditor() {
 
       {/* Parse error banner */}
       {parseError && (
-        <div className="px-4 py-2 bg-red-50 border-b border-red-200 text-red-700 text-sm">
+        <div className="px-4 py-2 bg-red-900/40 border-b border-red-800 text-red-300 text-sm">
           YAML parse error: {parseError}
         </div>
       )}
@@ -140,14 +139,14 @@ export default function WorkflowEditor() {
         {/* Left side: file sidebar + editor */}
         <div className="flex flex-1 min-w-0">
           {/* File sidebar */}
-          <div className="w-48 border-r border-gray-200 bg-gray-50 overflow-y-auto flex-shrink-0">
-            <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          <div className="w-48 border-r border-slate-700 bg-slate-900 overflow-y-auto flex-shrink-0">
+            <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Workflows
             </div>
             {loadingList ? (
-              <div className="px-3 py-2 text-sm text-gray-400">Loading...</div>
+              <div className="px-3 py-2 text-sm text-slate-500">Loading...</div>
             ) : fileList.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-400">No files found</div>
+              <div className="px-3 py-2 text-sm text-slate-500">No files found</div>
             ) : (
               fileList.map((f) => (
                 <button
@@ -155,8 +154,8 @@ export default function WorkflowEditor() {
                   onClick={() => setSelectedPath(f)}
                   className={`w-full text-left px-3 py-1.5 text-sm truncate ${
                     f === selectedPath
-                      ? 'bg-blue-100 text-blue-800 font-medium'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-blue-600/20 text-blue-400 font-medium'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                   }`}
                   title={f}
                 >
@@ -172,6 +171,7 @@ export default function WorkflowEditor() {
               <Editor
                 height="100%"
                 language="yaml"
+                theme="vs-dark"
                 value={content}
                 onChange={handleEditorChange}
                 options={{
@@ -184,7 +184,7 @@ export default function WorkflowEditor() {
                 }}
               />
             ) : (
-              <div className="flex items-center justify-center h-full text-gray-400">
+              <div className="flex items-center justify-center h-full text-slate-500">
                 Select a workflow file to edit
               </div>
             )}
@@ -192,12 +192,12 @@ export default function WorkflowEditor() {
         </div>
 
         {/* Right side: DAG preview + Cost Estimate */}
-        <div className="w-1/2 border-l border-gray-200 bg-white flex-shrink-0 flex flex-col">
+        <div className="w-1/2 border-l border-slate-700 bg-slate-900 flex-shrink-0 flex flex-col">
           <div className="flex-1 min-h-0">
             {graphNodes.length > 0 ? (
               <WorkflowGraph nodes={graphNodes} edges={graphEdges} />
             ) : (
-              <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+              <div className="flex items-center justify-center h-full text-slate-500 text-sm">
                 {content.trim() ? 'No nodes found in workflow' : 'DAG preview will appear here'}
               </div>
             )}

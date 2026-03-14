@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   Background,
   Controls,
-  MiniMap,
   type Edge,
   type Node,
 } from 'reactflow';
@@ -64,11 +63,6 @@ export function WorkflowGraph({ nodes, edges, onNodeClick }: WorkflowGraphProps)
       >
         <Background color="#334155" gap={16} />
         <Controls className="!bg-slate-800 !border-slate-700 !shadow-lg [&>button]:!bg-slate-700 [&>button]:!border-slate-600 [&>button]:!text-slate-300 [&>button:hover]:!bg-slate-600" />
-        <MiniMap
-          nodeColor="#475569"
-          maskColor="rgba(15, 23, 42, 0.7)"
-          className="!bg-slate-900 !border-slate-700"
-        />
       </ReactFlow>
     </div>
   );
