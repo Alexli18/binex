@@ -77,11 +77,9 @@ function GanttChart({
         {sorted.map((entry) => {
           const offset = entry.offset_s ?? 0;
           const duration = entry.duration_s ?? 0;
-          const leftPct = totalDuration > 0 ? (offset / totalDuration) * 100 : 0;
-          const widthPct =
-            totalDuration > 0
-              ? Math.max((duration / totalDuration) * 100, 0.5)
-              : 0;
+          const leftPct = totalDuration > 0 ? Math.min((offset / totalDuration) * 100, 99) : 0;
+          const rawWidthPct = totalDuration > 0 ? (duration / totalDuration) * 100 : 0;
+          const widthPct = Math.max(Math.min(rawWidthPct, 100 - leftPct), 0.5);
           const isAnomaly = anomalyNodeIds.has(entry.node_id);
           const isSelected = selectedId === entry.node_id;
 
@@ -103,7 +101,7 @@ function GanttChart({
               </div>
 
               {/* Bar container */}
-              <div className="flex-1 relative" style={{ height: barHeight - 8 }}>
+              <div className="flex-1 relative overflow-hidden" style={{ height: barHeight - 8 }}>
                 <div
                   className={`absolute top-0 h-full rounded cursor-pointer transition-all ${statusBarColor(entry.status)} ${
                     isAnomaly
