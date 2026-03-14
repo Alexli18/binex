@@ -11,7 +11,7 @@ export interface NodeTypeConfig {
 }
 
 export const NODE_TYPES: NodeTypeConfig[] = [
-  { type: 'llm', label: 'LLM Agent', icon: Bot, color: '#3b82f6', agentPrefix: 'llm://', defaultAgent: 'llm://openrouter/gemma-3-27b:free' },
+  { type: 'llm', label: 'LLM Agent', icon: Bot, color: '#3b82f6', agentPrefix: 'llm://', defaultAgent: 'llm://openrouter/google/gemma-3-27b-it:free' },
   { type: 'local', label: 'Local Script', icon: Monitor, color: '#22c55e', agentPrefix: 'local://', defaultAgent: 'local://echo' },
   { type: 'human-approve', subtype: 'approve', label: 'Human Approve', icon: ShieldCheck, color: '#f97316', agentPrefix: 'human://', defaultAgent: 'human://approve' },
   { type: 'human-input', subtype: 'input', label: 'Human Input', icon: MessageSquare, color: '#a855f7', agentPrefix: 'human://', defaultAgent: 'human://input' },

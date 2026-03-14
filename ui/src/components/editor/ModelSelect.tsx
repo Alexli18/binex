@@ -14,14 +14,14 @@ const MODEL_TIERS = [
   {
     label: 'OpenRouter Free',
     models: [
-      'openrouter/qwen3-coder-480b:free',
-      'openrouter/llama-3.3-70b:free',
-      'openrouter/gemma-3-27b:free',
-      'openrouter/mistral-small-3.1-24b:free',
-      'openrouter/hermes-3-405b:free',
-      'openrouter/gpt-oss-120b:free',
-      'openrouter/nemotron-3-super-120b:free',
-      'openrouter/glm-4.5-air:free',
+      'openrouter/qwen/qwen3-coder-480b:free',
+      'openrouter/meta-llama/llama-3.3-70b-instruct:free',
+      'openrouter/google/gemma-3-27b-it:free',
+      'openrouter/mistralai/mistral-small-3.1-24b-instruct:free',
+      'openrouter/nousresearch/hermes-3-llama-3.1-405b:free',
+      'openrouter/openai/gpt-oss-120b:free',
+      'openrouter/nvidia/llama-3.1-nemotron-ultra-253b:free',
+      'openrouter/zhipuai/glm-4-air:free',
     ],
   },
 ];
