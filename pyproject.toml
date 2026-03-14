@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "binex"
-version = "0.5.0"
+version = "0.5.1"
 description = "Debuggable runtime for AI agent pipelines"
 readme = "README.md"
 license = {text = "MIT"}
@@ -61,6 +61,11 @@ telemetry = [
     "opentelemetry-sdk>=1.20",
     "opentelemetry-exporter-otlp>=1.20",
 ]
+
+[tool.hatch.build]
+include = ["src/binex"]
+# Include built frontend static files (gitignored but needed in wheel)
+artifacts = ["src/binex/ui/static"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/binex"]
