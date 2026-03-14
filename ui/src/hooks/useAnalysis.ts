@@ -18,6 +18,7 @@ export interface DebugNode {
   agent?: string;
   system_prompt?: string;
   model?: string;
+  input_artifacts?: DebugArtifact[];
   artifacts: DebugArtifact[];
 }
 

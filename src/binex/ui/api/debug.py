@@ -33,15 +33,19 @@ async def get_debug(
         records = await exec_store.list_records(run_id)
         artifacts = await art_store.list_by_run(run_id)
 
-        # Index artifacts by produced_by node
+        # Index artifacts by produced_by node and by id
         arts_by_node: dict[str, list[dict]] = {}
+        arts_by_id: dict[str, dict] = {}
         for art in artifacts:
-            producer = art.lineage.produced_by
-            arts_by_node.setdefault(producer, []).append({
+            art_dict = {
                 "id": art.id,
                 "type": art.type,
                 "content": art.content,
-            })
+                "produced_by": art.lineage.produced_by,
+            }
+            producer = art.lineage.produced_by
+            arts_by_node.setdefault(producer, []).append(art_dict)
+            arts_by_id[art.id] = art_dict
 
         nodes = []
         for rec in records:
@@ -49,6 +53,12 @@ async def get_debug(
 
             # Calculate duration
             duration_s = rec.latency_ms / 1000.0 if rec.latency_ms else 0.0
+
+            # Resolve input artifacts from refs
+            input_arts = []
+            for ref in (rec.input_artifact_refs or []):
+                if ref in arts_by_id:
+                    input_arts.append(arts_by_id[ref])
 
             node_data = {
                 "node_id": rec.task_id,
@@ -60,6 +70,7 @@ async def get_debug(
                 "agent": rec.agent_id,
                 "system_prompt": rec.prompt,
                 "model": rec.model,
+                "input_artifacts": input_arts,
                 "artifacts": arts_by_node.get(rec.task_id, []),
             }
             nodes.append(node_data)

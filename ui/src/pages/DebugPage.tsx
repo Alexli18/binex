@@ -105,11 +105,37 @@ function NodeDetail({ node }: { node: DebugNode }) {
         </div>
       )}
 
-      {/* Artifacts */}
+      {/* Input Artifacts */}
+      {node.input_artifacts && node.input_artifacts.length > 0 && (
+        <div>
+          <span className="text-sm text-slate-500">
+            Input Artifacts ({node.input_artifacts.length})
+          </span>
+          <div className="mt-2 space-y-2">
+            {node.input_artifacts.map((a, i) => {
+              const content = typeof a.content === 'string' ? a.content : JSON.stringify(a.content, null, 2);
+              return (
+                <div key={i} className="bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-amber-400 font-medium">{a.type}</span>
+                    <span className="text-slate-600 font-mono">{a.id}</span>
+                    {(a as { produced_by?: string }).produced_by && (
+                      <span className="text-slate-600">from {(a as { produced_by?: string }).produced_by}</span>
+                    )}
+                  </div>
+                  <pre className="text-slate-400 whitespace-pre-wrap break-words max-h-32 overflow-y-auto">{content}</pre>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Output Artifacts */}
       {node.artifacts.length > 0 && (
         <div>
           <span className="text-sm text-slate-500">
-            Artifacts ({node.artifacts.length})
+            Output Artifacts ({node.artifacts.length})
           </span>
           <div className="mt-2 space-y-2">
             {node.artifacts.map((a, i) => {
