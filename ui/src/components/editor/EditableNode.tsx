@@ -1,6 +1,6 @@
 import { memo, useState, useCallback } from 'react';
-import { Handle, Position, type NodeProps } from 'reactflow';
-import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X } from 'lucide-react';
+import { Handle, Position, useReactFlow, type NodeProps } from 'reactflow';
+import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2 } from 'lucide-react';
 import { ModelSelect } from './ModelSelect';
 
 const ICONS: Record<string, React.ElementType> = {
@@ -16,11 +16,17 @@ interface EditableNodeData {
   color: string;
 }
 
-function EditableNodeInner({ data }: NodeProps<EditableNodeData>) {
+function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
+  const { deleteElements } = useReactFlow();
   const [expanded, setExpanded] = useState(false);
   const [label, setLabel] = useState(data.label);
   const [agent, setAgent] = useState(data.agent);
   const [config, setConfig] = useState<Record<string, unknown>>(data.config || {});
+
+  const handleDelete = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteElements({ nodes: [{ id }] });
+  }, [deleteElements, id]);
 
   const Icon = ICONS[data.nodeType] || Bot;
   const model = agent.includes('://') ? agent.split('://')[1] : agent;
@@ -46,11 +52,18 @@ function EditableNodeInner({ data }: NodeProps<EditableNodeData>) {
   if (!expanded) {
     return (
       <div
-        className="bg-slate-800 rounded-lg border-2 px-4 py-2.5 shadow-lg shadow-black/20 min-w-[180px] max-w-[220px] cursor-pointer hover:brightness-110 transition-all"
+        className="group bg-slate-800 rounded-lg border-2 px-4 py-2.5 shadow-lg shadow-black/20 min-w-[180px] max-w-[220px] cursor-pointer hover:brightness-110 transition-all relative"
         style={{ borderColor: data.color }}
         onClick={() => setExpanded(true)}
       >
         <Handle type="target" position={Position.Top} className="!bg-slate-500 !border-slate-400" />
+        <button
+          onClick={handleDelete}
+          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+          title="Delete node"
+        >
+          <Trash2 size={10} />
+        </button>
         <div className="flex items-center gap-2">
           <Icon size={16} style={{ color: data.color }} className="shrink-0" />
           <span className="text-sm font-medium text-slate-100 truncate">{label}</span>
@@ -78,9 +91,14 @@ function EditableNodeInner({ data }: NodeProps<EditableNodeData>) {
             onClick={(e) => e.stopPropagation()}
           />
         </div>
-        <button onClick={(e) => { e.stopPropagation(); setExpanded(false); }} className="text-slate-500 hover:text-slate-300">
-          <X size={14} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={handleDelete} className="text-red-500 hover:text-red-400" title="Delete node">
+            <Trash2 size={13} />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); setExpanded(false); }} className="text-slate-500 hover:text-slate-300">
+            <X size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Fields */}
