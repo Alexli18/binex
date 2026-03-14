@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 const MODEL_TIERS = [
   {
     label: 'Frontier',
@@ -26,30 +28,52 @@ const MODEL_TIERS = [
   },
 ];
 
+const ALL_MODELS = MODEL_TIERS.flatMap((t) => t.models);
+
 interface ModelSelectProps {
   value: string;
   onChange: (model: string) => void;
 }
 
 export function ModelSelect({ value, onChange }: ModelSelectProps) {
+  const [custom, setCustom] = useState(!ALL_MODELS.includes(value) && value !== '');
+
   return (
-    <div className="relative">
-      <input
-        type="text"
-        list="model-options"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Type or select a model..."
+    <div className="space-y-1" onClick={(e) => e.stopPropagation()}>
+      <select
+        value={custom ? '__custom__' : value}
+        onChange={(e) => {
+          if (e.target.value === '__custom__') {
+            setCustom(true);
+          } else {
+            setCustom(false);
+            onChange(e.target.value);
+          }
+        }}
         className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
-        onClick={(e) => e.stopPropagation()}
-      />
-      <datalist id="model-options">
-        {MODEL_TIERS.map((tier) =>
-          tier.models.map((m) => (
-            <option key={m} value={m} label={`${tier.label}: ${m}`} />
-          ))
-        )}
-      </datalist>
+      >
+        {MODEL_TIERS.map((tier) => (
+          <optgroup key={tier.label} label={tier.label}>
+            {tier.models.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </optgroup>
+        ))}
+        <optgroup label="Custom">
+          <option value="__custom__">Enter custom model...</option>
+        </optgroup>
+      </select>
+
+      {custom && (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="e.g. ollama/my-model, openrouter/org/model"
+          className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-200 font-mono focus:outline-none focus:border-blue-500"
+          autoFocus
+        />
+      )}
     </div>
   );
 }
