@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { WorkflowGraph } from '../components/dag/WorkflowGraph';
 import { CostEstimatePanel } from '../components/CostEstimatePanel';
+import { SaveAsModal } from '../components/SaveAsModal';
 import { useWorkflows, useWorkflow, useSaveWorkflow } from '../hooks/useWorkflows';
 import { useCreateRun } from '../hooks/useRuns';
 import { parseWorkflowYaml, type WorkflowNode, type WorkflowEdge } from '../lib/yaml-to-graph';
 
 export default function WorkflowEditor() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialContent = (location.state as { initialContent?: string })?.initialContent;
   const { data: workflows, isLoading: loadingList } = useWorkflows();
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const { data: workflowData } = useWorkflow(selectedPath);
@@ -20,6 +23,7 @@ export default function WorkflowEditor() {
   const [graphNodes, setGraphNodes] = useState<WorkflowNode[]>([]);
   const [graphEdges, setGraphEdges] = useState<WorkflowEdge[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [showSaveAs, setShowSaveAs] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track dirty state
@@ -39,6 +43,16 @@ export default function WorkflowEditor() {
       setSelectedPath(workflows[0]);
     }
   }, [workflows, selectedPath]);
+
+  // Accept initialContent from Scaffold page via router state
+  useEffect(() => {
+    if (initialContent) {
+      setContent(initialContent);
+      setOriginalContent('');
+      setSelectedPath(null);
+      window.history.replaceState({}, document.title);
+    }
+  }, []);
 
   // Debounced YAML -> graph conversion
   useEffect(() => {
@@ -83,6 +97,19 @@ export default function WorkflowEditor() {
     );
   }, [selectedPath, content, saveMutation]);
 
+  const handleSaveAs = useCallback((path: string) => {
+    saveMutation.mutate(
+      { path, content },
+      {
+        onSuccess: () => {
+          setSelectedPath(path);
+          setOriginalContent(content);
+          setShowSaveAs(false);
+        },
+      },
+    );
+  }, [content, saveMutation]);
+
   const handleRun = useCallback(() => {
     if (!selectedPath) return;
     createRun.mutate(
@@ -105,15 +132,15 @@ export default function WorkflowEditor() {
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-4 py-2 bg-slate-900 border-b border-slate-700">
         <span className="text-sm font-medium text-slate-200">
-          {selectedPath ?? 'No file selected'}
+          {selectedPath ?? (content.trim() ? '(new workflow)' : 'No file selected')}
         </span>
         {isDirty && (
           <span className="text-xs text-amber-400 font-medium">(unsaved changes)</span>
         )}
         <div className="flex-1" />
         <button
-          onClick={handleSave}
-          disabled={!selectedPath || !isDirty || saveMutation.isPending}
+          onClick={() => selectedPath ? handleSave() : setShowSaveAs(true)}
+          disabled={(!selectedPath && !content.trim()) || (!!selectedPath && !isDirty) || saveMutation.isPending}
           className="px-3 py-1.5 text-sm font-medium rounded bg-slate-700 text-slate-200 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-600"
         >
           {saveMutation.isPending ? 'Saving...' : 'Save'}
@@ -167,7 +194,7 @@ export default function WorkflowEditor() {
 
           {/* Monaco Editor */}
           <div className="flex-1 min-w-0">
-            {selectedPath ? (
+            {selectedPath || content.trim() ? (
               <Editor
                 height="100%"
                 language="yaml"
@@ -205,6 +232,7 @@ export default function WorkflowEditor() {
           {content.trim() && <CostEstimatePanel yamlContent={content} />}
         </div>
       </div>
+      {showSaveAs && <SaveAsModal onSave={handleSaveAs} onClose={() => setShowSaveAs(false)} isPending={saveMutation.isPending} />}
     </div>
   );
 }
