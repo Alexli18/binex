@@ -60,7 +60,7 @@ def create_app() -> FastAPI:
         return JSONResponse({"status": "ok"})
 
     # Mount static files and SPA fallback only if the static directory exists
-    if STATIC_DIR.is_dir():
+    if (STATIC_DIR / "index.html").is_file():
         # SPA fallback: serve index.html for any GET request that doesn't match /api/*
         @app.get("/{full_path:path}")
         async def spa_fallback(request: Request, full_path: str) -> FileResponse:
