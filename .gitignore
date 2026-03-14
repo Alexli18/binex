@@ -29,3 +29,9 @@ docs/plans/
 .specify/
 .claude/
 specs/
+
+# Web UI
+src/binex/ui/static/
+ui/node_modules/
+ui/dist/
+.playwright-mcp/
