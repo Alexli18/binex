@@ -38,6 +38,7 @@ def register_workflow_adapters(
     workflow_dir: str | None = None,
     gateway_url: str | None = None,
     plugin_registry: Any | None = None,
+    web_mode: bool = False,
 ) -> None:
     """Register adapters for all agents in a workflow spec.
 
@@ -76,14 +77,45 @@ def register_workflow_adapters(
                     workflow_dir=workflow_dir,
                 ),
             )
+        elif agent == "human://output":
+            if web_mode:
+                from binex.adapters.web_human import WebHumanOutputAdapter
+                from binex.ui.api.events import event_bus
+                from binex.ui.api.prompts import pending_prompts
+
+                dispatcher.register_adapter(
+                    agent, WebHumanOutputAdapter(event_bus, pending_prompts),
+                )
+            else:
+                from binex.adapters.human import HumanOutputAdapter
+
+                dispatcher.register_adapter(agent, HumanOutputAdapter())
         elif agent == "human://input":
-            from binex.adapters.human import HumanInputAdapter
+            if web_mode:
+                from binex.adapters.web_human import WebHumanInputAdapter
+                from binex.ui.api.events import event_bus
+                from binex.ui.api.prompts import pending_prompts
 
-            dispatcher.register_adapter(agent, HumanInputAdapter())
+                dispatcher.register_adapter(
+                    agent, WebHumanInputAdapter(event_bus, pending_prompts),
+                )
+            else:
+                from binex.adapters.human import HumanInputAdapter
+
+                dispatcher.register_adapter(agent, HumanInputAdapter())
         elif agent.startswith("human://"):
-            from binex.adapters.human import HumanApprovalAdapter
+            if web_mode:
+                from binex.adapters.web_human import WebHumanApprovalAdapter
+                from binex.ui.api.events import event_bus
+                from binex.ui.api.prompts import pending_prompts
 
-            dispatcher.register_adapter(agent, HumanApprovalAdapter())
+                dispatcher.register_adapter(
+                    agent, WebHumanApprovalAdapter(event_bus, pending_prompts),
+                )
+            else:
+                from binex.adapters.human import HumanApprovalAdapter
+
+                dispatcher.register_adapter(agent, HumanApprovalAdapter())
         elif agent.startswith("a2a://"):
             endpoint = agent.removeprefix("a2a://")
 

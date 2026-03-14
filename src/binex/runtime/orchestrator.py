@@ -47,6 +47,7 @@ class Orchestrator:
         *,
         stream: bool = False,
         stream_callback: Callable[[str], None] | None = None,
+        event_callback: Callable[[dict], Any] | None = None,
     ) -> None:
         self.artifact_store = artifact_store
         self.execution_store = execution_store
@@ -54,12 +55,21 @@ class Orchestrator:
         self._pending_feedback: dict[str, list[Artifact]] = {}
         self._stream = stream
         self._stream_callback = stream_callback
+        self._event_callback = event_callback
+
+    async def _emit_event(self, event: dict) -> None:
+        """Emit a lifecycle event if a callback is configured."""
+        if self._event_callback is not None:
+            result = self._event_callback(event)
+            if asyncio.iscoroutine(result):
+                await result
 
     async def run_workflow(
         self,
         workflow: dict[str, Any] | WorkflowSpec,
         *,
         user_vars: dict[str, str] | None = None,
+        run_id: str | None = None,
     ) -> RunSummary:
         if isinstance(workflow, dict):
             spec = WorkflowSpec(**workflow)
@@ -69,16 +79,18 @@ class Orchestrator:
         tracer = get_tracer()
         with tracer.start_as_current_span("binex.run") as span:
             span.set_attribute("workflow.name", spec.name)
-            return await self._run_workflow_inner(spec, span)
+            return await self._run_workflow_inner(spec, span, run_id=run_id)
 
     async def _run_workflow_inner(
         self,
         spec: WorkflowSpec,
         span: Any,
+        *,
+        run_id: str | None = None,
     ) -> RunSummary:
         dag = DAG.from_workflow(spec)
         scheduler = Scheduler(dag)
-        run_id = f"run_{uuid.uuid4().hex[:12]}"
+        run_id = run_id or f"run_{uuid.uuid4().hex[:12]}"
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
 
         # Store workflow snapshot
@@ -357,6 +369,13 @@ class Orchestrator:
         )
 
         start_ms = now_ms()
+        await self._emit_event({
+            "type": "node:started",
+            "run_id": run_id,
+            "node_id": node_id,
+            "timestamp": datetime.now(UTC).isoformat(),
+        })
+
         succeeded, error_msg, output_artifacts = await self._retry_loop(
             spec, run_id, node_id, task, input_artifacts, trace_id,
             node_max, max_retries, retry_policy, node_artifacts,
@@ -374,6 +393,16 @@ class Orchestrator:
         else:
             scheduler.mark_failed(node_id)
             status = task.status.__class__("failed")
+
+        latency = now_ms() - start_ms
+        await self._emit_event({
+            "type": f"node:{'completed' if succeeded else 'failed'}",
+            "run_id": run_id,
+            "node_id": node_id,
+            "timestamp": datetime.now(UTC).isoformat(),
+            "latency_ms": latency,
+            **({"error": error_msg} if error_msg else {}),
+        })
 
         latency_ms = now_ms() - start_ms
         await record_execution(

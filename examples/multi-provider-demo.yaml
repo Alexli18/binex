@@ -32,7 +32,7 @@ nodes:
     depends_on: [planner]
 
   summarizer:
-    agent: "llm://ollama/gemma3:4b"
+    agent: "llm://gemini/gemini-2.5-flash"
     system_prompt: "file://prompts/gen-research-synthesizer.md"
     inputs:
       research1: "${researcher1.result}"

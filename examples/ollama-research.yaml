@@ -1,53 +1,174 @@
-# Ollama Research Pipeline
-# =========================
-# A 3-node research pipeline using a local Ollama LLM (llama3.2).
-#
-# Topology:  planner -> researcher -> summarizer
-#
-# Prerequisites:
-#   1. Install Ollama: https://ollama.ai
-#   2. Pull the model:  ollama pull llama3.2
-#   3. Ollama runs on localhost:11434 by default
-#
-# The llm:// prefix tells Binex to use the LLM adapter with litellm.
-# Model format: llm://ollama/<model-name>
-#
-# Run:  binex run examples/ollama-research.yaml query="Impact of AI on healthcare"
-# Debug: binex debug <run_id>
-
-name: ollama-research (local)
-description: "Research pipeline using local Ollama (gemma3:4b)"
-
+name: my-workflow
 nodes:
-  # Step 1: Break the user's query into sub-questions
+  input:
+    agent: human://input
+    outputs:
+      - output
+    inputs:
+      query: ${user.query}
   planner:
-    agent: "llm://ollama/llama3.2"
-    system_prompt: "file://prompts/gen-research-planner.md"
-    inputs:
-      query: "${user.query}"        # user provides the research topic
-    outputs: [plan]
+    agent: llm://ollama/llama3.2
+    outputs:
+      - output
+    system_prompt: >
+      You are a research planner. Your job is to understand what the user wants and produce a clear research brief for
+      the next agent.
 
-  # Step 2: Answer the sub-questions with facts
+
+      Instructions:
+
+      1. Read the user's request carefully
+
+      2. Identify the core topic and what kind of answer they expect
+
+      3. Formulate 2-4 specific research questions that, when answered, will fully satisfy the request
+
+      4. Specify what kind of information to look for (facts, comparisons, examples, opinions, data)
+
+
+      Output format:
+
+
+      **Topic**: [one-sentence description of what the user is asking about]
+
+
+      **Research Questions**:
+
+      1. [Specific question that targets the main aspect of the request]
+
+      2. [Specific question that covers a secondary angle or context]
+
+      3. [Specific question about practical details, examples, or recommendations]
+
+
+      **Expected Output**: [describe what the final answer should look like — a list, comparison, summary, guide, etc.]
+
+
+      **Key Constraints**: [any limitations mentioned by the user — time period, language, format, scope]
+
+
+      Rules:
+
+      - Do NOT answer the questions yourself — your job is to define WHAT to research, not to do the research
+
+      - Questions must be specific enough that a researcher can find concrete answers
+
+      - Each question should target a different aspect — no overlap
+
+      - If the user's request is vague, interpret it reasonably and note your assumptions
+    depends_on:
+      - input
+    inputs:
+      input: ${input.output}
   researcher:
-    agent: "llm://ollama/llama3.2"
-    system_prompt: "file://prompts/gen-researcher.md"
-    inputs:
-      questions: "${planner.plan}"  # runtime reference to planner's output
-    outputs: [findings]
-    depends_on: [planner]
+    agent: llm://openrouter/google/gemma-3-27b-it:free
+    outputs:
+      - output
+    system_prompt: |
+      You are a researcher. Investigate the assigned question thoroughly and report findings.
 
-  # Step 3: Synthesize findings into a report
+      Instructions:
+      - Lead with the most important finding
+      - Support each claim with specific data, numbers, or named sources
+      - Distinguish established facts from emerging evidence
+      - Stay focused on the assigned question — do not drift to adjacent topics
+
+      Output format:
+
+      **Key Finding**: [one-sentence answer]
+
+      **Evidence**:
+      - [fact with source]
+      - [fact with source]
+      - [fact with source]
+
+      **Limitations**: [what this analysis doesn't cover]
+
+      Keep response under 200 words.
+    config:
+      max_tokens: 3096
+      temperature: 0.3
+    depends_on:
+      - planner
+    inputs:
+      planner: ${planner.output}
   summarizer:
-    agent: "llm://ollama/llama3.2"
-    system_prompt: "file://prompts/gen-research-synthesizer.md"
-    inputs:
-      research: "${researcher.findings}"
-    outputs: [report]
-    depends_on: [researcher]
+    agent: llm://ollama/llama3.2
+    outputs:
+      - output
+    system_prompt: >
+      # Detailed Executive Summarizer
 
-# Longer deadline for local LLM inference (can be slow on CPU)
-defaults:
-  deadline_ms: 300000               # 5-minute deadline
-  retry_policy:
-    max_retries: 1
-    backoff: exponential
+
+      You are an executive summarizer producing comprehensive reports with supporting detail and appendices.
+
+
+      Structure your output as follows:
+
+      1. **Executive Summary** — 1 paragraph distilling the core message
+
+      2. **Background** — context and scope of the analysis
+
+      3. **Key Findings** — detailed findings organized by theme, with supporting evidence
+
+      4. **Analysis** — implications of the findings, trade-offs, and scenarios
+
+      5. **Recommendations** — prioritized actions with expected impact and effort
+
+      6. **Appendix** — raw data, methodology notes, and supplementary detail
+
+
+      Write for an audience that will read the summary and selectively dive into sections. Use clear headings, numbered
+      lists, and cross-references. Support every conclusion with data or reasoning from the source material.
+    config:
+      max_tokens: 8096
+    depends_on:
+      - researcher
+      - planner
+    inputs:
+      researcher: ${researcher.output}
+      planner: ${planner.output}
+  llm_translator:
+    agent: llm://ollama/owl/t-lite
+    outputs:
+      - output
+    system_prompt: >
+      You are an adaptive translator. Translate text to Russian while adjusting style, register, and complexity to match
+      the target audience and context.
+
+
+      Adaptation dimensions:
+
+      1. **Register** — match the formality level appropriate for the target context (casual, professional, academic,
+      legal)
+
+      2. **Complexity** — adjust sentence structure and vocabulary to the audience's proficiency level
+
+      3. **Cultural references** — replace source-culture idioms and references with target-culture equivalents
+
+      4. **Tone** — preserve the emotional tone while adapting expression to target-language norms
+
+
+      Process:
+
+      - Translate for meaning first, then adapt for audience
+
+      - Preserve the author's intent even when changing specific expressions
+
+      - Flag any passages where adaptation significantly changes the surface meaning
+
+
+      Output the translated to Russian text followed by a brief adaptation note listing the key adjustments made and
+      why. If any passages resist clean adaptation, explain the tradeoff you chose.
+    depends_on:
+      - summarizer
+    inputs:
+      summarizer: ${summarizer.output}
+  human-output_5:
+    agent: human://output
+    outputs:
+      - output
+    depends_on:
+      - llm_translator
+    inputs:
+      llm_translator: ${llm_translator.output}

@@ -25,7 +25,7 @@
 
 ## v1.0 — Production Ready
 
-- [ ] Web UI for execution visualization and timeline
+- [x] Web UI for execution visualization and timeline
 - [ ] Distributed execution across multiple runtimes
 - [ ] Workflow templates marketplace
 - [ ] Role-based access control for shared deployments

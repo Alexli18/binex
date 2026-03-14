@@ -160,6 +160,54 @@ class HumanInputAdapter:
         ]
         return ExecutionResult(artifacts=artifacts)
 
+    async def cancel(self, task_id: str) -> None:  # HumanInputAdapter
+        pass
+
+    async def health(self) -> AgentHealth:
+        return AgentHealth.ALIVE
+
+
+class HumanOutputAdapter:
+    """Adapter that displays workflow results to the user.
+
+    Use ``human://output`` as the agent prefix in workflow YAML.
+    Collects input artifacts and presents them as a formatted summary.
+    """
+
+    async def execute(
+        self,
+        task: TaskNode,
+        input_artifacts: list[Artifact],
+        trace_id: str,
+    ) -> ExecutionResult:
+        label = task.system_prompt or "Workflow Output"
+        click.echo(f"\n{'='*50}", err=True)
+        click.echo(f"  {label}", err=True)
+        click.echo(f"{'='*50}", err=True)
+
+        combined: list[str] = []
+        for art in input_artifacts:
+            content_str = art.content if isinstance(art.content, str) else str(art.content)
+            click.echo(f"\n[{art.type}] from {art.lineage.produced_by}:", err=True)
+            click.echo(f"  {content_str}", err=True)
+            combined.append(content_str)
+
+        click.echo(f"\n{'='*50}\n", err=True)
+
+        artifacts = [
+            Artifact(
+                id=f"art_{uuid4().hex[:12]}",
+                run_id=task.run_id,
+                type="human_output",
+                content="\n\n".join(combined),
+                lineage=Lineage(
+                    produced_by=task.node_id,
+                    derived_from=[a.id for a in input_artifacts],
+                ),
+            )
+        ]
+        return ExecutionResult(artifacts=artifacts)
+
     async def cancel(self, task_id: str) -> None:
         pass
 
