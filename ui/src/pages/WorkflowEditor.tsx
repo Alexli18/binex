@@ -457,8 +457,22 @@ export default function WorkflowEditor() {
         {/* File sidebar */}
         {showFiles && (
         <div className="w-48 border-r border-slate-700 bg-slate-900 overflow-y-auto flex-shrink-0">
-          <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Workflows
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Workflows</span>
+            <button
+              onClick={() => {
+                setSelectedPath(null);
+                setContent('');
+                setOriginalContent('');
+                setRfNodes([]);
+                setRfEdges([]);
+                setMode('visual');
+              }}
+              className="text-[10px] px-1.5 py-0.5 rounded bg-blue-600 text-white hover:bg-blue-500"
+              title="Create new workflow"
+            >
+              + New
+            </button>
           </div>
           {loadingList ? (
             <div className="px-3 py-2 text-sm text-slate-500">Loading...</div>
