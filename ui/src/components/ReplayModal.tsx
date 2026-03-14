@@ -43,7 +43,7 @@ export function ReplayModal({
 
     // TODO: prompt swaps require backend support — for now just swap model
     try {
-      const result = await api.post<{ run_id: string; status: string }>('/replay', {
+      const result = await api.post<{ run_id: string; status: string }>('/runs/replay', {
         run_id: runId,
         from_step: nodeId,
         workflow_path: workflowPath,
