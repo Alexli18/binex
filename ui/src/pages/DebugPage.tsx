@@ -87,7 +87,7 @@ function NodeDetail({ node }: { node: DebugNode }) {
           {node.system_prompt && (
             <div>
               <span className="text-sm text-slate-500">System Prompt</span>
-              <pre className="mt-0.5 text-xs text-slate-400 bg-slate-900 rounded p-2 whitespace-pre-wrap max-h-24 overflow-y-auto">
+              <pre className="mt-1 text-xs text-slate-300 bg-slate-900 border border-slate-700 rounded-lg p-3 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
                 {node.system_prompt}
               </pre>
             </div>
