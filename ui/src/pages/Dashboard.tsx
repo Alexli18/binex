@@ -3,8 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useRuns, useCreateRun } from '../hooks/useRuns';
 import { useWorkflows } from '../hooks/useWorkflows';
 import { StatusBadge } from '../components/common/StatusBadge';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ErrorState } from '@/components/layout/ErrorState';
+import { LoadingState } from '@/components/layout/LoadingState';
 import { Button } from '@/components/ui/button';
-import { Rocket, FileCode, Bug, Sparkles, X } from 'lucide-react';
+import { Rocket, FileCode, Bug, Sparkles, X, Plus } from 'lucide-react';
 
 const STATUS_OPTIONS = ['all', 'completed', 'running', 'failed', 'cancelled'] as const;
 
@@ -49,7 +54,7 @@ function WhatsNew() {
       <ul className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
         {WHATS_NEW_ITEMS.map((item) => (
           <li key={item} className="text-xs text-slate-400 flex items-start gap-1.5">
-            <span className="text-blue-500 mt-0.5">•</span>
+            <span className="text-blue-500 mt-0.5">&bull;</span>
             {item}
           </li>
         ))}
@@ -107,7 +112,7 @@ function NewRunModal({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="bg-slate-800 rounded-lg shadow-xl border border-slate-700 w-full max-w-md p-6"
+        className="bg-slate-800 rounded-modal shadow-modal border border-slate-700 w-full max-w-md p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-semibold text-slate-100 mb-4">New Run</h3>
@@ -119,7 +124,7 @@ function NewRunModal({ onClose }: { onClose: () => void }) {
           <select
             value={selectedWorkflow}
             onChange={(e) => setSelectedWorkflow(e.target.value)}
-            className="w-full border border-slate-600 rounded px-3 py-1.5 text-sm bg-slate-700 text-slate-200 mb-3"
+            className="w-full border border-slate-600 rounded-md px-3 py-1.5 text-sm bg-slate-700 text-slate-200 mb-3 focus:outline-none focus:border-blue-500"
             aria-label="Select workflow"
           >
             <option value="">-- Select a workflow --</option>
@@ -139,26 +144,23 @@ function NewRunModal({ onClose }: { onClose: () => void }) {
           onChange={(e) => setVariablesText(e.target.value)}
           placeholder={"topic=AI\nlanguage=en"}
           rows={3}
-          className="w-full border border-slate-600 rounded px-3 py-1.5 text-sm font-mono bg-slate-700 text-slate-200 mb-3"
+          className="w-full border border-slate-600 rounded-md px-3 py-1.5 text-sm font-mono bg-slate-700 text-slate-200 mb-3 focus:outline-none focus:border-blue-500"
           aria-label="Variables"
         />
 
         {errorMsg && <p className="text-red-400 text-sm mb-3">{errorMsg}</p>}
 
         <div className="flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 text-sm border border-slate-600 rounded text-slate-300 hover:bg-slate-700"
-          >
+          <Button onClick={onClose} variant="outline" size="sm">
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSubmit}
             disabled={createRun.isPending}
-            className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-50"
+            size="sm"
           >
             {createRun.isPending ? 'Starting...' : 'Start Run'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -167,7 +169,7 @@ function NewRunModal({ onClose }: { onClose: () => void }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { data: runs, isLoading, error } = useRuns();
+  const { data: runs, isLoading, error, refetch } = useRuns();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [showNewRun, setShowNewRun] = useState(false);
@@ -183,41 +185,50 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <p className="text-slate-500">Loading runs...</p>
-      </div>
+      <PageShell>
+        <LoadingState message="Loading runs..." />
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6">
-        <p className="text-red-400">Failed to load runs: {(error as Error).message}</p>
-      </div>
+      <PageShell>
+        <Breadcrumb items={[{ label: 'Dashboard' }]} className="mb-4" />
+        <ErrorState
+          title="Failed to load runs"
+          message={(error as Error).message}
+          onRetry={() => refetch()}
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-slate-100">Dashboard</h2>
-        <button
-          onClick={() => setShowNewRun(true)}
-          className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-500"
-        >
-          New Run
-        </button>
-      </div>
+    <PageShell>
+      <Breadcrumb items={[{ label: 'Dashboard' }]} className="mb-4" />
+
+      <PageHeader
+        title="Dashboard"
+        actions={
+          <Button onClick={() => setShowNewRun(true)} size="sm">
+            <Plus className="w-4 h-4 mr-1.5" />
+            New Run
+          </Button>
+        }
+      />
 
       {showNewRun && <NewRunModal onClose={() => setShowNewRun(false)} />}
 
-      <WhatsNew />
+      <div className="mt-6">
+        <WhatsNew />
+      </div>
 
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-4 mt-4 mb-4">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="border border-slate-600 rounded px-3 py-1.5 text-sm bg-slate-800 text-slate-200"
+          className="border border-slate-600 rounded-md px-3 py-1.5 text-sm bg-slate-800 text-slate-200 focus:outline-none focus:border-blue-500"
           aria-label="Filter by status"
         >
           {STATUS_OPTIONS.map((s) => (
@@ -232,7 +243,7 @@ export default function Dashboard() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by run ID..."
-          className="border border-slate-600 rounded px-3 py-1.5 text-sm w-64 bg-slate-800 text-slate-200 placeholder:text-slate-500"
+          className="border border-slate-600 rounded-md px-3 py-1.5 text-sm w-64 bg-slate-800 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
           aria-label="Search by run ID"
         />
       </div>
@@ -259,7 +270,7 @@ export default function Dashboard() {
       ) : filteredRuns.length === 0 ? (
         <p className="text-slate-500">No runs match your filters</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-700">
+        <div className="overflow-x-auto rounded-card border border-slate-700">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-800">
               <tr>
@@ -314,6 +325,6 @@ export default function Dashboard() {
           </table>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

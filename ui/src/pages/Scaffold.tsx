@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Wand2, Layout, FileText, ArrowRight, Copy, Check } from 'lucide-react';
 import { usePatterns, useScaffold } from '../hooks/useUtilities';
 import type { Pattern } from '../hooks/useUtilities';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
 
 type Mode = 'dsl' | 'template' | 'blank';
 
@@ -37,7 +41,7 @@ function PatternCard({
   return (
     <button
       onClick={() => onSelect(pattern)}
-      className="text-left border border-slate-700 rounded-lg p-4 bg-slate-800/50 hover:bg-slate-700/50 hover:border-slate-600 transition-colors"
+      className="text-left border border-slate-700 rounded-card p-4 bg-slate-800/50 hover:bg-slate-700/50 hover:border-slate-600 transition-colors"
     >
       <h4 className="font-medium text-slate-200">{pattern.name}</h4>
       <p className="text-xs text-slate-400 mt-1">{pattern.description}</p>
@@ -94,166 +98,171 @@ export default function Scaffold() {
   };
 
   return (
-    <div className="p-6 flex flex-col gap-6 max-w-4xl">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Wand2 size={24} className="text-purple-400" />
-        <h1 className="text-xl font-bold">Create Workflow</h1>
-      </div>
+    <PageShell className="max-w-4xl">
+      <Breadcrumb items={[{ label: 'Workflows', href: '/workflows' }, { label: 'Create Workflow' }]} className="mb-4" />
 
-      {/* Mode tabs */}
-      <div className="flex gap-1 border border-slate-700 rounded-lg bg-slate-800/50 p-1 w-fit">
-        {TAB_CONFIG.map(({ mode: m, label, icon: Icon }) => (
-          <button
-            key={m}
-            onClick={() => setMode(m)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm rounded-md transition-colors ${
-              mode === m
-                ? 'bg-blue-600 text-white'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-            }`}
-          >
-            <Icon size={16} />
-            {label}
-          </button>
-        ))}
-      </div>
+      <PageHeader title="Create Workflow" />
 
-      {/* DSL Mode */}
-      {mode === 'dsl' && (
-        <div className="space-y-4">
-          <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-4 space-y-3">
-            <label className="block text-sm text-slate-400">
-              DSL Expression
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={expression}
-                onChange={(e) => setExpression(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                placeholder='e.g. "A -> B, C -> D"'
-                className="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 font-mono"
-              />
-              <button
-                onClick={handleGenerate}
-                disabled={!expression.trim() || scaffold.isPending}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {scaffold.isPending ? (
-                  'Generating...'
-                ) : (
-                  <>
-                    <ArrowRight size={16} />
-                    Generate
-                  </>
-                )}
-              </button>
+      <div className="mt-6 flex flex-col gap-6">
+        {/* Mode tabs */}
+        <div className="flex gap-1 border border-slate-700 rounded-lg bg-slate-800/50 p-1 w-fit">
+          {TAB_CONFIG.map(({ mode: m, label, icon: Icon }) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`flex items-center gap-2 px-4 py-2 text-sm rounded-md transition-colors ${
+                mode === m
+                  ? 'bg-blue-600 text-white'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+              }`}
+            >
+              <Icon size={16} />
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* DSL Mode */}
+        {mode === 'dsl' && (
+          <div className="space-y-4">
+            <div className="border border-slate-700 rounded-card bg-slate-800/50 p-4 space-y-3">
+              <label className="block text-sm text-slate-400">
+                DSL Expression
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={expression}
+                  onChange={(e) => setExpression(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+                  placeholder='e.g. "A -> B, C -> D"'
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 font-mono"
+                />
+                <Button
+                  onClick={handleGenerate}
+                  disabled={!expression.trim() || scaffold.isPending}
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {scaffold.isPending ? (
+                    'Generating...'
+                  ) : (
+                    <>
+                      <ArrowRight size={16} className="mr-1.5" />
+                      Generate
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-slate-500">
+                Use arrows to define flow: "A -&gt; B" for sequential, "A -&gt; B, C" for parallel branching.
+              </p>
             </div>
-            <p className="text-xs text-slate-500">
-              Use arrows to define flow: "A -&gt; B" for sequential, "A -&gt; B, C" for parallel branching.
-            </p>
+
+            {scaffold.error && (
+              <div className="rounded-md bg-red-900/30 border border-red-700/50 p-3 text-sm text-red-300">
+                {scaffold.error.message}
+              </div>
+            )}
+
+            {generatedYaml && (
+              <div className="border border-slate-700 rounded-card overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700">
+                  <span className="text-sm font-medium text-slate-300">
+                    Generated YAML
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => handleCopy(generatedYaml)}
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                    >
+                      {copied ? <Check size={12} className="mr-1" /> : <Copy size={12} className="mr-1" />}
+                      {copied ? 'Copied' : 'Copy'}
+                    </Button>
+                    <Button
+                      onClick={() => handleOpenInEditor(generatedYaml)}
+                      size="sm"
+                      className="h-7 text-xs"
+                    >
+                      Open in Editor
+                    </Button>
+                  </div>
+                </div>
+                <pre className="p-4 text-xs text-slate-300 whitespace-pre-wrap font-mono overflow-x-auto max-h-96 overflow-y-auto bg-slate-900">
+                  {generatedYaml}
+                </pre>
+              </div>
+            )}
           </div>
+        )}
 
-          {scaffold.error && (
-            <div className="rounded-md bg-red-900/30 border border-red-700/50 p-3 text-sm text-red-300">
-              {scaffold.error.message}
-            </div>
-          )}
+        {/* Template Mode */}
+        {mode === 'template' && (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-400">
+              Select a predefined pattern to generate a workflow.
+            </p>
+            {loadingPatterns ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="h-28 bg-slate-800 rounded-card animate-pulse"
+                  />
+                ))}
+              </div>
+            ) : !patternsData?.patterns || patternsData.patterns.length === 0 ? (
+              <div className="border border-slate-700 rounded-card bg-slate-800/50 p-8 text-center">
+                <p className="text-slate-400">No patterns available.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {patternsData.patterns.map((pattern) => (
+                  <PatternCard
+                    key={pattern.name}
+                    pattern={pattern}
+                    onSelect={handleSelectPattern}
+                  />
+                ))}
+              </div>
+            )}
 
-          {generatedYaml && (
-            <div className="border border-slate-700 rounded-lg bg-slate-800/50 overflow-hidden">
+            {scaffold.isPending && (
+              <p className="text-sm text-slate-400">Generating workflow...</p>
+            )}
+            {scaffold.error && (
+              <div className="rounded-md bg-red-900/30 border border-red-700/50 p-3 text-sm text-red-300">
+                {scaffold.error.message}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Blank Mode */}
+        {mode === 'blank' && (
+          <div className="space-y-4">
+            <div className="border border-slate-700 rounded-card overflow-hidden">
               <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700">
                 <span className="text-sm font-medium text-slate-300">
-                  Generated YAML
+                  Starter Template
                 </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleCopy(generatedYaml)}
-                    className="flex items-center gap-1 px-2.5 py-1 text-xs rounded border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors"
-                  >
-                    {copied ? <Check size={12} /> : <Copy size={12} />}
-                    {copied ? 'Copied' : 'Copy'}
-                  </button>
-                  <button
-                    onClick={() => handleOpenInEditor(generatedYaml)}
-                    className="flex items-center gap-1 px-2.5 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                  >
-                    Open in Editor
-                  </button>
-                </div>
+                <Button
+                  onClick={() => handleOpenInEditor(BLANK_YAML)}
+                  size="sm"
+                  className="h-7 text-xs"
+                >
+                  Open in Editor
+                </Button>
               </div>
-              <pre className="p-4 text-xs text-slate-300 whitespace-pre-wrap font-mono overflow-x-auto max-h-96 overflow-y-auto bg-slate-900">
-                {generatedYaml}
+              <pre className="p-4 text-xs text-slate-300 whitespace-pre-wrap font-mono overflow-x-auto bg-slate-900">
+                {BLANK_YAML}
               </pre>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Template Mode */}
-      {mode === 'template' && (
-        <div className="space-y-4">
-          <p className="text-sm text-slate-400">
-            Select a predefined pattern to generate a workflow.
-          </p>
-          {loadingPatterns ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="h-28 bg-slate-800 rounded-lg animate-pulse"
-                />
-              ))}
-            </div>
-          ) : !patternsData?.patterns || patternsData.patterns.length === 0 ? (
-            <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-8 text-center">
-              <p className="text-slate-400">No patterns available.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {patternsData.patterns.map((pattern) => (
-                <PatternCard
-                  key={pattern.name}
-                  pattern={pattern}
-                  onSelect={handleSelectPattern}
-                />
-              ))}
-            </div>
-          )}
-
-          {scaffold.isPending && (
-            <p className="text-sm text-slate-400">Generating workflow...</p>
-          )}
-          {scaffold.error && (
-            <div className="rounded-md bg-red-900/30 border border-red-700/50 p-3 text-sm text-red-300">
-              {scaffold.error.message}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Blank Mode */}
-      {mode === 'blank' && (
-        <div className="space-y-4">
-          <div className="border border-slate-700 rounded-lg bg-slate-800/50 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-medium text-slate-300">
-                Starter Template
-              </span>
-              <button
-                onClick={() => handleOpenInEditor(BLANK_YAML)}
-                className="flex items-center gap-1 px-2.5 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-              >
-                Open in Editor
-              </button>
-            </div>
-            <pre className="p-4 text-xs text-slate-300 whitespace-pre-wrap font-mono overflow-x-auto bg-slate-900">
-              {BLANK_YAML}
-            </pre>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </PageShell>
   );
 }

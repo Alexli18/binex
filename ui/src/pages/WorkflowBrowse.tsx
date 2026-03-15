@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileCode, Plus, CheckCircle, Pencil } from 'lucide-react';
 import { useWorkflows, useWorkflow } from '../hooks/useWorkflows';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ErrorState } from '@/components/layout/ErrorState';
+import { LoadingState } from '@/components/layout/LoadingState';
+import { EmptyState } from '@/components/layout/EmptyState';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import yaml from 'js-yaml';
 
@@ -35,121 +42,125 @@ function ValidateButton({ path }: { path: string }) {
   };
 
   return (
-    <button
+    <Button
       onClick={handleValidate}
       disabled={validating}
-      className="flex items-center gap-1 px-2.5 py-1 text-xs rounded border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors"
+      variant="outline"
+      size="sm"
+      className="h-7 text-xs"
       title="Validate workflow YAML"
     >
-      <CheckCircle size={12} />
+      <CheckCircle size={12} className="mr-1" />
       Validate
-    </button>
+    </Button>
   );
 }
 
 export default function WorkflowBrowse() {
   const navigate = useNavigate();
-  const { data: workflows, isLoading, error } = useWorkflows();
+  const { data: workflows, isLoading, error, refetch } = useWorkflows();
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
-        <div className="h-8 w-48 bg-slate-800 rounded animate-pulse" />
-        <div className="h-64 bg-slate-800 rounded animate-pulse" />
-      </div>
+      <PageShell>
+        <LoadingState message="Loading workflows..." />
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6">
-        <p className="text-red-400">
-          Failed to load workflows: {(error as Error).message}
-        </p>
-      </div>
+      <PageShell>
+        <Breadcrumb items={[{ label: 'Workflows' }]} className="mb-4" />
+        <ErrorState
+          title="Failed to load workflows"
+          message={(error as Error).message}
+          onRetry={() => refetch()}
+        />
+      </PageShell>
     );
   }
 
   return (
-    <div className="p-6 flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <FileCode size={24} className="text-blue-400" />
-          <h1 className="text-xl font-bold">Workflows</h1>
-        </div>
-        <button
-          onClick={() => navigate('/scaffold')}
-          className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          <Plus size={16} />
-          Create New
-        </button>
-      </div>
+    <PageShell>
+      <Breadcrumb items={[{ label: 'Workflows' }]} className="mb-4" />
 
-      {/* Table */}
-      {!workflows || workflows.length === 0 ? (
-        <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-8 text-center">
-          <FileCode size={40} className="mx-auto text-slate-600 mb-3" />
-          <p className="text-slate-400">No workflow files found.</p>
-          <p className="text-sm text-slate-500 mt-1">
-            Create one with the Scaffold wizard or place YAML files in your project.
-          </p>
-        </div>
-      ) : (
-        <div className="border border-slate-700 rounded-lg bg-slate-800/50 overflow-hidden">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left px-4 py-3 font-medium text-slate-400">
-                  File Path
-                </th>
-                <th className="text-right px-4 py-3 font-medium text-slate-400">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-700/50">
-              {workflows.map((path) => (
-                <tr
-                  key={path}
-                  className="hover:bg-slate-700/30 cursor-pointer transition-colors"
-                  onClick={() =>
-                    navigate(`/editor?file=${encodeURIComponent(path)}`)
-                  }
-                >
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <FileCode size={16} className="text-slate-500 shrink-0" />
-                      <span className="font-mono text-xs text-slate-200 truncate">
-                        {path}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(
-                            `/editor?file=${encodeURIComponent(path)}`,
-                          );
-                        }}
-                        className="flex items-center gap-1 px-2.5 py-1 text-xs rounded border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors"
-                        title="Edit workflow"
-                      >
-                        <Pencil size={12} />
-                        Edit
-                      </button>
-                      <ValidateButton path={path} />
-                    </div>
-                  </td>
+      <PageHeader
+        title="Workflows"
+        description="Browse and manage your workflow files"
+        actions={
+          <Button onClick={() => navigate('/scaffold')} size="sm">
+            <Plus size={16} className="mr-1.5" />
+            Create New
+          </Button>
+        }
+      />
+
+      <div className="mt-6">
+        {!workflows || workflows.length === 0 ? (
+          <EmptyState
+            icon={FileCode}
+            title="No workflow files found"
+            description="Create one with the Scaffold wizard or place YAML files in your project."
+            action={{ label: 'Create Workflow', onClick: () => navigate('/scaffold') }}
+          />
+        ) : (
+          <div className="border border-slate-700 rounded-card overflow-hidden">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-700 bg-slate-800/50">
+                  <th className="text-left px-4 py-3 font-medium text-slate-400">
+                    File Path
+                  </th>
+                  <th className="text-right px-4 py-3 font-medium text-slate-400">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+              </thead>
+              <tbody className="divide-y divide-slate-700/50">
+                {workflows.map((path) => (
+                  <tr
+                    key={path}
+                    className="hover:bg-slate-700/30 cursor-pointer transition-colors"
+                    onClick={() =>
+                      navigate(`/editor?file=${encodeURIComponent(path)}`)
+                    }
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <FileCode size={16} className="text-slate-500 shrink-0" />
+                        <span className="font-mono text-xs text-slate-200 truncate">
+                          {path}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(
+                              `/editor?file=${encodeURIComponent(path)}`,
+                            );
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          title="Edit workflow"
+                        >
+                          <Pencil size={12} className="mr-1" />
+                          Edit
+                        </Button>
+                        <ValidateButton path={path} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </PageShell>
   );
 }
