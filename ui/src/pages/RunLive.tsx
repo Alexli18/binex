@@ -5,6 +5,7 @@ import { StatusBadge } from '../components/common/StatusBadge';
 import { useRun, useCancelRun } from '../hooks/useRuns';
 import { useSSE } from '../hooks/useSSE';
 import type { RunEvent } from '../lib/types';
+import { toast } from 'sonner';
 
 function EventLogItem({ event }: { event: RunEvent }) {
   const time = new Date(event.timestamp).toLocaleTimeString();
@@ -42,6 +43,13 @@ export default function RunLive() {
   useEffect(() => {
     const lastEvent = events[events.length - 1];
     if (lastEvent && (lastEvent.type === 'run:completed' || lastEvent.type === 'run:cancelled')) {
+      if (lastEvent.status === 'failed') {
+        toast.error('Run failed');
+      } else if (lastEvent.type === 'run:cancelled') {
+        toast.warning('Run cancelled');
+      } else {
+        toast.success('Run completed');
+      }
       if (outputResult) return; // Don't redirect while user is viewing output
       const timer = setTimeout(() => navigate(`/runs/${runId}`), 1500);
       return () => clearTimeout(timer);

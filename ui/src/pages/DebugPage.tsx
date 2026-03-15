@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDebug } from '../hooks/useAnalysis';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+import { HelpTooltip } from '@/components/common/HelpTooltip';
 import { ReplayModal } from '../components/ReplayModal';
 import {
   DebugNodeList,
@@ -57,19 +59,23 @@ export default function DebugPage() {
   return (
     <div className="p-6 flex flex-col gap-4 h-full">
       {/* Breadcrumb */}
-      <div className="text-sm text-slate-500">
-        <Link to="/" className="hover:text-slate-300">Dashboard</Link>{' '}
-        /{' '}
-        <Link to={`/runs/${runId}`} className="hover:text-slate-300">
-          {runId?.slice(0, 8)}...
-        </Link>{' '}
-        / <span className="text-slate-200">Debug</span>
-      </div>
+      <Breadcrumb items={[
+        { label: 'Home', href: '/' },
+        { label: 'Runs', href: '/' },
+        { label: (runId?.slice(0, 8) ?? '') + '...', href: `/runs/${runId}` },
+        { label: 'Debug' },
+      ]} />
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Debug</h1>
+          <h1 className="text-xl font-bold inline-flex items-center gap-2">
+            Debug
+            <HelpTooltip
+              side="right"
+              content="Inspect each node's inputs, outputs, timing, and errors. Click a node to see details, or use Replay to re-run with modified parameters."
+            />
+          </h1>
           {data?.workflow_name && (
             <p className="text-sm text-slate-400 mt-0.5">{data.workflow_name}</p>
           )}

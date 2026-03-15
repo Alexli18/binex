@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTrace } from '../hooks/useAnalysis';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { TraceGantt } from '@/components/trace/TraceGantt';
 import { TraceControls } from '@/components/trace/TraceControls';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -53,14 +54,12 @@ export default function TracePage() {
   return (
     <div className="p-6 flex flex-col gap-4">
       {/* Breadcrumb */}
-      <div className="text-sm text-slate-500">
-        <Link to="/" className="hover:text-slate-300">Dashboard</Link>{' '}
-        /{' '}
-        <Link to={`/runs/${runId}`} className="hover:text-slate-300">
-          {runId?.slice(0, 8)}...
-        </Link>{' '}
-        / <span className="text-slate-200">Trace</span>
-      </div>
+      <Breadcrumb items={[
+        { label: 'Home', href: '/' },
+        { label: 'Runs', href: '/' },
+        { label: (runId?.slice(0, 8) ?? '') + '...', href: `/runs/${runId}` },
+        { label: 'Trace' },
+      ]} />
 
       <TraceControls
         runId={runId}

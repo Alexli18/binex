@@ -1,10 +1,16 @@
 import { useState, useMemo, useEffect, Fragment } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useRun, useRecords } from '../hooks/useRuns';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useRun, useRecords, useCreateRun } from '../hooks/useRuns';
 import { useArtifacts, useCosts } from '../hooks/useArtifacts';
+import { useWorkflow } from '../hooks/useWorkflows';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { WorkflowGraph } from '../components/dag/WorkflowGraph';
+import { Button } from '@/components/ui/button';
+import { Bug, Pencil, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
 import type { WorkflowNode, WorkflowEdge } from '../lib/yaml-to-graph';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+import yaml from 'js-yaml';
 
 type Tab = 'artifacts' | 'costs';
 
@@ -22,6 +28,8 @@ export default function RunDetail() {
   const { data: records } = useRecords(runId);
   const { data: artifacts } = useArtifacts(runId);
   const { data: costSummary } = useCosts(runId);
+  const { data: workflowData } = useWorkflow(run?.workflow_path ?? null);
+  const createRun = useCreateRun();
 
   const [activeTab, setActiveTab] = useState<Tab>('artifacts');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -37,7 +45,24 @@ export default function RunDetail() {
     }));
   }, [records]);
 
-  const graphEdges: WorkflowEdge[] = useMemo(() => [], []);
+  const graphEdges: WorkflowEdge[] = useMemo(() => {
+    if (!workflowData?.content) return [];
+    try {
+      const parsed = yaml.load(workflowData.content) as { nodes?: Record<string, { depends_on?: string[] }> };
+      if (!parsed?.nodes) return [];
+      const edges: WorkflowEdge[] = [];
+      for (const [id, spec] of Object.entries(parsed.nodes)) {
+        if (spec.depends_on) {
+          for (const dep of spec.depends_on) {
+            edges.push({ id: `${dep}-${id}`, source: dep, target: id });
+          }
+        }
+      }
+      return edges;
+    } catch {
+      return [];
+    }
+  }, [workflowData]);
 
   const selectedRecord = useMemo(
     () => records?.find((r) => r.task_id === selectedNodeId) ?? null,
@@ -94,18 +119,58 @@ export default function RunDetail() {
   return (
     <div className="p-6 flex flex-col gap-6">
       {/* Breadcrumb */}
-      <div className="text-sm text-slate-400">
-        <Link to="/" className="hover:text-slate-100">
-          Dashboard
-        </Link>{' '}
-        / <span className="text-slate-100">{run.run_id}</span>
-      </div>
+      <Breadcrumb items={[
+        { label: 'Home', href: '/' },
+        { label: 'Runs', href: '/' },
+        { label: run.run_id.slice(0, 8) + '...' },
+      ]} />
 
       {/* Header */}
       <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-bold">{run.workflow_name}</h2>
-          <StatusBadge status={run.status} />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (run.workflow_path) {
+                  createRun.mutate(
+                    { workflow_path: run.workflow_path },
+                    {
+                      onSuccess: (data) => {
+                        toast.success('Run started');
+                        navigate(data.status === 'running' ? `/runs/${data.run_id}/live` : `/runs/${data.run_id}`);
+                      },
+                      onError: (err) => toast.error(`Re-run failed: ${err.message}`),
+                    },
+                  );
+                }
+              }}
+              disabled={!run.workflow_path || createRun.isPending}
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              Re-run
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/editor?file=${encodeURIComponent(run.workflow_path ?? '')}`)}
+              disabled={!run.workflow_path}
+            >
+              <Pencil className="w-3.5 h-3.5 mr-1.5" />
+              Edit Workflow
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/runs/${runId}/debug`)}
+            >
+              <Bug className="w-3.5 h-3.5 mr-1.5" />
+              Debug
+            </Button>
+            <StatusBadge status={run.status} />
+          </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-300">
           <div>

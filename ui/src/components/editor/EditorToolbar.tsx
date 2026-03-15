@@ -1,6 +1,7 @@
 import { FolderOpen, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { HelpTooltip } from '@/components/common/HelpTooltip';
 
 export type EditorMode = 'visual' | 'yaml';
 
@@ -42,6 +43,16 @@ export function EditorToolbar({
       <span className="text-sm font-medium text-slate-200">
         {selectedPath ?? (hasContent ? '(new workflow)' : 'No file selected')}
       </span>
+      <HelpTooltip
+        side="bottom"
+        content={
+          <span>
+            Agent prefixes: <code>llm://</code> (LLM), <code>local://</code> (Python),{' '}
+            <code>a2a://</code> (remote), <code>human://</code> (approval/input).
+            Use <code>depends_on</code> for DAG edges.
+          </span>
+        }
+      />
       {isDirty && (
         <span className="text-xs text-amber-400 font-medium">(unsaved changes)</span>
       )}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
 import ReactFlow, {
   Background,
   Controls,
@@ -180,16 +181,12 @@ export default function LineagePage() {
   return (
     <div className="p-6 flex flex-col gap-4 h-full">
       {/* Breadcrumb */}
-      <div className="text-sm text-slate-500">
-        <Link to="/" className="hover:text-slate-300">
-          Dashboard
-        </Link>{' '}
-        /{' '}
-        <Link to={`/runs/${runId}`} className="hover:text-slate-300">
-          {runId?.slice(0, 8)}...
-        </Link>{' '}
-        / <span className="text-slate-200">Lineage</span>
-      </div>
+      <Breadcrumb items={[
+        { label: 'Home', href: '/' },
+        { label: 'Runs', href: '/' },
+        { label: (runId?.slice(0, 8) ?? '') + '...', href: `/runs/${runId}` },
+        { label: 'Lineage' },
+      ]} />
 
       {/* Header */}
       <div className="flex items-center justify-between">

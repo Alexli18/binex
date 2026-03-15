@@ -1,6 +1,51 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileCode, Plus, Play, Pencil } from 'lucide-react';
-import { useWorkflows } from '../hooks/useWorkflows';
+import { FileCode, Plus, CheckCircle, Pencil } from 'lucide-react';
+import { useWorkflows, useWorkflow } from '../hooks/useWorkflows';
+import { toast } from 'sonner';
+import yaml from 'js-yaml';
+
+function ValidateButton({ path }: { path: string }) {
+  const { data: workflowData } = useWorkflow(path);
+  const [validating, setValidating] = useState(false);
+
+  const handleValidate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setValidating(true);
+    try {
+      if (!workflowData?.content) {
+        toast.error('Could not load workflow content');
+        return;
+      }
+      const parsed = yaml.load(workflowData.content) as { name?: string; nodes?: Record<string, unknown> };
+      if (!parsed || typeof parsed !== 'object') {
+        toast.error('Invalid YAML: not an object');
+        return;
+      }
+      if (!parsed.nodes || Object.keys(parsed.nodes).length === 0) {
+        toast.warning('Workflow has no nodes defined');
+        return;
+      }
+      toast.success(`Valid workflow: ${Object.keys(parsed.nodes).length} nodes`);
+    } catch (err) {
+      toast.error(`YAML error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleValidate}
+      disabled={validating}
+      className="flex items-center gap-1 px-2.5 py-1 text-xs rounded border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors"
+      title="Validate workflow YAML"
+    >
+      <CheckCircle size={12} />
+      Validate
+    </button>
+  );
+}
 
 export default function WorkflowBrowse() {
   const navigate = useNavigate();
@@ -96,19 +141,7 @@ export default function WorkflowBrowse() {
                         <Pencil size={12} />
                         Edit
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(
-                            `/editor?file=${encodeURIComponent(path)}`,
-                          );
-                        }}
-                        className="flex items-center gap-1 px-2.5 py-1 text-xs rounded border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors"
-                        title="Validate workflow"
-                      >
-                        <Play size={12} />
-                        Validate
-                      </button>
+                      <ValidateButton path={path} />
                     </div>
                   </td>
                 </tr>

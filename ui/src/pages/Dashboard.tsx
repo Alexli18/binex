@@ -1,10 +1,62 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRuns, useCreateRun } from '../hooks/useRuns';
 import { useWorkflows } from '../hooks/useWorkflows';
 import { StatusBadge } from '../components/common/StatusBadge';
+import { Button } from '@/components/ui/button';
+import { Rocket, FileCode, Bug, Sparkles, X } from 'lucide-react';
 
 const STATUS_OPTIONS = ['all', 'completed', 'running', 'failed', 'cancelled'] as const;
+
+const WHATS_NEW_VERSION = 'v3';
+const WHATS_NEW_ITEMS = [
+  'Design system with shadcn/ui components and design tokens',
+  'Visual workflow editor with drag-and-drop canvas',
+  'Improved debugging tools with node replay',
+  'Cost tracking and budget management',
+  'Trace timeline with anomaly detection',
+  'Contextual help tooltips and help panel',
+];
+
+function WhatsNew() {
+  const storageKey = `binex-whats-new-dismissed-${WHATS_NEW_VERSION}`;
+  const [dismissed, setDismissed] = useState(
+    () => localStorage.getItem(storageKey) === 'true',
+  );
+
+  const handleDismiss = useCallback(() => {
+    setDismissed(true);
+    localStorage.setItem(storageKey, 'true');
+  }, [storageKey]);
+
+  if (dismissed) return null;
+
+  return (
+    <div className="mb-4 rounded-lg border border-blue-800/50 bg-blue-950/30 p-4">
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Sparkles size={16} className="text-blue-400" />
+          <h3 className="text-sm font-semibold text-blue-300">What's New</h3>
+        </div>
+        <button
+          onClick={handleDismiss}
+          className="p-0.5 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
+          aria-label="Dismiss what's new"
+        >
+          <X size={14} />
+        </button>
+      </div>
+      <ul className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+        {WHATS_NEW_ITEMS.map((item) => (
+          <li key={item} className="text-xs text-slate-400 flex items-start gap-1.5">
+            <span className="text-blue-500 mt-0.5">•</span>
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function NewRunModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
@@ -114,6 +166,7 @@ function NewRunModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { data: runs, isLoading, error } = useRuns();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -158,6 +211,8 @@ export default function Dashboard() {
 
       {showNewRun && <NewRunModal onClose={() => setShowNewRun(false)} />}
 
+      <WhatsNew />
+
       <div className="flex items-center gap-4 mb-4">
         <select
           value={statusFilter}
@@ -182,8 +237,27 @@ export default function Dashboard() {
         />
       </div>
 
-      {filteredRuns.length === 0 ? (
-        <p className="text-slate-500">No runs found</p>
+      {filteredRuns.length === 0 && (!runs || runs.length === 0) ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="rounded-full bg-slate-800 p-5 mb-5">
+            <Rocket className="h-10 w-10 text-blue-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-slate-100 mb-2">Welcome to Binex</h3>
+          <p className="text-sm text-slate-400 max-w-sm mb-6">
+            Create your first workflow or run an example to get started.
+          </p>
+          <div className="flex gap-3">
+            <Button onClick={() => navigate('/editor')} variant="default">
+              <FileCode className="w-4 h-4 mr-2" />
+              Create Workflow
+            </Button>
+            <Button onClick={() => navigate('/workflows')} variant="outline">
+              Browse Examples
+            </Button>
+          </div>
+        </div>
+      ) : filteredRuns.length === 0 ? (
+        <p className="text-slate-500">No runs match your filters</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-700">
           <table className="min-w-full text-sm">
@@ -195,6 +269,7 @@ export default function Dashboard() {
                 <th className="text-center px-4 py-2.5 font-medium text-slate-400">Nodes</th>
                 <th className="text-right px-4 py-2.5 font-medium text-slate-400">Cost</th>
                 <th className="text-left px-4 py-2.5 font-medium text-slate-400">Created</th>
+                <th className="text-right px-4 py-2.5 font-medium text-slate-400">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
@@ -220,6 +295,18 @@ export default function Dashboard() {
                   </td>
                   <td className="px-4 py-2.5 text-slate-500 text-xs">
                     {new Date(run.started_at).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    {run.status === 'failed' && (
+                      <Link
+                        to={`/runs/${run.run_id}/debug`}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-red-800 text-red-400 hover:bg-red-900/30 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Bug size={12} />
+                        Debug
+                      </Link>
+                    )}
                   </td>
                 </tr>
               ))}

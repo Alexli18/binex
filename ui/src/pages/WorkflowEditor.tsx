@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useNodesState, useEdgesState, type Node, type Edge } from 'reactflow';
 import yaml from 'js-yaml';
 import { EditorToolbar, type EditorMode } from '@/components/editor/EditorToolbar';
@@ -11,6 +11,8 @@ import { useCreateRun } from '../hooks/useRuns';
 import { parseWorkflowYaml, type WorkflowNode, type WorkflowEdge } from '../lib/yaml-to-graph';
 import { graphToYaml } from '../lib/graph-to-yaml';
 import { api } from '../lib/api';
+import { toast } from 'sonner';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 // ---------------------------------------------------------------------------
 // Helpers (kept local — only used by the orchestrator)
@@ -67,9 +69,11 @@ function yamlToRfGraph(yamlContent: string): { nodes: Node[]; edges: Edge[] } {
 export default function WorkflowEditor() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const initialContent = (location.state as { initialContent?: string })?.initialContent;
+  const fileParam = searchParams.get('file');
   const { data: workflows, isLoading: loadingList } = useWorkflows();
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [selectedPath, setSelectedPath] = useState<string | null>(fileParam);
   const { data: workflowData } = useWorkflow(selectedPath);
   const saveMutation = useSaveWorkflow();
   const createRun = useCreateRun();
@@ -99,12 +103,14 @@ export default function WorkflowEditor() {
     }
   }, [workflowData]);
 
-  // Auto-select first workflow
+  // Select file from URL query param, or auto-select first workflow
   useEffect(() => {
-    if (workflows && workflows.length > 0 && !selectedPath) {
+    if (fileParam && workflows?.includes(fileParam)) {
+      setSelectedPath(fileParam);
+    } else if (workflows && workflows.length > 0 && !selectedPath && !fileParam) {
       setSelectedPath(workflows[0]);
     }
-  }, [workflows, selectedPath]);
+  }, [workflows, selectedPath, fileParam]);
 
   // Accept initialContent from Scaffold page
   useEffect(() => {
@@ -182,7 +188,7 @@ export default function WorkflowEditor() {
     if (!selectedPath) return;
     saveMutation.mutate(
       { path: selectedPath, content },
-      { onSuccess: () => setOriginalContent(content) },
+      { onSuccess: () => { setOriginalContent(content); toast.success('Workflow saved'); } },
     );
   }, [selectedPath, content, saveMutation]);
 
@@ -195,6 +201,7 @@ export default function WorkflowEditor() {
             setSelectedPath(path);
             setOriginalContent(content);
             setShowSaveAs(false);
+            toast.success('Workflow saved');
           },
         },
       );
@@ -224,10 +231,16 @@ export default function WorkflowEditor() {
         onSuccess: (data) => {
           navigate(data.status === 'running' ? `/runs/${data.run_id}/live` : `/runs/${data.run_id}`);
         },
-        onError: (err) => { alert(`Run failed: ${(err as Error).message}`); },
+        onError: (err) => { toast.error(`Run failed: ${(err as Error).message}`); },
       },
     );
   }, [selectedPath, content, isDirty, createRun, navigate]);
+
+  // Keyboard shortcuts: Cmd+S to save, Cmd+Enter to run
+  useKeyboardShortcuts(useMemo(() => [
+    { key: 's', meta: true, handler: () => { selectedPath ? handleSave() : setShowSaveAs(true); } },
+    { key: 'Enter', meta: true, handler: () => { handleRun(); } },
+  ], [handleSave, handleRun, selectedPath]));
 
   const handleEditorChange = useCallback((value: string | undefined) => {
     setContent(value ?? '');

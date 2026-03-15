@@ -1,5 +1,10 @@
+import { useState, useCallback, useMemo } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { Toaster } from '@/components/ui/sonner';
 import Sidebar from './components/Sidebar';
+import { HelpPanel } from './components/common/HelpPanel';
+import { CommandPalette } from './components/common/CommandPalette';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import Dashboard from './pages/Dashboard';
 import RunDetail from './pages/RunDetail';
 import RunLive from './pages/RunLive';
@@ -20,9 +25,22 @@ import PluginsPage from './pages/PluginsPage';
 import GatewayPage from './pages/GatewayPage';
 
 export default function App() {
+  const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
+
+  const togglePalette = useCallback(() => setCmdPaletteOpen((v) => !v), []);
+
+  const shortcuts = useMemo(() => [
+    { key: 'k', meta: true, handler: togglePalette },
+  ], [togglePalette]);
+
+  useKeyboardShortcuts(shortcuts);
+
   return (
     <div className="flex h-screen bg-slate-900 text-slate-100">
+      <Toaster position="top-right" richColors />
+      <CommandPalette open={cmdPaletteOpen} onOpenChange={setCmdPaletteOpen} />
       <Sidebar />
+      <HelpPanel />
       <main className="flex-1 overflow-auto">
         <Routes>
           <Route path="/" element={<Dashboard />} />

@@ -1,6 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Anomaly } from '@/hooks/useAnalysis';
+import { HelpTooltip } from '@/components/common/HelpTooltip';
 
 export interface TraceControlsProps {
   runId: string;
@@ -20,7 +21,13 @@ export function TraceControls({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Trace Timeline</h1>
+          <h1 className="text-xl font-bold inline-flex items-center gap-2">
+            Trace Timeline
+            <HelpTooltip
+              side="right"
+              content="Gantt chart of node execution. Bar width = duration, position = start offset. Nodes with orange rings took significantly longer than average."
+            />
+          </h1>
           <p className="text-sm text-slate-400 mt-0.5">
             Total duration: {totalDuration.toFixed(3)}s |{' '}
             Status: {status}
@@ -67,8 +74,12 @@ export function TraceControls({
         <div className="border border-orange-700/50 rounded-lg bg-orange-900/10 p-4">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle size={16} className="text-orange-400" />
-            <h2 className="text-sm font-medium text-orange-300">
+            <h2 className="text-sm font-medium text-orange-300 inline-flex items-center gap-1.5">
               Latency Anomalies ({anomalies.length})
+              <HelpTooltip
+                side="right"
+                content="Nodes that took significantly longer than average. The ratio shows how many times slower than the mean duration."
+              />
             </h2>
           </div>
           <div className="space-y-2">

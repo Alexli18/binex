@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useCostDashboard } from '../hooks/useCostDashboard';
+import { useCostDashboard, type DashboardData } from '../hooks/useCostDashboard';
+import { HelpTooltip } from '@/components/common/HelpTooltip';
 import { DollarSign, TrendingUp, Play, Wallet } from 'lucide-react';
 import {
   AreaChart,
@@ -37,14 +38,23 @@ export default function CostDashboard() {
     );
   }
 
-  const budgetUsed = data ? Math.min((data.total_cost / Math.max(data.avg_per_run * data.run_count, 0.01)) * 100, 100) : 0;
+  const budgetLimit = (data as DashboardData & { budget_limit?: number })?.budget_limit;
+  const budgetUsed = data && budgetLimit && budgetLimit > 0
+    ? Math.min((data.total_cost / budgetLimit) * 100, 100)
+    : 0;
   const budgetColor = budgetUsed < 70 ? 'bg-green-500' : budgetUsed < 90 ? 'bg-amber-500' : 'bg-red-500';
 
   return (
     <div className="p-6 space-y-6 bg-slate-900 min-h-screen">
       {/* Header + Period selector */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Cost Dashboard</h1>
+        <h1 className="text-2xl font-bold text-white inline-flex items-center gap-2">
+          Cost Dashboard
+          <HelpTooltip
+            side="bottom"
+            content="Costs are calculated via litellm based on model, input/output tokens. Non-LLM nodes (local://, human://) have zero cost."
+          />
+        </h1>
         <div className="flex gap-1 bg-slate-800 rounded-lg p-1">
           {PERIODS.map((p) => (
             <button
@@ -68,6 +78,7 @@ export default function CostDashboard() {
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
             <DollarSign className="w-4 h-4" />
             Total Cost
+            <HelpTooltip content="Sum of all LLM API costs for the selected period." />
           </div>
           <p className="text-2xl font-bold text-white font-mono">
             ${data?.total_cost.toFixed(2) ?? '0.00'}
@@ -98,16 +109,23 @@ export default function CostDashboard() {
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
             <Wallet className="w-4 h-4" />
             Budget Used
+            <HelpTooltip content="'stop' policy halts execution when exceeded. 'warn' policy logs a warning but continues." />
           </div>
-          <p className="text-2xl font-bold text-white">
-            {budgetUsed.toFixed(0)}%
-          </p>
-          <div className="mt-2 w-full bg-slate-700 rounded-full h-2">
-            <div
-              className={`h-2 rounded-full ${budgetColor} transition-all`}
-              style={{ width: `${budgetUsed}%` }}
-            />
-          </div>
+          {budgetLimit && budgetLimit > 0 ? (
+            <>
+              <p className="text-2xl font-bold text-white">
+                {budgetUsed.toFixed(0)}%
+              </p>
+              <div className="mt-2 w-full bg-slate-700 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full ${budgetColor} transition-all`}
+                  style={{ width: `${budgetUsed}%` }}
+                />
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-slate-500 mt-1">Not configured</p>
+          )}
         </div>
       </div>
 
