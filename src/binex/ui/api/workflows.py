@@ -8,6 +8,8 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from binex.ui.api.errors import APIError
+
 router = APIRouter(prefix="/workflows", tags=["workflows"])
 
 
@@ -110,8 +112,9 @@ async def get_workflow(path: str) -> JSONResponse:
     """Get the content of a specific workflow file."""
     resolved = _resolve_workflow_path(path)
     if resolved is None:
-        return JSONResponse(
-            status_code=404, content={"error": f"Workflow '{path}' not found"}
+        raise APIError(
+            404, "workflow_not_found",
+            f"Workflow '{path}' not found",
         )
     content = resolved.read_text()
     return JSONResponse({"path": path, "content": content})
@@ -128,8 +131,9 @@ async def save_workflow(path: str, body: SaveWorkflowRequest) -> JSONResponse:
     # Path traversal protection
     resolved = (base / path).resolve()
     if not str(resolved).startswith(str(base.resolve())):
-        return JSONResponse(
-            status_code=400, content={"error": "Path traversal not allowed"}
+        raise APIError(
+            400, "path_traversal",
+            "Path traversal not allowed",
         )
     # Ensure parent directories exist
     resolved.parent.mkdir(parents=True, exist_ok=True)

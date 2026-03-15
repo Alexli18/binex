@@ -20,7 +20,7 @@ from binex.ui.server import create_app
 )
 def ui_cmd(port: int, host: str, dev: bool, no_browser: bool) -> None:
     """Launch the Binex web UI in a browser."""
-    app = create_app()
+    app = create_app(dev=dev)
 
     if not no_browser:
         url = f"http://{host}:{port}"
