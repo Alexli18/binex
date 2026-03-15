@@ -103,11 +103,23 @@ export default function WorkflowEditor() {
     }
   }, [workflowData]);
 
-  // Select file from URL query param, or auto-select first workflow
+  // Sync selectedPath with URL query param whenever it changes
+  // Also clear stale content so old file data is never shown
   useEffect(() => {
-    if (fileParam && workflows?.includes(fileParam)) {
-      setSelectedPath(fileParam);
-    } else if (workflows && workflows.length > 0 && !selectedPath && !fileParam) {
+    if (fileParam) {
+      setSelectedPath((prev) => {
+        if (prev !== fileParam) {
+          setContent('');
+          setOriginalContent('');
+        }
+        return fileParam;
+      });
+    }
+  }, [fileParam]);
+
+  // Auto-select first workflow when no file is specified
+  useEffect(() => {
+    if (!fileParam && !selectedPath && workflows && workflows.length > 0) {
       setSelectedPath(workflows[0]);
     }
   }, [workflows, selectedPath, fileParam]);

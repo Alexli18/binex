@@ -2,7 +2,11 @@ import { useState } from 'react';
 import { useRuns } from '../hooks/useRuns';
 import { useBisect } from '../hooks/useComparison';
 import { StatusBadge } from '../components/common/StatusBadge';
-import { GitBranch, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
+import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 function DiffLine({ line }: { line: string }) {
   if (line.startsWith('+')) {
@@ -20,7 +24,7 @@ function DiffLine({ line }: { line: string }) {
 function ArtifactDiff({ diff }: { diff: string }) {
   const lines = diff.split('\n');
   return (
-    <pre className="bg-slate-950 rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-96 overflow-y-auto border border-slate-700">
+    <pre className="bg-slate-950 rounded-card p-3 text-xs font-mono overflow-x-auto max-h-96 overflow-y-auto border border-slate-700">
       {lines.map((line, i) => (
         <DiffLine key={i} line={line} />
       ))}
@@ -47,15 +51,18 @@ export default function BisectPage() {
     : null;
 
   return (
-    <div className="p-6 flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <GitBranch className="w-6 h-6 text-purple-400" />
-        <h1 className="text-2xl font-bold text-slate-100">Bisect &mdash; Find Divergence</h1>
-      </div>
+    <PageShell>
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/' },
+          { label: 'Bisect' },
+        ]}
+        className="mb-4"
+      />
+      <PageHeader title="Bisect — Find Divergence" description="Compare two runs to find where they diverge" />
 
       {/* Selectors */}
-      <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+      <div className="bg-slate-800 border border-slate-700 rounded-card p-4 mt-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
@@ -113,25 +120,21 @@ export default function BisectPage() {
             </div>
           </div>
 
-          <button
+          <Button
             onClick={handleBisect}
             disabled={!goodRun || !badRun || bisect.isPending}
-            className="self-start px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2"
+            size="sm"
+            className="self-start"
           >
-            {bisect.isPending && (
-              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            )}
+            {bisect.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {bisect.isPending ? 'Finding Divergence...' : 'Find Divergence'}
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Error */}
       {bisect.isError && (
-        <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 flex items-center gap-2">
+        <div className="bg-red-900/30 border border-red-700 rounded-card p-4 flex items-center gap-2">
           <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
           <p className="text-red-300 text-sm">{bisect.error.message}</p>
         </div>
@@ -144,7 +147,7 @@ export default function BisectPage() {
           {bisect.data.divergence_node ? (
             <>
               {/* Divergence found */}
-              <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+              <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
                 <div className="flex items-center gap-3 mb-4">
                   <AlertCircle className="w-5 h-5 text-red-400" />
                   <span className="text-sm font-bold text-slate-200">
@@ -180,7 +183,7 @@ export default function BisectPage() {
 
                 {/* Details card */}
                 {bisect.data.details && (
-                  <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
+                  <div className="bg-slate-900 border border-slate-700 rounded-card p-4">
                     <h4 className="text-sm font-bold text-slate-300 mb-3">Divergence Details</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                       <div>
@@ -221,7 +224,7 @@ export default function BisectPage() {
             </>
           ) : (
             /* No divergence found */
-            <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 flex items-center gap-3">
+            <div className="bg-slate-800 border border-slate-700 rounded-card p-4 flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-green-400" />
               <span className="inline-flex items-center px-2.5 py-1 rounded text-sm font-medium bg-green-900/50 text-green-300 border border-green-700">
                 No divergence found
@@ -233,6 +236,6 @@ export default function BisectPage() {
           )}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
