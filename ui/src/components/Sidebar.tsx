@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
   Workflow,
   Wand2,
+  BookOpen,
   LayoutDashboard,
   HeartPulse,
   Puzzle,
@@ -32,6 +33,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Editor", path: "/editor", icon: Workflow },
       { label: "Scaffold", path: "/scaffold", icon: Wand2 },
+      { label: "Prompts", path: "/prompts", icon: BookOpen },
     ],
   },
   {

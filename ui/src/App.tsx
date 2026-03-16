@@ -20,6 +20,7 @@ import ExportPage from './pages/ExportPage';
 import DoctorPage from './pages/DoctorPage';
 import PluginsPage from './pages/PluginsPage';
 import GatewayPage from './pages/GatewayPage';
+import PromptLibrary from './pages/PromptLibrary';
 
 export default function App() {
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/runs/:runId/lineage" element={<LineagePage />} />
           <Route path="/editor" element={<WorkflowEditor />} />
           <Route path="/scaffold" element={<Scaffold />} />
+          <Route path="/prompts" element={<PromptLibrary />} />
           <Route path="/diff" element={<DiffPage />} />
           <Route path="/bisect" element={<BisectPage />} />
           <Route path="/export" element={<ExportPage />} />

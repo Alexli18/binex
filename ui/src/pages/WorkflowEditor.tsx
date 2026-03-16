@@ -43,7 +43,7 @@ function agentToNodeType(agent: string): { nodeType: string; color: string } {
 
 interface ParsedYamlWorkflow {
   name?: string;
-  nodes?: Record<string, { agent: string; depends_on?: string[]; config?: Record<string, unknown> }>;
+  nodes?: Record<string, { agent: string; depends_on?: string[]; config?: Record<string, unknown>; system_prompt?: string; inputs?: Record<string, string>; outputs?: string[] }>;
 }
 
 function yamlToRfGraph(yamlContent: string): { nodes: Node[]; edges: Edge[] } {
@@ -59,7 +59,16 @@ function yamlToRfGraph(yamlContent: string): { nodes: Node[]; edges: Edge[] } {
       id,
       type: 'editable',
       position: { x: 250, y: i * 120 + 50 },
-      data: { label: id, nodeType, agent, config: spec.config || {}, color },
+      data: {
+        label: id,
+        nodeType,
+        agent,
+        config: { ...spec.config, ...(spec.system_prompt ? { system_prompt: spec.system_prompt } : {}) },
+        system_prompt: spec.system_prompt,
+        inputs: spec.inputs,
+        outputs: spec.outputs,
+        color,
+      },
     };
   });
 
