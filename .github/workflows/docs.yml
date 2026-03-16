@@ -6,6 +6,7 @@ on:
     paths:
       - "docs/**"
       - "mkdocs.yml"
+      - "website/**"
 
 permissions:
   contents: write
@@ -19,4 +20,19 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install mkdocs-material
-      - run: mkdocs gh-deploy --force
+
+      - name: Build MkDocs into docs/ subdirectory
+        run: mkdocs build -d _site/docs
+
+      - name: Copy landing page to root
+        run: cp website/index.html _site/index.html
+
+      - name: Add .nojekyll
+        run: touch _site/.nojekyll
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          force_orphan: true
