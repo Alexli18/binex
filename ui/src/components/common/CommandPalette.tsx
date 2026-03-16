@@ -9,7 +9,6 @@ import {
 import { Input } from '@/components/ui/input';
 import {
   LayoutDashboard,
-  FileCode,
   Pencil,
   Wrench,
   Search,
@@ -46,11 +45,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   const commands: CommandItem[] = useMemo(() => [
     { id: 'dashboard', label: 'Dashboard', description: 'View all runs', icon: <LayoutDashboard className="w-4 h-4" />, action: () => navigate('/'), keywords: ['home', 'runs'] },
-    { id: 'workflows', label: 'Browse Workflows', description: 'View workflow files', icon: <FileCode className="w-4 h-4" />, action: () => navigate('/workflows'), keywords: ['files', 'browse'] },
-    { id: 'editor', label: 'Workflow Editor', description: 'Edit workflow YAML', icon: <Pencil className="w-4 h-4" />, action: () => navigate('/editor'), keywords: ['edit', 'yaml', 'visual'] },
+    { id: 'editor', label: 'Workflow Editor', description: 'Edit workflow YAML', icon: <Pencil className="w-4 h-4" />, action: () => navigate('/editor'), keywords: ['edit', 'yaml', 'visual', 'files', 'browse'] },
     { id: 'scaffold', label: 'Scaffold Workflow', description: 'Create from template or DSL', icon: <Wrench className="w-4 h-4" />, action: () => navigate('/scaffold'), keywords: ['create', 'new', 'template'] },
-    { id: 'costs', label: 'Cost Dashboard', description: 'View cost analytics', icon: <DollarSign className="w-4 h-4" />, action: () => navigate('/costs'), keywords: ['money', 'analytics'] },
-    { id: 'budget', label: 'Budget', description: 'Budget configuration', icon: <Wallet className="w-4 h-4" />, action: () => navigate('/costs/budget'), keywords: ['limit'] },
+    { id: 'costs', label: 'Cost Dashboard', description: 'View cost analytics', icon: <DollarSign className="w-4 h-4" />, action: () => navigate('/?tab=costs'), keywords: ['money', 'analytics'] },
+    { id: 'budget', label: 'Budget', description: 'Budget configuration', icon: <Wallet className="w-4 h-4" />, action: () => navigate('/?tab=budget'), keywords: ['limit'] },
     { id: 'diff', label: 'Compare Runs', description: 'Diff two runs side-by-side', icon: <GitCompare className="w-4 h-4" />, action: () => navigate('/diff'), keywords: ['compare', 'difference'] },
     { id: 'bisect', label: 'Bisect Runs', description: 'Find regression point', icon: <Binary className="w-4 h-4" />, action: () => navigate('/bisect'), keywords: ['regression'] },
     { id: 'export', label: 'Export Runs', description: 'Download run data', icon: <Download className="w-4 h-4" />, action: () => navigate('/export'), keywords: ['download', 'csv', 'json'] },

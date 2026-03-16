@@ -8,13 +8,10 @@ function makeProps(overrides: Partial<EditorToolbarProps> = {}): EditorToolbarPr
     selectedPath: null,
     isDirty: false,
     mode: 'visual',
-    showFiles: false,
-    showCost: false,
     isSaving: false,
     isRunning: false,
     hasContent: true,
-    onToggleFiles: vi.fn(),
-    onToggleCost: vi.fn(),
+    onOpenFiles: vi.fn(),
     onSwitchToVisual: vi.fn(),
     onSwitchToYaml: vi.fn(),
     onSave: vi.fn(),
@@ -46,19 +43,19 @@ describe('EditorToolbar', () => {
     expect(screen.getByText('(new workflow)')).toBeInTheDocument();
   });
 
-  it('shows "No file selected" when no content and no path', () => {
+  it('shows empty when no content and no path', () => {
     render(<EditorToolbar {...makeProps({ selectedPath: null, hasContent: false })} />);
-    expect(screen.getByText('No file selected')).toBeInTheDocument();
+    expect(screen.queryByText('(new workflow)')).not.toBeInTheDocument();
   });
 
-  it('shows unsaved changes indicator when dirty', () => {
+  it('shows unsaved indicator when dirty', () => {
     render(<EditorToolbar {...makeProps({ isDirty: true })} />);
-    expect(screen.getByText('(unsaved changes)')).toBeInTheDocument();
+    expect(screen.getByText('(unsaved)')).toBeInTheDocument();
   });
 
   it('hides unsaved indicator when not dirty', () => {
     render(<EditorToolbar {...makeProps({ isDirty: false })} />);
-    expect(screen.queryByText('(unsaved changes)')).not.toBeInTheDocument();
+    expect(screen.queryByText('(unsaved)')).not.toBeInTheDocument();
   });
 
   it('calls onSwitchToVisual when Visual clicked', async () => {
@@ -113,19 +110,11 @@ describe('EditorToolbar', () => {
     expect(screen.getByText('Starting...')).toBeInTheDocument();
   });
 
-  it('calls onToggleFiles when file toggle clicked', async () => {
+  it('calls onOpenFiles when Open clicked', async () => {
     const user = userEvent.setup();
     const props = makeProps();
     render(<EditorToolbar {...props} />);
-    await user.click(screen.getByTitle('Toggle file browser'));
-    expect(props.onToggleFiles).toHaveBeenCalledOnce();
-  });
-
-  it('calls onToggleCost when cost toggle clicked', async () => {
-    const user = userEvent.setup();
-    const props = makeProps();
-    render(<EditorToolbar {...props} />);
-    await user.click(screen.getByTitle('Toggle cost estimate'));
-    expect(props.onToggleCost).toHaveBeenCalledOnce();
+    await user.click(screen.getByText('Open'));
+    expect(props.onOpenFiles).toHaveBeenCalledOnce();
   });
 });

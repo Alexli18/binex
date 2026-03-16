@@ -213,12 +213,23 @@ nodes:
 | `binex trace` | Execution timeline |
 | `binex replay` | Re-run with agent swaps |
 | `binex diff` | Compare two runs |
+| `binex diagnose` | Root-cause failure analysis |
+| `binex bisect` | Find first divergence between two runs |
 | `binex cost show` | Cost breakdown per node |
 | `binex explore` | Interactive TUI dashboard |
 | `binex scaffold` | Generate workflow from DSL |
 | `binex export` | Export to CSV/JSON |
 | `binex doctor` | System health check |
 | `binex hello` | Zero-config demo |
+| `binex init` | Initialize a new Binex project |
+| `binex start` | Interactive workflow wizard |
+| `binex validate` | Validate workflow YAML |
+| `binex cancel` | Cancel a running workflow |
+| `binex artifacts` | Inspect artifacts |
+| `binex dev` | Local development environment |
+| `binex gateway` | A2A Gateway management |
+| `binex plugins` | Manage adapter plugins |
+| `binex workflow` | Workflow versioning & inspection |
 
 ### LLM Providers
 
@@ -238,17 +249,25 @@ nodes:
 
 ## Examples
 
+29 example workflows in `examples/`. Highlights:
+
 | Example | What it demonstrates |
 |---------|---------------------|
 | `simple.yaml` | Minimal two-node pipeline |
 | `diamond.yaml` | Diamond dependency pattern |
 | `fan-out-fan-in.yaml` | Parallel execution with aggregation |
 | `human-in-the-loop.yaml` | Approval gates and conditional branching |
+| `human-feedback.yaml` | Human feedback loop |
+| `conditional-routing.yaml` | Conditional node execution |
 | `multi-provider-demo.yaml` | Multiple LLM providers in one workflow |
 | `ollama-research.yaml` | Full research pipeline with Ollama + OpenRouter |
+| `budget-hard-limit.yaml` | Budget enforcement with hard stop |
+| `budget-per-node.yaml` | Per-node budget allocation |
+| `a2a-multi-agent.yaml` | A2A protocol multi-agent workflow |
 | `langchain-summarizer.yaml` | LangChain Runnable in a pipeline |
 | `crewai-research-crew.yaml` | CrewAI Crew as a workflow node |
 | `autogen-coding-team.yaml` | AutoGen Team for code generation |
+| `mixed-framework-pipeline.yaml` | LangChain + CrewAI + AutoGen in one pipeline |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -259,16 +278,19 @@ nodes:
 ```
 src/binex/
 ├── adapters/        # Agent backends (local, LLM, A2A, human, frameworks)
+├── agents/          # Agent definitions and configuration
 ├── cli/             # Click CLI commands
+├── gateway/         # A2A Gateway server and routing
 ├── graph/           # DAG construction + topological scheduling
 ├── models/          # Pydantic v2 domain models
 ├── plugins/         # Plugin registry for custom adapters
-├── prompts/         # 121 built-in prompt templates
+├── prompts/         # 112 built-in prompt templates
+├── registry/        # Provider and adapter registry
 ├── runtime/         # Orchestrator, dispatcher, replay engine
 ├── stores/          # SQLite execution + filesystem artifacts
 ├── trace/           # Debug, lineage, timeline, diffing
 ├── ui/              # FastAPI backend + React frontend
-│   ├── api/         # 20 REST endpoints
+│   ├── api/         # 31 REST endpoints
 │   └── static/      # Pre-built React app
 └── workflow_spec/   # YAML loader + validator
 ```

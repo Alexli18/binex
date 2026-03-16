@@ -14,19 +14,10 @@ vi.mock('@monaco-editor/react', () => ({
   ),
 }));
 
-// Mock WorkflowGraph
-vi.mock('@/components/dag/WorkflowGraph', () => ({
-  WorkflowGraph: (props: { nodes: unknown[]; edges: unknown[] }) => (
-    <div data-testid="workflow-graph" data-nodes={props.nodes.length} data-edges={props.edges.length} />
-  ),
-}));
-
 function makeProps(overrides: Partial<EditorYamlProps> = {}): EditorYamlProps {
   return {
     content: '',
     selectedPath: null,
-    graphNodes: [],
-    graphEdges: [],
     onContentChange: vi.fn(),
     ...overrides,
   };
@@ -35,7 +26,8 @@ function makeProps(overrides: Partial<EditorYamlProps> = {}): EditorYamlProps {
 describe('EditorYaml', () => {
   it('shows placeholder when no content and no path', () => {
     render(<EditorYaml {...makeProps()} />);
-    expect(screen.getByText('Select a workflow file to edit')).toBeInTheDocument();
+    expect(screen.getByText(/Select a workflow file or press/)).toBeInTheDocument();
+    expect(screen.getByText('Cmd+O')).toBeInTheDocument();
   });
 
   it('renders Monaco editor when selectedPath is set', () => {
@@ -46,22 +38,6 @@ describe('EditorYaml', () => {
   it('renders Monaco editor when content has text', () => {
     render(<EditorYaml {...makeProps({ content: 'name: workflow' })} />);
     expect(screen.getByTestId('monaco-editor')).toBeInTheDocument();
-  });
-
-  it('shows DAG preview when graphNodes exist', () => {
-    const graphNodes = [{ id: 'a', label: 'A', type: 'llm', status: 'pending' }];
-    render(<EditorYaml {...makeProps({ graphNodes: graphNodes as any, content: 'x' })} />);
-    expect(screen.getByTestId('workflow-graph')).toBeInTheDocument();
-  });
-
-  it('shows DAG placeholder when no nodes and content', () => {
-    render(<EditorYaml {...makeProps({ content: 'name: test' })} />);
-    expect(screen.getByText('No nodes found in workflow')).toBeInTheDocument();
-  });
-
-  it('shows generic DAG placeholder when no content', () => {
-    render(<EditorYaml {...makeProps({ selectedPath: 'test.yaml', content: '' })} />);
-    expect(screen.getByText('DAG preview will appear here')).toBeInTheDocument();
   });
 
   it('passes YAML content to Monaco', () => {

@@ -18,15 +18,27 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 // Helpers (kept local — only used by the orchestrator)
 // ---------------------------------------------------------------------------
 
+/**
+ * Maps agent URI prefixes to a node type and a border/icon colour.
+ *
+ * Hex values are taken directly from the design-tokens palette so that
+ * EditableNode's inline `style={{ borderColor }}` stays in sync with the
+ * Tailwind classes used in read-only CustomNode:
+ *   llm    → violet-500  (#8b5cf6)
+ *   local  → cyan-500    (#06b6d4)
+ *   a2a    → indigo-500  (#6366f1)
+ *   human  → amber-500   (#f59e0b)
+ */
 function agentToNodeType(agent: string): { nodeType: string; color: string } {
-  if (agent.startsWith('llm://')) return { nodeType: 'llm', color: '#3b82f6' };
-  if (agent.startsWith('local://')) return { nodeType: 'local', color: '#22c55e' };
+  if (agent.startsWith('llm://')) return { nodeType: 'llm', color: '#8b5cf6' };
+  if (agent.startsWith('local://')) return { nodeType: 'local', color: '#06b6d4' };
   if (agent.startsWith('human://')) {
-    if (agent.includes('input')) return { nodeType: 'human-input', color: '#a855f7' };
-    return { nodeType: 'human-approve', color: '#f97316' };
+    // human-input and human-approve both map to human:// prefix in design-tokens
+    if (agent.includes('input')) return { nodeType: 'human-input', color: '#f59e0b' };
+    return { nodeType: 'human-approve', color: '#f59e0b' };
   }
-  if (agent.startsWith('a2a://')) return { nodeType: 'a2a', color: '#06b6d4' };
-  return { nodeType: 'local', color: '#22c55e' };
+  if (agent.startsWith('a2a://')) return { nodeType: 'a2a', color: '#6366f1' };
+  return { nodeType: 'local', color: '#06b6d4' };
 }
 
 interface ParsedYamlWorkflow {
@@ -85,8 +97,8 @@ export default function WorkflowEditor() {
   const [graphEdges, setGraphEdges] = useState<WorkflowEdge[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
   const [showSaveAs, setShowSaveAs] = useState(false);
-  const [showFiles, setShowFiles] = useState(true);
-  const [showCost, setShowCost] = useState(true);
+  const [filesOpen, setFilesOpen] = useState(false);
+  const [fileFilter, setFileFilter] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const syncDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -94,6 +106,13 @@ export default function WorkflowEditor() {
   const [rfEdges, setRfEdges, onRfEdgesChange] = useEdgesState([]);
 
   const isDirty = content !== originalContent;
+
+  const filteredFiles = useMemo(() => {
+    const list = workflows ?? [];
+    if (!fileFilter) return list;
+    const q = fileFilter.toLowerCase();
+    return list.filter((f) => f.toLowerCase().includes(q));
+  }, [workflows, fileFilter]);
 
   // Load file content when workflow data arrives
   useEffect(() => {
@@ -248,17 +267,55 @@ export default function WorkflowEditor() {
     );
   }, [selectedPath, content, isDirty, createRun, navigate]);
 
-  // Keyboard shortcuts: Cmd+S to save, Cmd+Enter to run
+  // Keyboard shortcuts: Cmd+S to save, Cmd+Enter to run, Cmd+O to open files
   useKeyboardShortcuts(useMemo(() => [
     { key: 's', meta: true, handler: () => { selectedPath ? handleSave() : setShowSaveAs(true); } },
     { key: 'Enter', meta: true, handler: () => { handleRun(); } },
+    { key: 'o', meta: true, handler: () => { setFilesOpen((v) => !v); } },
   ], [handleSave, handleRun, selectedPath]));
+
+  // Escape to close file browser
+  const filePanelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!filesOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setFilesOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [filesOpen]);
+
+  // Focus trap: keep focus inside file browser panel when open
+  useEffect(() => {
+    if (!filesOpen || !filePanelRef.current) return;
+    const panel = filePanelRef.current;
+    const focusable = panel.querySelectorAll<HTMLElement>(
+      'button, input, [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusable.length === 0) return;
+
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    panel.addEventListener('keydown', handleTab);
+    return () => panel.removeEventListener('keydown', handleTab);
+  }, [filesOpen]);
 
   const handleEditorChange = useCallback((value: string | undefined) => {
     setContent(value ?? '');
   }, []);
-
-  const fileList = useMemo(() => workflows ?? [], [workflows]);
 
   return (
     <div className="flex flex-col h-screen">
@@ -266,69 +323,17 @@ export default function WorkflowEditor() {
         selectedPath={selectedPath}
         isDirty={isDirty}
         mode={mode}
-        showFiles={showFiles}
-        showCost={showCost}
         isSaving={saveMutation.isPending}
         isRunning={createRun.isPending}
         hasContent={!!content.trim()}
-        onToggleFiles={() => setShowFiles(!showFiles)}
-        onToggleCost={() => setShowCost(!showCost)}
+        onOpenFiles={() => setFilesOpen(true)}
         onSwitchToVisual={switchToVisual}
         onSwitchToYaml={switchToYaml}
         onSave={() => (selectedPath ? handleSave() : setShowSaveAs(true))}
         onRun={handleRun}
       />
 
-      {parseError && (
-        <div className="px-4 py-2 bg-red-900/40 border-b border-red-800 text-red-300 text-sm">
-          YAML parse error: {parseError}
-        </div>
-      )}
-
       <div className="flex flex-1 min-h-0">
-        {/* File sidebar */}
-        {showFiles && (
-          <div className="w-48 border-r border-slate-700 bg-slate-900 overflow-y-auto flex-shrink-0">
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Workflows</span>
-              <button
-                onClick={() => {
-                  setSelectedPath(null);
-                  setContent('');
-                  setOriginalContent('');
-                  setRfNodes([]);
-                  setRfEdges([]);
-                  setMode('visual');
-                }}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-blue-600 text-white hover:bg-blue-500"
-                title="Create new workflow"
-              >
-                + New
-              </button>
-            </div>
-            {loadingList ? (
-              <div className="px-3 py-2 text-sm text-slate-500">Loading...</div>
-            ) : fileList.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-slate-500">No files found</div>
-            ) : (
-              fileList.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setSelectedPath(f)}
-                  className={`w-full text-left px-3 py-1.5 text-sm truncate ${
-                    f === selectedPath
-                      ? 'bg-blue-600/20 text-blue-400 font-medium'
-                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                  }`}
-                  title={f}
-                >
-                  {f}
-                </button>
-              ))
-            )}
-          </div>
-        )}
-
         {mode === 'visual' ? (
           <EditorCanvas
             rfNodes={rfNodes}
@@ -343,15 +348,98 @@ export default function WorkflowEditor() {
           <EditorYaml
             content={content}
             selectedPath={selectedPath}
-            graphNodes={graphNodes}
-            graphEdges={graphEdges}
             onContentChange={handleEditorChange}
           />
         )}
       </div>
 
+      {/* Status bar */}
+      <div className="flex items-center gap-4 px-4 py-1.5 bg-slate-900/80 border-t border-slate-700/50 text-xs text-slate-500">
+        {parseError ? (
+          <span className="text-red-400">Parse error: {parseError}</span>
+        ) : content.trim() ? (
+          <span className="text-emerald-400">YAML valid</span>
+        ) : null}
+        {graphNodes.length > 0 && (
+          <span>Nodes: {graphNodes.length}</span>
+        )}
+        {graphEdges.length > 0 && (
+          <span>Edges: {graphEdges.length}</span>
+        )}
+      </div>
+
+      {/* Slide-out file browser */}
+      {filesOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+            onClick={() => setFilesOpen(false)}
+          />
+          {/* Panel */}
+          <div
+            ref={filePanelRef}
+            role="dialog"
+            aria-label="Open workflow file"
+            className="fixed left-12 top-0 bottom-0 w-72 bg-slate-900 border-r border-slate-700 z-50 shadow-xl animate-slide-in-right overflow-y-auto"
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
+              <span className="text-sm font-semibold text-slate-200">Open Workflow</span>
+              <button
+                onClick={() => {
+                  setSelectedPath(null);
+                  setContent('');
+                  setOriginalContent('');
+                  setRfNodes([]);
+                  setRfEdges([]);
+                  setMode('visual');
+                  setFilesOpen(false);
+                }}
+                className="text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-500 transition-colors"
+              >
+                + New
+              </button>
+            </div>
+            {/* Search */}
+            <div className="px-3 py-2">
+              <input
+                type="text"
+                placeholder="Filter workflows..."
+                className="w-full bg-slate-800 border border-slate-600/50 rounded-md px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                onChange={(e) => setFileFilter(e.target.value)}
+                autoFocus
+              />
+            </div>
+            {/* File list */}
+            {loadingList ? (
+              <div className="px-4 py-3 text-sm text-slate-500">Loading...</div>
+            ) : filteredFiles.length === 0 ? (
+              <div className="px-4 py-3 text-sm text-slate-500">No files found</div>
+            ) : (
+              filteredFiles.map((f) => (
+                <button
+                  key={f}
+                  onClick={() => {
+                    setSelectedPath(f);
+                    setFilesOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                    f === selectedPath
+                      ? 'bg-blue-600/20 text-blue-400 font-medium'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                  }`}
+                  title={f}
+                >
+                  {f}
+                </button>
+              ))
+            )}
+          </div>
+        </>
+      )}
+
       <EditorSidebar
-        showCost={showCost}
+        showCost={false}
         hasContent={!!content.trim()}
         yamlContent={content}
         showSaveAs={showSaveAs}

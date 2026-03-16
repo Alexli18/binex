@@ -1,19 +1,16 @@
 import { useState, useMemo } from 'react';
 import type { TraceEntry } from '@/hooks/useAnalysis';
+import { getStatusColors } from '@/lib/design-tokens';
 
-const statusBarColor = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return 'bg-blue-500';
-    case 'failed':
-      return 'bg-red-500';
-    case 'running':
-      return 'bg-amber-500 animate-pulse';
-    case 'skipped':
-      return 'bg-slate-600';
-    default:
-      return 'bg-slate-500';
-  }
+/**
+ * Returns a solid Tailwind bg class for the Gantt bar.
+ * Uses the `dot` token from design-tokens (solid, full-opacity colour)
+ * so bars remain visually distinct at narrow widths.
+ */
+const statusBarColor = (status: string): string => {
+  const tokens = getStatusColors(status);
+  const isRunning = status === 'running';
+  return `${tokens.dot}${isRunning ? ' animate-pulse' : ''}`;
 };
 
 interface TooltipInfo {
@@ -101,7 +98,11 @@ export function TraceGantt({
               {/* Bar container */}
               <div className="flex-1 relative overflow-hidden" style={{ height: barHeight - 8 }}>
                 <div
-                  className={`absolute top-0 h-full rounded cursor-pointer transition-all ${statusBarColor(entry.status)} ${
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${entry.node_id} — ${entry.status}${entry.duration_s != null ? `, ${entry.duration_s.toFixed(3)}s` : ''}${isAnomaly ? ', anomaly detected' : ''}`}
+                  aria-pressed={isSelected}
+                  className={`absolute top-0 h-full rounded cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-900 ${statusBarColor(entry.status)} ${
                     isAnomaly
                       ? 'ring-2 ring-orange-400 ring-offset-1 ring-offset-slate-900'
                       : ''
@@ -114,6 +115,12 @@ export function TraceGantt({
                   onClick={() =>
                     setSelectedId(isSelected ? null : entry.node_id)
                   }
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedId(isSelected ? null : entry.node_id);
+                    }
+                  }}
                   onMouseEnter={(e) =>
                     setTooltip({ entry, x: e.clientX, y: e.clientY })
                   }

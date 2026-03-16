@@ -6,6 +6,17 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { ErrorState } from '@/components/layout/ErrorState';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/common/StatusBadge';
+
+/**
+ * Maps agent health strings to the canonical status keys used by design-tokens
+ * so that StatusBadge can apply the correct colour token set.
+ */
+function normalizeAgentStatus(status: string): string {
+  if (status === 'healthy' || status === 'online') return 'completed';
+  if (status === 'unhealthy' || status === 'offline') return 'failed';
+  return status;
+}
 
 export default function GatewayPage() {
   const { data, isLoading, error, refetch, isFetching } = useGateway();
@@ -140,26 +151,10 @@ export default function GatewayPage() {
                       {agent.url}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium ${
-                          agent.status === 'healthy' || agent.status === 'online'
-                            ? 'bg-green-500/20 text-green-400'
-                            : agent.status === 'unhealthy' || agent.status === 'offline'
-                              ? 'bg-red-500/20 text-red-400'
-                              : 'bg-slate-600/20 text-slate-400'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            agent.status === 'healthy' || agent.status === 'online'
-                              ? 'bg-green-400'
-                              : agent.status === 'unhealthy' || agent.status === 'offline'
-                                ? 'bg-red-400'
-                                : 'bg-slate-400'
-                          }`}
-                        />
-                        {agent.status}
-                      </span>
+                      <StatusBadge
+                        status={normalizeAgentStatus(agent.status)}
+                        dot
+                      />
                     </td>
                     <td className="px-4 py-3">
                       {agent.skills.length === 0 ? (

@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from 'reactflow';
 import { Bot, Monitor, Globe, User, Cog } from 'lucide-react';
 import type { WorkflowNode } from '../../lib/yaml-to-graph';
+import { getNodeTypeColors, getStatusColors } from '../../lib/design-tokens';
 
 const typeIcons: Record<string, React.ElementType> = {
   llm: Bot,
@@ -9,25 +10,12 @@ const typeIcons: Record<string, React.ElementType> = {
   human: User,
 };
 
-const typeColors: Record<string, string> = {
-  llm: 'text-blue-400',
-  local: 'text-green-400',
-  a2a: 'text-cyan-400',
-  human: 'text-purple-400',
-};
-
-const statusBorders: Record<string, string> = {
-  completed: 'border-green-500',
-  running: 'border-blue-500 animate-pulse',
-  failed: 'border-red-500',
-  pending: 'border-slate-600',
-  skipped: 'border-slate-700',
-};
-
 export function CustomNode({ data }: NodeProps<WorkflowNode>) {
   const Icon = typeIcons[data.type] || Cog;
-  const iconColor = typeColors[data.type] || 'text-slate-400';
-  const border = statusBorders[data.status || 'pending'] || 'border-slate-600';
+  const typeTokens = getNodeTypeColors(data.type);
+  const statusTokens = getStatusColors(data.status || 'pending');
+  const isRunning = data.status === 'running';
+  const border = `${statusTokens.border}${isRunning ? ' animate-pulse' : ''}`;
 
   return (
     <div
@@ -35,11 +23,11 @@ export function CustomNode({ data }: NodeProps<WorkflowNode>) {
     >
       <Handle type="target" position={Position.Top} className="!bg-slate-500 !border-slate-400" />
       <div className="flex items-center gap-2">
-        <Icon size={16} className={`shrink-0 ${iconColor}`} />
+        <Icon size={16} className={`shrink-0 ${typeTokens.icon}`} />
         <span className="text-sm font-medium text-slate-100 truncate">{data.label}</span>
       </div>
       {data.status && (
-        <div className="text-xs text-slate-500 mt-1 capitalize">{data.status}</div>
+        <div className={`text-xs mt-1 capitalize ${statusTokens.text}`}>{data.status}</div>
       )}
       <Handle type="source" position={Position.Bottom} className="!bg-slate-500 !border-slate-400" />
     </div>

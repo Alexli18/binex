@@ -10,6 +10,8 @@ const HELP_CONTENT: Record<string, { title: string; sections: { heading: string;
       { heading: 'Overview', body: 'The Dashboard lists all workflow runs. Use filters to narrow by status or search by run ID.' },
       { heading: 'Starting a Run', body: 'Click "New Run" to select a workflow and optionally set variables (key=value format, one per line).' },
       { heading: 'Run Statuses', body: 'completed = all nodes finished, running = execution in progress, failed = one or more nodes errored, cancelled = manually stopped.' },
+      { heading: 'Costs Tab', body: 'Track LLM API costs across runs. Cost Trend shows spending over time. Cost by Model and Cost by Node break down where money is going.' },
+      { heading: 'Budget Tab', body: 'Set max_cost in your workflow YAML to cap spending. "stop" policy halts execution when exceeded. "warn" policy logs a warning but continues.' },
     ],
   },
   '/editor': {
@@ -36,22 +38,6 @@ const HELP_CONTENT: Record<string, { title: string; sections: { heading: string;
       { heading: 'Gantt Chart', body: 'Each bar represents a node execution. Bar width = duration, position = start time offset. Parallel nodes appear on separate rows.' },
       { heading: 'Colors', body: 'Blue = completed successfully, Red = failed, Amber = still running. Orange ring = latency anomaly detected.' },
       { heading: 'Anomalies', body: 'Nodes flagged as anomalies took significantly longer than average (ratio shows how many times slower). Investigate these for performance issues.' },
-    ],
-  },
-  '/costs': {
-    title: 'Cost Dashboard',
-    sections: [
-      { heading: 'Metrics', body: 'Total Cost = sum of all LLM API costs. Avg per Run = total divided by run count. Budget Used = percentage of estimated capacity consumed.' },
-      { heading: 'Cost Calculation', body: 'Costs are calculated via litellm.completion_cost() based on model, input tokens, and output tokens. Non-LLM nodes (local://, human://) have zero cost.' },
-      { heading: 'Budget Policies', body: '"stop" policy halts execution when budget is exceeded, skipping remaining nodes. "warn" policy logs a warning but continues execution.' },
-      { heading: 'Charts', body: 'Cost Trend shows spending over time. Cost by Model and Cost by Node break down where money is going.' },
-    ],
-  },
-  '/costs/budget': {
-    title: 'Budget Configuration',
-    sections: [
-      { heading: 'Budget Limit', body: 'Set max_cost in your workflow YAML to cap spending. The orchestrator checks budget between scheduling batches.' },
-      { heading: 'Policies', body: 'stop = halt workflow and mark remaining nodes as over_budget. warn = log warning and continue execution.' },
     ],
   },
   '/diagnose': {

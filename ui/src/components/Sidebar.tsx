@@ -1,19 +1,9 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
-  FileCode,
   Workflow,
   Wand2,
   LayoutDashboard,
-  GitCompare,
-  GitBranch,
-  Bug,
-  Stethoscope,
-  Clock,
-  Network,
-  DollarSign,
-  Wallet,
-  Download,
   HeartPulse,
   Puzzle,
   Radio,
@@ -32,15 +22,12 @@ interface NavItem {
 interface NavGroup {
   label: string;
   items: NavItem[];
-  /** If true, group is only shown when a run is selected */
-  requiresRunId?: boolean;
 }
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Workflows",
+    label: "Build",
     items: [
-      { label: "Browse", path: "/workflows", icon: FileCode },
       { label: "Editor", path: "/editor", icon: Workflow },
       { label: "Scaffold", path: "/scaffold", icon: Wand2 },
     ],
@@ -49,37 +36,14 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Runs",
     items: [
       { label: "Dashboard", path: "/", icon: LayoutDashboard },
-      { label: "Compare", path: "/diff", icon: GitCompare },
-      { label: "Bisect", path: "/bisect", icon: GitBranch },
     ],
-  },
-  {
-    label: "Analysis",
-    requiresRunId: true,
-    items: [
-      { label: "Debug", path: "/debug", icon: Bug },
-      { label: "Diagnose", path: "/diagnose", icon: Stethoscope },
-      { label: "Trace", path: "/trace", icon: Clock },
-      { label: "Lineage", path: "/lineage", icon: Network },
-    ],
-  },
-  {
-    label: "Costs & Budget",
-    items: [
-      { label: "Cost Dashboard", path: "/costs", icon: DollarSign },
-      { label: "Budget", path: "/costs/budget", icon: Wallet },
-    ],
-  },
-  {
-    label: "Export",
-    items: [{ label: "Export Runs", path: "/export", icon: Download }],
   },
   {
     label: "System",
     items: [
-      { label: "Doctor", path: "/system/doctor", icon: HeartPulse },
-      { label: "Plugins", path: "/system/plugins", icon: Puzzle },
       { label: "Gateway", path: "/system/gateway", icon: Radio },
+      { label: "Plugins", path: "/system/plugins", icon: Puzzle },
+      { label: "Doctor", path: "/system/doctor", icon: HeartPulse },
     ],
   },
 ];
@@ -87,30 +51,19 @@ const NAV_GROUPS: NavGroup[] = [
 function NavGroupSection({
   group,
   collapsed,
-  runId,
 }: {
   group: NavGroup;
   collapsed: boolean;
-  runId?: string;
 }) {
   const [expanded, setExpanded] = useState(true);
-
-  if (group.requiresRunId && !runId) {
-    return null;
-  }
-
-  const resolvedItems = group.items.map((item) => {
-    if (group.requiresRunId && runId) {
-      return { ...item, path: `/runs/${runId}${item.path}` };
-    }
-    return item;
-  });
 
   return (
     <div className="mb-2">
       {!collapsed && (
         <button
           onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          aria-controls={`nav-group-${group.label.replace(/\s+/g, '-').toLowerCase()}`}
           className="flex w-full items-center justify-between px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-slate-500 hover:text-slate-400 transition-colors"
         >
           <span>{group.label}</span>
@@ -124,20 +77,23 @@ function NavGroupSection({
       )}
 
       {(collapsed || expanded) && (
-        <ul className="space-y-0.5">
-          {resolvedItems.map((item) => (
+        <ul
+          id={`nav-group-${group.label.replace(/\s+/g, '-').toLowerCase()}`}
+          className="space-y-0.5"
+        >
+          {group.items.map((item) => (
             <li key={item.path}>
               <NavLink
                 to={item.path}
                 end={item.path === "/"}
                 title={collapsed ? item.label : undefined}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2 text-sm transition-colors ${
-                    collapsed ? "justify-center px-0" : ""
+                  `flex items-center gap-3 px-4 py-2.5 text-sm transition-all duration-150 mx-2 rounded-md ${
+                    collapsed ? "justify-center px-0 mx-0" : ""
                   } ${
                     isActive
-                      ? "border-l-2 border-blue-500 bg-blue-600/20 text-blue-400"
-                      : "border-l-2 border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                      ? "bg-slate-800/80 text-slate-100"
+                      : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
                   }`
                 }
               >
@@ -154,9 +110,6 @@ function NavGroupSection({
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const location = useLocation();
-  const runIdMatch = location.pathname.match(/\/runs\/([^/]+)/);
-  const runId = runIdMatch ? runIdMatch[1] : undefined;
 
   return (
     <aside
@@ -171,7 +124,7 @@ export default function Sidebar() {
         }`}
       >
         {!collapsed && (
-          <span className="text-sm font-semibold text-slate-200">Binex</span>
+          <span className="text-base font-bold text-slate-200">Binex</span>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -189,7 +142,6 @@ export default function Sidebar() {
             key={group.label}
             group={group}
             collapsed={collapsed}
-            runId={runId}
           />
         ))}
       </nav>

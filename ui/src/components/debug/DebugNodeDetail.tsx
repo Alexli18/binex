@@ -4,20 +4,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DebugArtifactViewer } from './DebugArtifactViewer';
 import { DebugErrorPanel } from './DebugErrorPanel';
 import type { DebugNode } from '@/hooks/useAnalysis';
+import { getStatusColors } from '@/lib/design-tokens';
 
-const statusColor = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return 'border-green-500/30 bg-green-500/5';
-    case 'failed':
-      return 'border-red-500/30 bg-red-500/5';
-    case 'running':
-      return 'border-blue-500/30 bg-blue-500/5';
-    case 'skipped':
-      return 'border-slate-600/30 bg-slate-600/5';
-    default:
-      return 'border-slate-700/30 bg-slate-700/5';
-  }
+/** Returns border + bg classes for the node detail card header chip. */
+const statusColor = (status: string): string => {
+  const t = getStatusColors(status);
+  return `${t.border} ${t.bg}`;
 };
 
 export interface DebugNodeDetailProps {
@@ -148,7 +140,7 @@ function NodeDetailContent({ node }: { node: DebugNode }) {
 function StatusIcon({ status }: { status: string }) {
   switch (status) {
     case 'completed':
-      return <CheckCircle2 size={16} className="text-green-400" />;
+      return <CheckCircle2 size={16} className="text-emerald-400" />;
     case 'failed':
       return <XCircle size={16} className="text-red-400" />;
     case 'running':
