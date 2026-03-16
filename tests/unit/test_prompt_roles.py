@@ -85,7 +85,7 @@ def test_all_categories_present():
     categories = {r.category for r in ROLES}
     expected = {
         "general", "development", "business", "content",
-        "education", "legal", "data", "support",
+        "education", "legal", "data", "support", "workflow",
     }
     assert categories == expected
 

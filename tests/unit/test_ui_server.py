@@ -23,7 +23,13 @@ async def client(app):
 async def test_health_endpoint(client):
     resp = await client.get("/api/v1/health")
     assert resp.status_code == 200
-    assert resp.json() == {"status": "ok"}
+    data = resp.json()
+    assert data["status"] == "ok"
+    # Enhanced health response includes version, uptime, frontend, store info
+    assert "version" in data
+    assert "uptime_s" in data
+    assert "frontend_built" in data
+    assert "store" in data
 
 
 async def test_health_returns_json_content_type(client):
@@ -94,4 +100,4 @@ async def test_api_routes_not_caught_by_spa(tmp_path, monkeypatch):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/api/v1/health")
         assert resp.status_code == 200
-        assert resp.json() == {"status": "ok"}
+        assert resp.json()["status"] == "ok"

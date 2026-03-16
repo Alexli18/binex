@@ -4,7 +4,13 @@ import { api } from '../lib/api';
 export interface Pattern {
   name: string;
   description: string;
-  example: string;
+  dsl: string;
+  use_case?: string;
+  category?: string;
+  node_count?: number;
+  tags?: string[];
+  /** @deprecated Use `dsl` instead */
+  example?: string;
 }
 
 export interface ScaffoldResult {

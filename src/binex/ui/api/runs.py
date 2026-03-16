@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 from fastapi import APIRouter
@@ -12,6 +13,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from binex.cli import get_stores
+from binex.ui.api.errors import APIError
 from binex.ui.api.events import event_bus
 
 logger = logging.getLogger(__name__)
@@ -31,38 +33,27 @@ class CreateRunRequest(BaseModel):
     variables: dict[str, str] = {}
 
 
-def _ensure_valid_spec(workflow_path: Path) -> None:
-    """Patch workflow YAML to ensure it passes WorkflowSpec validation.
+def _normalize_spec_data(data: dict[str, Any]) -> dict[str, Any]:
+    """Normalize a parsed workflow dict so it passes WorkflowSpec validation.
 
-    Fixes common issues from the visual editor:
-    - Missing 'outputs' field (required by WorkflowSpec)
-    - 'inputs' as string instead of dict
+    Fixes common issues produced by the visual editor without touching the
+    YAML file on disk:
+
+    - Missing ``outputs`` field (required by NodeSpec) -- defaults to ``["output"]``
+    - ``inputs`` given as a bare string instead of a dict
     """
-    import yaml as _yaml
-
-    try:
-        text = workflow_path.read_text()
-        data = _yaml.safe_load(text)
-        if not isinstance(data, dict) or "nodes" not in data:
-            return
-        patched = False
-        for node_name, node_spec in data.get("nodes", {}).items():
-            if not isinstance(node_spec, dict):
-                continue
-            if "outputs" not in node_spec:
-                node_spec["outputs"] = ["output"]
-                patched = True
-            # Fix inputs: must be dict, not string
-            inputs = node_spec.get("inputs")
-            if isinstance(inputs, str):
-                node_spec["inputs"] = {"input": inputs}
-                patched = True
-        if patched:
-            workflow_path.write_text(
-                _yaml.dump(data, indent=2, default_flow_style=False, sort_keys=False)
-            )
-    except Exception:
-        pass  # Best effort — loader will report the real error
+    nodes = data.get("nodes")
+    if not isinstance(nodes, dict):
+        return data
+    for node_spec in nodes.values():
+        if not isinstance(node_spec, dict):
+            continue
+        if "outputs" not in node_spec:
+            node_spec["outputs"] = ["output"]
+        inputs = node_spec.get("inputs")
+        if isinstance(inputs, str):
+            node_spec["inputs"] = {"input": inputs}
+    return data
 
 
 async def _execute_workflow(
@@ -71,14 +62,31 @@ async def _execute_workflow(
     run_id: str | None = None,
 ) -> dict:
     """Load and execute a workflow through the real orchestrator."""
+    import yaml as _yaml
+
     from binex.cli.adapter_registry import register_workflow_adapters
     from binex.plugins import PluginRegistry
     from binex.runtime.orchestrator import Orchestrator
-    from binex.workflow_spec.loader import load_workflow
+    from binex.workflow_spec.loader import load_workflow_from_string
     from binex.workflow_spec.validator import validate_workflow
 
-    _ensure_valid_spec(workflow_path)
-    spec = load_workflow(str(workflow_path), user_vars=variables or None)
+    # Read, normalize in memory, and parse -- no file mutation.
+    raw_text = workflow_path.read_text()
+    raw_data = _yaml.safe_load(raw_text)
+    if isinstance(raw_data, dict) and "nodes" in raw_data:
+        _normalize_spec_data(raw_data)
+        # Re-serialize so load_workflow_from_string gets the normalized text
+        normalized_text = _yaml.dump(
+            raw_data, indent=2, default_flow_style=False, sort_keys=False,
+        )
+    else:
+        normalized_text = raw_text
+
+    spec = load_workflow_from_string(
+        normalized_text, fmt="yaml", user_vars=variables or None,
+        base_dir=workflow_path.parent,
+    )
+    spec.source_path = str(workflow_path)
 
     errors = validate_workflow(spec)
     if errors:
@@ -160,9 +168,9 @@ async def create_run(body: CreateRunRequest) -> JSONResponse:
     if not workflow.is_absolute():
         workflow = Path.cwd() / workflow
     if not workflow.exists():
-        return JSONResponse(
-            {"error": f"Workflow file '{body.workflow_path}' not found"},
-            status_code=404,
+        raise APIError(
+            404, "workflow_not_found",
+            f"Workflow file '{body.workflow_path}' not found",
         )
 
     # Check if workflow contains human:// nodes (needs async execution)
@@ -189,15 +197,16 @@ async def create_run(body: CreateRunRequest) -> JSONResponse:
         result = await _execute_workflow(workflow, body.variables)
     except Exception as exc:
         logger.exception("Workflow execution failed")
-        return JSONResponse(
-            {"error": f"Workflow execution failed: {exc}"},
-            status_code=422,
-        )
+        raise APIError(
+            422, "execution_failed",
+            f"Workflow execution failed: {exc}",
+        ) from exc
 
     if "error" in result:
-        return JSONResponse(
-            {"error": result["error"]},
-            status_code=result.get("status_code", 422),
+        raise APIError(
+            result.get("status_code", 422),
+            "validation_error",
+            result["error"],
         )
 
     return JSONResponse(
@@ -216,25 +225,39 @@ class ReplayRequest(BaseModel):
 @router.post("/replay")
 async def replay_run(body: ReplayRequest) -> JSONResponse:
     """Replay a run from a specific step with optional agent swaps."""
+    import yaml as _yaml
+
     from binex.cli.adapter_registry import register_workflow_adapters
     from binex.plugins import PluginRegistry
     from binex.runtime.replay import ReplayEngine
-    from binex.workflow_spec.loader import load_workflow
+    from binex.workflow_spec.loader import load_workflow_from_string
 
     workflow = Path(body.workflow_path)
     if not workflow.is_absolute():
         workflow = Path.cwd() / workflow
     if not workflow.exists():
-        return JSONResponse(
-            {"error": f"Workflow '{body.workflow_path}' not found"},
-            status_code=404,
+        raise APIError(
+            404, "workflow_not_found",
+            f"Workflow '{body.workflow_path}' not found",
         )
 
-    # Run replay synchronously — it's typically fast (single node re-run)
     exec_store, artifact_store = _get_stores()
     try:
-        _ensure_valid_spec(workflow)
-        spec = load_workflow(str(workflow))
+        raw_text = workflow.read_text()
+        raw_data = _yaml.safe_load(raw_text)
+        if isinstance(raw_data, dict) and "nodes" in raw_data:
+            _normalize_spec_data(raw_data)
+            normalized_text = _yaml.dump(
+                raw_data, indent=2, default_flow_style=False, sort_keys=False,
+            )
+        else:
+            normalized_text = raw_text
+
+        spec = load_workflow_from_string(
+            normalized_text, fmt="yaml", base_dir=workflow.parent,
+        )
+        spec.source_path = str(workflow)
+
         engine = ReplayEngine(
             execution_store=exec_store, artifact_store=artifact_store,
         )
@@ -255,9 +278,13 @@ async def replay_run(body: ReplayRequest) -> JSONResponse:
             {"run_id": summary.run_id, "status": summary.status},
             status_code=201,
         )
+    except APIError:
+        raise
     except Exception as exc:
         logger.exception("Replay failed")
-        return JSONResponse({"error": f"Replay failed: {exc}"}, status_code=422)
+        raise APIError(
+            422, "replay_failed", f"Replay failed: {exc}",
+        ) from exc
     finally:
         await exec_store.close()
 
@@ -276,7 +303,7 @@ async def get_run(run_id: str) -> JSONResponse:
     exec_store, _ = _get_stores()
     run = await exec_store.get_run(run_id)
     if run is None:
-        return JSONResponse({"error": f"Run '{run_id}' not found"}, status_code=404)
+        raise APIError(404, "run_not_found", f"Run '{run_id}' not found")
     return JSONResponse(run.model_dump(mode="json"))
 
 
@@ -294,13 +321,11 @@ async def cancel_run(run_id: str) -> JSONResponse:
     exec_store, _ = _get_stores()
     run = await exec_store.get_run(run_id)
     if run is None:
-        return JSONResponse(
-            {"error": f"Run '{run_id}' not found"}, status_code=404
-        )
+        raise APIError(404, "run_not_found", f"Run '{run_id}' not found")
     if run.status != "running":
-        return JSONResponse(
-            {"error": f"Run '{run_id}' is not running (status: {run.status})"},
-            status_code=409,
+        raise APIError(
+            409, "run_not_running",
+            f"Run '{run_id}' is not running (status: {run.status})",
         )
     run_updated = run.model_copy(update={"status": "cancelled"})
     await exec_store.update_run(run_updated)

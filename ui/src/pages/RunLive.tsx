@@ -2,9 +2,12 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { HumanPromptModal } from '../components/HumanPromptModal';
 import { StatusBadge } from '../components/common/StatusBadge';
+import { LoadingState } from '@/components/layout/LoadingState';
 import { useRun, useCancelRun } from '../hooks/useRuns';
 import { useSSE } from '../hooks/useSSE';
 import type { RunEvent } from '../lib/types';
+import { X } from 'lucide-react';
+import { toast } from 'sonner';
 
 function EventLogItem({ event }: { event: RunEvent }) {
   const time = new Date(event.timestamp).toLocaleTimeString();
@@ -42,6 +45,13 @@ export default function RunLive() {
   useEffect(() => {
     const lastEvent = events[events.length - 1];
     if (lastEvent && (lastEvent.type === 'run:completed' || lastEvent.type === 'run:cancelled')) {
+      if (lastEvent.status === 'failed') {
+        toast.error('Run failed');
+      } else if (lastEvent.type === 'run:cancelled') {
+        toast.warning('Run cancelled');
+      } else {
+        toast.success('Run completed');
+      }
       if (outputResult) return; // Don't redirect while user is viewing output
       const timer = setTimeout(() => navigate(`/runs/${runId}`), 1500);
       return () => clearTimeout(timer);
@@ -68,7 +78,7 @@ export default function RunLive() {
   if (isLoading) {
     return (
       <div className="p-6">
-        <p className="text-slate-400">Loading run...</p>
+        <LoadingState message="Loading run..." />
       </div>
     );
   }
@@ -164,7 +174,12 @@ export default function RunLive() {
               {events.length === 0 ? (
                 <p className="text-slate-400 text-sm p-4">No events yet...</p>
               ) : (
-                events.map((event, i) => <EventLogItem key={i} event={event} />)
+                events.map((event, i) => (
+                  <EventLogItem
+                    key={`${event.timestamp}-${event.node_id ?? event.type}-${i}`}
+                    event={event}
+                  />
+                ))
               )}
             </div>
           </div>
@@ -189,7 +204,13 @@ export default function RunLive() {
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
               <h3 className="text-lg font-semibold text-emerald-400">{outputResult.label}</h3>
-              <button onClick={clearOutput} className="text-slate-400 hover:text-slate-200 text-xl">&times;</button>
+              <button
+                onClick={clearOutput}
+                className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
             </div>
             <div className="p-6 overflow-y-auto space-y-4">
               {outputResult.artifacts.map((art, i) => (

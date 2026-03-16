@@ -235,6 +235,11 @@ def scaffold_workflow(
                     if htype == "input"
                     else "Review and approve",
                 }
+            elif node_name in AGENTIC_PROMPTS:
+                node_configs[node_name] = {
+                    "agent": "local://echo",
+                    "system_prompt": AGENTIC_PROMPTS[node_name],
+                }
             else:
                 node_configs[node_name] = {
                     "agent": "local://echo",
@@ -253,6 +258,18 @@ def scaffold_workflow(
     if gen_env:
         _generate_env_example(out_path.parent)
 
+
+# Agentic node → prompt file mapping (used in --no-interactive mode).
+AGENTIC_PROMPTS: dict[str, str] = {
+    "generator": "file://prompts/wf-generator.md",
+    "critic": "file://prompts/wf-critic.md",
+    "refiner": "file://prompts/wf-refiner.md",
+    "planner": "file://prompts/wf-task-decomposer.md",
+    "executor": "file://prompts/wf-executor.md",
+    "verifier": "file://prompts/wf-verifier.md",
+    "agent": "file://prompts/wf-agent.md",
+    "simulator": "file://prompts/wf-simulator.md",
+}
 
 _HUMAN_APPROVE_KEYWORDS = {"approve", "confirm", "gate"}
 _HUMAN_INPUT_KEYWORDS = {"input", "feedback", "edit", "ask"}

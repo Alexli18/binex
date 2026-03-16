@@ -64,8 +64,13 @@ binex run workflow.yaml --var topic="quantum computing"
 | DeepSeek | `deepseek/` | deepseek-chat, deepseek-coder |
 | Together | `together_ai/` | llama3-70b, mixtral-8x7b |
 
+## Migration from `binex init`
+
+`binex init` is now a deprecated alias for `binex start --quick`. If you have scripts or documentation referencing `binex init`, update them to use `binex start` instead. The `init` command will be removed in a future release.
+
 ## See Also
 
-- [binex run](run.md) — execute the generated workflow
+- [`binex list`](list.md) — discover available workflows
+- [`binex run`](run.md) — execute the generated workflow
 - [binex scaffold](scaffold.md) — generate workflows from DSL without the wizard
 - [binex explore](explore.md) — browse results after running

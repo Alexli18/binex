@@ -1,18 +1,45 @@
-const statusColors: Record<string, string> = {
-  completed: 'bg-green-100 text-green-800',
-  running: 'bg-blue-100 text-blue-800',
-  failed: 'bg-red-100 text-red-800',
-  cancelled: 'bg-gray-100 text-gray-800',
-  over_budget: 'bg-yellow-100 text-yellow-800',
-  interrupted: 'bg-orange-100 text-orange-800',
-  pending: 'bg-gray-100 text-gray-500',
-  skipped: 'bg-gray-100 text-gray-400',
-};
+import { cn } from '@/lib/utils';
+import { getStatusColors } from '../../lib/design-tokens';
 
-export function StatusBadge({ status }: { status: string }) {
-  const colors = statusColors[status] || 'bg-gray-100 text-gray-600';
+interface StatusBadgeProps {
+  status: string;
+  /** Optional size variant */
+  size?: 'sm' | 'md';
+  /** Show a small colored dot before the label */
+  dot?: boolean;
+  className?: string;
+}
+
+export function StatusBadge({
+  status,
+  size = 'sm',
+  dot = true,
+  className,
+}: StatusBadgeProps) {
+  const tokens = getStatusColors(status);
+  const isRunning = status === 'running';
+
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colors}`}>
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-badge border font-medium select-none',
+        tokens.bg,
+        tokens.text,
+        tokens.border,
+        size === 'sm' && 'px-2 py-0.5 text-xs',
+        size === 'md' && 'px-2.5 py-1 text-body-sm',
+        className,
+      )}
+    >
+      {dot && (
+        <span
+          className={cn(
+            'inline-block h-1.5 w-1.5 rounded-full shrink-0',
+            tokens.dot,
+            isRunning && 'animate-pulse-status',
+          )}
+        />
+      )}
       {status}
     </span>
   );

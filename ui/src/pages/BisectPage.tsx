@@ -1,30 +1,289 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRuns } from '../hooks/useRuns';
 import { useBisect } from '../hooks/useComparison';
 import { StatusBadge } from '../components/common/StatusBadge';
-import { GitBranch, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
+import { AlertCircle, AlertTriangle, CheckCircle2, XCircle, HelpCircle, Loader2, ChevronDown } from 'lucide-react';
+import { ArtifactDiff } from '@/components/common/ArtifactDiff';
+import ReactFlow, { type Node, type Edge } from 'reactflow';
+import { BisectNode } from '../components/dag/BisectNode';
+import 'reactflow/dist/style.css';
+import type { BisectNodeStatus, BisectDetails } from '../hooks/useComparison';
 
-function DiffLine({ line }: { line: string }) {
-  if (line.startsWith('+')) {
-    return <div className="bg-green-900/40 text-green-300 px-2">{line}</div>;
-  }
-  if (line.startsWith('-')) {
-    return <div className="bg-red-900/40 text-red-300 px-2">{line}</div>;
-  }
-  if (line.startsWith('@@')) {
-    return <div className="text-blue-400 px-2">{line}</div>;
-  }
-  return <div className="px-2 text-slate-300">{line}</div>;
+const nodeStatusConfig = {
+  match: {
+    icon: CheckCircle2,
+    label: 'Match',
+    dotClass: 'bg-emerald-400',
+    bgClass: 'bg-emerald-500/10',
+    textClass: 'text-emerald-400',
+    borderClass: 'border-emerald-500/30',
+  },
+  content_diff: {
+    icon: AlertTriangle,
+    label: 'Content differs',
+    dotClass: 'bg-amber-400',
+    bgClass: 'bg-amber-500/10',
+    textClass: 'text-amber-400',
+    borderClass: 'border-amber-500/30',
+  },
+  status_diff: {
+    icon: XCircle,
+    label: 'Status differs',
+    dotClass: 'bg-red-400',
+    bgClass: 'bg-red-500/10',
+    textClass: 'text-red-400',
+    borderClass: 'border-red-500/30',
+  },
+  missing_in_good: {
+    icon: HelpCircle,
+    label: 'Missing in good run',
+    dotClass: 'bg-slate-500',
+    bgClass: 'bg-slate-500/10',
+    textClass: 'text-slate-400',
+    borderClass: 'border-slate-600/30',
+  },
+  missing_in_bad: {
+    icon: HelpCircle,
+    label: 'Missing in bad run',
+    dotClass: 'bg-slate-500',
+    bgClass: 'bg-slate-500/10',
+    textClass: 'text-slate-400',
+    borderClass: 'border-slate-600/30',
+  },
+} as const;
+
+function NodeMap({
+  nodes,
+  divergenceNode,
+  downstreamImpact,
+}: {
+  nodes: BisectNodeStatus[];
+  divergenceNode: string | null;
+  downstreamImpact: string[];
+}) {
+  const [expandedNode, setExpandedNode] = useState<string | null>(null);
+  const downstreamSet = useMemo(() => new Set(downstreamImpact), [downstreamImpact]);
+
+  if (nodes.length === 0) return null;
+
+  return (
+    <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
+      <h4 className="text-sm font-bold text-slate-300 mb-4">Node Map</h4>
+      <div className="space-y-0">
+        {nodes.map((node, i) => {
+          const config = nodeStatusConfig[node.status] || nodeStatusConfig.missing_in_bad;
+          const Icon = config.icon;
+          const isDivergence = node.node_id === divergenceNode;
+          const isDownstream = downstreamSet.has(node.node_id);
+          const isExpanded = expandedNode === node.node_id;
+          const isLast = i === nodes.length - 1;
+
+          return (
+            <div key={node.node_id}>
+              <button
+                onClick={() => setExpandedNode(isExpanded ? null : node.node_id)}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-md text-left transition-colors hover:bg-slate-700/30 ${
+                  isDivergence ? 'ring-2 ring-red-400/60 bg-red-500/5' : ''
+                } ${isDownstream ? 'border-l-2 border-orange-400' : ''}`}
+                aria-expanded={isExpanded}
+              >
+                {/* Vertical connector line */}
+                <div className="flex flex-col items-center w-5 shrink-0">
+                  <div className={`w-3 h-3 rounded-full ${config.dotClass} ${isDivergence ? 'animate-pulse' : ''}`} />
+                  {!isLast && <div className="w-px h-6 bg-slate-600 mt-1" />}
+                </div>
+
+                {/* Node info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono text-slate-200 truncate">{node.node_id}</span>
+                    {isDivergence && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-900/50 text-red-300 border border-red-700 font-medium uppercase">
+                        Divergence
+                      </span>
+                    )}
+                    {isDownstream && !isDivergence && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-900/50 text-orange-300 border border-orange-700 font-medium">
+                        Downstream
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status + similarity */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`flex items-center gap-1 text-xs ${config.textClass}`}>
+                    <Icon size={14} />
+                    {config.label}
+                  </span>
+                  {node.similarity !== null && (
+                    <span className="text-xs font-mono text-slate-500">{Math.round(node.similarity * 100)}%</span>
+                  )}
+                  <ChevronDown size={14} className={`text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+
+              {/* Expanded details */}
+              {isExpanded && (
+                <div className={`ml-11 mb-2 p-3 rounded-md ${config.bgClass} border ${config.borderClass} text-sm`}>
+                  <div className="grid grid-cols-2 gap-3">
+                    {node.good_status !== null && (
+                      <div>
+                        <span className="text-slate-500 text-xs">Good Status</span>
+                        <p className="text-slate-200 text-xs mt-0.5">{node.good_status}</p>
+                      </div>
+                    )}
+                    {node.bad_status !== null && (
+                      <div>
+                        <span className="text-slate-500 text-xs">Bad Status</span>
+                        <p className="text-slate-200 text-xs mt-0.5">{node.bad_status}</p>
+                      </div>
+                    )}
+                    {node.latency_good_ms !== null && (
+                      <div>
+                        <span className="text-slate-500 text-xs">Latency Good</span>
+                        <p className="font-mono text-xs text-slate-300 mt-0.5">{node.latency_good_ms}ms</p>
+                      </div>
+                    )}
+                    {node.latency_bad_ms !== null && (
+                      <div>
+                        <span className="text-slate-500 text-xs">Latency Bad</span>
+                        <p className="font-mono text-xs text-slate-300 mt-0.5">{node.latency_bad_ms}ms</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
-function ArtifactDiff({ diff }: { diff: string }) {
-  const lines = diff.split('\n');
+function DivergenceMetrics({ details }: { details: BisectDetails }) {
+  const hasLatency = details.latency_good_ms != null && details.latency_bad_ms != null;
+  const hasCost = details.cost_good != null && details.cost_bad != null;
+
+  if (!hasLatency && !hasCost) return null;
+
+  const latencyDelta = hasLatency ? details.latency_bad_ms! - details.latency_good_ms! : 0;
+  const latencyPct = hasLatency && details.latency_good_ms! > 0
+    ? Math.round((latencyDelta / details.latency_good_ms!) * 100)
+    : null;
+
+  const costDelta = hasCost ? details.cost_bad! - details.cost_good! : 0;
+  const costWarning = hasCost && details.cost_good! > 0 && details.cost_bad! / details.cost_good! > 2;
+
   return (
-    <pre className="bg-slate-950 rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-96 overflow-y-auto border border-slate-700">
-      {lines.map((line, i) => (
-        <DiffLine key={i} line={line} />
-      ))}
-    </pre>
+    <div className="bg-slate-800/50 rounded-md p-3 my-3 border border-slate-700/50">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        {hasLatency && (
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">Latency</span>
+            <div className="flex items-center gap-2 font-mono text-xs">
+              <span className="text-slate-300">{details.latency_good_ms}ms</span>
+              <span className="text-slate-600">&rarr;</span>
+              <span className="text-slate-300">{details.latency_bad_ms}ms</span>
+              {latencyPct !== null && (
+                <span className={`font-medium ${latencyDelta > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                  {latencyDelta > 0 ? '+' : ''}{latencyPct}%
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        {hasCost && (
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400 flex items-center gap-1">
+              Cost
+              {costWarning && <AlertTriangle size={12} className="text-amber-400" />}
+            </span>
+            <div className="flex items-center gap-2 font-mono text-xs">
+              <span className="text-slate-300">${details.cost_good!.toFixed(4)}</span>
+              <span className="text-slate-600">&rarr;</span>
+              <span className="text-slate-300">${details.cost_bad!.toFixed(4)}</span>
+              <span className={`font-medium ${costDelta > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                {costDelta > 0 ? '+' : ''}${costDelta.toFixed(4)}
+              </span>
+              {costWarning && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-300 border border-amber-700">
+                  &gt;2x
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const bisectNodeTypes = { bisect: BisectNode };
+
+function BisectDAG({
+  nodeMap,
+  divergenceNode,
+  downstreamImpact,
+}: {
+  nodeMap: BisectNodeStatus[];
+  divergenceNode: string | null;
+  downstreamImpact: string[];
+}) {
+  const downstreamSet = useMemo(() => new Set(downstreamImpact), [downstreamImpact]);
+
+  const { nodes, edges } = useMemo(() => {
+    const dagEdges: Edge[] = [];
+    const dagNodes: Node[] = nodeMap.map((n, i) => {
+      let bisectStatus: 'match' | 'divergence' | 'downstream' | 'missing' = 'match';
+      if (n.node_id === divergenceNode) bisectStatus = 'divergence';
+      else if (downstreamSet.has(n.node_id)) bisectStatus = 'downstream';
+      else if (n.status === 'missing_in_good' || n.status === 'missing_in_bad') bisectStatus = 'missing';
+      else if (n.status !== 'match') bisectStatus = 'downstream';
+
+      return {
+        id: n.node_id,
+        type: 'bisect',
+        position: { x: 200, y: i * 100 + 30 },
+        data: {
+          label: n.node_id,
+          type: 'local',
+          bisectStatus,
+          similarity: n.similarity,
+        },
+      };
+    });
+
+    return { nodes: dagNodes, edges: dagEdges };
+  }, [nodeMap, divergenceNode, downstreamSet]);
+
+  if (nodes.length === 0) return null;
+
+  return (
+    <div className="bg-slate-800 border border-slate-700 rounded-card overflow-hidden" style={{ height: 300 }}>
+      <div className="px-4 py-2 border-b border-slate-700/50">
+        <h4 className="text-sm font-bold text-slate-300">Workflow DAG</h4>
+      </div>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={bisectNodeTypes}
+        fitView
+        panOnDrag={false}
+        zoomOnScroll={false}
+        preventScrolling={false}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        elementsSelectable={false}
+        proOptions={{ hideAttribution: true }}
+        className="bg-slate-900"
+      />
+    </div>
   );
 }
 
@@ -47,15 +306,18 @@ export default function BisectPage() {
     : null;
 
   return (
-    <div className="p-6 flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <GitBranch className="w-6 h-6 text-purple-400" />
-        <h1 className="text-2xl font-bold text-slate-100">Bisect &mdash; Find Divergence</h1>
-      </div>
+    <PageShell>
+      <Breadcrumb
+        items={[
+          { label: 'Dashboard', href: '/' },
+          { label: 'Bisect' },
+        ]}
+        className="mb-4"
+      />
+      <PageHeader title="Bisect — Find Divergence" description="Compare two runs to find where they diverge" />
 
       {/* Selectors */}
-      <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+      <div className="bg-slate-800 border border-slate-700 rounded-card p-4 mt-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
@@ -113,25 +375,21 @@ export default function BisectPage() {
             </div>
           </div>
 
-          <button
+          <Button
             onClick={handleBisect}
             disabled={!goodRun || !badRun || bisect.isPending}
-            className="self-start px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-md text-sm font-medium transition-colors flex items-center gap-2"
+            size="sm"
+            className="self-start"
           >
-            {bisect.isPending && (
-              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            )}
+            {bisect.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {bisect.isPending ? 'Finding Divergence...' : 'Find Divergence'}
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Error */}
       {bisect.isError && (
-        <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 flex items-center gap-2">
+        <div className="bg-red-900/30 border border-red-700 rounded-card p-4 flex items-center gap-2">
           <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
           <p className="text-red-300 text-sm">{bisect.error.message}</p>
         </div>
@@ -144,7 +402,7 @@ export default function BisectPage() {
           {bisect.data.divergence_node ? (
             <>
               {/* Divergence found */}
-              <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+              <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
                 <div className="flex items-center gap-3 mb-4">
                   <AlertCircle className="w-5 h-5 text-red-400" />
                   <span className="text-sm font-bold text-slate-200">
@@ -180,7 +438,7 @@ export default function BisectPage() {
 
                 {/* Details card */}
                 {bisect.data.details && (
-                  <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
+                  <div className="bg-slate-900 border border-slate-700 rounded-card p-4">
                     <h4 className="text-sm font-bold text-slate-300 mb-3">Divergence Details</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                       <div>
@@ -191,6 +449,12 @@ export default function BisectPage() {
                         <span className="text-slate-500 block mb-1">Bad Run Status</span>
                         <StatusBadge status={bisect.data.details.bad_status} />
                       </div>
+                    </div>
+
+                    {/* Cost/Latency Metrics */}
+                    <DivergenceMetrics details={bisect.data.details} />
+
+                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                       {bisect.data.details.good_output !== null && (
                         <div>
                           <span className="text-slate-500 block mb-1">Good Output</span>
@@ -218,10 +482,28 @@ export default function BisectPage() {
                   </div>
                 )}
               </div>
+
+              {/* Node Map */}
+              {bisect.data.node_map && bisect.data.node_map.length > 0 && (
+                <NodeMap
+                  nodes={bisect.data.node_map}
+                  divergenceNode={bisect.data.divergence_node}
+                  downstreamImpact={bisect.data.downstream_impact ?? []}
+                />
+              )}
+
+              {/* DAG Visualization */}
+              {bisect.data.node_map && bisect.data.node_map.length > 0 && (
+                <BisectDAG
+                  nodeMap={bisect.data.node_map}
+                  divergenceNode={bisect.data.divergence_node}
+                  downstreamImpact={bisect.data.downstream_impact ?? []}
+                />
+              )}
             </>
           ) : (
             /* No divergence found */
-            <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 flex items-center gap-3">
+            <div className="bg-slate-800 border border-slate-700 rounded-card p-4 flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-green-400" />
               <span className="inline-flex items-center px-2.5 py-1 rounded text-sm font-medium bg-green-900/50 text-green-300 border border-green-700">
                 No divergence found
@@ -233,6 +515,6 @@ export default function BisectPage() {
           )}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

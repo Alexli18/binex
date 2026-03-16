@@ -1,7 +1,8 @@
 import { memo, useState, useCallback } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from 'reactflow';
-import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2 } from 'lucide-react';
+import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2, BookOpen } from 'lucide-react';
 import { ModelSelect } from './ModelSelect';
+import { PromptLibraryPanel } from '../../pages/PromptLibrary';
 
 const ICONS: Record<string, React.ElementType> = {
   llm: Bot, local: Monitor, 'human-approve': ShieldCheck,
@@ -22,6 +23,7 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
   const [label, setLabel] = useState(data.label);
   const [agent, setAgent] = useState(data.agent);
   const [config, setConfig] = useState<Record<string, unknown>>(data.config || {});
+  const [promptPanelOpen, setPromptPanelOpen] = useState(false);
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -129,73 +131,21 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
                 className="w-full accent-blue-500" />
             </div>
             <div>
-              <label className="text-slate-400 block mb-0.5">System Prompt</label>
-              <select
-                value=""
-                onChange={(e) => {
-                  if (e.target.value) {
-                    fetch(`/api/v1/prompts/templates/${e.target.value}`)
-                      .then(r => r.json())
-                      .then(data => {
-                        if (data.content) updateConfig('system_prompt', data.content);
-                      });
-                  }
-                }}
-                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 mb-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <option value="">Choose built-in prompt...</option>
-                <optgroup label="⭐ Workflow Roles">
-                  <option value="wf-planner">Planner — break goal into steps</option>
-                  <option value="gen-researcher">Researcher — investigate & report</option>
-                  <option value="wf-analyzer">Analyzer — find patterns & insights</option>
-                  <option value="gen-draft-writer">Writer — produce first draft</option>
-                  <option value="gen-content-reviewer">Reviewer — evaluate & give feedback</option>
-                  <option value="sup-summarizer-brief">Summarizer — distill to essentials</option>
-                </optgroup>
-                <optgroup label="Development">
-                  <option value="dev-coder">Coder</option>
-                  <option value="dev-code-reviewer-strict">Code Reviewer (Strict)</option>
-                  <option value="dev-code-reviewer-mentor">Code Reviewer (Mentor)</option>
-                  <option value="dev-test-writer">Test Writer</option>
-                  <option value="dev-docs-generator">Docs Generator</option>
-                  <option value="dev-refactorer">Refactorer</option>
-                  <option value="dev-bug-reproducer">Bug Reproducer</option>
-                  <option value="dev-security-auditor-strict">Security Auditor</option>
-                </optgroup>
-                <optgroup label="Content">
-                  <option value="cnt-content-drafter-formal">Content Drafter (Formal)</option>
-                  <option value="cnt-content-drafter-casual">Content Drafter (Casual)</option>
-                  <option value="cnt-seo-optimizer">SEO Optimizer</option>
-                  <option value="cnt-outline-writer">Outline Writer</option>
-                </optgroup>
-                <optgroup label="Data">
-                  <option value="dat-data-validator">Data Validator</option>
-                  <option value="dat-data-normalizer">Data Normalizer</option>
-                  <option value="dat-quality-reporter">Quality Reporter</option>
-                </optgroup>
-                <optgroup label="Business">
-                  <option value="biz-executive-summarizer-brief">Executive Summary (Brief)</option>
-                  <option value="biz-executive-summarizer-detailed">Executive Summary (Detailed)</option>
-                  <option value="biz-swot-writer">SWOT Analysis</option>
-                  <option value="biz-recommender">Recommender</option>
-                </optgroup>
-                <optgroup label="General">
-                  <option value="gen-researcher">Researcher</option>
-                  <option value="gen-draft-writer">Draft Writer</option>
-                  <option value="gen-content-reviewer">Content Reviewer</option>
-                  <option value="gen-data-processor">Data Processor</option>
-                </optgroup>
-                <optgroup label="Support">
-                  <option value="sup-response-generator">Response Generator</option>
-                  <option value="sup-translator-adaptive">Translator (Adaptive)</option>
-                  <option value="sup-summarizer-brief">Summarizer (Brief)</option>
-                </optgroup>
-              </select>
+              <div className="flex items-center justify-between mb-0.5">
+                <label className="text-slate-400">System Prompt</label>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setPromptPanelOpen(true); }}
+                  className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
+                  title="Browse prompt library"
+                >
+                  <BookOpen size={11} />
+                  <span className="text-[10px]">Browse</span>
+                </button>
+              </div>
               <textarea value={(config.system_prompt as string) || ''}
                 onChange={(e) => updateConfig('system_prompt', e.target.value)}
-                placeholder="Or write your own prompt..."
-                rows={3}
+                placeholder="Write your prompt or click Browse to pick one..."
+                rows={4}
                 className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 resize-none"
                 onClick={(e) => e.stopPropagation()} />
             </div>
@@ -268,6 +218,17 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
       </div>
 
       <Handle type="source" position={Position.Bottom} className="!bg-slate-500 !border-slate-400" />
+
+      {promptPanelOpen && (
+        <PromptLibraryPanel
+          open={promptPanelOpen}
+          onClose={() => setPromptPanelOpen(false)}
+          onUse={(content) => {
+            updateConfig('system_prompt', content);
+            setPromptPanelOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

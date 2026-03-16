@@ -75,6 +75,23 @@ async def bisect_runs(body: BisectRequest) -> JSONResponse:
                 "diff": diff_text,
             }
 
+        # Add node_map for full per-node comparison data
+        response["node_map"] = [
+            {
+                "node_id": nc.node_id,
+                "status": nc.status,
+                "good_status": nc.good_status,
+                "bad_status": nc.bad_status,
+                "similarity": nc.similarity,
+                "latency_good_ms": nc.latency_good_ms,
+                "latency_bad_ms": nc.latency_bad_ms,
+            }
+            for nc in report.node_map
+        ]
+
+        # Add downstream impact list
+        response["downstream_impact"] = report.downstream_impact
+
         return JSONResponse(response)
     finally:
         await exec_store.close()

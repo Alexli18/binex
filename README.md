@@ -38,14 +38,25 @@
 
 ## Demo
 
-Full workflow: drag & drop nodes, configure models and prompts, run with human input, see results, debug, trace, and lineage — all in the browser.
+### 1. Start in seconds
 
 <div align="center">
-  <a href="https://alexli18.github.io/binex/demo/">
-    <img src="https://github.com/Alexli18/binex/blob/master/docs/demo/binex-demo.gif?raw=true" alt="Binex Demo" width="800">
-  </a>
-  <br>
-  <sub>Click to watch full demo video</sub>
+  <img src="assets/demo-start.gif" alt="Quick Start" width="800">
+  <br><sub>Install, run <code>binex ui</code>, and you're building workflows</sub>
+</div>
+
+### 2. Build & run custom workflows
+
+<div align="center">
+  <img src="assets/demo-custom.gif" alt="Custom Workflow" width="800">
+  <br><sub>Drag & drop nodes, configure models, run with human input</sub>
+</div>
+
+### 3. Explore & debug results
+
+<div align="center">
+  <img src="assets/demo-explore.gif" alt="Explore Results" width="800">
+  <br><sub>Debug, trace, diff, lineage — full post-mortem inspection</sub>
 </div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -105,7 +116,12 @@ binex ui
 
 ### Visual Drag & Drop Editor
 
-Build workflows visually — drag nodes from the palette, connect them, configure models and prompts inline.
+<div align="center">
+  <img src="screenshots/new-editor.png" alt="Workflow Editor" width="800">
+  <br><sub>Drag & drop nodes, configure models and prompts, switch between Visual and YAML</sub>
+</div>
+
+<br>
 
 6 node types: **LLM Agent**, **Local Script**, **Human Input**, **Human Approve**, **Human Output**, **A2A Agent**
 
@@ -115,6 +131,28 @@ Build workflows visually — drag nodes from the palette, connect them, configur
 - Real-time cost estimation as you build
 - Custom model input — use any litellm-compatible model
 
+### Dashboard
+
+<div align="center">
+  <img src="screenshots/new-dashboard.png" alt="Runs Dashboard" width="800">
+  <br><sub>All runs at a glance — status, cost, duration</sub>
+</div>
+
+### Debugging & Analysis
+
+<div align="center">
+  <img src="screenshots/new-debug.png" alt="Debug View" width="380">
+  <img src="screenshots/new-trace.png" alt="Trace Timeline" width="380">
+  <br><sub>Left: Node-by-node debug inspection. Right: Gantt timeline with anomaly detection.</sub>
+</div>
+
+### Run Comparison
+
+<div align="center">
+  <img src="screenshots/new-diff.png" alt="Diff View" width="800">
+  <br><sub>Side-by-side diff with filtering: changed, failed, cost delta</sub>
+</div>
+
 ### 18 Pages — Full CLI Parity
 
 | Category | Pages |
@@ -122,9 +160,13 @@ Build workflows visually — drag nodes from the palette, connect them, configur
 | **Workflows** | Browse, Visual Editor, Scaffold Wizard |
 | **Runs** | Dashboard, RunLive (SSE), RunDetail |
 | **Analysis** | Debug (input/output artifacts), Trace (Gantt timeline), Diagnose (root-cause), Lineage (artifact graph) |
-| **Comparison** | Diff (side-by-side), Bisect (find divergence) |
+| **Comparison** | Diff (side-by-side with filter bar, compare with previous run), Bisect (NodeMap, DAG visualization, divergence metrics) |
 | **Costs** | Cost Dashboard (charts), Budget Management |
 | **System** | Doctor (health), Plugins, Gateway, Export |
+
+### Navigation
+
+Sidebar organized into 4 groups: **Build** (Editor, Scaffold), **Runs** (Dashboard), **Analyze** (Compare, Bisect), **System** (Gateway, Plugins, Doctor). Run-specific pages (Debug, Trace, Diagnose, Lineage, Costs) open from run context.
 
 ### Replay
 
@@ -141,20 +183,32 @@ Debug any node → click Replay → swap the model or prompt → re-run just tha
 ```bash
 # Zero-config demo
 binex hello
+```
 
+> **Tip:** Runs a 2-node demo workflow (producer → consumer), no API keys needed.
+
+```bash
 # Run a workflow
 binex run examples/simple.yaml
+```
 
+> **Tip:** Uses your configured LLM provider. Set `OPENAI_API_KEY` or use `ollama` for fully local runs.
+
+```bash
 # Inspect the run
 binex debug latest
 binex trace latest
 ```
+
+> **Tip:** `debug` shows per-node inputs/outputs. `trace` shows the execution timeline as a Gantt chart.
 
 ### Web UI
 
 ```bash
 binex ui
 ```
+
+> **Tip:** Opens the browser automatically. Use `--port 9000` to change the port, `--no-browser` to skip auto-open.
 
 ### Create a Workflow
 
@@ -213,12 +267,24 @@ nodes:
 | `binex trace` | Execution timeline |
 | `binex replay` | Re-run with agent swaps |
 | `binex diff` | Compare two runs |
+| `binex diagnose` | Root-cause failure analysis |
+| `binex bisect` | Find first divergence between two runs |
 | `binex cost show` | Cost breakdown per node |
 | `binex explore` | Interactive TUI dashboard |
 | `binex scaffold` | Generate workflow from DSL |
 | `binex export` | Export to CSV/JSON |
 | `binex doctor` | System health check |
 | `binex hello` | Zero-config demo |
+| `binex list` | List available workflows |
+| `binex start` | Create a new project interactively |
+| `binex init` | Deprecated alias for `binex start` |
+| `binex validate` | Validate workflow YAML |
+| `binex cancel` | Cancel a running workflow |
+| `binex artifacts` | Inspect artifacts |
+| `binex dev` | Local development environment |
+| `binex gateway` | A2A Gateway management |
+| `binex plugins` | Manage adapter plugins |
+| `binex workflow` | Workflow versioning & inspection |
 
 ### LLM Providers
 
@@ -238,17 +304,25 @@ nodes:
 
 ## Examples
 
+29 example workflows in `examples/`. Highlights:
+
 | Example | What it demonstrates |
 |---------|---------------------|
 | `simple.yaml` | Minimal two-node pipeline |
 | `diamond.yaml` | Diamond dependency pattern |
 | `fan-out-fan-in.yaml` | Parallel execution with aggregation |
 | `human-in-the-loop.yaml` | Approval gates and conditional branching |
+| `human-feedback.yaml` | Human feedback loop |
+| `conditional-routing.yaml` | Conditional node execution |
 | `multi-provider-demo.yaml` | Multiple LLM providers in one workflow |
 | `ollama-research.yaml` | Full research pipeline with Ollama + OpenRouter |
+| `budget-hard-limit.yaml` | Budget enforcement with hard stop |
+| `budget-per-node.yaml` | Per-node budget allocation |
+| `a2a-multi-agent.yaml` | A2A protocol multi-agent workflow |
 | `langchain-summarizer.yaml` | LangChain Runnable in a pipeline |
 | `crewai-research-crew.yaml` | CrewAI Crew as a workflow node |
 | `autogen-coding-team.yaml` | AutoGen Team for code generation |
+| `mixed-framework-pipeline.yaml` | LangChain + CrewAI + AutoGen in one pipeline |
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -259,16 +333,19 @@ nodes:
 ```
 src/binex/
 ├── adapters/        # Agent backends (local, LLM, A2A, human, frameworks)
+├── agents/          # Agent definitions and configuration
 ├── cli/             # Click CLI commands
+├── gateway/         # A2A Gateway server and routing
 ├── graph/           # DAG construction + topological scheduling
 ├── models/          # Pydantic v2 domain models
 ├── plugins/         # Plugin registry for custom adapters
-├── prompts/         # 121 built-in prompt templates
+├── prompts/         # 112 built-in prompt templates
+├── registry/        # Provider and adapter registry
 ├── runtime/         # Orchestrator, dispatcher, replay engine
 ├── stores/          # SQLite execution + filesystem artifacts
 ├── trace/           # Debug, lineage, timeline, diffing
 ├── ui/              # FastAPI backend + React frontend
-│   ├── api/         # 20 REST endpoints
+│   ├── api/         # 31 REST endpoints
 │   └── static/      # Pre-built React app
 └── workflow_spec/   # YAML loader + validator
 ```

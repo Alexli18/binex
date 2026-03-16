@@ -20,7 +20,7 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
     };
 
     // system_prompt is top-level in YAML (used by LLM and Human adapters)
-    const promptText = d.config?.system_prompt || d.config?.prompt_message;
+    const promptText = d.system_prompt || d.config?.system_prompt || d.config?.prompt_message;
     if (promptText) entry.system_prompt = promptText;
 
     const config: Record<string, unknown> = {};

@@ -69,17 +69,17 @@ class TestHelloContentOutput:
 # ---------------------------------------------------------------------------
 
 class TestInitWorkflowAgentRefs:
-    """TC-CLI-002 supplement: verify generated YAML has correct provider agent refs."""
+    """TC-CLI-002 supplement: verify `binex init` is a deprecated alias for `binex start`."""
 
-    def test_init_ollama_provider_uses_llm_prefix(self, tmp_path: Path):
-        """Selecting ollama provider should produce llm://ollama/ agent refs."""
+    def test_init_shows_deprecation_and_delegates_to_start(self, tmp_path: Path):
+        """binex init should print deprecation warning and delegate to start."""
+        from unittest.mock import patch
+
         runner = CliRunner()
-        with runner.isolated_filesystem(temp_dir=tmp_path) as td:
-            # mode=1 (workflow), provider=1 (ollama), model=default
-            result = runner.invoke(cli, ["init"], input="\n1\n1\n\n")
-            assert result.exit_code == 0
-            wf = (Path(td) / "workflow.yaml").read_text()
-            assert "llm://ollama/" in wf
+        with patch("binex.cli.start._step_choose_template", side_effect=SystemExit(0)):
+            result = runner.invoke(cli, ["init"])
+        assert "deprecated" in result.output.lower()
+        assert "binex start" in result.output
 
 
 # ---------------------------------------------------------------------------

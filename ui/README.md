@@ -1,50 +1,82 @@
-# React + TypeScript + Vite
+# Binex Web UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React frontend for the Binex workflow orchestrator. Provides a visual drag-and-drop editor, real-time run monitoring, and full CLI parity in the browser.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18** + TypeScript
+- **Vite** — build & dev server
+- **Tailwind CSS** + **shadcn/ui** — styling & components
+- **React Flow** + **ELK.js** — DAG visualization & auto-layout
+- **Monaco Editor** — YAML editing with syntax highlighting
+- **@tanstack/react-query** — data fetching & caching
+- **js-yaml** — YAML parsing in browser
+- **Recharts** — cost & timeline charts
+- **Lucide React** — icons
 
-## Expanding the ESLint configuration
+## Pages (18)
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+| Category | Pages |
+|----------|-------|
+| **Workflows** | WorkflowBrowse, WorkflowEditor, Scaffold |
+| **Runs** | Dashboard, RunLive (SSE), RunDetail |
+| **Analysis** | DebugPage, TracePage, DiagnosePage, LineagePage |
+| **Comparison** | DiffPage (filter bar, compare with previous), BisectPage (NodeMap, DAG viz, divergence metrics) |
+| **Costs** | CostDashboard, BudgetPage |
+| **System** | DoctorPage, PluginsPage, GatewayPage, ExportPage |
 
-- Configure the top-level `parserOptions` property like this:
+## Sidebar Navigation
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+4 collapsible groups: **Build** (Editor, Scaffold), **Runs** (Dashboard), **Analyze** (Compare, Bisect), **System** (Gateway, Plugins, Doctor). Run-specific pages open from run context menus.
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Dev server (hot reload, proxied to FastAPI backend)
+npm run dev
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+
+# Lint
+npm run lint
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+The dev server expects the FastAPI backend at `http://localhost:8000` (started via `binex ui --dev`).
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+## Production Build
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```bash
+# From repo root — builds frontend and copies to Python package
+./scripts/build-ui.sh
+```
+
+The built assets are placed in `src/binex/ui/static/` and served by FastAPI in production mode.
+
+## Project Structure
+
+```
+ui/
+├── src/
+│   ├── pages/           # 18 page components
+│   ├── components/
+│   │   ├── common/      # Shared UI (NewRunModal, ArtifactDiff, etc.)
+│   │   ├── dag/         # React Flow DAG components (CustomNode, BisectNode)
+│   │   ├── debug/       # Debug detail panels
+│   │   ├── editor/      # Visual workflow editor
+│   │   ├── layout/      # PageShell, Breadcrumb, layout primitives
+│   │   ├── trace/       # Gantt timeline components
+│   │   └── ui/          # shadcn/ui primitives
+│   ├── hooks/           # Custom hooks (usePreviousRun, etc.)
+│   ├── lib/             # Utilities
+│   └── App.tsx          # Router & layout
+├── public/
+├── index.html
+└── vite.config.ts
 ```

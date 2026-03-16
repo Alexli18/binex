@@ -748,10 +748,19 @@ def _step_generate_project(
 
 @click.command("start", epilog="""\b
 Examples:
-  binex start   Launch the interactive wizard
+  binex start          Launch the interactive wizard
+  binex start --quick  Quick setup (3 questions, works in current dir)
 """)
-def start_cmd() -> None:
+@click.option(
+    "--quick", is_flag=True, default=False,
+    help="Minimal setup: provider + model, creates workflow in current directory.",
+)
+def start_cmd(quick: bool) -> None:
     """Interactive wizard to create and run an agent workflow."""
+    if quick:
+        _quick_start()
+        return
+
     _print_banner()
 
     dsl, default_name, user_prompt_text = _step_choose_template()
@@ -768,3 +777,43 @@ def start_cmd() -> None:
         want_user_input=want_user_input,
         user_prompt_text=user_prompt_text,
     )
+
+
+def _quick_start() -> None:
+    """Minimal 3-question setup: project name, provider, model. Works in cwd."""
+    cwd = Path.cwd()
+
+    # Non-empty directory check
+    if any(cwd.iterdir()):
+        if not click.confirm(
+            "Current directory is not empty. Continue anyway?", default=False,
+        ):
+            click.echo("Aborted.")
+            return
+
+    project_name = click.prompt("Project name", default=cwd.name)
+    provider, model, api_key = _step_choose_provider()
+
+    dsl = "planner -> researcher -> writer"
+    workflow_yaml, needed_prompts = build_start_workflow(
+        dsl=dsl,
+        agent_prefix=provider.agent_prefix,
+        model=model,
+    )
+
+    (cwd / "workflow.yaml").write_text(workflow_yaml)
+    if needed_prompts:
+        from binex.cli.start_templates import _copy_prompts_to_project
+
+        _copy_prompts_to_project(cwd, needed_prompts)
+
+    env_content = f"{provider.env_var}={api_key}\n" if provider.env_var and api_key else ""
+    (cwd / ".env").write_text(env_content)
+    (cwd / ".gitignore").write_text(".binex/\n.env\n__pycache__/\n*.pyc\n")
+
+    _print_file_created("workflow.yaml")
+    _print_file_created(".env")
+    _print_file_created(".gitignore")
+
+    click.echo(f"\nProject '{project_name}' ready!")
+    click.echo('Run: binex run workflow.yaml --var topic="your topic"')
