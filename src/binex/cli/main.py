@@ -21,6 +21,7 @@ from binex.cli.export_cmd import export_cmd
 from binex.cli.gateway_cmd import gateway
 from binex.cli.hello import hello_cmd
 from binex.cli.init_cmd import init_cmd
+from binex.cli.list_cmd import list_cmd
 from binex.cli.plugins_cmd import plugins_group
 from binex.cli.replay import replay_cmd
 from binex.cli.run import cancel_cmd, run_cmd
@@ -37,7 +38,7 @@ Examples:
   binex hello                              Run the built-in demo
   binex run workflow.yaml --var topic=AI   Execute a workflow
   binex debug latest                       Inspect the most recent run
-  binex init                               Create a new project
+  binex start                              Create a new project
 
 Learn more:
   https://binex.dev/docs
@@ -70,6 +71,7 @@ cli.add_command(doctor_cmd, "doctor")
 cli.add_command(validate_cmd, "validate")
 cli.add_command(scaffold_group, "scaffold")
 cli.add_command(init_cmd, "init")
+cli.add_command(list_cmd, "list")
 cli.add_command(start_cmd, "start")
 cli.add_command(explore_cmd, "explore")
 cli.add_command(cost_group, "cost")

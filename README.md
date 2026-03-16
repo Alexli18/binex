@@ -38,14 +38,25 @@
 
 ## Demo
 
-Full workflow: drag & drop nodes, configure models and prompts, run with human input, see results, debug, trace, and lineage — all in the browser.
+### 1. Start in seconds
 
 <div align="center">
-  <a href="https://alexli18.github.io/binex/demo/">
-    <img src="https://github.com/Alexli18/binex/blob/master/docs/demo/binex-demo.gif?raw=true" alt="Binex Demo" width="800">
-  </a>
-  <br>
-  <sub>Click to watch full demo video</sub>
+  <img src="assets/demo-start.gif" alt="Quick Start" width="800">
+  <br><sub>Install, run <code>binex ui</code>, and you're building workflows</sub>
+</div>
+
+### 2. Build & run custom workflows
+
+<div align="center">
+  <img src="assets/demo-custom.gif" alt="Custom Workflow" width="800">
+  <br><sub>Drag & drop nodes, configure models, run with human input</sub>
+</div>
+
+### 3. Explore & debug results
+
+<div align="center">
+  <img src="assets/demo-explore.gif" alt="Explore Results" width="800">
+  <br><sub>Debug, trace, diff, lineage — full post-mortem inspection</sub>
 </div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -105,7 +116,12 @@ binex ui
 
 ### Visual Drag & Drop Editor
 
-Build workflows visually — drag nodes from the palette, connect them, configure models and prompts inline.
+<div align="center">
+  <img src="screenshots/new-editor.png" alt="Workflow Editor" width="800">
+  <br><sub>Drag & drop nodes, configure models and prompts, switch between Visual and YAML</sub>
+</div>
+
+<br>
 
 6 node types: **LLM Agent**, **Local Script**, **Human Input**, **Human Approve**, **Human Output**, **A2A Agent**
 
@@ -114,6 +130,28 @@ Build workflows visually — drag nodes from the palette, connect them, configur
 - Switch between Visual and YAML modes — changes sync both ways
 - Real-time cost estimation as you build
 - Custom model input — use any litellm-compatible model
+
+### Dashboard
+
+<div align="center">
+  <img src="screenshots/new-dashboard.png" alt="Runs Dashboard" width="800">
+  <br><sub>All runs at a glance — status, cost, duration</sub>
+</div>
+
+### Debugging & Analysis
+
+<div align="center">
+  <img src="screenshots/new-debug.png" alt="Debug View" width="380">
+  <img src="screenshots/new-trace.png" alt="Trace Timeline" width="380">
+  <br><sub>Left: Node-by-node debug inspection. Right: Gantt timeline with anomaly detection.</sub>
+</div>
+
+### Run Comparison
+
+<div align="center">
+  <img src="screenshots/new-diff.png" alt="Diff View" width="800">
+  <br><sub>Side-by-side diff with filtering: changed, failed, cost delta</sub>
+</div>
 
 ### 18 Pages — Full CLI Parity
 
@@ -145,20 +183,32 @@ Debug any node → click Replay → swap the model or prompt → re-run just tha
 ```bash
 # Zero-config demo
 binex hello
+```
 
+> **Tip:** Runs a 2-node demo workflow (producer → consumer), no API keys needed.
+
+```bash
 # Run a workflow
 binex run examples/simple.yaml
+```
 
+> **Tip:** Uses your configured LLM provider. Set `OPENAI_API_KEY` or use `ollama` for fully local runs.
+
+```bash
 # Inspect the run
 binex debug latest
 binex trace latest
 ```
+
+> **Tip:** `debug` shows per-node inputs/outputs. `trace` shows the execution timeline as a Gantt chart.
 
 ### Web UI
 
 ```bash
 binex ui
 ```
+
+> **Tip:** Opens the browser automatically. Use `--port 9000` to change the port, `--no-browser` to skip auto-open.
 
 ### Create a Workflow
 
@@ -225,8 +275,9 @@ nodes:
 | `binex export` | Export to CSV/JSON |
 | `binex doctor` | System health check |
 | `binex hello` | Zero-config demo |
-| `binex init` | Initialize a new Binex project |
-| `binex start` | Interactive workflow wizard |
+| `binex list` | List available workflows |
+| `binex start` | Create a new project interactively |
+| `binex init` | Deprecated alias for `binex start` |
 | `binex validate` | Validate workflow YAML |
 | `binex cancel` | Cancel a running workflow |
 | `binex artifacts` | Inspect artifacts |

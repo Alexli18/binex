@@ -75,8 +75,8 @@ def _print_next_steps(summary) -> None:
         lines.append("Next steps:\n\n", style="bold")
         lines.append(f"  binex debug {summary.run_id}", style="cyan")
         lines.append("   \u2014 inspect the run\n")
-        lines.append("  binex init", style="cyan")
-        lines.append("                       \u2014 create your own project\n")
+        lines.append("  binex start", style="cyan")
+        lines.append("                      \u2014 create your own project\n")
         lines.append("  binex run examples/simple.yaml", style="cyan")
         lines.append("   \u2014 try a workflow file")
 
@@ -89,7 +89,7 @@ def _print_next_steps(summary) -> None:
             err=True,
         )
         click.echo(
-            "  binex init                       "
+            "  binex start                      "
             "\u2014 create your own project",
             err=True,
         )

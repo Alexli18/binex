@@ -47,7 +47,7 @@ Run ID: <run-id>
 
 Next steps:
   binex debug <run-id>               — inspect the run
-  binex init                       — create your own project
+  binex start                      — create your own project
   binex run examples/simple.yaml   — try a workflow file
 ```
 
@@ -198,10 +198,10 @@ This catches issues like missing dependencies, circular references, and invalid 
 
 ## Creating Your Own Project
 
-Use the interactive init wizard to scaffold a new project:
+Use the interactive wizard to scaffold a new project:
 
 ```bash
-binex init
+binex start
 ```
 
 Or use the scaffold command to generate a workflow from a DSL string:

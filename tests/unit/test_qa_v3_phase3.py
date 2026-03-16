@@ -436,21 +436,15 @@ class TestStartWizardGaps:
 class TestInitCommandGaps:
     """Gap tests for init command."""
 
-    # TC-INIT-001: Mode=workflow generates files
+    # TC-INIT-001: init is now a deprecated alias for start
     def test_init_001_workflow_mode(self, tmp_path):
         from binex.cli.init_cmd import init_cmd
-        with patch("binex.cli.init_cmd.click.prompt", side_effect=[
-            "myproject",     # project name
-            "1",             # mode=workflow
-            "1",             # provider=ollama
-            "",              # default model
-        ]), patch("binex.cli.init_cmd.click.confirm", return_value=True):
+        with patch("binex.cli.start._step_choose_template", side_effect=SystemExit(0)):
             runner = CliRunner()
-            result = runner.invoke(init_cmd, [], input="myproject\n1\n1\n\n")
+            result = runner.invoke(init_cmd, [])
 
-        # Check the command ran (may vary on exact prompt flow)
-        # The important thing is it doesn't crash
-        assert result.exit_code == 0 or "Error" not in (result.output or "")
+        # Should show deprecation warning
+        assert "deprecated" in result.output.lower()
 
     # TC-INIT-004: Provider selection
     def test_init_004_provider_selection(self):

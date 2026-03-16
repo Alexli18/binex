@@ -55,6 +55,7 @@ nav:
     - validate: cli/validate.md
     - scaffold: cli/scaffold.md
     - cost: cli/cost.md
+    - list: cli/list.md
     - start: cli/start.md
     - explore: cli/explore.md
     - diagnose: cli/diagnose.md

@@ -1,132 +1,84 @@
-"""Tests for `binex init` command (T013-T018)."""
+"""Tests for `binex init` (deprecated alias) and `binex start --quick`."""
 
 from __future__ import annotations
 
 import os
 from pathlib import Path
+from unittest.mock import patch
 
 from click.testing import CliRunner
 
 from binex.cli.main import cli
 
 
-def test_init_workflow_mode(tmp_path: Path) -> None:
-    """T013: workflow mode creates workflow.yaml, .env.example, .gitignore."""
+def test_init_shows_deprecation_warning() -> None:
+    """binex init prints a deprecation warning."""
     runner = CliRunner()
-    with runner.isolated_filesystem(temp_dir=tmp_path) as td:
-        # Prompts: project_name(default) -> mode=1 -> provider=2(openai) -> model(default)
-        result = runner.invoke(cli, ["init"], input="\n1\n2\n\n")
-        assert result.exit_code == 0, result.output
-
-        td_path = Path(td)
-        assert (td_path / "workflow.yaml").exists()
-        assert (td_path / ".env.example").exists()
-        assert (td_path / ".gitignore").exists()
-
-        # workflow.yaml should have planner/researcher/writer nodes
-        wf = (td_path / "workflow.yaml").read_text()
-        assert "planner:" in wf
-        assert "researcher:" in wf
-        assert "writer:" in wf
-        assert "gpt-4o" in wf  # openai default model
-
-        # Should NOT have agent dir in workflow-only mode
-        assert not (td_path / "agents").exists()
-        assert not (td_path / "tests").exists()
+    with patch("binex.cli.start._quick_start"):
+        result = runner.invoke(cli, ["init"])
+    assert "deprecated" in result.output.lower()
+    assert "binex start" in result.output
 
 
-def test_init_agent_mode(tmp_path: Path) -> None:
-    """T014: agent mode creates agents/ directory in addition to base files."""
+def test_init_invokes_quick_start_and_creates_files(tmp_path: Path) -> None:
+    """binex init delegates to start --quick and creates a working project."""
     runner = CliRunner()
-    with runner.isolated_filesystem(temp_dir=tmp_path) as td:
-        # mode=2 (agent), provider=1 (ollama), model=default
-        result = runner.invoke(cli, ["init"], input="\n2\n1\n\n")
-        assert result.exit_code == 0, result.output
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(tmp_path)
+        # provider 1 (ollama), default model
+        result = runner.invoke(cli, ["init"], input="\n1\n\n")
+    finally:
+        os.chdir(old_cwd)
+    assert result.exit_code == 0, result.output
+    assert "deprecated" in result.output.lower()
+    # Quick start should have created files in cwd
+    assert (tmp_path / "workflow.yaml").exists()
+    wf = (tmp_path / "workflow.yaml").read_text()
+    assert "planner" in wf
 
-        td_path = Path(td)
-        assert (td_path / "workflow.yaml").exists()
-        assert (td_path / ".env.example").exists()
-        assert (td_path / ".gitignore").exists()
-        assert (td_path / "agents").is_dir()
 
-
-def test_init_full_mode(tmp_path: Path) -> None:
-    """T015: full mode creates all files including tests/ and docker-compose.yml."""
+def test_init_hidden_from_help() -> None:
+    """binex init should not appear in --help output."""
     runner = CliRunner()
-    with runner.isolated_filesystem(temp_dir=tmp_path) as td:
-        # mode=3 (full), provider=3 (anthropic), model=default
-        result = runner.invoke(cli, ["init"], input="\n3\n3\n\n")
-        assert result.exit_code == 0, result.output
-
-        td_path = Path(td)
-        assert (td_path / "workflow.yaml").exists()
-        assert (td_path / ".env.example").exists()
-        assert (td_path / ".gitignore").exists()
-        assert (td_path / "agents").is_dir()
-        assert (td_path / "workflows").is_dir()
-        assert (td_path / "tests").is_dir()
-        assert (td_path / "tests" / "__init__.py").exists()
-        assert (td_path / "tests" / "test_workflow.py").exists()
-        assert (td_path / "docker-compose.yml").exists()
+    result = runner.invoke(cli, ["--help"])
+    assert result.exit_code == 0
+    # init should be hidden
+    lines = result.output.split("\n")
+    init_lines = [ln for ln in lines if ln.strip().startswith("init")]
+    assert len(init_lines) == 0
 
 
-def test_init_with_name_option(tmp_path: Path) -> None:
-    """T016: --name flag skips the project name prompt."""
+def test_start_quick_creates_files(tmp_path: Path) -> None:
+    """binex start --quick creates workflow.yaml, .env, .gitignore in cwd."""
     runner = CliRunner()
-    with runner.isolated_filesystem(temp_dir=tmp_path) as td:
-        # --name provided, so first prompt skipped: mode=1, provider=1, model=default
-        result = runner.invoke(cli, ["init", "--name", "my-cool-project"], input="1\n1\n\n")
-        assert result.exit_code == 0, result.output
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(tmp_path)
+        # Inputs: project_name (default) -> provider 1 (ollama) -> model (default)
+        result = runner.invoke(cli, ["start", "--quick"], input="\n1\n\n")
+    finally:
+        os.chdir(old_cwd)
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "workflow.yaml").exists()
+    assert (tmp_path / ".env").exists()
+    assert (tmp_path / ".gitignore").exists()
 
-        td_path = Path(td)
-        wf = (td_path / "workflow.yaml").read_text()
-        assert "my-cool-project" in wf
+    wf = (tmp_path / "workflow.yaml").read_text()
+    assert "planner" in wf
+    assert "researcher" in wf
+    assert "writer" in wf
 
 
-def test_init_nonempty_dir_warning(tmp_path: Path) -> None:
-    """T017: confirmation prompt when directory is not empty."""
+def test_start_quick_nonempty_dir_abort(tmp_path: Path) -> None:
+    """binex start --quick aborts if user declines in non-empty dir."""
+    (tmp_path / "existing.txt").write_text("hello")
     runner = CliRunner()
-    with runner.isolated_filesystem(temp_dir=tmp_path) as td:
-        # Create a file to make dir non-empty
-        Path(td, "existing.txt").write_text("hello")
-
-        # Answer 'n' to confirmation -> should abort
-        result = runner.invoke(cli, ["init"], input="n\n")
-        assert result.exit_code == 0 or result.exit_code == 1
-        assert "not empty" in result.output.lower() or "abort" in result.output.lower()
-
-        # Answer 'y' to confirmation, then fill prompts
-        result = runner.invoke(cli, ["init"], input="y\n\n1\n1\n\n")
-        assert result.exit_code == 0, result.output
-        assert (Path(td) / "workflow.yaml").exists()
-
-
-def test_init_skip_provider(tmp_path: Path) -> None:
-    """Provider=9 (skip) means no env var in .env.example."""
-    runner = CliRunner()
-    with runner.isolated_filesystem(temp_dir=tmp_path) as td:
-        # mode=1, provider=10 (skip)
-        result = runner.invoke(cli, ["init"], input="\n1\n10\n")
-        assert result.exit_code == 0, result.output
-
-        td_path = Path(td)
-        env_content = (td_path / ".env.example").read_text()
-        # Should not contain any API key line
-        assert "API_KEY" not in env_content
-
-        # workflow.yaml should still exist but use a placeholder
-        wf = (td_path / "workflow.yaml").read_text()
-        assert "planner:" in wf
-
-
-def test_init_provider_env_var(tmp_path: Path) -> None:
-    """Provider=2 (openai) puts OPENAI_API_KEY in .env.example."""
-    runner = CliRunner()
-    with runner.isolated_filesystem(temp_dir=tmp_path) as td:
-        # mode=1, provider=2 (openai), model=default
-        result = runner.invoke(cli, ["init"], input="\n1\n2\n\n")
-        assert result.exit_code == 0, result.output
-
-        td_path = Path(td)
-        env_content = (td_path / ".env.example").read_text()
-        assert "OPENAI_API_KEY" in env_content
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(tmp_path)
+        result = runner.invoke(cli, ["start", "--quick"], input="n\n")
+    finally:
+        os.chdir(old_cwd)
+    assert "abort" in result.output.lower() or result.exit_code == 0
+    assert not (tmp_path / "workflow.yaml").exists()
