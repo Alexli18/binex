@@ -21,6 +21,7 @@ import DoctorPage from './pages/DoctorPage';
 import PluginsPage from './pages/PluginsPage';
 import GatewayPage from './pages/GatewayPage';
 import PromptLibrary from './pages/PromptLibrary';
+import CostDashboard from './pages/CostDashboard';
 import NotFound from './pages/NotFound';
 import LatestRunRedirect from './pages/LatestRunRedirect';
 
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="/editor" element={<WorkflowEditor />} />
           <Route path="/scaffold" element={<Scaffold />} />
           <Route path="/prompts" element={<PromptLibrary />} />
+          <Route path="/costs" element={<CostDashboard />} />
           <Route path="/diff" element={<DiffPage />} />
           <Route path="/bisect" element={<BisectPage />} />
           <Route path="/export" element={<ExportPage />} />

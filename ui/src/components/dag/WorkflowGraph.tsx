@@ -24,25 +24,46 @@ export function WorkflowGraph({ nodes, edges, onNodeClick }: WorkflowGraphProps)
 
   useEffect(() => {
     if (nodes.length === 0) return;
-    layoutGraph(nodes, edges).then((layout) => {
-      setRfNodes(
-        layout.nodes.map((n) => ({
-          id: n.id,
-          type: 'custom',
-          position: n.position,
-          data: n.data,
-        })),
-      );
-      setRfEdges(
-        layout.edges.map((e) => ({
-          id: e.id,
-          source: e.source,
-          target: e.target,
-          animated: nodes.find((n) => n.id === e.source)?.status === 'running',
-          style: { stroke: chartColors.edge, strokeWidth: 2 },
-        })),
-      );
-    });
+    layoutGraph(nodes, edges)
+      .then((layout) => {
+        setRfNodes(
+          layout.nodes.map((n) => ({
+            id: n.id,
+            type: 'custom',
+            position: n.position,
+            data: n.data,
+          })),
+        );
+        setRfEdges(
+          layout.edges.map((e) => ({
+            id: e.id,
+            source: e.source,
+            target: e.target,
+            animated: nodes.find((n) => n.id === e.source)?.status === 'running',
+            style: { stroke: chartColors.edge, strokeWidth: 2 },
+          })),
+        );
+      })
+      .catch((err) => {
+        console.error('ELK layout failed, using fallback:', err);
+        // Fallback: stack nodes vertically without ELK
+        setRfNodes(
+          nodes.map((n, i) => ({
+            id: n.id,
+            type: 'custom',
+            position: { x: 200, y: i * 100 },
+            data: n,
+          })),
+        );
+        setRfEdges(
+          edges.map((e) => ({
+            id: e.id,
+            source: e.source,
+            target: e.target,
+            style: { stroke: chartColors.edge, strokeWidth: 2 },
+          })),
+        );
+      });
   }, [nodes, edges]);
 
   const handleNodeClick = useCallback(

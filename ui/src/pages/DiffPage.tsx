@@ -185,7 +185,7 @@ export default function DiffPage() {
                     </div>
                     <div>
                       <span className="text-slate-500">Total Cost</span>
-                      <p className="font-mono text-slate-300 mt-0.5">${data.total_cost.toFixed(4)}</p>
+                      <p className="font-mono text-slate-300 mt-0.5">${(data.total_cost ?? 0).toFixed(4)}</p>
                     </div>
                   </div>
                 </div>

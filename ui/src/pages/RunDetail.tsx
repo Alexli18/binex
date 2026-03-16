@@ -185,7 +185,7 @@ export default function RunDetail() {
         <span className="text-xs text-slate-400">·</span>
         <span className="text-xs text-slate-400">{duration !== null ? `${duration}s` : '...'}</span>
         <span className="text-xs text-slate-400">·</span>
-        <span className="text-xs font-mono text-slate-400">${run.total_cost.toFixed(4)}</span>
+        <span className="text-xs font-mono text-slate-400">${(run.total_cost ?? 0).toFixed(4)}</span>
         <div className="flex gap-1.5 ml-2">
           <Button variant="outline" size="sm" onClick={handleRerun} disabled={!run.workflow_path || createRun.isPending}>
             <RotateCcw className="w-3.5 h-3.5 mr-1" />
@@ -270,7 +270,7 @@ export default function RunDetail() {
                 </div>
                 <div>
                   <span className="font-medium text-slate-100">Total Cost</span>
-                  <p className="mt-0.5 font-mono">${run.total_cost.toFixed(4)}</p>
+                  <p className="mt-0.5 font-mono">${(run.total_cost ?? 0).toFixed(4)}</p>
                 </div>
               </div>
             </div>
@@ -343,7 +343,7 @@ export default function RunDetail() {
               ) : (
                 <>
                   <p className="text-sm text-slate-300 mb-3">
-                    Total: <span className="font-mono font-bold">${costSummary.total_cost.toFixed(4)}</span>
+                    Total: <span className="font-mono font-bold">${(costSummary.total_cost ?? 0).toFixed(4)}</span>
                   </p>
                   <table className="min-w-full text-sm">
                     <thead>
@@ -360,7 +360,7 @@ export default function RunDetail() {
                           <td className="py-2 font-mono text-xs">{c.node_id}</td>
                           <td className="py-2">{c.model ?? '-'}</td>
                           <td className="py-2">{c.source}</td>
-                          <td className="py-2 text-right font-mono">${c.cost.toFixed(6)}</td>
+                          <td className="py-2 text-right font-mono">${(c.cost ?? 0).toFixed(6)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -426,7 +426,7 @@ export default function RunDetail() {
                 {selectedCost && (
                   <div className="text-sm border-t pt-2 mb-4">
                     <span className="text-slate-400">Cost</span>
-                    <p className="font-mono">${selectedCost.cost.toFixed(6)}</p>
+                    <p className="font-mono">${(selectedCost.cost ?? 0).toFixed(6)}</p>
                     {selectedCost.model && (
                       <p className="text-xs text-slate-500">{selectedCost.model}</p>
                     )}

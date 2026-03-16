@@ -52,6 +52,10 @@ export async function layoutGraph(
   nodes: WorkflowNode[],
   edges: WorkflowEdge[],
 ): Promise<GraphLayout> {
+  const nodeIds = new Set(nodes.map((n) => n.id));
+  // Filter edges to only include those whose source and target exist in nodes
+  const validEdges = edges.filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target));
+
   const elkGraph: ElkNode = {
     id: 'root',
     layoutOptions: {
@@ -61,7 +65,7 @@ export async function layoutGraph(
       'elk.layered.spacing.nodeNodeBetweenLayers': '80',
     },
     children: nodes.map((n) => ({ id: n.id, width: 180, height: 50 })),
-    edges: edges.map((e) => ({ id: e.id, sources: [e.source], targets: [e.target] })),
+    edges: validEdges.map((e) => ({ id: e.id, sources: [e.source], targets: [e.target] })),
   };
 
   const layout = await elk.layout(elkGraph);

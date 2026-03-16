@@ -8,15 +8,12 @@ import {
   HeartPulse,
   Puzzle,
   Radio,
+  DollarSign,
   GitCompare,
   GitBranch,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Bug,
-  Stethoscope,
-  Activity,
-  Network,
   type LucideIcon,
 } from "lucide-react";
 
@@ -50,11 +47,8 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Analyze",
     items: [
       { label: "Compare", path: "/diff", icon: GitCompare },
+      { label: "Costs", path: "/costs", icon: DollarSign },
       { label: "Bisect", path: "/bisect", icon: GitBranch },
-      { label: "Debug", path: "/runs/latest/debug", icon: Bug },
-      { label: "Diagnose", path: "/runs/latest/diagnose", icon: Stethoscope },
-      { label: "Trace", path: "/runs/latest/trace", icon: Activity },
-      { label: "Lineage", path: "/runs/latest/lineage", icon: Network },
     ],
   },
   {
