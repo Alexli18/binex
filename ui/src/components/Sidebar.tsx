@@ -8,6 +8,7 @@ import {
   HeartPulse,
   Puzzle,
   Radio,
+  Clock,
   DollarSign,
   GitCompare,
   GitBranch,
@@ -54,6 +55,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "System",
     items: [
+      { label: "Scheduler", path: "/scheduler", icon: Clock },
       { label: "Gateway", path: "/system/gateway", icon: Radio },
       { label: "Plugins", path: "/system/plugins", icon: Puzzle },
       { label: "Doctor", path: "/system/doctor", icon: HeartPulse },

@@ -1,5 +1,5 @@
-import { Radio, RefreshCw, Terminal } from 'lucide-react';
-import { useGateway } from '../hooks/useUtilities';
+import { Play, Radio, RefreshCw } from 'lucide-react';
+import { useGateway, useGatewayStart } from '../hooks/useUtilities';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -20,6 +20,7 @@ function normalizeAgentStatus(status: string): string {
 
 export default function GatewayPage() {
   const { data, isLoading, error, refetch, isFetching } = useGateway();
+  const startMut = useGatewayStart();
 
   if (isLoading) {
     return (
@@ -49,9 +50,10 @@ export default function GatewayPage() {
     <PageShell>
       <Breadcrumb items={[{ label: 'System' }, { label: 'Gateway' }]} className="mb-4" />
 
+      {/* FIX 4: Less jargon in description */}
       <PageHeader
         title="A2A Gateway"
-        description="Monitor agent-to-agent gateway status and registered agents"
+        description="Route tasks between independent AI agents"
         actions={
           <Button
             onClick={() => refetch()}
@@ -66,48 +68,111 @@ export default function GatewayPage() {
       />
 
       <div className="mt-6 flex flex-col gap-6 max-w-4xl">
-        {/* Status card */}
-        <div
-          className={`rounded-card border p-6 ${
-            isOnline
-              ? 'bg-green-900/20 border-green-700/30'
-              : 'bg-red-900/20 border-red-700/30'
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            <div
-              className={`w-4 h-4 rounded-full ${
-                isOnline ? 'bg-green-400 shadow-lg shadow-green-400/50' : 'bg-red-400 shadow-lg shadow-red-400/50'
-              }`}
-            />
-            <div>
-              <h2 className="text-lg font-semibold text-slate-200">
-                {isOnline ? 'Gateway Online' : 'Gateway Offline'}
-              </h2>
-              {data?.message && (
-                <p className="text-sm text-slate-400 mt-0.5">{data.message}</p>
-              )}
-            </div>
-          </div>
-          {isOnline && agents.length > 0 && (
-            <p className="text-sm text-slate-400 mt-3">
-              {agents.length} registered agent{agents.length > 1 ? 's' : ''}
-            </p>
-          )}
-        </div>
-
-        {/* Offline instructions */}
-        {!isOnline && (
-          <div className="border border-slate-700 rounded-card bg-slate-800/50 p-5">
-            <div className="flex items-start gap-3">
-              <Terminal size={20} className="text-slate-500 shrink-0 mt-0.5" />
+        {/* Status + Action */}
+        {isOnline ? (
+          <div className="rounded-lg border p-6 bg-green-900/20 border-green-700/30">
+            <div className="flex items-center gap-4">
+              <div className="w-4 h-4 rounded-full bg-green-400 shadow-lg shadow-green-400/50" />
               <div>
-                <p className="text-sm text-slate-300">
-                  The gateway is not running. Start it with:
-                </p>
-                <code className="block mt-2 text-sm font-mono text-cyan-400 bg-slate-900 rounded px-3 py-2">
-                  binex gateway
-                </code>
+                <h2 className="text-lg font-semibold text-slate-200">Gateway Online</h2>
+                {data?.message && (
+                  <p className="text-sm text-slate-400 mt-0.5">{data.message}</p>
+                )}
+              </div>
+            </div>
+            {agents.length > 0 && (
+              <p className="text-sm text-slate-400 mt-3">
+                {agents.length} registered agent{agents.length > 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Status banner with Start button */}
+            <div className="rounded-lg border p-6 bg-slate-800/50 border-slate-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-4 h-4 rounded-full bg-slate-500" />
+                  <h2 className="text-lg font-semibold text-slate-200">Gateway Offline</h2>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => startMut.mutate()}
+                  disabled={startMut.isPending}
+                >
+                  <Play className="w-3.5 h-3.5 mr-1.5" />
+                  Start Gateway
+                </Button>
+              </div>
+            </div>
+
+            {/* Getting Started — 3 steps */}
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
+              <h3 className="text-sm font-semibold text-slate-200 mb-1">What is the A2A Gateway?</h3>
+              <p className="text-sm text-slate-400 mb-5">
+                The gateway connects multiple AI agents into a single workflow — agents communicate
+                through it, sharing tasks and results.
+              </p>
+
+              <div className="space-y-4">
+                {/* Step 1 */}
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold flex items-center justify-center">
+                    1
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-300">Create gateway.yaml</p>
+                    <pre className="mt-2 text-xs font-mono text-slate-400 bg-slate-900 rounded p-3 overflow-x-auto">
+{`agents:
+  - name: researcher
+    url: http://localhost:8001
+    skills: [research, summarize]
+  - name: writer
+    url: http://localhost:8002
+    skills: [write, edit]`}
+                    </pre>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold flex items-center justify-center">
+                    2
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-300">Start the gateway</p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => startMut.mutate()}
+                        disabled={startMut.isPending}
+                      >
+                        <Play className="w-3.5 h-3.5 mr-1.5" />
+                        Start Gateway
+                      </Button>
+                      <span className="text-xs text-slate-500">or</span>
+                      <code className="text-xs font-mono text-cyan-400 bg-slate-900 rounded px-2.5 py-1.5">
+                        binex gateway
+                      </code>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold flex items-center justify-center">
+                    3
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-300">
+                      Agents register automatically
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Once running, the gateway discovers agents defined in gateway.yaml and shows them below.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -115,7 +180,7 @@ export default function GatewayPage() {
 
         {/* Agent table */}
         {isOnline && agents.length > 0 && (
-          <div className="border border-slate-700 rounded-card bg-slate-800/50 overflow-hidden">
+          <div className="border border-slate-700 rounded-lg bg-slate-800/50 overflow-hidden">
             <div className="px-4 py-3 border-b border-slate-700">
               <h3 className="text-sm font-medium text-slate-300">
                 Registered Agents
@@ -179,16 +244,25 @@ export default function GatewayPage() {
           </div>
         )}
 
-        {/* Online but no agents */}
+        {/* FIX 3: Online but no agents — with YAML example */}
         {isOnline && agents.length === 0 && (
-          <div className="border border-slate-700 rounded-card bg-slate-800/50 p-8 text-center">
-            <Radio size={40} className="mx-auto text-slate-600 mb-3" />
-            <p className="text-slate-400">
-              No agents registered with the gateway.
-            </p>
-            <p className="text-sm text-slate-500 mt-1">
-              Configure agents in your gateway.yaml file.
-            </p>
+          <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-6">
+            <div className="text-center mb-4">
+              <Radio size={36} className="mx-auto text-slate-600 mb-3" />
+              <p className="text-slate-300 font-medium">No agents registered</p>
+              <p className="text-sm text-slate-500 mt-1">
+                Add agents to your <code className="text-cyan-400 text-xs">gateway.yaml</code> file:
+              </p>
+            </div>
+            <pre className="text-xs font-mono text-slate-400 bg-slate-900 rounded p-3 overflow-x-auto">
+{`agents:
+  - name: researcher
+    url: http://localhost:8001
+    skills: [research, summarize]
+  - name: writer
+    url: http://localhost:8002
+    skills: [write, edit]`}
+            </pre>
           </div>
         )}
 

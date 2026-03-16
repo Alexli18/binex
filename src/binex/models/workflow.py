@@ -76,6 +76,7 @@ class WorkflowSpec(BaseModel):
     defaults: DefaultsSpec | None = None
     budget: BudgetConfig | None = None
     webhook: WebhookConfig | None = None
+    schedule: str | None = None
     source_path: str | None = None
 
     @field_validator("version")

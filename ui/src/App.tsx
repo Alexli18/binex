@@ -22,6 +22,7 @@ import PluginsPage from './pages/PluginsPage';
 import GatewayPage from './pages/GatewayPage';
 import PromptLibrary from './pages/PromptLibrary';
 import CostDashboard from './pages/CostDashboard';
+import SchedulerPage from './pages/SchedulerPage';
 import NotFound from './pages/NotFound';
 import LatestRunRedirect from './pages/LatestRunRedirect';
 
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/diff" element={<DiffPage />} />
           <Route path="/bisect" element={<BisectPage />} />
           <Route path="/export" element={<ExportPage />} />
+          <Route path="/scheduler" element={<SchedulerPage />} />
           <Route path="/system/doctor" element={<DoctorPage />} />
           <Route path="/system/plugins" element={<PluginsPage />} />
           <Route path="/system/gateway" element={<GatewayPage />} />

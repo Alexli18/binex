@@ -1,0 +1,38 @@
+# Scheduled Report Example
+# ========================
+# Demonstrates the `schedule` field for cron-based workflow execution.
+#
+# Topology:  gather -> summarize
+#
+# The `schedule` field accepts a standard cron expression.
+# This workflow runs every 30 minutes when the scheduler is active.
+#
+# Run once:      binex run examples/scheduled-report.yaml
+# Schedule:      binex scheduler add examples/scheduled-report.yaml
+# List active:   binex scheduler list
+
+name: scheduled-report
+description: "Periodic report generation (runs every 30 minutes)"
+schedule: "*/30 * * * *"
+
+nodes:
+  gather:
+    agent: "llm://openai/gpt-4o-mini"
+    system_prompt: "Gather key metrics and recent events for a status report."
+    inputs:
+      topic: "${user.topic}"
+    outputs: [raw_data]
+
+  summarize:
+    agent: "llm://openai/gpt-4o-mini"
+    system_prompt: "Summarize the gathered data into a concise report."
+    inputs:
+      data: "${gather.raw_data}"
+    outputs: [report]
+    depends_on: [gather]
+
+defaults:
+  deadline_ms: 60000
+  retry_policy:
+    max_retries: 2
+    backoff: exponential

@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 
 export interface Pattern {
@@ -30,6 +30,7 @@ export interface Plugin {
   type: string;
   builtin: boolean;
   description: string;
+  version?: string;
 }
 
 export interface GatewayAgent {
@@ -102,5 +103,14 @@ export function useGateway() {
     queryKey: ['gateway'],
     queryFn: () => api.get('/system/gateway'),
     refetchInterval: 10000,
+  });
+}
+
+export function useGatewayStart() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      fetch('/api/v1/gateway/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) }).then(r => r.json()),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['gateway'] }),
   });
 }

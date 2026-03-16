@@ -19,6 +19,12 @@ _BUILTIN_ADAPTERS = [
 
 _DEFAULT_GATEWAY_URL = "http://localhost:8421"
 
+_KNOWN_PLUGIN_DESCRIPTIONS: dict[str, str] = {
+    "autogen": "AutoGen framework adapter",
+    "crewai": "CrewAI framework adapter",
+    "langchain": "LangChain framework adapter",
+}
+
 
 @router.get("/doctor")
 async def doctor() -> JSONResponse:
@@ -107,7 +113,10 @@ async def list_plugins() -> JSONResponse:
                 "name": p["prefix"],
                 "type": "adapter",
                 "builtin": False,
-                "description": p.get("package_name", p.get("name", "")),
+                "description": _KNOWN_PLUGIN_DESCRIPTIONS.get(
+                    p["prefix"], p.get("description", p.get("name", p["prefix"])),
+                ),
+                "version": p.get("version", None),
             })
     except Exception:
         pass  # Plugin discovery is best-effort

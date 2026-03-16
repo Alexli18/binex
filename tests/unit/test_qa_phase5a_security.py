@@ -420,8 +420,8 @@ class TestAllExampleYAMLsStrict:
     def test_exactly_20_example_files_exist(self) -> None:
         """Verify the expected number of example YAML files."""
         yaml_files = sorted(EXAMPLES_DIR.glob("*.yaml"))
-        assert len(yaml_files) == 30, (
-            f"Expected 30 example YAML files, found {len(yaml_files)}: "
+        assert len(yaml_files) == 31, (
+            f"Expected 31 example YAML files, found {len(yaml_files)}: "
             f"{[f.name for f in yaml_files]}"
         )
 
