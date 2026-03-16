@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Search, BookOpen, X, ArrowLeft, Plus } from 'lucide-react';
-import { usePromptTemplates, usePromptTemplateContent, useCreatePromptTemplate } from '../hooks/usePromptTemplates';
+import { Search, BookOpen, X, ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { usePromptTemplates, usePromptTemplateContent, useCreatePromptTemplate, useDeletePromptTemplate } from '../hooks/usePromptTemplates';
 import type { PromptTemplate } from '../hooks/usePromptTemplates';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageShell } from '@/components/layout/PageShell';
@@ -77,9 +77,11 @@ function PromptCard({
 function PromptPreview({
   name,
   onUse,
+  onDelete,
 }: {
   name: string | null;
   onUse?: (content: string) => void;
+  onDelete?: (name: string) => void;
 }) {
   const { data, isLoading } = usePromptTemplateContent(name);
 
@@ -115,15 +117,28 @@ function PromptPreview({
             </span>
           )}
         </div>
-        {onUse && (
-          <Button
-            onClick={() => onUse(data.content)}
-            size="sm"
-            className="h-7 text-xs"
-          >
-            Use this prompt
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {onUse && (
+            <Button
+              onClick={() => onUse(data.content)}
+              size="sm"
+              className="h-7 text-xs"
+            >
+              Use this prompt
+            </Button>
+          )}
+          {data.is_custom && onDelete && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete(data.name)}
+              className="h-7 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 border-red-500/30"
+            >
+              <Trash2 size={12} className="mr-1" />
+              Delete
+            </Button>
+          )}
+        </div>
       </div>
       <div className="flex-1 overflow-auto p-4">
         <pre className="text-xs text-slate-300 whitespace-pre-wrap font-mono leading-relaxed">
@@ -143,6 +158,7 @@ interface PromptLibraryCoreProps {
 
 function PromptLibraryCore({ onUse, compact = false }: PromptLibraryCoreProps) {
   const { data: templatesData, isLoading } = usePromptTemplates();
+  const deletePrompt = useDeletePromptTemplate();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
@@ -179,7 +195,7 @@ function PromptLibraryCore({ onUse, compact = false }: PromptLibraryCoreProps) {
           </button>
         </div>
         <div className="flex-1 min-h-0">
-          <PromptPreview name={selectedPrompt} onUse={onUse} />
+          <PromptPreview name={selectedPrompt} onUse={onUse} onDelete={(n) => { deletePrompt.mutate(n); setSelectedPrompt(null); }} />
         </div>
       </div>
     );
@@ -256,7 +272,7 @@ function PromptLibraryCore({ onUse, compact = false }: PromptLibraryCoreProps) {
       {/* Right: preview (only in non-compact / page mode) */}
       {!compact && (
         <div className="flex-1 min-w-0">
-          <PromptPreview name={selectedPrompt} onUse={onUse} />
+          <PromptPreview name={selectedPrompt} onUse={onUse} onDelete={(n) => { deletePrompt.mutate(n); setSelectedPrompt(null); }} />
         </div>
       )}
     </div>
@@ -427,17 +443,19 @@ export default function PromptLibrary() {
         items={[{ label: 'Build' }, { label: 'Prompt Library' }]}
         className="mb-4"
       />
-      <div className="flex items-center justify-between">
-        <PageHeader title="Prompt Library" />
-        <Button
-          onClick={() => setShowNewForm(true)}
-          size="sm"
-          className="h-8 text-xs"
-        >
-          <Plus size={14} className="mr-1.5" />
-          New Prompt
-        </Button>
-      </div>
+      <PageHeader
+        title="Prompt Library"
+        actions={
+          <Button
+            onClick={() => setShowNewForm(true)}
+            size="sm"
+            className="h-8 text-xs"
+          >
+            <Plus size={14} className="mr-1.5" />
+            New Prompt
+          </Button>
+        }
+      />
       <div className="mt-6 border border-slate-700 rounded-lg overflow-hidden">
         <PromptLibraryCore />
       </div>

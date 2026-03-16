@@ -33,6 +33,46 @@ def _get_prompts_dir() -> Path:
     return Path(__file__).resolve().parent.parent.parent / "prompts"
 
 
+def _custom_registry_path() -> Path:
+    """Path to the file tracking custom prompt names."""
+    return _get_prompts_dir() / ".custom-prompts"
+
+
+def _load_custom_names() -> set[str]:
+    """Load set of custom prompt names."""
+    reg = _custom_registry_path()
+    if not reg.exists():
+        return set()
+    return {
+        line.strip()
+        for line in reg.read_text().splitlines()
+        if line.strip()
+    }
+
+
+def _save_custom_name(name: str) -> None:
+    """Add a name to the custom prompts registry."""
+    names = _load_custom_names()
+    names.add(name)
+    _custom_registry_path().write_text(
+        "\n".join(sorted(names)) + "\n"
+    )
+
+
+def _remove_custom_name(name: str) -> None:
+    """Remove a name from the custom prompts registry."""
+    names = _load_custom_names()
+    names.discard(name)
+    if names:
+        _custom_registry_path().write_text(
+            "\n".join(sorted(names)) + "\n"
+        )
+    else:
+        reg = _custom_registry_path()
+        if reg.exists():
+            reg.unlink()
+
+
 def _category_for(name: str) -> str:
     """Derive display category from a prompt file stem."""
     prefix = name.split("-")[0] if "-" in name else "general"
@@ -50,6 +90,7 @@ async def list_prompt_templates() -> JSONResponse:
     if not prompts_dir.is_dir():
         return JSONResponse({"templates": []})
 
+    custom_names = _load_custom_names()
     templates = []
     for f in sorted(prompts_dir.glob("*.md")):
         name = f.stem
@@ -62,6 +103,7 @@ async def list_prompt_templates() -> JSONResponse:
             "name": name,
             "category": _category_for(name),
             "description": first_line,
+            "is_custom": name in custom_names,
         })
 
     return JSONResponse({"templates": templates})
@@ -87,7 +129,13 @@ async def get_prompt_template(name: str) -> JSONResponse:
         )
 
     content = path.read_text()
-    return JSONResponse({"name": name, "category": _category_for(name), "content": content})
+    custom_names = _load_custom_names()
+    return JSONResponse({
+        "name": name,
+        "category": _category_for(name),
+        "content": content,
+        "is_custom": name in custom_names,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -130,6 +178,7 @@ async def create_prompt_template(body: CreatePromptRequest) -> JSONResponse:
 
     path.write_text(body.content)
     stem = path.stem
+    _save_custom_name(stem)
     return JSONResponse(
         {"name": stem, "category": body.category, "filename": filename},
         status_code=201,
@@ -182,5 +231,12 @@ async def delete_prompt_template(name: str) -> JSONResponse:
             {"error": f"Template '{name}' not found"}, status_code=404,
         )
 
+    if name not in _load_custom_names():
+        return JSONResponse(
+            {"error": "Cannot delete built-in prompts"},
+            status_code=403,
+        )
+
     path.unlink()
+    _remove_custom_name(name)
     return JSONResponse({"name": name, "status": "deleted"})

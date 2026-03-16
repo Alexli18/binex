@@ -5,6 +5,7 @@ export interface PromptTemplate {
   name: string;
   category: string;
   description: string;
+  is_custom?: boolean;
 }
 
 export function usePromptTemplates() {
@@ -58,7 +59,7 @@ export function useDeletePromptTemplate() {
 }
 
 export function usePromptTemplateContent(name: string | null) {
-  return useQuery<{ name: string; category: string; content: string }>({
+  return useQuery<{ name: string; category: string; content: string; is_custom?: boolean }>({
     queryKey: ['promptTemplate', name],
     queryFn: () => api.get(`/prompts/templates/${name}`),
     enabled: !!name,
