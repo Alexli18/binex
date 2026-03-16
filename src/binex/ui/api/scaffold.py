@@ -7,7 +7,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from binex.cli.dsl_parser import PATTERNS, parse_dsl
+from binex.cli.dsl_parser import PATTERN_METADATA, PATTERNS, parse_dsl
 
 router = APIRouter(prefix="/scaffold", tags=["scaffold"])
 
@@ -94,13 +94,17 @@ async def scaffold_workflow(body: ScaffoldRequest) -> JSONResponse:
 
 @router.get("/patterns")
 async def list_patterns() -> JSONResponse:
-    """List all available scaffold patterns."""
+    """List all available scaffold patterns with rich metadata."""
     patterns = [
         {
             "name": name,
-            "description": dsl,
-            "example": dsl,
+            "dsl": info.dsl,
+            "description": info.description,
+            "use_case": info.use_case,
+            "category": info.category,
+            "node_count": info.node_count,
+            "tags": list(info.tags),
         }
-        for name, dsl in PATTERNS.items()
+        for name, info in PATTERN_METADATA.items()
     ]
     return JSONResponse({"patterns": patterns})

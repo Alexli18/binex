@@ -43,6 +43,14 @@ _NODE_PROMPT_FILES: dict[str, str] = {
     # Generic fallbacks
     "analyzer": "gen-data-refiner.md",
     "reviewer": "gen-content-reviewer.md",
+    # Agentic patterns
+    "generator": "wf-generator.md",
+    "critic": "wf-critic.md",
+    "refiner": "wf-refiner.md",
+    "executor": "wf-executor.md",
+    "verifier": "wf-verifier.md",
+    "agent": "wf-agent.md",
+    "simulator": "wf-simulator.md",
 }
 
 

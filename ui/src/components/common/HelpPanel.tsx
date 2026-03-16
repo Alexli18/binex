@@ -88,7 +88,7 @@ export function HelpPanel() {
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          'fixed top-3 right-3 z-40 p-2 rounded-full transition-colors',
+          'fixed top-14 right-3 z-40 p-2 rounded-full transition-colors',
           open
             ? 'bg-blue-600 text-white'
             : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700 border border-slate-700',

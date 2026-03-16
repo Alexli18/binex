@@ -965,3 +965,88 @@
       label: Default
       description: Synthesize multiple summaries
       is_default: true
+
+# -- Workflow / Agentic Patterns --
+
+# Reflection pattern: generator -> critic -> refiner
+- name: generator
+  category: workflow
+  phase: process
+  pairs_with: [critic]
+  variants:
+    - filename: wf-generator.md
+      label: Default
+      description: Generate complete output for a given task
+      is_default: true
+
+- name: critic
+  category: workflow
+  phase: review
+  pairs_with: [generator, refiner]
+  variants:
+    - filename: wf-critic.md
+      label: Default
+      description: Critique output with actionable feedback
+      is_default: true
+
+- name: refiner
+  category: workflow
+  phase: output
+  pairs_with: [critic]
+  variants:
+    - filename: wf-refiner.md
+      label: Default
+      description: Refine output based on critic feedback
+      is_default: true
+
+# Plan-Execute-Verify pattern: planner -> executor -> verifier
+- name: task-decomposer
+  category: workflow
+  phase: input
+  pairs_with: [executor]
+  variants:
+    - filename: wf-task-decomposer.md
+      label: Default
+      description: Decompose task into executable plan
+      is_default: true
+
+- name: executor
+  category: workflow
+  phase: process
+  pairs_with: [task-decomposer, verifier]
+  variants:
+    - filename: wf-executor.md
+      label: Default
+      description: Execute plan step by step
+      is_default: true
+
+- name: verifier
+  category: workflow
+  phase: review
+  pairs_with: [executor]
+  variants:
+    - filename: wf-verifier.md
+      label: Default
+      description: Verify execution meets plan requirements
+      is_default: true
+
+# Dry-Run-Harness pattern: agent -> simulator -> [approve] -> executor
+- name: agent
+  category: workflow
+  phase: input
+  pairs_with: [simulator]
+  variants:
+    - filename: wf-agent.md
+      label: Default
+      description: Prepare action plan for simulation
+      is_default: true
+
+- name: simulator
+  category: workflow
+  phase: review
+  pairs_with: [agent, executor]
+  variants:
+    - filename: wf-simulator.md
+      label: Default
+      description: Dry-run simulation with risk assessment
+      is_default: true

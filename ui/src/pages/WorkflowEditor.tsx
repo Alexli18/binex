@@ -114,13 +114,23 @@ export default function WorkflowEditor() {
     return list.filter((f) => f.toLowerCase().includes(q));
   }, [workflows, fileFilter]);
 
-  // Load file content when workflow data arrives
+  // Load file content when workflow data arrives or selected path changes
   useEffect(() => {
     if (workflowData?.content != null) {
       setContent(workflowData.content);
       setOriginalContent(workflowData.content);
+      // If in visual mode, also sync RF nodes/edges
+      if (mode === 'visual') {
+        try {
+          const { nodes, edges } = yamlToRfGraph(workflowData.content);
+          setRfNodes(nodes);
+          setRfEdges(edges);
+        } catch {
+          // parse error handled by debounced effect
+        }
+      }
     }
-  }, [workflowData]);
+  }, [workflowData, selectedPath]);
 
   // Sync selectedPath with URL query param whenever it changes
   // Also clear stale content so old file data is never shown
@@ -421,6 +431,8 @@ export default function WorkflowEditor() {
                   key={f}
                   onClick={() => {
                     setSelectedPath(f);
+                    setContent('');
+                    setOriginalContent('');
                     setFilesOpen(false);
                   }}
                   className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
