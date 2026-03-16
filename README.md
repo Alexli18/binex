@@ -122,9 +122,13 @@ Build workflows visually — drag nodes from the palette, connect them, configur
 | **Workflows** | Browse, Visual Editor, Scaffold Wizard |
 | **Runs** | Dashboard, RunLive (SSE), RunDetail |
 | **Analysis** | Debug (input/output artifacts), Trace (Gantt timeline), Diagnose (root-cause), Lineage (artifact graph) |
-| **Comparison** | Diff (side-by-side), Bisect (find divergence) |
+| **Comparison** | Diff (side-by-side with filter bar, compare with previous run), Bisect (NodeMap, DAG visualization, divergence metrics) |
 | **Costs** | Cost Dashboard (charts), Budget Management |
 | **System** | Doctor (health), Plugins, Gateway, Export |
+
+### Navigation
+
+Sidebar organized into 4 groups: **Build** (Editor, Scaffold), **Runs** (Dashboard), **Analyze** (Compare, Bisect), **System** (Gateway, Plugins, Doctor). Run-specific pages (Debug, Trace, Diagnose, Lineage, Costs) open from run context.
 
 ### Replay
 

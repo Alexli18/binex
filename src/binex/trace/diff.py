@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import difflib
 from typing import Any
 
 from binex.stores.artifact_store import ArtifactStore
@@ -30,7 +31,10 @@ def _compute_summary(steps: list[dict]) -> dict:
         "changed_nodes": changed,
         "unchanged_nodes": total - changed,
         "latency_delta_ms": latency_delta,
-        "cost_delta": 0.0,  # TODO: compute from cost_records when available
+        "cost_delta": sum(
+            (s.get("cost_b", 0.0) or 0.0) - (s.get("cost_a", 0.0) or 0.0)
+            for s in steps
+        ),
         "content_similarity": round(avg_similarity, 4),
     }
 
@@ -40,6 +44,11 @@ async def _compare_single_task(
     task_id: str,
     rec_a: Any | None,
     rec_b: Any | None,
+    *,
+    run_id_a: str = "",
+    run_id_b: str = "",
+    cost_a: float = 0.0,
+    cost_b: float = 0.0,
 ) -> dict[str, Any]:
     """Compare a single task across two runs — artifact fetching, similarity, status."""
     status_a = rec_a.status.value if rec_a else None
@@ -57,6 +66,10 @@ async def _compare_single_task(
     content_b = await get_artifact_content(art_store, refs_b)
     similarity = content_similarity(content_a, content_b)
 
+    artifact_diff = _build_unified_diff(
+        content_a or "", content_b or "", run_id_a, run_id_b, task_id,
+    )
+
     return {
         "task_id": task_id,
         "status_a": status_a,
@@ -73,7 +86,34 @@ async def _compare_single_task(
         "content_a": content_a,
         "content_b": content_b,
         "content_similarity": similarity,
+        "cost_a": cost_a,
+        "cost_b": cost_b,
+        "artifact_diff": artifact_diff,
     }
+
+
+def _build_unified_diff(
+    content_a: str, content_b: str,
+    run_id_a: str, run_id_b: str, task_id: str,
+) -> str | None:
+    """Generate unified diff text between two content strings."""
+    if content_a == content_b:
+        return None
+    diff_lines = list(difflib.unified_diff(
+        content_a.splitlines(keepends=True),
+        content_b.splitlines(keepends=True),
+        fromfile=f"{run_id_a}/{task_id}",
+        tofile=f"{run_id_b}/{task_id}",
+    ))
+    return "".join(diff_lines) if diff_lines else None
+
+
+def _build_cost_lookup(cost_records: list) -> dict[str, float]:
+    """Build task_id → total cost mapping from cost records."""
+    by_task: dict[str, float] = {}
+    for c in cost_records:
+        by_task[c.task_id] = by_task.get(c.task_id, 0.0) + c.cost
+    return by_task
 
 
 async def diff_runs(
@@ -99,10 +139,17 @@ async def diff_runs(
 
     all_tasks = sorted(set(by_task_a.keys()) | set(by_task_b.keys()))
 
+    # Load cost data
+    cost_by_task_a = _build_cost_lookup(await exec_store.list_costs(run_id_a))
+    cost_by_task_b = _build_cost_lookup(await exec_store.list_costs(run_id_b))
+
     steps: list[dict[str, Any]] = []
     for task_id in all_tasks:
         step = await _compare_single_task(
-            art_store, task_id, by_task_a.get(task_id), by_task_b.get(task_id)
+            art_store, task_id, by_task_a.get(task_id), by_task_b.get(task_id),
+            run_id_a=run_id_a, run_id_b=run_id_b,
+            cost_a=cost_by_task_a.get(task_id, 0.0),
+            cost_b=cost_by_task_b.get(task_id, 0.0),
         )
         steps.append(step)
 

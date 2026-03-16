@@ -5,6 +5,7 @@ import { useArtifacts, useCosts } from '../hooks/useArtifacts';
 import { useWorkflow } from '../hooks/useWorkflows';
 import { useDebug } from '../hooks/useAnalysis';
 import { useTrace } from '../hooks/useAnalysis';
+import { usePreviousRun } from '../hooks/usePreviousRun';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { WorkflowGraph } from '../components/dag/WorkflowGraph';
 import { DebugNodeList, DebugNodeDetail } from '@/components/debug';
@@ -43,6 +44,8 @@ export default function RunDetail() {
   const { data: costSummary } = useCosts(runId);
   const { data: workflowData } = useWorkflow(run?.workflow_path ?? null);
   const createRun = useCreateRun();
+
+  const { data: previousRun } = usePreviousRun(runId);
 
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -218,9 +221,16 @@ export default function RunDetail() {
             More ▾
           </DropdownMenuTrigger>
           <DropdownMenuContent>
+            <DropdownMenuItem
+              onClick={() => previousRun && navigate(`/diff?runA=${runId}&runB=${previousRun.run_id}`)}
+              disabled={!previousRun}
+              className={!previousRun ? 'opacity-50 cursor-not-allowed' : ''}
+            >
+              Compare with previous
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`/diff?runA=${runId}`)}>Compare...</DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate(`/runs/${runId}/diagnose`)}>Diagnose</DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate(`/runs/${runId}/lineage`)}>Lineage</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate(`/diff?runA=${runId}`)}>Compare...</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

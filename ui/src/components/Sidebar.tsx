@@ -7,6 +7,8 @@ import {
   HeartPulse,
   Puzzle,
   Radio,
+  GitCompare,
+  GitBranch,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -36,6 +38,13 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Runs",
     items: [
       { label: "Dashboard", path: "/", icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: "Analyze",
+    items: [
+      { label: "Compare", path: "/diff", icon: GitCompare },
+      { label: "Bisect", path: "/bisect", icon: GitBranch },
     ],
   },
   {

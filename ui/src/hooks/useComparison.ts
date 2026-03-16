@@ -10,6 +10,10 @@ export interface NodeDiff {
   cost_a: number | null;
   cost_b: number | null;
   artifact_diff: string | null;
+  content_similarity?: number | null;
+  agent_changed?: boolean;
+  error_a?: string | null;
+  error_b?: string | null;
 }
 
 export interface DiffRunSummary {
@@ -23,6 +27,11 @@ export interface DiffResult {
   run_a: DiffRunSummary;
   run_b: DiffRunSummary;
   node_diffs: NodeDiff[];
+  summary?: {
+    total_changed: number;
+    total_failed: number;
+    total_cost_delta: number;
+  };
 }
 
 export interface BisectDetails {
@@ -32,6 +41,21 @@ export interface BisectDetails {
   good_output: string | null;
   bad_output: string | null;
   diff: string | null;
+  latency_good_ms?: number | null;
+  latency_bad_ms?: number | null;
+  cost_good?: number | null;
+  cost_bad?: number | null;
+}
+
+export interface BisectNodeStatus {
+  node_id: string;
+  status: 'match' | 'status_diff' | 'content_diff' | 'missing_in_good' | 'missing_in_bad';
+  similarity: number | null;
+  good_status: string | null;
+  bad_status: string | null;
+  latency_good_ms: number | null;
+  latency_bad_ms: number | null;
+  content_diff: string | null;
 }
 
 export interface BisectResult {
@@ -41,6 +65,8 @@ export interface BisectResult {
   divergence_index: number | null;
   similarity: number | null;
   details: BisectDetails | null;
+  node_map?: BisectNodeStatus[];
+  downstream_impact?: string[];
 }
 
 export function useDiff() {

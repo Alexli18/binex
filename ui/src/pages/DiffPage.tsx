@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useRuns } from '../hooks/useRuns';
 import { useDiff } from '../hooks/useComparison';
 import { StatusBadge } from '../components/common/StatusBadge';
@@ -7,31 +8,11 @@ import { PageShell } from '@/components/layout/PageShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, AlertCircle } from 'lucide-react';
+import { ArtifactDiff } from '@/components/common/ArtifactDiff';
+import { cn } from '@/lib/utils';
 import type { NodeDiff } from '../hooks/useComparison';
 
-function DiffLine({ line }: { line: string }) {
-  if (line.startsWith('+')) {
-    return <div className="bg-green-900/40 text-green-300 px-2">{line}</div>;
-  }
-  if (line.startsWith('-')) {
-    return <div className="bg-red-900/40 text-red-300 px-2">{line}</div>;
-  }
-  if (line.startsWith('@@')) {
-    return <div className="text-blue-400 px-2">{line}</div>;
-  }
-  return <div className="px-2 text-slate-300">{line}</div>;
-}
-
-function ArtifactDiff({ diff }: { diff: string }) {
-  const lines = diff.split('\n');
-  return (
-    <pre className="bg-slate-950 rounded-card p-3 text-xs font-mono overflow-x-auto max-h-96 overflow-y-auto border border-slate-700">
-      {lines.map((line, i) => (
-        <DiffLine key={i} line={line} />
-      ))}
-    </pre>
-  );
-}
+type DiffFilter = 'all' | 'changed' | 'failed' | 'cost_delta';
 
 function formatDelta(a: number | null, b: number | null, isCost: boolean): string | null {
   if (a === null || b === null) return null;
@@ -43,12 +24,51 @@ function formatDelta(a: number | null, b: number | null, isCost: boolean): strin
 }
 
 export default function DiffPage() {
+  const [searchParams] = useSearchParams();
+  const initialRunA = searchParams.get('runA') ?? '';
+  const initialRunB = searchParams.get('runB') ?? '';
+
   const { data: runs, isLoading: runsLoading } = useRuns();
   const diff = useDiff();
 
-  const [runA, setRunA] = useState('');
-  const [runB, setRunB] = useState('');
+  const [runA, setRunA] = useState(initialRunA);
+  const [runB, setRunB] = useState(initialRunB);
+
+  // Auto-compare when both params provided
+  useEffect(() => {
+    if (initialRunA && initialRunB) {
+      diff.mutate({ run_a: initialRunA, run_b: initialRunB });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [expandedDiffs, setExpandedDiffs] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState<DiffFilter>('all');
+
+  const filterCounts = useMemo(() => {
+    if (!diff.data) return { all: 0, changed: 0, failed: 0, cost_delta: 0 };
+    const diffs = diff.data.node_diffs;
+    return {
+      all: diffs.length,
+      changed: diffs.filter(nd => nd.status_a !== nd.status_b || nd.artifact_diff !== null).length,
+      failed: diffs.filter(nd => nd.status_a === 'failed' || nd.status_b === 'failed').length,
+      cost_delta: diffs.filter(nd => nd.cost_a !== null && nd.cost_b !== null && Math.abs(nd.cost_a - nd.cost_b) > 0).length,
+    };
+  }, [diff.data]);
+
+  const filteredNodeDiffs = useMemo(() => {
+    if (!diff.data) return [];
+    const diffs = diff.data.node_diffs;
+    switch (filter) {
+      case 'changed':
+        return diffs.filter(nd => nd.status_a !== nd.status_b || nd.artifact_diff !== null);
+      case 'failed':
+        return diffs.filter(nd => nd.status_a === 'failed' || nd.status_b === 'failed');
+      case 'cost_delta':
+        return diffs.filter(nd => nd.cost_a !== null && nd.cost_b !== null && Math.abs(nd.cost_a - nd.cost_b) > 0);
+      default:
+        return diffs;
+    }
+  }, [diff.data, filter]);
 
   const handleCompare = () => {
     if (runA && runB) {
@@ -167,13 +187,36 @@ export default function DiffPage() {
             {/* Node-by-Node Table */}
             <div className="bg-slate-800 border border-slate-700 rounded-card overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-700">
-                <h3 className="text-sm font-bold text-slate-300">
+                <h3 className="text-sm font-bold text-slate-300 mb-3">
                   Node-by-Node Comparison ({diff.data.node_diffs.length} nodes)
                 </h3>
+                <div className="flex rounded-lg overflow-hidden border border-slate-600/50 bg-slate-800/50 w-fit">
+                  {([
+                    { key: 'all' as DiffFilter, label: 'All' },
+                    { key: 'changed' as DiffFilter, label: 'Changed' },
+                    { key: 'failed' as DiffFilter, label: 'Failed' },
+                    { key: 'cost_delta' as DiffFilter, label: 'Cost \u0394' },
+                  ]).map(({ key, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => setFilter(key)}
+                      className={cn(
+                        'px-3.5 py-1.5 text-xs font-medium transition-colors',
+                        filter === key
+                          ? 'bg-blue-600 text-white'
+                          : 'text-slate-400 hover:text-slate-200',
+                      )}
+                    >
+                      {label} ({filterCounts[key]})
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {diff.data.node_diffs.length === 0 ? (
-                <div className="p-4 text-sm text-slate-500">No node differences found.</div>
+              {filteredNodeDiffs.length === 0 ? (
+                <div className="p-4 text-sm text-slate-500">
+                  {filter === 'all' ? 'No node differences found.' : 'No nodes match this filter.'}
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
@@ -190,7 +233,7 @@ export default function DiffPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-700/50">
-                      {diff.data.node_diffs.map((nd: NodeDiff) => {
+                      {filteredNodeDiffs.map((nd: NodeDiff) => {
                         const statusDiffers = nd.status_a !== nd.status_b;
                         const durationDelta = formatDelta(nd.duration_a, nd.duration_b, false);
                         const costDelta = formatDelta(nd.cost_a, nd.cost_b, true);
@@ -252,7 +295,7 @@ export default function DiffPage() {
             </div>
 
             {/* Expanded artifact diffs */}
-            {diff.data.node_diffs
+            {filteredNodeDiffs
               .filter((nd: NodeDiff) => nd.artifact_diff && expandedDiffs.has(nd.node_id))
               .map((nd: NodeDiff) => (
                 <div key={nd.node_id} className="bg-slate-800 border border-slate-700 rounded-card p-4">

@@ -21,9 +21,13 @@ React frontend for the Binex workflow orchestrator. Provides a visual drag-and-d
 | **Workflows** | WorkflowBrowse, WorkflowEditor, Scaffold |
 | **Runs** | Dashboard, RunLive (SSE), RunDetail |
 | **Analysis** | DebugPage, TracePage, DiagnosePage, LineagePage |
-| **Comparison** | DiffPage, BisectPage |
+| **Comparison** | DiffPage (filter bar, compare with previous), BisectPage (NodeMap, DAG viz, divergence metrics) |
 | **Costs** | CostDashboard, BudgetPage |
 | **System** | DoctorPage, PluginsPage, GatewayPage, ExportPage |
+
+## Sidebar Navigation
+
+4 collapsible groups: **Build** (Editor, Scaffold), **Runs** (Dashboard), **Analyze** (Compare, Bisect), **System** (Gateway, Plugins, Doctor). Run-specific pages open from run context menus.
 
 ## Development
 
@@ -62,13 +66,14 @@ ui/
 ├── src/
 │   ├── pages/           # 18 page components
 │   ├── components/
-│   │   ├── common/      # Shared UI (NewRunModal, etc.)
-│   │   ├── dag/         # React Flow DAG components
+│   │   ├── common/      # Shared UI (NewRunModal, ArtifactDiff, etc.)
+│   │   ├── dag/         # React Flow DAG components (CustomNode, BisectNode)
 │   │   ├── debug/       # Debug detail panels
 │   │   ├── editor/      # Visual workflow editor
 │   │   ├── layout/      # PageShell, Breadcrumb, layout primitives
 │   │   ├── trace/       # Gantt timeline components
 │   │   └── ui/          # shadcn/ui primitives
+│   ├── hooks/           # Custom hooks (usePreviousRun, etc.)
 │   ├── lib/             # Utilities
 │   └── App.tsx          # Router & layout
 ├── public/
