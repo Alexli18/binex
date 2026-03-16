@@ -29,7 +29,7 @@ nodes:
     agent: "local://echo"
     system_prompt: "file://prompts/gen-researcher.md"
     inputs:
-      plan: "${node.planner.plan}"
+      plan: "${planner.plan}"
     outputs: [findings]
     depends_on: [planner]
     budget:
@@ -39,7 +39,7 @@ nodes:
     agent: "local://echo"
     system_prompt: "file://prompts/gen-research-synthesizer.md"
     inputs:
-      data: "${node.researcher.findings}"
+      data: "${researcher.findings}"
     outputs: [summary]
     depends_on: [researcher]
     budget: 1.00

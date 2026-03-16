@@ -14,6 +14,20 @@ def _import_httpx():
     return httpx
 
 
+def _gateway_error_message(httpx_mod, exc: Exception, url: str) -> str:
+    """Produce a user-friendly error message from a gateway request failure."""
+    try:
+        if isinstance(exc, httpx_mod.ConnectError):
+            return f"Error: Connection refused — gateway at {url} is not running"
+        if isinstance(exc, httpx_mod.TimeoutException):
+            return f"Error: Timeout connecting to gateway at {url}"
+        if isinstance(exc, httpx_mod.HTTPStatusError):
+            return f"Error: Gateway returned HTTP {exc.response.status_code}"
+    except (AttributeError, TypeError):
+        pass
+    return f"Error: Cannot connect to gateway at {url}"
+
+
 def _import_uvicorn():
     """Lazy import uvicorn. Extracted for test patching."""
     import uvicorn
@@ -32,7 +46,11 @@ def gateway(
     ctx: click.Context, config_path: str | None,
     host: str | None, port: int | None,
 ) -> None:
-    """A2A Gateway — start server, check status, list agents."""
+    """A2A Gateway — start server, check status, list agents.
+
+    Running without a subcommand starts the gateway server.
+    Use 'binex gateway status' to check health or 'binex gateway agents' to list agents.
+    """
     if ctx.invoked_subcommand is not None:
         return
 
@@ -97,8 +115,9 @@ def status_cmd(gateway_url: str, json_out: bool) -> None:
         response = httpx.get(f"{gateway_url}/health", timeout=10.0)
         response.raise_for_status()
         data = response.json()
-    except Exception:
-        click.echo(f"Error: Cannot connect to gateway at {gateway_url}", err=True)
+    except Exception as exc:
+        msg = _gateway_error_message(httpx, exc, gateway_url)
+        click.echo(msg, err=True)
         sys.exit(1)
 
     if json_out:
@@ -136,8 +155,9 @@ def agents_cmd(gateway_url: str, json_out: bool) -> None:
         response = httpx.get(f"{gateway_url}/agents", timeout=10.0)
         response.raise_for_status()
         data = response.json()
-    except Exception:
-        click.echo(f"Error: Cannot connect to gateway at {gateway_url}", err=True)
+    except Exception as exc:
+        msg = _gateway_error_message(httpx, exc, gateway_url)
+        click.echo(msg, err=True)
         sys.exit(1)
 
     agents = data.get("agents", [])

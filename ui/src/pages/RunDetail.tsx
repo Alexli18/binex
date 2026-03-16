@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ReplayModal } from '../components/ReplayModal';
 import { Pencil, RotateCcw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -54,6 +55,7 @@ export default function RunDetail() {
   // Debug data (lazy — only fetched when debug tab is active)
   const [errorsOnly, setErrorsOnly] = useState(false);
   const [debugSelectedNodeId, setDebugSelectedNodeId] = useState<string | null>(null);
+  const [replayNodeId, setReplayNodeId] = useState<string | null>(null);
   const debugQuery = useDebug(activeTab === 'debug' ? runId : undefined, errorsOnly);
   const debugSelectedNode = useMemo(
     () => debugQuery.data?.nodes.find((n) => n.node_id === debugSelectedNodeId) ?? null,
@@ -202,7 +204,9 @@ export default function RunDetail() {
           <button
             key={tab}
             role="tab"
+            id={`run-tab-${tab}`}
             aria-selected={activeTab === tab}
+            aria-controls={`run-tabpanel-${tab}`}
             onClick={() => setActiveTab(tab)}
             className={cn(
               'px-4 min-h-[44px] text-sm font-medium border-b-2 transition-colors capitalize',
@@ -239,7 +243,7 @@ export default function RunDetail() {
       <div className="flex-1 overflow-auto">
         {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <div className="p-6 flex flex-col gap-6">
+          <div className="p-6 flex flex-col gap-6" role="tabpanel" id="run-tabpanel-overview" aria-labelledby="run-tab-overview">
             {/* Summary card */}
             <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-300">
@@ -369,7 +373,7 @@ export default function RunDetail() {
 
         {/* Graph Tab */}
         {activeTab === 'graph' && (
-          <div className="flex h-full" style={{ minHeight: 450 }}>
+          <div className="flex h-full" role="tabpanel" id="run-tabpanel-graph" aria-labelledby="run-tab-graph" style={{ minHeight: 450 }}>
             <div className="flex-1 overflow-hidden">
               {graphNodes.length > 0 ? (
                 <WorkflowGraph
@@ -453,7 +457,7 @@ export default function RunDetail() {
 
         {/* Trace Tab */}
         {activeTab === 'trace' && (
-          <div className="p-6 flex flex-col gap-4">
+          <div className="p-6 flex flex-col gap-4" role="tabpanel" id="run-tabpanel-trace" aria-labelledby="run-tab-trace">
             {traceQuery.isLoading ? (
               <LoadingState message="Loading trace..." />
             ) : traceQuery.error ? (
@@ -490,7 +494,7 @@ export default function RunDetail() {
 
         {/* Debug Tab */}
         {activeTab === 'debug' && (
-          <div className="p-6 flex flex-col gap-4 h-full">
+          <div className="p-6 flex flex-col gap-4 h-full" role="tabpanel" id="run-tabpanel-debug" aria-labelledby="run-tab-debug">
             {debugQuery.isLoading ? (
               <LoadingState message="Loading debug data..." />
             ) : debugQuery.error ? (
@@ -511,13 +515,28 @@ export default function RunDetail() {
                 />
                 <DebugNodeDetail
                   node={debugSelectedNode}
-                  onReplay={() => {}}
+                  onReplay={setReplayNodeId}
                 />
               </div>
             )}
           </div>
         )}
       </div>
+
+      {replayNodeId && debugQuery.data && (() => {
+        const nodeData = debugQuery.data.nodes.find((n) => n.node_id === replayNodeId);
+        return (
+          <ReplayModal
+            runId={runId!}
+            nodeId={replayNodeId}
+            currentAgent={nodeData?.agent || 'llm://unknown'}
+            currentPrompt={nodeData?.system_prompt}
+            workflowPath={run.workflow_path ?? null}
+            artifacts={nodeData?.artifacts}
+            onClose={() => setReplayNodeId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

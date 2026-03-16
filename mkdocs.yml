@@ -64,6 +64,7 @@ nav:
     - plugins: cli/plugins.md
     - export: cli/export.md
     - workflow: cli/workflow.md
+    - ui: cli/ui.md
   - Architecture:
     - Overview: architecture/overview.md
     - Runtime: architecture/runtime.md

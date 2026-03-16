@@ -582,17 +582,25 @@ def _step_custom_dsl_topology() -> str:
             click.echo(f"  {name}: {PATTERNS[name]}")
         click.echo()
 
-    dsl_input = click.prompt("Pick a pattern name OR write your own topology")
+    while True:
+        dsl_input = click.prompt(
+            "Pick a pattern name OR write your own topology (or 'q' to cancel)"
+        )
 
-    if dsl_input in PATTERNS:
-        dsl = PATTERNS[dsl_input]
-    else:
-        dsl = dsl_input
-        try:
-            parse_dsl([dsl])
-        except ValueError as e:
-            click.echo(f"Error: {e}", err=True)
-            sys.exit(1)
+        if dsl_input.strip().lower() == "q":
+            raise SystemExit(0)
+
+        if dsl_input in PATTERNS:
+            dsl = PATTERNS[dsl_input]
+            break
+        else:
+            dsl = dsl_input
+            try:
+                parse_dsl([dsl])
+                break
+            except ValueError as e:
+                click.echo(f"Error: {e}", err=True)
+                click.echo("Please try again (or type 'q' to cancel).", err=True)
 
     _print_confirm("Custom workflow")
     _print_dsl_preview(dsl)

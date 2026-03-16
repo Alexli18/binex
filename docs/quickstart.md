@@ -10,9 +10,7 @@ Install Binex and run your first workflow in under 5 minutes.
 ## Install
 
 ```bash
-git clone https://github.com/Alexli18/binex.git
-cd binex
-pip install -e ".[dev]"
+pip install binex
 ```
 
 Verify the installation:
@@ -20,6 +18,14 @@ Verify the installation:
 ```bash
 binex --version
 ```
+
+??? note "Development install"
+    If you want to contribute or run from source:
+    ```bash
+    git clone https://github.com/Alexli18/binex.git
+    cd binex
+    pip install -e ".[dev]"
+    ```
 
 ## Step 1: Run the Built-in Demo
 

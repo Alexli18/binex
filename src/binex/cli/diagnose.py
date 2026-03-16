@@ -16,7 +16,12 @@ def _get_stores():
     return get_stores()
 
 
-@click.command("diagnose")
+@click.command("diagnose", epilog="""\b
+Examples:
+  binex diagnose <run_id>          Identify root causes of failure
+  binex diagnose <run_id> --json   Machine-readable output
+  binex diagnose latest            Diagnose the most recent run
+""")
 @click.argument("run_id")
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
 @click.option("--rich/--no-rich", "rich_out", default=None, help="Rich output (auto-detected)")

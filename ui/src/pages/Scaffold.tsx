@@ -201,6 +201,12 @@ export default function Scaffold() {
   };
 
   const handleSelectPattern = (pattern: Pattern) => {
+    if (
+      (expression.trim() || generatedYaml.trim()) &&
+      !window.confirm('This will replace your current DSL expression and generated YAML. Continue?')
+    ) {
+      return;
+    }
     setExpression(pattern.dsl || pattern.example || '');
     scaffold.mutate(
       { mode: 'template', template_name: pattern.name },
@@ -225,7 +231,7 @@ export default function Scaffold() {
 
   return (
     <PageShell className="max-w-5xl">
-      <Breadcrumb items={[{ label: 'Workflows', href: '/workflows' }, { label: 'Create Workflow' }]} className="mb-4" />
+      <Breadcrumb items={[{ label: 'Workflows', href: '/editor' }, { label: 'Create Workflow' }]} className="mb-4" />
 
       <PageHeader title="Create Workflow" />
 

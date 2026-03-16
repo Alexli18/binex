@@ -22,7 +22,7 @@ def test_workflow_diff_shows_differences():
 
     with patch("binex.cli.workflow_cmd._get_stores", return_value=(mock_store, None)):
         runner = CliRunner()
-        result = runner.invoke(workflow_group, ["diff", "run_1", "run_2"])
+        result = runner.invoke(workflow_group, ["compare", "run_1", "run_2"])
 
     assert result.exit_code == 0
     assert "v1" in result.output or "v2" in result.output
@@ -38,7 +38,7 @@ def test_workflow_diff_identical():
 
     with patch("binex.cli.workflow_cmd._get_stores", return_value=(mock_store, None)):
         runner = CliRunner()
-        result = runner.invoke(workflow_group, ["diff", "run_1", "run_2"])
+        result = runner.invoke(workflow_group, ["compare", "run_1", "run_2"])
 
     assert result.exit_code == 0
     assert "identical" in result.output.lower() or "no diff" in result.output.lower()

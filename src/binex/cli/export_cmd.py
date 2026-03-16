@@ -39,7 +39,14 @@ def export_cmd(
 ) -> None:
     """Export run data to CSV or JSON files."""
     if run_id is None and last_n is None:
-        click.echo("Error: provide a run_id or --last N", err=True)
+        click.echo(
+            "Error: provide a run_id or --last N\n\n"
+            "Examples:\n"
+            "  binex export <run_id>              Export a single run\n"
+            "  binex export --last 5              Export the 5 most recent runs\n"
+            "  binex export --last 10 --format json -o ./export/",
+            err=True,
+        )
         sys.exit(1)
     asyncio.run(_export(run_id, last_n, fmt, include_artifacts, output_dir))
 

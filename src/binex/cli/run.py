@@ -45,10 +45,17 @@ def run_cmd(
     user_vars = _parse_vars(var)
     spec = load_workflow(workflow_file, user_vars=user_vars)
 
+    _warn_var_mismatches(spec, user_vars)
+
     errors = validate_workflow(spec)
     if errors:
         for err in errors:
             click.echo(f"Error: {err}", err=True)
+        click.echo(
+            f"\nTip: run 'binex validate {workflow_file}' for details, "
+            "or 'binex scaffold workflow --list-patterns' for valid examples.",
+            err=True,
+        )
         sys.exit(2)
 
     summary, node_errors, artifacts = asyncio.run(
@@ -323,10 +330,37 @@ def _parse_vars(var_tuples: tuple[str, ...]) -> dict[str, str]:
     return result
 
 
+def _warn_var_mismatches(spec, user_vars: dict[str, str]) -> None:
+    """Warn about --var keys that don't match workflow ${user.*} references."""
+    import re
+
+    referenced: set[str] = set()
+    for node in spec.nodes.values():
+        for v in (node.inputs or {}).values():
+            if isinstance(v, str):
+                referenced.update(re.findall(r"\$\{user\.(\w+)\}", v))
+
+    provided = set(user_vars.keys())
+    extra = provided - referenced
+    missing = referenced - provided
+
+    for key in sorted(extra):
+        click.echo(f"Warning: --var '{key}' not referenced in workflow", err=True)
+    for key in sorted(missing):
+        click.echo(
+            f"Warning: workflow references ${{user.{key}}} but no --var '{key}' provided",
+            err=True,
+        )
+
+
 @click.command("cancel")
 @click.argument("run_id")
 def cancel_cmd(run_id: str) -> None:
-    """Cancel a running workflow by run ID."""
+    """Cancel a running workflow by run ID.
+
+    Note: this marks the run as cancelled in the database but cannot
+    interrupt an in-progress execution.
+    """
     result = asyncio.run(_cancel(run_id))
     if result == "not_found":
         click.echo(f"Error: Run '{run_id}' not found.", err=True)
@@ -339,6 +373,11 @@ def cancel_cmd(run_id: str) -> None:
         sys.exit(1)
     else:
         click.echo(f"Run '{run_id}' cancelled.")
+        click.echo(
+            "Note: this marks the run as cancelled in the database "
+            "but cannot interrupt an in-progress execution.",
+            err=True,
+        )
 
 
 async def _cancel(run_id: str) -> str:

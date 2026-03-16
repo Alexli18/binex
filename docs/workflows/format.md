@@ -290,16 +290,19 @@ Two variable scopes are available inside `inputs` values:
 
 | Syntax | Resolved | Description |
 |--------|----------|-------------|
-| `${user.*}` | Load time | Substituted from `--var` CLI arguments |
-| `${node.*}` | Runtime | References an artifact produced by another node |
+| `${user.<key>}` | Load time | Substituted from `--var` CLI arguments |
+| `${<node_id>.<output>}` | Runtime | References an artifact produced by another node |
 
 **Example:**
 
 ```yaml
 inputs:
-  query: "${user.query}"          # --var query="LLM agents"
-  plan: "${planner.execution_plan}" # artifact from the planner node
+  query: "${user.query}"              # --var query="LLM agents"
+  plan: "${planner.execution_plan}"   # artifact from the planner node
 ```
+
+!!! warning
+    Use `${planner.plan}` (node ID + output name), **not** `${node.planner.plan}`. The `node.` prefix is not supported.
 
 ## Minimal Valid Workflow
 

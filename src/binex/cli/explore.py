@@ -22,6 +22,7 @@ from binex.cli.explore_browser import _browse_runs
 from binex.cli.explore_replay import _action_replay
 from binex.cli.explore_ui import (
     _print_dashboard_menu,
+    _print_help_table,
     _render_dashboard,
     _wait_for_enter,
     _wait_for_enter_or_preview,
@@ -38,8 +39,14 @@ def _get_stores():
 
 @click.command("explore", epilog="""\b
 Examples:
-  binex explore              Browse recent runs → interactive dashboard
+  binex explore              Browse recent runs -> interactive dashboard
   binex explore <run_id>     Jump directly to the dashboard for a run
+
+Dashboard keys:
+  t  trace        g  graph        d  debug
+  c  cost         a  artifacts    n  node inspect
+  r  replay       i  diagnose     f  diff
+  b  bisect       ?  help         q  back  Q  quit
 """)
 @click.argument("run_id", required=False, default=None)
 def explore_cmd(run_id: str | None) -> None:
@@ -88,6 +95,10 @@ async def _dashboard(exec_store, art_store, run_id: str) -> bool:
 
         if key in ("q", "Q"):
             return key == "Q"
+        if key == "?":
+            _print_help_table()
+            _wait_for_enter()
+            continue
 
         result = await _dispatch_action(
             key.lower(), exec_store, art_store, run_id, run, records,
@@ -141,7 +152,7 @@ async def _dispatch_action(
         }
         await handler[key]()
     else:
-        click.echo("  Unknown action. Use t/g/d/c/a/n/r/i/f/b/q/Q.")
+        click.echo("  Unknown action. Use t/g/d/c/a/n/r/i/f/b/?/q/Q.")
         return "continue"
     return None
 

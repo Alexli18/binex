@@ -25,7 +25,7 @@ Binex orchestrates multi-agent workflows defined in YAML. It executes DAG-based 
 ## Install
 
 ```bash
-pip install -e ".[dev]"
+pip install binex
 ```
 
 ## Quick Demo

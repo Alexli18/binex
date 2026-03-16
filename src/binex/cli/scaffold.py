@@ -128,10 +128,21 @@ async def agent_card():
     return _agent_card
 
 
-@app.post("/")
-async def handle_message(message: dict):
-    """Handle an incoming A2A message."""
-    return await agent.handle(message)
+@app.post("/execute")
+async def execute(request: dict):
+    """Handle a Binex A2A execution request.
+
+    Expected: {{"task_id": str, "skill": str, "trace_id": str, "artifacts": list}}
+    Returns:  {{"artifacts": list, "cost": float | null}}
+    """
+    result = await agent.handle(request)
+    return {{"artifacts": [result], "cost": None}}
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint."""
+    return {{"status": "ok", "agent": agent.name}}
 
 
 if __name__ == "__main__":

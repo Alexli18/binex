@@ -38,9 +38,7 @@ export default function Dashboard() {
   const [period, setPeriod] = useState<string>('7d');
   const costQuery = useCostDashboard(period);
 
-  // Budget state
-  const [maxCost, setMaxCost] = useState<string>('1.00');
-  const [policy, setPolicy] = useState<'stop' | 'warn'>('stop');
+  // Budget — read from workflow data, not editable here
 
   const filteredRuns = useMemo(() => {
     if (!runs) return [];
@@ -102,7 +100,9 @@ export default function Dashboard() {
           <button
             key={tab}
             role="tab"
+            id={`dash-tab-${tab}`}
             aria-selected={dashTab === tab}
+            aria-controls={`dash-tabpanel-${tab}`}
             onClick={() => setDashTab(tab)}
             className={cn(
               'px-4 min-h-[44px] text-sm font-medium border-b-2 transition-colors capitalize',
@@ -119,7 +119,7 @@ export default function Dashboard() {
 
       {/* Runs Tab */}
       {dashTab === 'runs' && (
-        <div className="mt-4">
+        <div className="mt-4" role="tabpanel" id="dash-tabpanel-runs" aria-labelledby="dash-tab-runs">
           <div className="flex items-center gap-4 mb-4">
             <select
               value={statusFilter}
@@ -232,7 +232,7 @@ export default function Dashboard() {
 
       {/* Costs Tab */}
       {dashTab === 'costs' && (
-        <div className="mt-4 space-y-6">
+        <div className="mt-4 space-y-6" role="tabpanel" id="dash-tabpanel-costs" aria-labelledby="dash-tab-costs">
           {/* Period selector */}
           <div className="flex gap-1 bg-slate-800 rounded-lg p-1 w-fit">
             {PERIODS.map((p) => (
@@ -414,55 +414,35 @@ export default function Dashboard() {
 
       {/* Budget Tab */}
       {dashTab === 'budget' && (
-        <div className="mt-4 space-y-6">
-          {/* Config Section */}
+        <div className="mt-4 space-y-6" role="tabpanel" id="dash-tabpanel-budget" aria-labelledby="dash-tab-budget">
+          {/* Info Section */}
           <div className="bg-slate-800 rounded-card border border-slate-700 p-6">
             <h2 className="text-lg font-semibold text-white mb-4">Budget Configuration</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Max cost per run ($)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={maxCost}
-                  onChange={(e) => setMaxCost(e.target.value)}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                />
+            <div className="flex items-start gap-3 bg-slate-700/50 rounded-card p-4">
+              <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-slate-300 space-y-2">
+                <p>
+                  Budget limits are configured per workflow in the YAML file via the{' '}
+                  <code className="text-blue-300 bg-slate-700 px-1.5 py-0.5 rounded">budget</code> section:
+                </p>
+                <pre className="bg-slate-800 rounded-lg p-3 text-xs text-slate-400 font-mono overflow-x-auto">
+{`budget:
+  max_cost: 1.00      # Maximum cost in USD
+  policy: stop        # "stop" or "warn"`}
+                </pre>
+                <p className="text-slate-400">
+                  <strong className="text-slate-300">stop</strong> — skips remaining nodes when budget exceeded.{' '}
+                  <strong className="text-slate-300">warn</strong> — logs a warning but continues execution.
+                </p>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Over-budget policy
-                </label>
-                <select
-                  value={policy}
-                  onChange={(e) => setPolicy(e.target.value as 'stop' | 'warn')}
-                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                >
-                  <option value="stop">Stop execution</option>
-                  <option value="warn">Warn and continue</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-start gap-2 bg-slate-700/50 rounded-card p-3">
-              <Info className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-slate-400">
-                Budget settings are configured in workflow YAML files via the{' '}
-                <code className="text-blue-300 bg-slate-700 px-1 rounded">budget</code> section.
-                The values above are for reference only.
-              </p>
             </div>
           </div>
 
-          {/* Recent Runs Table */}
+          {/* Recent Runs with Budget Info */}
           <div className="bg-slate-800 rounded-card border border-slate-700">
             <div className="px-6 py-4 border-b border-slate-700">
-              <h2 className="text-lg font-semibold text-white">Recent Runs</h2>
+              <h2 className="text-lg font-semibold text-white">Runs with Budget Status</h2>
             </div>
 
             {!runs || runs.length === 0 ? (
@@ -475,49 +455,32 @@ export default function Dashboard() {
                       <th className="px-6 py-3 font-medium">Run ID</th>
                       <th className="px-6 py-3 font-medium">Workflow</th>
                       <th className="px-6 py-3 font-medium">Cost</th>
-                      <th className="px-6 py-3 font-medium">Budget</th>
                       <th className="px-6 py-3 font-medium">Status</th>
-                      <th className="px-6 py-3 font-medium">Usage</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-700">
                     {runs.map((run) => {
-                      const budget = parseFloat(maxCost) || 1;
-                      const usage = (run.total_cost / budget) * 100;
                       const isOverBudget = run.status === 'over_budget';
-                      const barColor =
-                        usage < 70 ? 'bg-green-500' : usage < 90 ? 'bg-amber-500' : 'bg-red-500';
 
                       return (
                         <tr
                           key={run.run_id}
                           className={isOverBudget ? 'border-l-2 border-l-red-500 bg-red-500/5' : ''}
                         >
-                          <td className="px-6 py-3 font-mono text-xs text-slate-300">
-                            {run.run_id.slice(0, 12)}...
+                          <td className="px-6 py-3">
+                            <Link
+                              to={`/runs/${run.run_id}`}
+                              className="text-blue-400 hover:text-blue-300 hover:underline font-mono text-xs"
+                            >
+                              {run.run_id.slice(0, 12)}...
+                            </Link>
                           </td>
                           <td className="px-6 py-3 text-white">{run.workflow_name}</td>
                           <td className="px-6 py-3 font-mono text-slate-300">
                             ${run.total_cost.toFixed(4)}
                           </td>
-                          <td className="px-6 py-3 font-mono text-slate-400">
-                            ${budget.toFixed(2)}
-                          </td>
                           <td className="px-6 py-3">
                             <StatusBadge status={run.status} dot />
-                          </td>
-                          <td className="px-6 py-3">
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 bg-slate-700 rounded-full h-2 max-w-[100px]">
-                                <div
-                                  className={`h-2 rounded-full ${barColor} transition-all`}
-                                  style={{ width: `${Math.min(usage, 100)}%` }}
-                                />
-                              </div>
-                              <span className="text-xs text-slate-400 w-12 text-right">
-                                {usage.toFixed(0)}%
-                              </span>
-                            </div>
                           </td>
                         </tr>
                       );

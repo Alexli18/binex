@@ -238,7 +238,6 @@ function BisectDAG({
   const downstreamSet = useMemo(() => new Set(downstreamImpact), [downstreamImpact]);
 
   const { nodes, edges } = useMemo(() => {
-    const dagEdges: Edge[] = [];
     const dagNodes: Node[] = nodeMap.map((n, i) => {
       let bisectStatus: 'match' | 'divergence' | 'downstream' | 'missing' = 'match';
       if (n.node_id === divergenceNode) bisectStatus = 'divergence';
@@ -258,6 +257,17 @@ function BisectDAG({
         },
       };
     });
+
+    // Connect nodes sequentially based on topological order from bisect report
+    const dagEdges: Edge[] = [];
+    for (let i = 0; i < nodeMap.length - 1; i++) {
+      dagEdges.push({
+        id: `${nodeMap[i].node_id}-${nodeMap[i + 1].node_id}`,
+        source: nodeMap[i].node_id,
+        target: nodeMap[i + 1].node_id,
+        style: { stroke: '#475569' },
+      });
+    }
 
     return { nodes: dagNodes, edges: dagEdges };
   }, [nodeMap, divergenceNode, downstreamSet]);

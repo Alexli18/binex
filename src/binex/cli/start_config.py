@@ -48,7 +48,17 @@ def _select_provider(*, input_fn=None) -> tuple:
     provider_names = list(PROVIDERS.keys())
     _render_provider_list(provider_names)
 
-    choice = int(_prompt("Choose provider"))
+    while True:
+        try:
+            choice = int(_prompt("Choose provider"))
+            if 1 <= choice <= len(provider_names):
+                break
+            click.echo(
+                f"Please enter a number between 1 and {len(provider_names)}.",
+                err=True,
+            )
+        except ValueError:
+            click.echo("Invalid input. Please enter a number.", err=True)
     provider = PROVIDERS[provider_names[choice - 1]]
 
     model_input = _prompt(f"Model [{provider.default_model}]")
@@ -237,7 +247,17 @@ def _configure_back_edge(*, node_id: str, upstream_nodes: list[str], input_fn=No
         for i, name in enumerate(upstream_nodes, 1):
             click.echo(f"    {i}) {name}")
 
-    choice = int(_prompt("Choose target"))
+    while True:
+        try:
+            choice = int(_prompt("Choose target"))
+            if 1 <= choice <= len(upstream_nodes):
+                break
+            click.echo(
+                f"Please enter a number between 1 and {len(upstream_nodes)}.",
+                err=True,
+            )
+        except ValueError:
+            click.echo("Invalid input. Please enter a number.", err=True)
     target = upstream_nodes[choice - 1]
 
     max_iter_str = _prompt("Max iterations [3]") or "3"
@@ -407,6 +427,9 @@ def _step_choose_provider() -> tuple[ProviderConfig, str, str]:
 
     api_key = ""
     if provider.env_var:
-        api_key = click.prompt(provider.env_var)
+        api_key = click.prompt(provider.env_var, hide_input=True)
+        click.echo(
+            "API key written to .env — keep this file secure and never commit it."
+        )
 
     return provider, model, api_key

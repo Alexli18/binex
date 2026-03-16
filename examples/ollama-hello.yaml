@@ -1,0 +1,36 @@
+# Ollama Hello World
+# ==================
+# A minimal 2-node LLM workflow using a free local Ollama model.
+# This is the simplest LLM example — no API keys needed.
+#
+# Prerequisite:
+#   ollama pull llama3.2
+#
+# Run:
+#   binex run examples/ollama-hello.yaml --var topic="quantum computing"
+
+name: ollama-hello
+description: "Simple 2-node LLM pipeline using local Ollama"
+
+nodes:
+  writer:
+    agent: "llm://ollama/llama3.2"
+    system_prompt: |
+      Write a short, engaging paragraph about the given topic.
+      Keep it under 100 words.
+    inputs:
+      topic: "${user.topic}"
+    outputs: [text]
+
+  reviewer:
+    agent: "llm://ollama/llama3.2"
+    system_prompt: |
+      Review the text below. Give one strength and one suggestion
+      for improvement. Keep your review under 50 words.
+    inputs:
+      text: "${writer.text}"
+    outputs: [feedback]
+    depends_on: [writer]
+
+defaults:
+  deadline_ms: 60000

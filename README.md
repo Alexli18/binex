@@ -382,6 +382,26 @@ I'm a solo developer building this in the open. Every star, issue, and PR makes 
 
 ---
 
+## Configuration
+
+Binex can be configured via environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BINEX_STORE_PATH` | `.binex` | Directory for SQLite database and artifacts |
+| `BINEX_DEFAULT_DEADLINE_MS` | `120000` | Default node timeout in milliseconds |
+| `BINEX_DEFAULT_MAX_RETRIES` | `1` | Default retry count for failed nodes |
+| `BINEX_DEFAULT_BACKOFF` | `exponential` | Retry backoff strategy (`fixed` or `exponential`) |
+| `BINEX_REGISTRY_URL` | `http://localhost:8000` | Default A2A agent registry URL |
+
+All data is stored in `.binex/` (gitignored by default):
+- `.binex/binex.db` — SQLite database (runs, execution records, cost records)
+- `.binex/artifacts/` — JSON artifact files
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
 ## License
 
 Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.

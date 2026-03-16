@@ -19,14 +19,27 @@ Examples:
 """)
 @click.argument("run_id")
 @click.option("--from", "from_step", required=True, help="Re-execute from this step")
-@click.option("--workflow", required=True, type=click.Path(exists=True), help="Workflow file")
+@click.option(
+    "--workflow", required=False, type=click.Path(exists=True),
+    default=None, help="Workflow file (resolved from run metadata if omitted)",
+)
 @click.option("--agent", multiple=True, help="Swap agent: node=agent")
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
 def replay_cmd(
-    run_id: str, from_step: str, workflow: str,
+    run_id: str, from_step: str, workflow: str | None,
     agent: tuple[str, ...], json_out: bool,
 ) -> None:
     """Replay a run from a specific step or with agent swaps."""
+    if workflow is None:
+        workflow = asyncio.run(_resolve_workflow_from_run(run_id))
+        if workflow is None:
+            click.echo(
+                f"Error: Could not determine workflow path from run '{run_id}' metadata. "
+                "Please provide --workflow explicitly.",
+                err=True,
+            )
+            sys.exit(1)
+
     agent_swaps = _parse_agent_swaps(agent)
 
     try:
@@ -47,6 +60,20 @@ def replay_cmd(
             click.echo(f"Failed: {summary.failed_nodes}")
 
     sys.exit(0 if summary.status == "completed" else 1)
+
+
+async def _resolve_workflow_from_run(run_id: str) -> str | None:
+    """Look up the workflow path from the run's stored metadata."""
+    execution_store, _ = get_stores()
+    try:
+        run = await execution_store.get_run(run_id)
+        if run is None:
+            return None
+        if run.workflow_path:
+            return run.workflow_path
+        return None
+    finally:
+        await execution_store.close()
 
 
 async def _run_replay(
