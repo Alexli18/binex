@@ -27,7 +27,7 @@ with sync_playwright() as p:
     sidebar = page.locator("aside")
     check("Sidebar exists", sidebar.count() > 0)
 
-    groups = ["Workflows", "Runs", "Costs & Budget", "Export", "System"]
+    groups = ["Build", "Runs", "Analyze", "System"]
     for g in groups:
         check(f"Group '{g}' visible", page.get_by_text(g).count() > 0)
 
@@ -35,14 +35,12 @@ with sync_playwright() as p:
     print("\n=== Test: Page Navigation ===")
 
     nav_items = [
-        ("Browse", "/workflows", "Workflows"),
+        ("Editor", "/editor", "Editor"),
         ("Scaffold", "/scaffold", "Create Workflow"),
+        ("Prompts", "/prompts", "Prompt"),
         ("Dashboard", "/", "Dashboard"),
-        ("Compare", "/diff", "Compare Runs"),
+        ("Compare", "/diff", "Compare"),
         ("Bisect", "/bisect", "Bisect"),
-        ("Cost Dashboard", "/costs", "Cost Dashboard"),
-        ("Budget", "/costs/budget", "Budget Management"),
-        ("Export Runs", "/export", "Export Run Data"),
         ("Doctor", "/system/doctor", "System Health"),
         ("Plugins", "/system/plugins", "Plugins"),
         ("Gateway", "/system/gateway", "A2A Gateway"),
@@ -82,8 +80,9 @@ with sync_playwright() as p:
 
     # --- Test 4: Active nav state ---
     print("\n=== Test: Active Nav State ===")
-    page.goto(f"{BASE}/costs", wait_until="networkidle")
-    active_link = page.locator("a.border-blue-500")
+    page.goto(f"{BASE}/editor", wait_until="networkidle")
+    # Active links use bg-slate-800/80 class
+    active_link = page.locator("a.bg-slate-800\\/80")
     check("Active link highlighted", active_link.count() > 0)
 
     browser.close()
