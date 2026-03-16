@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.6.0
+
+Web UI Enhancement release.
+
+### Features
+
+- **Scaffold redesign** — template cards with categories, MiniGraph SVG preview, node count badges; 4→5 categories (new: Agentic Patterns)
+- **3 new agentic patterns** — reflection, plan-execute-verify, dry-run-harness (20 scaffold templates total)
+- **8 workflow prompts** — planner, analyzer, executor, task decomposer, and more for DAG-native roles (119 prompts total)
+- **Prompt Library** — new Build page with search, category tabs, markdown preview, "Use in Editor" integration; custom prompt creation with built-in deletion protection
+- **Model Selector v2** — provider-aware selection via `GET /api/v1/providers`, searchable Command popover, tier badges, configured vs unconfigured providers, recently used models
+- **`binex list`** — discover available workflows in current directory and examples (`--json` supported)
+- **`binex start` consolidation** — `binex init` now alias for `binex start`; added `--quick` flag for non-interactive setup
+- **README refresh** — inline screenshots, 3-panel GIF demo, quickstart callouts
+- **Landing page** — project website with feature overview
+
+### Fixes
+
+- Editor visual mode sync — YAML↔canvas changes now propagate correctly
+- HelpPanel z-index overlap with editor sidebar resolved
+- Scaffold prompt inlining — generated YAML now includes system_prompt content instead of placeholder text
+
+### Notes
+
+- `__version__` synced with pyproject.toml (was 0.4.0, now 0.6.0)
+- New API endpoint: `GET /api/v1/providers` for model selector
+- Scaffold API now includes `category`, `description`, `use_case`, `node_count` fields
+
 ## v0.4.0
 
 Observability & Persistence release.
