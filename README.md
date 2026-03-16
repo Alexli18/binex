@@ -41,21 +41,21 @@
 ### 1. Start in seconds
 
 <div align="center">
-  <img src="assets/demo-start.gif" alt="Quick Start" width="800">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-start.gif" alt="Quick Start" width="800">
   <br><sub>Install, run <code>binex ui</code>, and you're building workflows</sub>
 </div>
 
 ### 2. Build & run custom workflows
 
 <div align="center">
-  <img src="assets/demo-custom.gif" alt="Custom Workflow" width="800">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-custom.gif" alt="Custom Workflow" width="800">
   <br><sub>Drag & drop nodes, configure models, run with human input</sub>
 </div>
 
 ### 3. Explore & debug results
 
 <div align="center">
-  <img src="assets/demo-explore.gif" alt="Explore Results" width="800">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-explore.gif" alt="Explore Results" width="800">
   <br><sub>Debug, trace, diff, lineage — full post-mortem inspection</sub>
 </div>
 
@@ -117,7 +117,7 @@ binex ui
 ### Visual Drag & Drop Editor
 
 <div align="center">
-  <img src="screenshots/new-editor.png" alt="Workflow Editor" width="800">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-editor.png" alt="Workflow Editor" width="800">
   <br><sub>Drag & drop nodes, configure models and prompts, switch between Visual and YAML</sub>
 </div>
 
@@ -134,22 +134,22 @@ binex ui
 ### Dashboard
 
 <div align="center">
-  <img src="screenshots/new-dashboard.png" alt="Runs Dashboard" width="800">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-dashboard.png" alt="Runs Dashboard" width="800">
   <br><sub>All runs at a glance — status, cost, duration</sub>
 </div>
 
 ### Debugging & Analysis
 
 <div align="center">
-  <img src="screenshots/new-debug.png" alt="Debug View" width="380">
-  <img src="screenshots/new-trace.png" alt="Trace Timeline" width="380">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-debug.png" alt="Debug View" width="380">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-trace.png" alt="Trace Timeline" width="380">
   <br><sub>Left: Node-by-node debug inspection. Right: Gantt timeline with anomaly detection.</sub>
 </div>
 
 ### Run Comparison
 
 <div align="center">
-  <img src="screenshots/new-diff.png" alt="Diff View" width="800">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-diff.png" alt="Diff View" width="800">
   <br><sub>Side-by-side diff with filtering: changed, failed, cost delta</sub>
 </div>
 
