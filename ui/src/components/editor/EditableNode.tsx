@@ -1,6 +1,7 @@
 import { memo, useState, useCallback } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from 'reactflow';
 import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2, BookOpen } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { ModelSelect } from './ModelSelect';
 import { PromptLibraryPanel } from '../../pages/PromptLibrary';
 
@@ -119,9 +120,9 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
             </div>
             <div>
               <label className="text-slate-400 block mb-0.5">Max Tokens</label>
-              <input type="number" value={(config.max_tokens as number) || 4096}
+              <Input type="number" value={(config.max_tokens as number) || 4096}
                 onChange={(e) => updateConfig('max_tokens', parseInt(e.target.value) || 4096)}
-                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200"
+                className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                 onClick={(e) => e.stopPropagation()} />
             </div>
             <div>
@@ -151,10 +152,10 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
             </div>
             <div>
               <label className="text-slate-400 block mb-0.5">Budget Limit ($)</label>
-              <input type="number" step="0.01" value={(config.budget_limit as number) || ''}
+              <Input type="number" step="0.01" value={(config.budget_limit as number) || ''}
                 onChange={(e) => updateConfig('budget_limit', parseFloat(e.target.value) || undefined)}
                 placeholder="No limit"
-                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200"
+                className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                 onClick={(e) => e.stopPropagation()} />
             </div>
           </>
@@ -163,10 +164,10 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
         {data.nodeType === 'local' && (
           <div>
             <label className="text-slate-400 block mb-0.5">Module Path</label>
-            <input value={agent.replace('local://', '')}
+            <Input value={agent.replace('local://', '')}
               onChange={(e) => updateAgent(`local://${e.target.value}`)}
               placeholder="my_module.my_function"
-              className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 font-mono"
+              className="h-7 bg-slate-700 border-slate-600 text-slate-200 font-mono"
               onClick={(e) => e.stopPropagation()} />
           </div>
         )}
@@ -174,10 +175,10 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
         {data.nodeType === 'human-output' && (
           <div>
             <label className="text-slate-400 block mb-0.5">Display Label</label>
-            <input value={(config.display_label as string) || ''}
+            <Input value={(config.display_label as string) || ''}
               onChange={(e) => updateConfig('display_label', e.target.value)}
               placeholder="Final Result"
-              className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200"
+              className="h-7 bg-slate-700 border-slate-600 text-slate-200"
               onClick={(e) => e.stopPropagation()} />
             <p className="text-slate-500 mt-1">Shows the output of connected nodes to the user when workflow completes.</p>
           </div>
@@ -199,18 +200,18 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
           <>
             <div>
               <label className="text-slate-400 block mb-0.5">Host:Port</label>
-              <input value={agent.replace('a2a://', '')}
+              <Input value={agent.replace('a2a://', '')}
                 onChange={(e) => updateAgent(`a2a://${e.target.value}`)}
                 placeholder="localhost:8001"
-                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 font-mono"
+                className="h-7 bg-slate-700 border-slate-600 text-slate-200 font-mono"
                 onClick={(e) => e.stopPropagation()} />
             </div>
             <div>
               <label className="text-slate-400 block mb-0.5">Skill</label>
-              <input value={(config.skill as string) || ''}
+              <Input value={(config.skill as string) || ''}
                 onChange={(e) => updateConfig('skill', e.target.value)}
                 placeholder="summarize"
-                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200"
+                className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                 onClick={(e) => e.stopPropagation()} />
             </div>
           </>

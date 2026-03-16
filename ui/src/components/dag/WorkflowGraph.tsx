@@ -8,6 +8,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { layoutGraph, type WorkflowEdge, type WorkflowNode } from '../../lib/yaml-to-graph';
 import { CustomNode } from './CustomNode';
+import { chartColors } from '@/lib/design-tokens';
 
 const nodeTypes = { custom: CustomNode };
 
@@ -38,7 +39,7 @@ export function WorkflowGraph({ nodes, edges, onNodeClick }: WorkflowGraphProps)
           source: e.source,
           target: e.target,
           animated: nodes.find((n) => n.id === e.source)?.status === 'running',
-          style: { stroke: '#64748b', strokeWidth: 2 },
+          style: { stroke: chartColors.edge, strokeWidth: 2 },
         })),
       );
     });
@@ -61,7 +62,7 @@ export function WorkflowGraph({ nodes, edges, onNodeClick }: WorkflowGraphProps)
         fitView
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#334155" gap={16} />
+        <Background color={chartColors.grid} gap={16} />
         <Controls className="!bg-slate-800 !border-slate-700 !shadow-lg [&>button]:!bg-slate-700 [&>button]:!border-slate-600 [&>button]:!text-slate-300 [&>button:hover]:!bg-slate-600" />
       </ReactFlow>
     </div>

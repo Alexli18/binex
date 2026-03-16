@@ -11,7 +11,12 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { ErrorState } from '@/components/layout/ErrorState';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { chartColors, colors as tokenColors } from '@/lib/design-tokens';
 import {
   Rocket, FileCode, Bug, Plus, Download,
   DollarSign, TrendingUp, Play, Wallet, Info,
@@ -76,7 +81,7 @@ export default function Dashboard() {
   const budgetUsed = costData && budgetLimit && budgetLimit > 0
     ? Math.min((costData.total_cost / budgetLimit) * 100, 100)
     : 0;
-  const budgetColor = budgetUsed < 70 ? 'bg-emerald-500' : budgetUsed < 90 ? 'bg-amber-500' : 'bg-red-500';
+  const budgetColor = budgetUsed < 70 ? tokenColors.success.bg : budgetUsed < 90 ? tokenColors.warning.bg : tokenColors.danger.bg;
 
   return (
     <PageShell>
@@ -121,25 +126,25 @@ export default function Dashboard() {
       {dashTab === 'runs' && (
         <div className="mt-4" role="tabpanel" id="dash-tabpanel-runs" aria-labelledby="dash-tab-runs">
           <div className="flex items-center gap-4 mb-4">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-slate-600 rounded-md px-3 py-1.5 text-sm bg-slate-800 text-slate-200 focus:outline-none focus:border-blue-500"
-              aria-label="Filter by status"
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {s === 'all' ? 'All statuses' : s.charAt(0).toUpperCase() + s.slice(1)}
-                </option>
-              ))}
-            </select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px]" aria-label="Filter by status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s === 'all' ? 'All statuses' : s.charAt(0).toUpperCase() + s.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            <input
+            <Input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by run ID or workflow..."
-              className="border border-slate-600 rounded-md px-3 py-1.5 text-sm w-64 bg-slate-800 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-64"
               aria-label="Search by run ID or workflow name"
             />
 
@@ -323,13 +328,13 @@ export default function Dashboard() {
                 {costData && costData.cost_trend.length > 0 ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <AreaChart data={costData.cost_trend}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
-                      <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(v) => `$${v}`} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                      <XAxis dataKey="date" stroke={chartColors.axis} fontSize={12} />
+                      <YAxis stroke={chartColors.axis} fontSize={12} tickFormatter={(v) => `$${v}`} />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#1e293b',
-                          border: '1px solid #475569',
+                          backgroundColor: chartColors.tooltipBg,
+                          border: `1px solid ${chartColors.tooltipBorder}`,
                           borderRadius: '8px',
                           color: '#e2e8f0',
                         }}
@@ -342,8 +347,8 @@ export default function Dashboard() {
                       <Area
                         type="monotone"
                         dataKey="cost"
-                        stroke="#3b82f6"
-                        fill="#3b82f680"
+                        stroke={chartColors.primary}
+                        fill={chartColors.primaryFill}
                         strokeWidth={2}
                       />
                     </AreaChart>
@@ -362,9 +367,9 @@ export default function Dashboard() {
                   {costData && costData.cost_by_model.length > 0 ? (
                     <ResponsiveContainer width="100%" height={250}>
                       <BarChart data={costData.cost_by_model} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                        <XAxis type="number" stroke="#94a3b8" fontSize={12} tickFormatter={(v) => `$${v}`} />
-                        <YAxis type="category" dataKey="model" stroke="#94a3b8" fontSize={12} width={120} />
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                        <XAxis type="number" stroke={chartColors.axis} fontSize={12} tickFormatter={(v) => `$${v}`} />
+                        <YAxis type="category" dataKey="model" stroke={chartColors.axis} fontSize={12} width={120} />
                         <Tooltip
                           contentStyle={{
                             backgroundColor: '#1e293b',
@@ -374,7 +379,7 @@ export default function Dashboard() {
                           }}
                           formatter={(value: unknown) => [`$${Number(value).toFixed(6)}`, 'Cost']}
                         />
-                        <Bar dataKey="cost" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="cost" fill={chartColors.primary} radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
@@ -387,9 +392,9 @@ export default function Dashboard() {
                   {costData && costData.cost_by_node.length > 0 ? (
                     <ResponsiveContainer width="100%" height={250}>
                       <BarChart data={costData.cost_by_node} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                        <XAxis type="number" stroke="#94a3b8" fontSize={12} tickFormatter={(v) => `$${v}`} />
-                        <YAxis type="category" dataKey="node_id" stroke="#94a3b8" fontSize={12} width={120} />
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                        <XAxis type="number" stroke={chartColors.axis} fontSize={12} tickFormatter={(v) => `$${v}`} />
+                        <YAxis type="category" dataKey="node_id" stroke={chartColors.axis} fontSize={12} width={120} />
                         <Tooltip
                           contentStyle={{
                             backgroundColor: '#1e293b',
@@ -399,7 +404,7 @@ export default function Dashboard() {
                           }}
                           formatter={(value: unknown) => [`$${Number(value).toFixed(6)}`, 'Cost']}
                         />
-                        <Bar dataKey="cost" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="cost" fill={chartColors.secondary} radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (

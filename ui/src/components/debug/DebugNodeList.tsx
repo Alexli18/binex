@@ -1,21 +1,24 @@
 import { useState, useMemo } from 'react';
 import { CheckCircle2, XCircle, Clock, SkipForward, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getStatusColors } from '@/lib/design-tokens';
 import type { DebugNode } from '@/hooks/useAnalysis';
 
 const statusIcon = (status: string) => {
+  const tokens = getStatusColors(status);
   switch (status) {
     case 'completed':
-      return <CheckCircle2 size={16} className="text-green-400" />;
+      return <CheckCircle2 size={16} className={tokens.text} />;
     case 'failed':
-      return <XCircle size={16} className="text-red-400" />;
+      return <XCircle size={16} className={tokens.text} />;
     case 'running':
-      return <Clock size={16} className="text-blue-400 animate-pulse" />;
+      return <Clock size={16} className={`${tokens.text} animate-pulse`} />;
     case 'skipped':
-      return <SkipForward size={16} className="text-slate-500" />;
+      return <SkipForward size={16} className={tokens.text} />;
     default:
-      return <Clock size={16} className="text-slate-500" />;
+      return <Clock size={16} className={tokens.text} />;
   }
 };
 
@@ -55,12 +58,12 @@ export function DebugNodeList({
             size={14}
             className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"
           />
-          <input
+          <Input
             type="text"
             placeholder="Filter nodes..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 pl-8 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500"
+            className="pl-8"
           />
         </div>
         <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
@@ -107,7 +110,7 @@ export function DebugNodeList({
                     )}
                   </div>
                   {node.error && (
-                    <XCircle size={12} className="text-red-400 shrink-0" />
+                    <XCircle size={12} className={`${getStatusColors('failed').text} shrink-0`} />
                   )}
                 </button>
               </li>

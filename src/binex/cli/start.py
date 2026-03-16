@@ -756,12 +756,16 @@ def _step_generate_project(
 
 @click.command("start", epilog="""\b
 Examples:
-  binex start          Launch the interactive wizard
-  binex start --quick  Quick setup (3 questions, works in current dir)
+  binex start                Launch the interactive wizard (5 steps)
+  binex start --quick        Quick setup (3 questions, generates in current dir)
+
+Quick mode creates a planner -> researcher -> writer workflow with
+your chosen provider. Full mode lets you pick from 17+ templates,
+configure per-node settings, and set up user prompts.
 """)
 @click.option(
     "--quick", is_flag=True, default=False,
-    help="Minimal setup: provider + model, creates workflow in current directory.",
+    help="Minimal 3-question setup: provider + model, creates workflow in current directory.",
 )
 def start_cmd(quick: bool) -> None:
     """Interactive wizard to create and run an agent workflow."""

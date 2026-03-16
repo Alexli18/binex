@@ -33,8 +33,8 @@ def _get_stores():
 @click.argument("good_run_id")
 @click.argument("bad_run_id")
 @click.option(
-    "--threshold", type=float, default=0.9,
-    help="Content similarity threshold (0.0-1.0)",
+    "--threshold", type=float, default=0.9, show_default=True,
+    help="Content similarity threshold (0.0-1.0). Nodes below this are marked as diverged.",
 )
 @click.option(
     "--json-output", "--json", "json_out",

@@ -35,8 +35,10 @@ Examples:
 @click.option("--var", multiple=True, help="Variable substitution key=value")
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
 @click.option("--verbose", "-v", is_flag=True, help="Show artifact contents after each step")
-@click.option("--stream/--no-stream", "stream_out", default=None, help="Stream LLM output tokens")
-@click.option("--gateway", "gateway_url", default=None, help="External A2A Gateway URL")
+@click.option("--stream/--no-stream", "stream_out", default=None,
+              help="Stream LLM output tokens (auto-enabled in TTY, use --no-stream to disable)")
+@click.option("--gateway", "gateway_url", default=None,
+              help="A2A Gateway URL for routing a2a:// agents (e.g. http://localhost:8420)")
 def run_cmd(
     workflow_file: str, var: tuple[str, ...], json_out: bool, verbose: bool,
     stream_out: bool | None, gateway_url: str | None,

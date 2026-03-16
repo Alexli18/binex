@@ -88,6 +88,8 @@ That's it. Browser opens. You're building AI workflows.
 
 ## Installation
 
+> **Requires Python 3.11+**
+
 ```bash
 pip install binex
 ```

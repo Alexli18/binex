@@ -21,6 +21,8 @@ import DoctorPage from './pages/DoctorPage';
 import PluginsPage from './pages/PluginsPage';
 import GatewayPage from './pages/GatewayPage';
 import PromptLibrary from './pages/PromptLibrary';
+import NotFound from './pages/NotFound';
+import LatestRunRedirect from './pages/LatestRunRedirect';
 
 export default function App() {
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
@@ -42,6 +44,7 @@ export default function App() {
       <main className="flex-1 overflow-auto">
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/runs/latest/*" element={<LatestRunRedirect />} />
           <Route path="/runs/:runId" element={<RunDetail />} />
           <Route path="/runs/:runId/live" element={<RunLive />} />
           <Route path="/runs/:runId/debug" element={<DebugPage />} />
@@ -57,6 +60,7 @@ export default function App() {
           <Route path="/system/doctor" element={<DoctorPage />} />
           <Route path="/system/plugins" element={<PluginsPage />} />
           <Route path="/system/gateway" element={<GatewayPage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
     </div>

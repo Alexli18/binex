@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
+import { statusColors } from '@/lib/design-tokens';
 
 export interface DebugErrorPanelProps {
   error: string;
@@ -11,10 +12,10 @@ export function DebugErrorPanel({ error }: DebugErrorPanelProps) {
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-1">
-        <AlertTriangle size={14} className="text-red-400" />
+        <AlertTriangle size={14} className={statusColors.failed.text} />
         <span className="text-sm text-slate-500">Error</span>
       </div>
-      <div className="mt-1 rounded-md bg-red-900/30 border border-red-700/50 p-3 text-sm text-red-300 font-mono whitespace-pre-wrap break-words">
+      <div className={`mt-1 rounded-md ${statusColors.failed.bg} border ${statusColors.failed.border} p-3 text-sm ${statusColors.failed.text} font-mono whitespace-pre-wrap break-words`}>
         {error}
       </div>
       {isStackTrace && (

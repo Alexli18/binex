@@ -13,6 +13,7 @@ import { graphToYaml } from '../lib/graph-to-yaml';
 import { api } from '../lib/api';
 import { toast } from 'sonner';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { Input } from '@/components/ui/input';
 
 // ---------------------------------------------------------------------------
 // Helpers (kept local — only used by the orchestrator)
@@ -421,10 +422,10 @@ export default function WorkflowEditor() {
             </div>
             {/* Search */}
             <div className="px-3 py-2">
-              <input
+              <Input
                 type="text"
                 placeholder="Filter workflows..."
-                className="w-full bg-slate-800 border border-slate-600/50 rounded-md px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                className="h-8"
                 onChange={(e) => setFileFilter(e.target.value)}
                 autoFocus
               />

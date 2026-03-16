@@ -34,7 +34,15 @@ def _import_uvicorn():
     return uvicorn
 
 
-@click.group("gateway", invoke_without_command=True)
+@click.group("gateway", invoke_without_command=True, epilog="""\b
+Examples:
+  binex gateway                          Start gateway server (default action)
+  binex gateway --config gw.yaml         Start with custom config
+  binex gateway --port 9000              Start on custom port
+  binex gateway status                   Check gateway health
+  binex gateway agents                   List registered agents
+  binex gateway agents --json            Machine-readable agent list
+""")
 @click.option(
     "--config", "config_path", type=click.Path(), default=None,
     help="Path to gateway.yaml config file.",
