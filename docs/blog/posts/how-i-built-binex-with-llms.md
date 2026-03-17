@@ -24,7 +24,7 @@ I closed the terminal. Not in frustration — in decision. *I'm going to build t
 
 That thing became Binex — an open-source runtime for AI agent pipelines. You define your workflow as a DAG in YAML, and Binex runs it with full visibility: per-node cost tracking, artifact lineage, trace replay, conditional branching, and a web UI that shows you exactly what each agent did, what it cost, and where it broke. The "debugger for LLM workflows" I wished I had that evening.
 
-![binex debug — CLI output showing run inspection](images/terminal-debug.png)
+![Binex Web UI Debug — failed run with RateLimitError, node-by-node error inspection](images/terminal-debug.png)
 
 Ten days later (~6-8 hours/day), that thing had a name — Binex — 2,393 passing tests, 96% coverage, and a 19-page Web UI. Built with the same technology that burned me: LLMs.
 
