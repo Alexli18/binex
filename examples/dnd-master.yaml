@@ -1,0 +1,16 @@
+name: dnd-session
+description: D&D Dungeon Master with dice rolling and random encounters
+
+nodes:
+  dm:
+    agent: llm://openai/gpt-4
+    system_prompt: |
+      You are a D&D dungeon master running a campaign.
+      Use dice_roll for combat rolls and random_choice for generating encounters.
+      Be dramatic and immersive in your storytelling.
+    inputs:
+      scenario: "The party enters a dark cave. A faint growl echoes from the depths."
+    outputs: [narrative]
+    tools:
+      - builtin://dice_roll
+      - builtin://random_choice

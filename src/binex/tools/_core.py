@@ -19,6 +19,7 @@ class ToolDefinition:
     parameters: dict[str, Any]
     callable: Callable[..., Any] | None = None
     is_async: bool = False
+    _mcp_server: str | None = None
 
     def to_openai_schema(self) -> dict[str, Any]:
         """Return an OpenAI-compatible tool schema dict."""
@@ -241,13 +242,38 @@ def _resolve_inline_tool(tool_dict: dict[str, Any]) -> ToolDefinition:
 def resolve_tools(
     tools_spec: list[str | dict[str, Any]],
     workflow_dir: str | None = None,
+    mcp_manager: Any | None = None,
 ) -> list[ToolDefinition]:
-    """Resolve a list of tool specs (URIs or inline dicts) to ToolDefinitions."""
+    """Resolve a list of tool specs (URIs or inline dicts) to ToolDefinitions.
+
+    For ``mcp://`` URIs, an *mcp_manager* (McpClientManager) must be provided.
+    MCP tools are returned as placeholders with ``_mcp_server`` attribute set;
+    the LLM adapter resolves them asynchronously at execution time.
+    """
     result: list[ToolDefinition] = []
     for spec in tools_spec:
         if isinstance(spec, str):
             if spec.startswith("python://"):
                 result.append(load_python_tool(spec, workflow_dir=workflow_dir))
+            elif spec.startswith("builtin://"):
+                from binex.tools.builtins import get_builtin
+                name = spec[len("builtin://"):]
+                result.append(get_builtin(name))
+            elif spec.startswith("mcp://"):
+                if mcp_manager is None:
+                    raise ValueError(
+                        f"Tool '{spec}' requires mcp_servers config "
+                        f"in workflow YAML"
+                    )
+                server_name = spec[len("mcp://"):]
+                result.append(ToolDefinition(
+                    name=f"__mcp_pending_{server_name}",
+                    description=f"MCP tools from server '{server_name}'",
+                    parameters={"type": "object", "properties": {}},
+                    callable=None,
+                    is_async=True,
+                    _mcp_server=server_name,
+                ))
             else:
                 raise ValueError(f"Unsupported tool URI scheme: {spec!r}")
         elif isinstance(spec, dict):

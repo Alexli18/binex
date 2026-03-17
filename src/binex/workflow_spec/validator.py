@@ -25,6 +25,7 @@ def validate_workflow(spec: WorkflowSpec) -> list[str]:
     _check_when_conditions(spec, node_ids, errors)
     _check_output_schemas(spec, node_ids, errors)
     _check_schedule_cron(spec, errors)
+    _check_tool_uris(spec, errors)
 
     return errors
 
@@ -208,3 +209,34 @@ def _check_output_schemas(
             errors.append(
                 f"Node '{node_id}': invalid JSON Schema in output_schema: {e.message}"
             )
+
+
+def _check_tool_uris(
+    spec: WorkflowSpec, errors: list[str],
+) -> None:
+    """Validate builtin:// and mcp:// tool URIs in node tools lists."""
+    from binex.tools.builtins import list_builtins
+
+    available_builtins = set(list_builtins())
+    mcp_server_names = set(spec.mcp_servers.keys())
+
+    for node_id, node in spec.nodes.items():
+        for tool_spec in node.tools:
+            if not isinstance(tool_spec, str):
+                continue
+            if tool_spec.startswith("builtin://"):
+                name = tool_spec[len("builtin://"):]
+                if name not in available_builtins:
+                    errors.append(
+                        f"Node '{node_id}': unknown built-in tool '{name}'. "
+                        f"Available: {', '.join(sorted(available_builtins))}"
+                    )
+            elif tool_spec.startswith("mcp://"):
+                server = tool_spec[len("mcp://"):]
+                if server not in mcp_server_names:
+                    errors.append(
+                        f"Node '{node_id}': mcp:// references "
+                        f"unknown server '{server}'. "
+                        f"Declared mcp_servers: "
+                        f"{', '.join(sorted(mcp_server_names)) or '(none)'}"
+                    )

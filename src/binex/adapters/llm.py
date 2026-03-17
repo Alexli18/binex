@@ -37,6 +37,7 @@ class LLMAdapter:
         temperature: float | None = None,
         max_tokens: int | None = None,
         workflow_dir: str | None = None,
+        mcp_manager: Any | None = None,
     ) -> None:
         self._model = model
         self._prompt_template = prompt_template
@@ -45,6 +46,30 @@ class LLMAdapter:
         self._temperature = temperature
         self._max_tokens = max_tokens
         self._workflow_dir = workflow_dir
+        self._mcp_manager = mcp_manager
+
+    @staticmethod
+    def _is_mcp_placeholder(t: Any) -> bool:
+        """Check if a tool is an MCP placeholder."""
+        val = getattr(t, "_mcp_server", None)
+        return isinstance(val, str)
+
+    async def _expand_mcp_tools(
+        self, tools: list[Any],
+    ) -> list[Any]:
+        """Expand MCP placeholder tools into actual tool definitions."""
+        if self._mcp_manager is None:
+            return [t for t in tools if not self._is_mcp_placeholder(t)]
+
+        expanded: list[Any] = []
+        for t in tools:
+            if self._is_mcp_placeholder(t):
+                server_name = t._mcp_server
+                mcp_tools = await self._mcp_manager.get_tools(server_name)
+                expanded.extend(mcp_tools)
+            else:
+                expanded.append(t)
+        return expanded
 
     def _build_completion_kwargs(
         self, messages: list[dict[str, Any]],
@@ -190,7 +215,13 @@ class LLMAdapter:
         max_tool_rounds = task.config.get("max_tool_rounds", 10)
         resolved_tools: list[Any] = []
         if task.tools and max_tool_rounds > 0:
-            resolved_tools = resolve_tools(task.tools, workflow_dir=self._workflow_dir)
+            resolved_tools = resolve_tools(
+                task.tools,
+                workflow_dir=self._workflow_dir,
+                mcp_manager=self._mcp_manager,
+            )
+            # Expand MCP placeholders to actual tools
+            resolved_tools = await self._expand_mcp_tools(resolved_tools)
             kwargs["tools"] = [t.to_openai_schema() for t in resolved_tools]
 
         # Streaming mode (only for non-tool-calling initial request)
