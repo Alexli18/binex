@@ -120,7 +120,7 @@ binex ui
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-editor.png" alt="Workflow Editor" width="800">
-  <br><sub>Drag & drop nodes, configure models and prompts, switch between Visual and YAML</sub>
+  <br><sub>Collapsible node sections, tool picker with 10 built-in tools, MCP config, Visual ↔ YAML sync</sub>
 </div>
 
 <br>
