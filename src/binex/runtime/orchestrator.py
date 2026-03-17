@@ -104,15 +104,24 @@ class Orchestrator:
         else:
             workflow_hash = hashlib.sha256(workflow_yaml.encode()).hexdigest()
 
-        summary = RunSummary(
-            run_id=run_id,
-            workflow_name=spec.name,
-            workflow_path=spec.source_path,
-            workflow_hash=workflow_hash,
-            status="running",
-            total_nodes=len(spec.nodes),
-        )
-        await self.execution_store.create_run(summary)
+        # Check if run was pre-created (e.g. by Web UI for human workflows)
+        existing = await self.execution_store.get_run(run_id) if run_id else None
+        if existing:
+            summary = existing
+            summary.status = "running"
+            summary.total_nodes = len(spec.nodes)
+            summary.workflow_hash = workflow_hash
+            await self.execution_store.update_run(summary)
+        else:
+            summary = RunSummary(
+                run_id=run_id,
+                workflow_name=spec.name,
+                workflow_path=spec.source_path,
+                workflow_hash=workflow_hash,
+                status="running",
+                total_nodes=len(spec.nodes),
+            )
+            await self.execution_store.create_run(summary)
 
         # node_id -> list of output artifacts
         node_artifacts: dict[str, list[Artifact]] = {}
