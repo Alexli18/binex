@@ -182,8 +182,44 @@ async def create_run(body: CreateRunRequest) -> JSONResponse:
     has_human_nodes = "human://" in text
 
     if has_human_nodes:
-        # Launch in background so the browser can subscribe to SSE first
+        # Pre-create run record so the live page can find it immediately
         run_id = f"run_{uuid4().hex[:12]}"
+        try:
+            import yaml as _yaml
+
+            from binex.models import RunSummary
+            from binex.workflow_spec.loader import load_workflow_from_string
+
+            raw_data = _yaml.safe_load(text)
+            if isinstance(raw_data, dict) and "nodes" in raw_data:
+                _normalize_spec_data(raw_data)
+                normalized = _yaml.dump(
+                    raw_data, indent=2, default_flow_style=False, sort_keys=False,
+                )
+            else:
+                normalized = text
+            spec = load_workflow_from_string(normalized, fmt="yaml", base_dir=workflow.parent)
+            total_nodes = len(spec.nodes)
+            wf_name = spec.name
+        except Exception:
+            total_nodes = text.count("agent:")
+            wf_name = workflow.stem
+
+        exec_store, _ = _get_stores()
+        try:
+            from binex.models import RunSummary
+
+            summary = RunSummary(
+                run_id=run_id,
+                workflow_name=wf_name,
+                workflow_path=str(workflow),
+                status="running",
+                total_nodes=total_nodes,
+            )
+            await exec_store.create_run(summary)
+        finally:
+            await exec_store.close()
+
         asyncio.create_task(
             _execute_workflow_background(run_id, workflow, body.variables),
         )
