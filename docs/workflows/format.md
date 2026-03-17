@@ -13,6 +13,8 @@ Complete schema reference for Binex workflow files.
 | `defaults` | `DefaultsSpec` | no | Default settings applied to all nodes |
 | `budget` | `BudgetConfig` | no | Budget constraints for the run (see below) |
 | `webhook` | `WebhookConfig` | no | Webhook notification target (see below) |
+| `schedule` | `str` | no | Cron expression (5-field) for scheduled execution |
+| `mcp_servers` | `dict[str, McpServerConfig]` | no | MCP server configurations (see below) |
 
 ## Node — `NodeSpec`
 
@@ -30,6 +32,7 @@ Complete schema reference for Binex workflow files.
 | `when` | `str` | no | Conditional execution expression (see below) |
 | `cost` | `NodeCostHint` | no | Optional cost estimate for planning (see below) |
 | `budget` | `float` or `NodeBudget` | no | Per-node budget limit (shorthand: `budget: 0.50`, full: `budget: { max_cost: 0.50 }`) |
+| `tools` | `list[str]` | no | Tool URIs available to this node (see [Tools](#tools) below) |
 | `output_schema` | `dict` | no | JSON Schema for validating node output. Failed validation triggers auto-retry |
 | `routing` | `dict` | no | Per-node Gateway routing overrides (see below) |
 
@@ -283,6 +286,93 @@ nodes:
 | `failover` | `bool` | `null` | Override failover setting for this node |
 
 Routing overrides only apply when a Gateway is configured. Without a Gateway, the `routing` field is ignored.
+
+## Tools
+
+Nodes can declare tools that are made available to the LLM during execution. Three URI schemes are supported:
+
+| Scheme | Example | Description |
+|--------|---------|-------------|
+| `builtin://` | `builtin://web_search` | One of 10 built-in tools |
+| `mcp://` | `mcp://my-server` | All tools from a configured MCP server |
+| `python://` | `python://my_module.my_func` | Custom Python function decorated with `@tool` |
+
+### Built-in tools (10)
+
+| Category | Tools |
+|----------|-------|
+| **Data** | `calculator`, `json_parse`, `random_choice`, `dice_roll` |
+| **Web** | `fetch_url`, `http_request`, `web_search` |
+| **Files** | `read_file`, `write_file` |
+| **System** | `shell_command` |
+
+**Example:**
+
+```yaml
+nodes:
+  researcher:
+    agent: "llm://openai/gpt-4o"
+    system_prompt: "Research the topic using web search"
+    tools:
+      - "builtin://web_search"
+      - "builtin://fetch_url"
+      - "builtin://calculator"
+    outputs: [findings]
+```
+
+## MCP Servers — `McpServerConfig`
+
+MCP (Model Context Protocol) servers provide additional tools to LLM nodes. Configure them at the workflow level, then reference them in node `tools` lists.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `command` | `str` | stdio only | Command to launch the MCP server |
+| `args` | `list[str]` | no | Arguments for the command |
+| `env` | `dict[str, str]` | no | Environment variables |
+| `url` | `str` | HTTP only | URL of a running MCP server |
+
+**Example — stdio transport:**
+
+```yaml
+mcp_servers:
+  file-search:
+    command: npx
+    args: ["-y", "@anthropic/mcp-file-search"]
+  code-tools:
+    command: python
+    args: ["-m", "my_mcp_server"]
+
+nodes:
+  coder:
+    agent: "llm://anthropic/claude-sonnet-4-20250514"
+    tools:
+      - "mcp://file-search"
+      - "mcp://code-tools"
+      - "builtin://shell_command"
+    outputs: [code]
+```
+
+**Example — HTTP transport:**
+
+```yaml
+mcp_servers:
+  remote-api:
+    url: "http://localhost:3000/mcp"
+```
+
+## Schedule — Cron Expression
+
+The `schedule` field accepts a standard 5-field cron expression. Workflows with a `schedule` are automatically discovered and executed by `binex scheduler start`.
+
+```yaml
+name: hourly-report
+schedule: "0 * * * *"
+nodes:
+  reporter:
+    agent: "llm://openai/gpt-4o-mini"
+    system_prompt: "Generate hourly status report"
+    outputs: [report]
+```
 
 ## Variable Interpolation
 

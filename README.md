@@ -129,7 +129,10 @@ binex ui
 
 - 20+ preset models including 8 free OpenRouter models
 - Built-in prompt library (Planner, Researcher, Analyzer, Writer, Reviewer, Summarizer)
-- Switch between Visual and YAML modes — changes sync both ways
+- **Tool Picker** — 10 built-in tools, MCP server integration, custom Python tools
+- **Collapsible sections** — Model, Prompt, Tools, Advanced per LLM node
+- **Workflow Settings** panel — configure MCP servers (stdio/HTTP) and cron schedules
+- Switch between Visual and YAML modes — changes sync both ways (including tools & MCP)
 - Real-time cost estimation as you build
 - Custom model input — use any litellm-compatible model
 
@@ -155,16 +158,16 @@ binex ui
   <br><sub>Side-by-side diff with filtering: changed, failed, cost delta</sub>
 </div>
 
-### 18 Pages — Full CLI Parity
+### 19 Pages — Full CLI Parity
 
 | Category | Pages |
 |----------|-------|
-| **Workflows** | Browse, Visual Editor, Scaffold Wizard |
+| **Workflows** | Browse, Visual Editor (with tool picker & MCP config), Scaffold Wizard |
 | **Runs** | Dashboard, RunLive (SSE), RunDetail |
 | **Analysis** | Debug (input/output artifacts), Trace (Gantt timeline), Diagnose (root-cause), Lineage (artifact graph) |
 | **Comparison** | Diff (side-by-side with filter bar, compare with previous run), Bisect (NodeMap, DAG visualization, divergence metrics) |
 | **Costs** | Cost Dashboard (charts), Budget Management |
-| **System** | Doctor (health), Plugins, Gateway, Export |
+| **System** | Doctor (health), Plugins, Gateway, Export, Scheduler (cron) |
 
 ### Navigation
 
@@ -224,12 +227,17 @@ nodes:
   planner:
     agent: "llm://gemini/gemini-2.5-flash"
     system_prompt: "Break this topic into research questions"
+    tools:
+      - "builtin://web_search"
+      - "builtin://calculator"
     depends_on: [input]
     outputs: [output]
 
   researcher:
     agent: "llm://openrouter/google/gemma-3-27b-it:free"
     system_prompt: "Investigate and report findings"
+    tools:
+      - "builtin://fetch_url"
     depends_on: [planner]
     outputs: [output]
 
@@ -255,6 +263,9 @@ nodes:
 | `human://input` | Free-text input from user |
 | `human://approve` | Approval gate with conditional branching |
 | `human://output` | Display results to user |
+| `builtin://` | 10 built-in tools (calculator, web_search, shell_command, etc.) |
+| `mcp://` | MCP server tools (stdio or HTTP transport) |
+| `python://` | Custom Python function as tool |
 | `langchain://` | LangChain Runnable (plugin) |
 | `crewai://` | CrewAI Crew (plugin) |
 | `autogen://` | AutoGen Team (plugin) |
@@ -287,6 +298,9 @@ nodes:
 | `binex gateway` | A2A Gateway management |
 | `binex plugins` | Manage adapter plugins |
 | `binex workflow` | Workflow versioning & inspection |
+| `binex scheduler start` | Start cron-based workflow scheduler |
+| `binex scheduler list` | List scheduled workflows |
+| `binex scheduler add/remove` | Register/unregister workflow files |
 
 ### LLM Providers
 
@@ -344,10 +358,12 @@ src/binex/
 ├── prompts/         # 112 built-in prompt templates
 ├── registry/        # Provider and adapter registry
 ├── runtime/         # Orchestrator, dispatcher, replay engine
+├── scheduler/       # Cron-based workflow scheduling
 ├── stores/          # SQLite execution + filesystem artifacts
+├── tools/           # @tool decorator, 10 built-in tools, MCP client
 ├── trace/           # Debug, lineage, timeline, diffing
 ├── ui/              # FastAPI backend + React frontend
-│   ├── api/         # 31 REST endpoints
+│   ├── api/         # 32 REST endpoints
 │   └── static/      # Pre-built React app
 └── workflow_spec/   # YAML loader + validator
 ```

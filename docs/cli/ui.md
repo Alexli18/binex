@@ -12,10 +12,15 @@ binex ui [OPTIONS]
 
 - **Runs Dashboard** — view, filter, and search all workflow runs
 - **Workflow Editor** — create and edit workflow YAML with live validation
+  - **Tool Picker** — add built-in tools, MCP server tools, or custom Python tools to LLM nodes
+  - **Collapsible sections** — Model, Prompt, Tools, Advanced for each LLM node
+  - **Workflow Settings** — configure MCP servers (stdio/HTTP) and cron schedules
 - **Scaffold** — generate workflows from DSL patterns or templates
 - **Run Detail** — inspect nodes, artifacts, costs, and execution timeline
 - **Compare & Bisect** — diff two runs or find where they diverge
 - **Live View** — watch a running workflow in real time with SSE updates
+- **Scheduler** — manage cron-based workflow scheduling
+- **Cost Dashboard** — cost trends, breakdowns, and budget status
 
 The server reads data from the same `.binex/` store used by the CLI.
 
