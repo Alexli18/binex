@@ -139,13 +139,13 @@ I run a full agent team with specialized roles. The `/start_day` command can spa
 | **QA Tester** | Runs tests, finds regressions, reports bugs with severity |
 | **Docs Maintainer** | Keeps README, CLAUDE.md, docs consistent with code |
 | **DevOps** | CI/CD, GitHub Actions, releases, branch hygiene |
-| **Meta Agent** | Resource manager — context monitoring, memory updates, agent lifecycle |
+| **Meta Agent** | Reactive advisor — pings team-lead with recommendations on memory, context, and lifecycle |
 
-You don't run all 9 simultaneously. The **Meta Agent** manages the roster dynamically:
+You don't run all 9 simultaneously. I manage the roster as team-lead; the **Meta Agent** advises me when pinged:
 
-- **Agent lifecycle**: watches the task list. When frontend tasks appear — spawns `frontend-dev`. When they're done — shuts it down. No idle agents eating resources and context
-- **Context monitor**: Claude Code tracks context usage per agent. Meta Agent watches for agents approaching their limits and triggers shutdown + respawn with fresh context before they start losing track of earlier decisions
+- **Lifecycle advisor**: when a teammate finishes and goes idle, they ping Meta Agent. It checks the task list and recommends: "Agent X idle → available tasks Y,Z" or "Agent X idle → no tasks, recommend shutdown?" — I make the final call
 - **Memory manager**: updates CLAUDE.md and memory files as features complete, so future sessions start with full knowledge
+- **Strictly reactive**: Meta Agent does nothing until pinged. No autonomous monitoring, no spawning or shutting down agents on its own
 
 A typical session might have 3-4 agents running, not 9. Backend feature? Architect + backend-dev + qa-tester. UI feature? Add designer + frontend-dev. Everything else is off. This keeps costs comparable to single-agent usage — you're just distributing the same work across focused contexts instead of one bloated one.
 
