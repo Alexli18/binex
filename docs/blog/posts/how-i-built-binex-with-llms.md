@@ -11,6 +11,7 @@ tags:
   - agent-workflows
   - open-source
 readtime: 12
+og_image: images/ui-dashboard.png
 ---
 
 # Spec-Driven Development with LLMs: What Actually Worked Building Binex
@@ -20,6 +21,8 @@ I watched $40 disappear in one evening.
 Not on hosting. Not on a SaaS tool. On a single LLM chain that got stuck in a loop, calling itself over and over while I stared at a terminal that told me nothing. No trace. No cost breakdown. No way to see which step failed or why. Just a growing bill and a black box.
 
 I closed the terminal. Not in frustration — in decision. *I'm going to build the thing that would have saved me tonight.*
+
+That thing became Binex — an open-source runtime for AI agent pipelines. You define your workflow as a DAG in YAML, and Binex runs it with full visibility: per-node cost tracking, artifact lineage, trace replay, conditional branching, and a web UI that shows you exactly what each agent did, what it cost, and where it broke. The "debugger for LLM workflows" I wished I had that evening.
 
 ![binex debug — CLI output showing run inspection](images/terminal-debug.png)
 
@@ -154,6 +157,10 @@ The key: agents only work in parallel when tasks have **zero file dependencies**
 
 ![Run Graph — DAG execution with node status](images/ui-run-graph.png)
 
+*Above: run graph showing completed DAG nodes with status indicators.*
+
+The trace timeline shows the same run from a different angle — parallel execution visualized as overlapping time bars:
+
 ![Trace Timeline — parallel execution visualization](images/ui-trace-timeline.png)
 
 ## 5. Structured QA (not optional)
@@ -214,7 +221,12 @@ The discipline is the differentiator.
 
 ---
 
-*Binex is open source (MIT): [github.com/Alexli18/binex](https://github.com/Alexli18/binex)*
-*`pip install binex && binex ui` to try it.*
+**Try Binex:**
 
-*Happy to answer questions about the process in comments.*
+```bash
+pip install binex && binex ui
+```
+
+**[Star on GitHub →](https://github.com/Alexli18/binex)** · MIT License · No cloud required
+
+*Questions about the process? Drop them in the comments.*
