@@ -1,4 +1,4 @@
-"""E2E: Cost Dashboard — KPI cards, charts, period selector (now a tab on Dashboard)."""
+"""E2E: Cost Dashboard — KPI cards, charts, period selector (standalone page at /costs)."""
 from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:8420"
@@ -20,17 +20,10 @@ with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     page = browser.new_page(viewport={"width": 1440, "height": 900})
 
-    # --- Navigate to Dashboard and switch to Costs tab ---
-    print("\n=== Test: Cost Dashboard (tab) ===")
-    page.goto(BASE, wait_until="networkidle")
+    # --- Navigate to Cost Dashboard page ---
+    print("\n=== Test: Cost Dashboard ===")
+    page.goto(f"{BASE}/costs", wait_until="networkidle")
     page.wait_for_timeout(1000)
-
-    # Click the "costs" tab
-    costs_tab = page.get_by_role("tab", name="costs")
-    check("Costs tab exists", costs_tab.count() > 0)
-    if costs_tab.count() > 0:
-        costs_tab.click()
-        page.wait_for_timeout(1000)
 
     # --- Test 1: KPI cards ---
     check("Total Cost card", page.get_by_text("Total Cost").count() > 0)
