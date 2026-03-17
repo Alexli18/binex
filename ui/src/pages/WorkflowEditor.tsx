@@ -6,6 +6,8 @@ import { EditorToolbar, type EditorMode } from '@/components/editor/EditorToolba
 import { EditorCanvas } from '@/components/editor/EditorCanvas';
 import { EditorYaml } from '@/components/editor/EditorYaml';
 import { EditorSidebar } from '@/components/editor/EditorSidebar';
+import { WorkflowEditorProvider } from '@/components/editor/WorkflowEditorContext';
+import { WorkflowSettingsPanel, type McpServerConfig } from '@/components/editor/WorkflowSettingsPanel';
 import { useWorkflows, useWorkflow, useSaveWorkflow } from '../hooks/useWorkflows';
 import { useCreateRun } from '../hooks/useRuns';
 import { parseWorkflowYaml, type WorkflowNode, type WorkflowEdge } from '../lib/yaml-to-graph';
@@ -44,13 +46,22 @@ function agentToNodeType(agent: string): { nodeType: string; color: string } {
 
 interface ParsedYamlWorkflow {
   name?: string;
-  nodes?: Record<string, { agent: string; depends_on?: string[]; config?: Record<string, unknown>; system_prompt?: string; inputs?: Record<string, string>; outputs?: string[] }>;
+  schedule?: string;
+  mcp_servers?: Record<string, unknown>;
+  nodes?: Record<string, { agent: string; depends_on?: string[]; config?: Record<string, unknown>; system_prompt?: string; inputs?: Record<string, string>; outputs?: string[]; tools?: string[] }>;
 }
 
-function yamlToRfGraph(yamlContent: string): { nodes: Node[]; edges: Edge[] } {
-  if (!yamlContent.trim()) return { nodes: [], edges: [] };
+interface YamlParseResult {
+  nodes: Node[];
+  edges: Edge[];
+  mcpServers: Record<string, unknown>;
+  schedule: string;
+}
+
+function yamlToRfGraph(yamlContent: string): YamlParseResult {
+  if (!yamlContent.trim()) return { nodes: [], edges: [], mcpServers: {}, schedule: '' };
   const parsed = yaml.load(yamlContent) as ParsedYamlWorkflow;
-  if (!parsed?.nodes) return { nodes: [], edges: [] };
+  if (!parsed?.nodes) return { nodes: [], edges: [], mcpServers: {}, schedule: '' };
 
   const entries = Object.entries(parsed.nodes);
   const nodes: Node[] = entries.map(([id, spec], i) => {
@@ -68,6 +79,7 @@ function yamlToRfGraph(yamlContent: string): { nodes: Node[]; edges: Edge[] } {
         system_prompt: spec.system_prompt,
         inputs: spec.inputs,
         outputs: spec.outputs,
+        tools: spec.tools || [],
         color,
       },
     };
@@ -81,7 +93,12 @@ function yamlToRfGraph(yamlContent: string): { nodes: Node[]; edges: Edge[] } {
       }
     }
   }
-  return { nodes, edges };
+  return {
+    nodes,
+    edges,
+    mcpServers: parsed.mcp_servers || {},
+    schedule: parsed.schedule || '',
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -109,6 +126,9 @@ export default function WorkflowEditor() {
   const [showSaveAs, setShowSaveAs] = useState(false);
   const [filesOpen, setFilesOpen] = useState(false);
   const [fileFilter, setFileFilter] = useState('');
+  const [mcpServers, setMcpServers] = useState<Record<string, McpServerConfig>>({});
+  const [schedule, setSchedule] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const syncDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -129,15 +149,18 @@ export default function WorkflowEditor() {
     if (workflowData?.content != null) {
       setContent(workflowData.content);
       setOriginalContent(workflowData.content);
-      // If in visual mode, also sync RF nodes/edges
-      if (mode === 'visual') {
-        try {
-          const { nodes, edges } = yamlToRfGraph(workflowData.content);
-          setRfNodes(nodes);
-          setRfEdges(edges);
-        } catch {
-          // parse error handled by debounced effect
+      // Extract workflow-level settings from YAML
+      try {
+        const result = yamlToRfGraph(workflowData.content);
+        setMcpServers((result.mcpServers || {}) as Record<string, McpServerConfig>);
+        setSchedule(result.schedule || '');
+        // If in visual mode, also sync RF nodes/edges
+        if (mode === 'visual') {
+          setRfNodes(result.nodes);
+          setRfEdges(result.edges);
         }
+      } catch {
+        // parse error handled by debounced effect
       }
     }
   }, [workflowData, selectedPath]);
@@ -206,10 +229,10 @@ export default function WorkflowEditor() {
   const syncVisualToYaml = useCallback(() => {
     if (syncDebounceRef.current) clearTimeout(syncDebounceRef.current);
     syncDebounceRef.current = setTimeout(() => {
-      const yamlStr = graphToYaml(rfNodes, rfEdges);
+      const yamlStr = graphToYaml(rfNodes, rfEdges, 'my-workflow', { mcpServers, schedule });
       setContent(yamlStr);
     }, 500);
-  }, [rfNodes, rfEdges]);
+  }, [rfNodes, rfEdges, mcpServers, schedule]);
 
   useEffect(() => {
     const handler = () => syncVisualToYaml();
@@ -219,9 +242,11 @@ export default function WorkflowEditor() {
 
   const switchToVisual = useCallback(() => {
     try {
-      const { nodes, edges } = yamlToRfGraph(content);
-      setRfNodes(nodes);
-      setRfEdges(edges);
+      const result = yamlToRfGraph(content);
+      setRfNodes(result.nodes);
+      setRfEdges(result.edges);
+      setMcpServers((result.mcpServers || {}) as Record<string, McpServerConfig>);
+      setSchedule(result.schedule || '');
       setParseError(null);
       setMode('visual');
     } catch (err) {
@@ -230,10 +255,10 @@ export default function WorkflowEditor() {
   }, [content, setRfNodes, setRfEdges]);
 
   const switchToYaml = useCallback(() => {
-    const yamlStr = graphToYaml(rfNodes, rfEdges);
+    const yamlStr = graphToYaml(rfNodes, rfEdges, 'my-workflow', { mcpServers, schedule });
     setContent(yamlStr);
     setMode('yaml');
-  }, [rfNodes, rfEdges]);
+  }, [rfNodes, rfEdges, mcpServers, schedule]);
 
   const handleSave = useCallback(() => {
     if (!selectedPath) return;
@@ -351,8 +376,10 @@ export default function WorkflowEditor() {
         onSwitchToYaml={switchToYaml}
         onSave={() => (selectedPath ? handleSave() : setShowSaveAs(true))}
         onRun={handleRun}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
 
+      <WorkflowEditorProvider value={{ mcpServerNames: Object.keys(mcpServers) }}>
       <div className="flex flex-1 min-h-0">
         {mode === 'visual' ? (
           <EditorCanvas
@@ -372,6 +399,18 @@ export default function WorkflowEditor() {
           />
         )}
       </div>
+
+      </WorkflowEditorProvider>
+
+      {/* Workflow Settings Panel */}
+      <WorkflowSettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        mcpServers={mcpServers}
+        onMcpServersChange={(servers) => { setMcpServers(servers); syncVisualToYaml(); }}
+        schedule={schedule}
+        onScheduleChange={(cron) => { setSchedule(cron); syncVisualToYaml(); }}
+      />
 
       {/* Status bar */}
       <div className="flex items-center gap-4 px-4 py-1.5 bg-slate-900/80 border-t border-slate-700/50 text-xs text-slate-500">

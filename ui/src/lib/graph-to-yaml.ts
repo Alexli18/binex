@@ -1,7 +1,12 @@
 import yaml from 'js-yaml';
 import type { Node, Edge } from 'reactflow';
 
-export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-workflow'): string {
+export interface GraphToYamlOptions {
+  mcpServers?: Record<string, unknown>;
+  schedule?: string;
+}
+
+export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-workflow', options?: GraphToYamlOptions): string {
   if (nodes.length === 0) return '';
 
   const nodesObj: Record<string, Record<string, unknown>> = {};
@@ -30,6 +35,9 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
     if (d.config?.skill) config.skill = d.config.skill;
     if (Object.keys(config).length > 0) entry.config = config;
 
+    // Tools
+    if (d.tools?.length) entry.tools = d.tools;
+
     if (deps[node.id]?.length) {
       const depLabels = deps[node.id].map((depId) => {
         const depNode = nodes.find((n) => n.id === depId);
@@ -52,5 +60,12 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
     nodesObj[nodeLabel] = entry;
   }
 
-  return yaml.dump({ name: workflowName, nodes: nodesObj }, { indent: 2, lineWidth: 120, noRefs: true });
+  const doc: Record<string, unknown> = { name: workflowName };
+  if (options?.schedule) doc.schedule = options.schedule;
+  if (options?.mcpServers && Object.keys(options.mcpServers).length > 0) {
+    doc.mcp_servers = options.mcpServers;
+  }
+  doc.nodes = nodesObj;
+
+  return yaml.dump(doc, { indent: 2, lineWidth: 120, noRefs: true });
 }

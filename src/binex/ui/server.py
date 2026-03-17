@@ -30,6 +30,7 @@ from binex.ui.api.providers import router as providers_router
 from binex.ui.api.runs import router as runs_router
 from binex.ui.api.scaffold import router as scaffold_router
 from binex.ui.api.scheduler import router as scheduler_router
+from binex.ui.api.tools import router as tools_router
 from binex.ui.api.system import router as system_router
 from binex.ui.api.trace import router as trace_router
 from binex.ui.api.workflows import router as workflows_router
@@ -106,6 +107,7 @@ def create_app(*, dev: bool = False) -> FastAPI:
     app.include_router(runs_router, prefix="/api/v1")
     app.include_router(scheduler_router, prefix="/api/v1")
     app.include_router(scaffold_router, prefix="/api/v1")
+    app.include_router(tools_router, prefix="/api/v1")
     app.include_router(system_router, prefix="/api/v1")
     app.include_router(trace_router, prefix="/api/v1")
     app.include_router(workflows_router, prefix="/api/v1")

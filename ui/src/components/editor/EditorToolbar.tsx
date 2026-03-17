@@ -1,4 +1,4 @@
-import { FolderOpen } from 'lucide-react';
+import { FolderOpen, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -16,6 +16,7 @@ export interface EditorToolbarProps {
   onSwitchToYaml: () => void;
   onSave: () => void;
   onRun: () => void;
+  onOpenSettings?: () => void;
 }
 
 export function EditorToolbar({
@@ -30,6 +31,7 @@ export function EditorToolbar({
   onSwitchToYaml,
   onSave,
   onRun,
+  onOpenSettings,
 }: EditorToolbarProps) {
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-900 border-b border-slate-700/50">
@@ -83,6 +85,18 @@ export function EditorToolbar({
           Visual
         </button>
       </div>
+
+      {onOpenSettings && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onOpenSettings}
+          className="text-slate-400 hover:text-slate-200"
+          title="Workflow Settings"
+        >
+          <Settings size={15} />
+        </Button>
+      )}
 
       <Button
         variant="outline"
