@@ -31,19 +31,24 @@ with sync_playwright() as p:
     check("Total Runs card", page.get_by_text("Total Runs").count() > 0)
     check("Budget Used card", page.get_by_text("Budget Used").count() > 0)
 
-    # --- Test 2: Period selector ---
+    # --- Test 2: Period selector (shadcn Select, not buttons) ---
     print("\n=== Test: Period Selector ===")
-    period_btns = ["24h", "7d", "30d", "all"]
-    for p_text in period_btns:
-        btn = page.get_by_role("button", name=p_text, exact=True).first
-        check(f"Period button '{p_text}' exists", btn.count() > 0)
+    period_select = page.get_by_label("Select period")
+    check("Period selector exists", period_select.count() > 0)
 
-    # Click 30d and verify it becomes active
-    btn_30d = page.get_by_role("button", name="30d", exact=True).first
-    if btn_30d.count() > 0:
-        btn_30d.click()
-        page.wait_for_timeout(1000)
-        check("30d button clickable", True)
+    # Open the select and check options
+    if period_select.count() > 0:
+        period_select.click()
+        page.wait_for_timeout(500)
+        for p_text in ["24h", "7d", "30d", "all"]:
+            option = page.get_by_role("option", name=p_text, exact=True)
+            check(f"Period option '{p_text}' exists", option.count() > 0)
+        # Select 30d
+        opt_30d = page.get_by_role("option", name="30d", exact=True)
+        if opt_30d.count() > 0:
+            opt_30d.click()
+            page.wait_for_timeout(1000)
+            check("30d option selectable", True)
 
     # --- Test 3: Chart sections exist ---
     print("\n=== Test: Chart Sections ===")
