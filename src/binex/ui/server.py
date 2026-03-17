@@ -30,8 +30,8 @@ from binex.ui.api.providers import router as providers_router
 from binex.ui.api.runs import router as runs_router
 from binex.ui.api.scaffold import router as scaffold_router
 from binex.ui.api.scheduler import router as scheduler_router
-from binex.ui.api.tools import router as tools_router
 from binex.ui.api.system import router as system_router
+from binex.ui.api.tools import router as tools_router
 from binex.ui.api.trace import router as trace_router
 from binex.ui.api.workflows import router as workflows_router
 
