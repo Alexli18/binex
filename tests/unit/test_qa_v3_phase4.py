@@ -156,17 +156,17 @@ class TestSecurityRegression:
                     suspicious.append(f"Line {i}: {stripped[:80]}")
         assert not suspicious, "Potential SQL injection:\n" + "\n".join(suspicious)
 
-    # TC-SEC-007: Tool schema — no code eval
+    # TC-SEC-007: Tool schema — no code eval in core tools module
     def test_sec_007_no_eval_in_tools(self):
-        """tools.py should not use eval() or exec()."""
-        tools_file = SRC_DIR / "tools.py"
+        """tools/_core.py should not use eval() or exec()."""
+        tools_file = SRC_DIR / "tools" / "_core.py"
         content = tools_file.read_text()
         tree = ast.parse(content)
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Name):
                     assert node.func.id not in ("eval", "exec"), (
-                        f"tools.py uses {node.func.id}() — security risk"
+                        f"tools/_core.py uses {node.func.id}() — security risk"
                     )
 
     # TC-SEC-008: Human adapter — no command injection via input

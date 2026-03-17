@@ -6,8 +6,12 @@ import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { AlertCircle, AlertTriangle, CheckCircle2, XCircle, HelpCircle, Loader2, ChevronDown } from 'lucide-react';
 import { ArtifactDiff } from '@/components/common/ArtifactDiff';
+import { statusColors, colors as tokenColors, chartColors } from '@/lib/design-tokens';
 import ReactFlow, { type Node, type Edge } from 'reactflow';
 import { BisectNode } from '../components/dag/BisectNode';
 import 'reactflow/dist/style.css';
@@ -17,44 +21,44 @@ const nodeStatusConfig = {
   match: {
     icon: CheckCircle2,
     label: 'Match',
-    dotClass: 'bg-emerald-400',
-    bgClass: 'bg-emerald-500/10',
-    textClass: 'text-emerald-400',
-    borderClass: 'border-emerald-500/30',
+    dotClass: statusColors.completed.dot,
+    bgClass: statusColors.completed.bg,
+    textClass: statusColors.completed.text,
+    borderClass: statusColors.completed.border,
   },
   content_diff: {
     icon: AlertTriangle,
     label: 'Content differs',
-    dotClass: 'bg-amber-400',
-    bgClass: 'bg-amber-500/10',
-    textClass: 'text-amber-400',
-    borderClass: 'border-amber-500/30',
+    dotClass: statusColors.over_budget.dot,
+    bgClass: statusColors.over_budget.bg,
+    textClass: statusColors.over_budget.text,
+    borderClass: statusColors.over_budget.border,
   },
   status_diff: {
     icon: XCircle,
     label: 'Status differs',
-    dotClass: 'bg-red-400',
-    bgClass: 'bg-red-500/10',
-    textClass: 'text-red-400',
-    borderClass: 'border-red-500/30',
+    dotClass: statusColors.failed.dot,
+    bgClass: statusColors.failed.bg,
+    textClass: statusColors.failed.text,
+    borderClass: statusColors.failed.border,
   },
   missing_in_good: {
     icon: HelpCircle,
     label: 'Missing in good run',
-    dotClass: 'bg-slate-500',
-    bgClass: 'bg-slate-500/10',
-    textClass: 'text-slate-400',
-    borderClass: 'border-slate-600/30',
+    dotClass: statusColors.pending.dot,
+    bgClass: statusColors.pending.bg,
+    textClass: statusColors.pending.text,
+    borderClass: statusColors.pending.border,
   },
   missing_in_bad: {
     icon: HelpCircle,
     label: 'Missing in bad run',
-    dotClass: 'bg-slate-500',
-    bgClass: 'bg-slate-500/10',
-    textClass: 'text-slate-400',
-    borderClass: 'border-slate-600/30',
+    dotClass: statusColors.pending.dot,
+    bgClass: statusColors.pending.bg,
+    textClass: statusColors.pending.text,
+    borderClass: statusColors.pending.border,
   },
-} as const;
+};
 
 function NodeMap({
   nodes,
@@ -191,7 +195,7 @@ function DivergenceMetrics({ details }: { details: BisectDetails }) {
               <span className="text-slate-600">&rarr;</span>
               <span className="text-slate-300">{details.latency_bad_ms}ms</span>
               {latencyPct !== null && (
-                <span className={`font-medium ${latencyDelta > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                <span className={`font-medium ${latencyDelta > 0 ? statusColors.failed.text : statusColors.completed.text}`}>
                   {latencyDelta > 0 ? '+' : ''}{latencyPct}%
                 </span>
               )}
@@ -208,7 +212,7 @@ function DivergenceMetrics({ details }: { details: BisectDetails }) {
               <span className="text-slate-300">${details.cost_good!.toFixed(4)}</span>
               <span className="text-slate-600">&rarr;</span>
               <span className="text-slate-300">${details.cost_bad!.toFixed(4)}</span>
-              <span className={`font-medium ${costDelta > 0 ? 'text-red-400' : 'text-green-400'}`}>
+              <span className={`font-medium ${costDelta > 0 ? statusColors.failed.text : statusColors.completed.text}`}>
                 {costDelta > 0 ? '+' : ''}${costDelta.toFixed(4)}
               </span>
               {costWarning && (
@@ -238,7 +242,6 @@ function BisectDAG({
   const downstreamSet = useMemo(() => new Set(downstreamImpact), [downstreamImpact]);
 
   const { nodes, edges } = useMemo(() => {
-    const dagEdges: Edge[] = [];
     const dagNodes: Node[] = nodeMap.map((n, i) => {
       let bisectStatus: 'match' | 'divergence' | 'downstream' | 'missing' = 'match';
       if (n.node_id === divergenceNode) bisectStatus = 'divergence';
@@ -258,6 +261,17 @@ function BisectDAG({
         },
       };
     });
+
+    // Connect nodes sequentially based on topological order from bisect report
+    const dagEdges: Edge[] = [];
+    for (let i = 0; i < nodeMap.length - 1; i++) {
+      dagEdges.push({
+        id: `${nodeMap[i].node_id}-${nodeMap[i + 1].node_id}`,
+        source: nodeMap[i].node_id,
+        target: nodeMap[i + 1].node_id,
+        style: { stroke: chartColors.tooltipBorder },
+      });
+    }
 
     return { nodes: dagNodes, edges: dagEdges };
   }, [nodeMap, divergenceNode, downstreamSet]);
@@ -322,36 +336,40 @@ export default function BisectPage() {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-slate-400 mb-1">Good Run</label>
-              <select
-                value={goodRun}
-                onChange={(e) => setGoodRun(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-600 rounded-md px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="">Select a run...</option>
-                {runsLoading && <option disabled>Loading...</option>}
-                {runs?.map((r) => (
-                  <option key={r.run_id} value={r.run_id}>
-                    {r.workflow_name} — {r.run_id.slice(0, 8)} ({r.status})
-                  </option>
-                ))}
-              </select>
+              <Select value={goodRun} onValueChange={setGoodRun}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a run..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {runsLoading && (
+                    <SelectItem value="__loading" disabled>Loading...</SelectItem>
+                  )}
+                  {runs?.map((r) => (
+                    <SelectItem key={r.run_id} value={r.run_id}>
+                      {r.workflow_name} — {r.run_id.slice(0, 8)} ({r.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex-1">
               <label className="block text-sm font-medium text-slate-400 mb-1">Bad Run</label>
-              <select
-                value={badRun}
-                onChange={(e) => setBadRun(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-600 rounded-md px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="">Select a run...</option>
-                {runsLoading && <option disabled>Loading...</option>}
-                {runs?.map((r) => (
-                  <option key={r.run_id} value={r.run_id}>
-                    {r.workflow_name} — {r.run_id.slice(0, 8)} ({r.status})
-                  </option>
-                ))}
-              </select>
+              <Select value={badRun} onValueChange={setBadRun}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a run..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {runsLoading && (
+                    <SelectItem value="__loading" disabled>Loading...</SelectItem>
+                  )}
+                  {runs?.map((r) => (
+                    <SelectItem key={r.run_id} value={r.run_id}>
+                      {r.workflow_name} — {r.run_id.slice(0, 8)} ({r.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -389,9 +407,9 @@ export default function BisectPage() {
 
       {/* Error */}
       {bisect.isError && (
-        <div className="bg-red-900/30 border border-red-700 rounded-card p-4 flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-          <p className="text-red-300 text-sm">{bisect.error.message}</p>
+        <div className={`${statusColors.failed.bg} border ${statusColors.failed.border} rounded-card p-4 flex items-center gap-2`}>
+          <AlertCircle className={`w-5 h-5 ${statusColors.failed.text} flex-shrink-0`} />
+          <p className={`${statusColors.failed.text} text-sm`}>{bisect.error.message}</p>
         </div>
       )}
 
@@ -425,10 +443,10 @@ export default function BisectPage() {
                       <div
                         className={`h-3 rounded-full transition-all ${
                           similarityPercent >= 80
-                            ? 'bg-green-500'
+                            ? tokenColors.success.bg
                             : similarityPercent >= 50
-                              ? 'bg-yellow-500'
-                              : 'bg-red-500'
+                              ? tokenColors.warning.bg
+                              : tokenColors.danger.bg
                         }`}
                         style={{ width: `${similarityPercent}%` }}
                       />

@@ -7,9 +7,13 @@ import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { ArrowRight, AlertCircle } from 'lucide-react';
 import { ArtifactDiff } from '@/components/common/ArtifactDiff';
 import { cn } from '@/lib/utils';
+import { statusColors } from '@/lib/design-tokens';
 import type { NodeDiff } from '../hooks/useComparison';
 
 type DiffFilter = 'all' | 'changed' | 'failed' | 'cost_delta';
@@ -100,38 +104,42 @@ export default function DiffPage() {
           <div className="flex flex-col md:flex-row items-end gap-4">
             <div className="flex-1 w-full">
               <label className="block text-sm font-medium text-slate-400 mb-1">Run A</label>
-              <select
-                value={runA}
-                onChange={(e) => setRunA(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-600 rounded-md px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a run...</option>
-                {runsLoading && <option disabled>Loading...</option>}
-                {runs?.map((r) => (
-                  <option key={r.run_id} value={r.run_id}>
-                    {r.workflow_name} — {r.run_id.slice(0, 8)} ({r.status})
-                  </option>
-                ))}
-              </select>
+              <Select value={runA} onValueChange={setRunA}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a run..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {runsLoading && (
+                    <SelectItem value="__loading" disabled>Loading...</SelectItem>
+                  )}
+                  {runs?.map((r) => (
+                    <SelectItem key={r.run_id} value={r.run_id}>
+                      {r.workflow_name} — {r.run_id.slice(0, 8)} ({r.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <ArrowRight className="w-5 h-5 text-slate-500 hidden md:block mb-2" />
 
             <div className="flex-1 w-full">
               <label className="block text-sm font-medium text-slate-400 mb-1">Run B</label>
-              <select
-                value={runB}
-                onChange={(e) => setRunB(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-600 rounded-md px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a run...</option>
-                {runsLoading && <option disabled>Loading...</option>}
-                {runs?.map((r) => (
-                  <option key={r.run_id} value={r.run_id}>
-                    {r.workflow_name} — {r.run_id.slice(0, 8)} ({r.status})
-                  </option>
-                ))}
-              </select>
+              <Select value={runB} onValueChange={setRunB}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a run..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {runsLoading && (
+                    <SelectItem value="__loading" disabled>Loading...</SelectItem>
+                  )}
+                  {runs?.map((r) => (
+                    <SelectItem key={r.run_id} value={r.run_id}>
+                      {r.workflow_name} — {r.run_id.slice(0, 8)} ({r.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <Button
@@ -146,9 +154,9 @@ export default function DiffPage() {
 
         {/* Error */}
         {diff.isError && (
-          <div className="bg-red-900/30 border border-red-700 rounded-card p-4 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-            <p className="text-red-300 text-sm">{diff.error.message}</p>
+          <div className={`${statusColors.failed.bg} border ${statusColors.failed.border} rounded-card p-4 flex items-center gap-2`}>
+            <AlertCircle className={`w-5 h-5 ${statusColors.failed.text} flex-shrink-0`} />
+            <p className={`${statusColors.failed.text} text-sm`}>{diff.error.message}</p>
           </div>
         )}
 
@@ -177,7 +185,7 @@ export default function DiffPage() {
                     </div>
                     <div>
                       <span className="text-slate-500">Total Cost</span>
-                      <p className="font-mono text-slate-300 mt-0.5">${data.total_cost.toFixed(4)}</p>
+                      <p className="font-mono text-slate-300 mt-0.5">${(data.total_cost ?? 0).toFixed(4)}</p>
                     </div>
                   </div>
                 </div>
@@ -254,7 +262,7 @@ export default function DiffPage() {
                             <td className="px-4 py-2 text-right font-mono text-xs text-slate-300">
                               {nd.duration_a !== null ? `${nd.duration_a}ms` : '-'}
                               {durationDelta && (
-                                <span className={`ml-1 text-xs ${durationDelta.startsWith('+') ? 'text-red-400' : 'text-green-400'}`}>
+                                <span className={`ml-1 text-xs ${durationDelta.startsWith('+') ? statusColors.failed.text : statusColors.completed.text}`}>
                                   ({durationDelta})
                                 </span>
                               )}
@@ -265,7 +273,7 @@ export default function DiffPage() {
                             <td className="px-4 py-2 text-right font-mono text-xs text-slate-300">
                               {nd.cost_a !== null ? `$${nd.cost_a.toFixed(6)}` : '-'}
                               {costDelta && (
-                                <span className={`ml-1 text-xs ${costDelta.startsWith('+') ? 'text-red-400' : 'text-green-400'}`}>
+                                <span className={`ml-1 text-xs ${costDelta.startsWith('+') ? statusColors.failed.text : statusColors.completed.text}`}>
                                   ({costDelta})
                                 </span>
                               )}

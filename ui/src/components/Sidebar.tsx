@@ -8,6 +8,8 @@ import {
   HeartPulse,
   Puzzle,
   Radio,
+  Clock,
+  DollarSign,
   GitCompare,
   GitBranch,
   ChevronDown,
@@ -46,12 +48,14 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Analyze",
     items: [
       { label: "Compare", path: "/diff", icon: GitCompare },
+      { label: "Costs", path: "/costs", icon: DollarSign },
       { label: "Bisect", path: "/bisect", icon: GitBranch },
     ],
   },
   {
     label: "System",
     items: [
+      { label: "Scheduler", path: "/scheduler", icon: Clock },
       { label: "Gateway", path: "/system/gateway", icon: Radio },
       { label: "Plugins", path: "/system/plugins", icon: Puzzle },
       { label: "Doctor", path: "/system/doctor", icon: HeartPulse },

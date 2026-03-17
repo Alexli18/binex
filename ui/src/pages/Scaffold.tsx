@@ -7,6 +7,7 @@ import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type Mode = 'dsl' | 'template' | 'blank';
 
@@ -201,6 +202,12 @@ export default function Scaffold() {
   };
 
   const handleSelectPattern = (pattern: Pattern) => {
+    if (
+      (expression.trim() || generatedYaml.trim()) &&
+      !window.confirm('This will replace your current DSL expression and generated YAML. Continue?')
+    ) {
+      return;
+    }
     setExpression(pattern.dsl || pattern.example || '');
     scaffold.mutate(
       { mode: 'template', template_name: pattern.name },
@@ -225,7 +232,7 @@ export default function Scaffold() {
 
   return (
     <PageShell className="max-w-5xl">
-      <Breadcrumb items={[{ label: 'Workflows', href: '/workflows' }, { label: 'Create Workflow' }]} className="mb-4" />
+      <Breadcrumb items={[{ label: 'Workflows', href: '/editor' }, { label: 'Create Workflow' }]} className="mb-4" />
 
       <PageHeader title="Create Workflow" />
 
@@ -256,13 +263,13 @@ export default function Scaffold() {
                 DSL Expression
               </label>
               <div className="flex gap-2">
-                <input
+                <Input
                   type="text"
                   value={expression}
                   onChange={(e) => setExpression(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
                   placeholder='e.g. "A -> B, C -> D"'
-                  className="flex-1 bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 font-mono"
+                  className="flex-1 font-mono"
                 />
                 <Button
                   onClick={handleGenerate}

@@ -69,14 +69,22 @@ def _check_store_backend() -> dict:
 
 
 def run_checks() -> list[dict]:
-    """Run all health checks and return results."""
+    """Run all health checks and return results.
+
+    Checks are split into 'required' (core Binex) and 'optional'
+    (infrastructure that only matters when you use those features).
+    Optional check failures don't cause exit code 1.
+    """
     checks: list[dict] = []
 
-    # Binary checks
-    checks.append(_check_binary("docker"))
-    checks.append(_check_docker_running())
+    # Required: Store backend (always needed)
+    checks.append({**_check_store_backend(), "required": True})
 
-    # Service checks
+    # Optional: Docker (only for `binex dev`)
+    checks.append({**_check_binary("docker"), "required": False})
+    checks.append({**_check_docker_running(), "required": False})
+
+    # Optional: Services (only when configured)
     services = [
         ("http://localhost:11434/api/tags", "Ollama"),
         ("http://localhost:4000/health", "LiteLLM Proxy"),
@@ -87,10 +95,7 @@ def run_checks() -> list[dict]:
         ("http://localhost:8004/health", "Summarizer Agent"),
     ]
     for url, name in services:
-        checks.append(_check_http_service(url, name))
-
-    # Store backend
-    checks.append(_check_store_backend())
+        checks.append({**_check_http_service(url, name), "required": False})
 
     return checks
 
@@ -142,8 +147,9 @@ def _doctor_plain_output(checks: list[dict], has_errors: bool) -> None:
     click.echo("Binex System Health Check\n")
     for check in checks:
         icon = plain_status_icon(_normalize_status(check["status"]))
+        optional = "" if check.get("required", True) else " (optional)"
         click.echo(
-            f"  {icon} {check['name']}: {check['status']}"
+            f"  {icon} {check['name']}{optional}: {check['status']}"
             f" — {check['detail']}"
         )
     click.echo()
@@ -166,8 +172,9 @@ def doctor_cmd(json_out: bool) -> None:
     if json_out:
         click.echo(json.dumps(checks, indent=2))
     else:
-        has_errors = any(
-            c["status"] in ("missing", "error", "unreachable") for c in checks
+        has_required_errors = any(
+            c.get("required", True) and c["status"] in ("missing", "error", "unreachable")
+            for c in checks
         )
 
         from binex.cli import has_rich as _has_rich
@@ -175,7 +182,7 @@ def doctor_cmd(json_out: bool) -> None:
         if _has_rich():
             _doctor_rich_output(checks)
         else:
-            _doctor_plain_output(checks, has_errors)
+            _doctor_plain_output(checks, has_required_errors)
 
-        if has_errors:
+        if has_required_errors:
             sys.exit(1)

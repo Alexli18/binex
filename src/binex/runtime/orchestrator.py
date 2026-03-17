@@ -178,6 +178,11 @@ class Orchestrator:
         if sender is not None:
             await self._fire_webhook(sender, spec, summary)
 
+        # Close MCP server connections if any
+        mcp_mgr = getattr(self.dispatcher, "_mcp_manager", None)
+        if mcp_mgr is not None:
+            await mcp_mgr.close_all()
+
         return summary
 
     def _schedule_ready_nodes(

@@ -1,7 +1,24 @@
+# Research Pipeline Example
+# =========================
+# Multi-agent research pipeline using a fan-out-fan-in topology:
+#
+#   planner → researcher_1 ─┐
+#                            ├→ validator → summarizer
+#   planner → researcher_2 ─┘
+#
+# The planner creates an execution plan, two researchers search
+# different sources in parallel (fan-out), the validator merges
+# and validates results (fan-in), and the summarizer produces
+# the final report.
+#
+# Run:  binex run examples/research.yaml --var query="LLM agents"
+# Debug: binex debug <run_id>
+
 name: research-pipeline
 description: "Multi-agent research pipeline with 5 nodes"
 
 nodes:
+  # Step 1: Create a research plan from the user's query
   planner:
     agent: "local://planner"
     system_prompt: planning.research
@@ -9,6 +26,7 @@ nodes:
       query: "${user.query}"
     outputs: [execution_plan]
 
+  # Step 2a: Search arxiv (runs in parallel with researcher_2)
   researcher_1:
     agent: "local://researcher"
     system_prompt: research.search
@@ -18,6 +36,7 @@ nodes:
     outputs: [search_results]
     depends_on: [planner]
 
+  # Step 2b: Search Google Scholar (runs in parallel with researcher_1)
   researcher_2:
     agent: "local://researcher"
     system_prompt: research.search
@@ -27,6 +46,7 @@ nodes:
     outputs: [search_results]
     depends_on: [planner]
 
+  # Step 3: Merge and validate results from both researchers
   validator:
     agent: "local://validator"
     system_prompt: analysis.validate
@@ -39,6 +59,7 @@ nodes:
       max_retries: 2
       backoff: exponential
 
+  # Step 4: Produce a final summary report
   summarizer:
     agent: "local://summarizer"
     system_prompt: analysis.summarize

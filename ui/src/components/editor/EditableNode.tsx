@@ -1,7 +1,11 @@
 import { memo, useState, useCallback } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from 'reactflow';
-import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2, BookOpen } from 'lucide-react';
+import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2, BookOpen, Wrench } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { ModelSelect } from './ModelSelect';
+import { CollapsibleSection } from './CollapsibleSection';
+import { ToolChip } from './ToolChip';
+import { ToolPickerPopover } from './ToolPickerPopover';
 import { PromptLibraryPanel } from '../../pages/PromptLibrary';
 
 const ICONS: Record<string, React.ElementType> = {
@@ -9,12 +13,13 @@ const ICONS: Record<string, React.ElementType> = {
   'human-input': MessageSquare, 'human-output': Eye, a2a: Globe,
 };
 
-interface EditableNodeData {
+export interface EditableNodeData {
   label: string;
   nodeType: string;
   agent: string;
   config: Record<string, unknown>;
   color: string;
+  tools?: string[];
 }
 
 function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
@@ -23,6 +28,7 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
   const [label, setLabel] = useState(data.label);
   const [agent, setAgent] = useState(data.agent);
   const [config, setConfig] = useState<Record<string, unknown>>(data.config || {});
+  const [tools, setTools] = useState<string[]>(data.tools || []);
   const [promptPanelOpen, setPromptPanelOpen] = useState(false);
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
@@ -57,6 +63,25 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
     data.label = newLabel;
   }, [data]);
 
+  const toggleTool = useCallback((uri: string) => {
+    setTools((prev) => {
+      const next = prev.includes(uri) ? prev.filter((t) => t !== uri) : [...prev, uri];
+      data.tools = next;
+      return next;
+    });
+    notifyChange();
+  }, [data, notifyChange]);
+
+  const removeTool = useCallback((uri: string) => {
+    setTools((prev) => {
+      const next = prev.filter((t) => t !== uri);
+      data.tools = next;
+      return next;
+    });
+    notifyChange();
+  }, [data, notifyChange]);
+
+  // Collapsed view
   if (!expanded) {
     return (
       <div
@@ -75,12 +100,19 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
         <div className="flex items-center gap-2">
           <Icon size={16} style={{ color: data.color }} className="shrink-0" />
           <span className="text-sm font-medium text-slate-100 truncate">{label}</span>
+          {tools.length > 0 && (
+            <span className="flex items-center gap-0.5 text-[9px] text-blue-400 bg-blue-500/10 px-1 py-0.5 rounded">
+              <Wrench size={9} />
+              {tools.length}
+            </span>
+          )}
         </div>
         <Handle type="source" position={Position.Bottom} className="!bg-slate-500 !border-slate-400" />
       </div>
     );
   }
 
+  // Expanded view
   return (
     <div
       className="bg-slate-800 rounded-lg border-2 shadow-xl shadow-black/30 w-[280px] nowheel"
@@ -109,111 +141,149 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
         </div>
       </div>
 
-      {/* Fields */}
-      <div className="p-3 space-y-2.5 text-xs">
+      {/* Sections */}
+      <div className="text-xs">
         {data.nodeType === 'llm' && (
           <>
-            <div>
-              <label className="text-slate-400 block mb-0.5">Model</label>
-              <ModelSelect value={model} onChange={(m) => updateAgent(`llm://${m}`)} />
-            </div>
-            <div>
-              <label className="text-slate-400 block mb-0.5">Max Tokens</label>
-              <input type="number" value={(config.max_tokens as number) || 4096}
-                onChange={(e) => updateConfig('max_tokens', parseInt(e.target.value) || 4096)}
-                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200"
-                onClick={(e) => e.stopPropagation()} />
-            </div>
-            <div>
-              <label className="text-slate-400 block mb-0.5">Temperature: {(config.temperature as number) ?? 0.7}</label>
-              <input type="range" min="0" max="2" step="0.1" value={(config.temperature as number) ?? 0.7}
-                onChange={(e) => updateConfig('temperature', parseFloat(e.target.value))}
-                className="w-full accent-blue-500" />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-0.5">
-                <label className="text-slate-400">System Prompt</label>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setPromptPanelOpen(true); }}
-                  className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
-                  title="Browse prompt library"
-                >
-                  <BookOpen size={11} />
-                  <span className="text-[10px]">Browse</span>
-                </button>
+            {/* Model Section */}
+            <CollapsibleSection title="Model" defaultOpen>
+              <div>
+                <label className="text-slate-400 block mb-0.5">Model</label>
+                <ModelSelect value={model} onChange={(m) => updateAgent(`llm://${m}`)} />
               </div>
-              <textarea value={(config.system_prompt as string) || ''}
-                onChange={(e) => updateConfig('system_prompt', e.target.value)}
-                placeholder="Write your prompt or click Browse to pick one..."
-                rows={4}
-                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 resize-none"
-                onClick={(e) => e.stopPropagation()} />
-            </div>
-            <div>
-              <label className="text-slate-400 block mb-0.5">Budget Limit ($)</label>
-              <input type="number" step="0.01" value={(config.budget_limit as number) || ''}
-                onChange={(e) => updateConfig('budget_limit', parseFloat(e.target.value) || undefined)}
-                placeholder="No limit"
-                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200"
-                onClick={(e) => e.stopPropagation()} />
-            </div>
+              <div>
+                <label className="text-slate-400 block mb-0.5">Max Tokens</label>
+                <Input type="number" value={(config.max_tokens as number) || 4096}
+                  onChange={(e) => updateConfig('max_tokens', parseInt(e.target.value) || 4096)}
+                  className="h-7 bg-slate-700 border-slate-600 text-slate-200"
+                  onClick={(e) => e.stopPropagation()} />
+              </div>
+              <div>
+                <label className="text-slate-400 block mb-0.5">Temperature: {(config.temperature as number) ?? 0.7}</label>
+                <input type="range" min="0" max="2" step="0.1" value={(config.temperature as number) ?? 0.7}
+                  onChange={(e) => updateConfig('temperature', parseFloat(e.target.value))}
+                  className="w-full accent-blue-500" />
+              </div>
+            </CollapsibleSection>
+
+            {/* Prompt Section */}
+            <CollapsibleSection title="Prompt" defaultOpen>
+              <div>
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-slate-400">System Prompt</label>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setPromptPanelOpen(true); }}
+                    className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
+                    title="Browse prompt library"
+                  >
+                    <BookOpen size={11} />
+                    <span className="text-[10px]">Browse</span>
+                  </button>
+                </div>
+                <textarea value={(config.system_prompt as string) || ''}
+                  onChange={(e) => updateConfig('system_prompt', e.target.value)}
+                  placeholder="Write your prompt or click Browse to pick one..."
+                  rows={4}
+                  className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 resize-none"
+                  onClick={(e) => e.stopPropagation()} />
+              </div>
+            </CollapsibleSection>
+
+            {/* Tools Section */}
+            <CollapsibleSection
+              title="Tools"
+              badge={tools.length > 0 ? (
+                <span className="text-[9px] bg-blue-500/15 text-blue-400 px-1.5 py-0.5 rounded-full font-medium">
+                  {tools.length}
+                </span>
+              ) : undefined}
+            >
+              {tools.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1.5">
+                  {tools.map((uri) => (
+                    <ToolChip key={uri} uri={uri} onRemove={() => removeTool(uri)} />
+                  ))}
+                </div>
+              )}
+              <div className="relative">
+                <ToolPickerPopover selectedTools={tools} onToggleTool={toggleTool} />
+              </div>
+            </CollapsibleSection>
+
+            {/* Advanced Section */}
+            <CollapsibleSection title="Advanced">
+              <div>
+                <label className="text-slate-400 block mb-0.5">Budget Limit ($)</label>
+                <Input type="number" step="0.01" value={(config.budget_limit as number) || ''}
+                  onChange={(e) => updateConfig('budget_limit', parseFloat(e.target.value) || undefined)}
+                  placeholder="No limit"
+                  className="h-7 bg-slate-700 border-slate-600 text-slate-200"
+                  onClick={(e) => e.stopPropagation()} />
+              </div>
+            </CollapsibleSection>
           </>
         )}
 
         {data.nodeType === 'local' && (
-          <div>
-            <label className="text-slate-400 block mb-0.5">Module Path</label>
-            <input value={agent.replace('local://', '')}
-              onChange={(e) => updateAgent(`local://${e.target.value}`)}
-              placeholder="my_module.my_function"
-              className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 font-mono"
-              onClick={(e) => e.stopPropagation()} />
+          <div className="p-3 space-y-2.5">
+            <div>
+              <label className="text-slate-400 block mb-0.5">Module Path</label>
+              <Input value={agent.replace('local://', '')}
+                onChange={(e) => updateAgent(`local://${e.target.value}`)}
+                placeholder="my_module.my_function"
+                className="h-7 bg-slate-700 border-slate-600 text-slate-200 font-mono"
+                onClick={(e) => e.stopPropagation()} />
+            </div>
           </div>
         )}
 
         {data.nodeType === 'human-output' && (
-          <div>
-            <label className="text-slate-400 block mb-0.5">Display Label</label>
-            <input value={(config.display_label as string) || ''}
-              onChange={(e) => updateConfig('display_label', e.target.value)}
-              placeholder="Final Result"
-              className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200"
-              onClick={(e) => e.stopPropagation()} />
-            <p className="text-slate-500 mt-1">Shows the output of connected nodes to the user when workflow completes.</p>
+          <div className="p-3 space-y-2.5">
+            <div>
+              <label className="text-slate-400 block mb-0.5">Display Label</label>
+              <Input value={(config.display_label as string) || ''}
+                onChange={(e) => updateConfig('display_label', e.target.value)}
+                placeholder="Final Result"
+                className="h-7 bg-slate-700 border-slate-600 text-slate-200"
+                onClick={(e) => e.stopPropagation()} />
+              <p className="text-slate-500 mt-1">Shows the output of connected nodes to the user when workflow completes.</p>
+            </div>
           </div>
         )}
 
         {(data.nodeType === 'human-approve' || data.nodeType === 'human-input') && (
-          <div>
-            <label className="text-slate-400 block mb-0.5">Prompt Message</label>
-            <textarea value={(config.prompt_message as string) || ''}
-              onChange={(e) => updateConfig('prompt_message', e.target.value)}
-              placeholder={data.nodeType === 'human-approve' ? 'Please review and approve...' : 'Please provide input...'}
-              rows={2}
-              className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 resize-none"
-              onClick={(e) => e.stopPropagation()} />
+          <div className="p-3 space-y-2.5">
+            <div>
+              <label className="text-slate-400 block mb-0.5">Prompt Message</label>
+              <textarea value={(config.prompt_message as string) || ''}
+                onChange={(e) => updateConfig('prompt_message', e.target.value)}
+                placeholder={data.nodeType === 'human-approve' ? 'Please review and approve...' : 'Please provide input...'}
+                rows={2}
+                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 resize-none"
+                onClick={(e) => e.stopPropagation()} />
+            </div>
           </div>
         )}
 
         {data.nodeType === 'a2a' && (
-          <>
+          <div className="p-3 space-y-2.5">
             <div>
               <label className="text-slate-400 block mb-0.5">Host:Port</label>
-              <input value={agent.replace('a2a://', '')}
+              <Input value={agent.replace('a2a://', '')}
                 onChange={(e) => updateAgent(`a2a://${e.target.value}`)}
                 placeholder="localhost:8001"
-                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 font-mono"
+                className="h-7 bg-slate-700 border-slate-600 text-slate-200 font-mono"
                 onClick={(e) => e.stopPropagation()} />
             </div>
             <div>
               <label className="text-slate-400 block mb-0.5">Skill</label>
-              <input value={(config.skill as string) || ''}
+              <Input value={(config.skill as string) || ''}
                 onChange={(e) => updateConfig('skill', e.target.value)}
                 placeholder="summarize"
-                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200"
+                className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                 onClick={(e) => e.stopPropagation()} />
             </div>
-          </>
+          </div>
         )}
       </div>
 

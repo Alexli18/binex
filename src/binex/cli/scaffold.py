@@ -128,10 +128,21 @@ async def agent_card():
     return _agent_card
 
 
-@app.post("/")
-async def handle_message(message: dict):
-    """Handle an incoming A2A message."""
-    return await agent.handle(message)
+@app.post("/execute")
+async def execute(request: dict):
+    """Handle a Binex A2A execution request.
+
+    Expected: {{"task_id": str, "skill": str, "trace_id": str, "artifacts": list}}
+    Returns:  {{"artifacts": list, "cost": float | null}}
+    """
+    result = await agent.handle(request)
+    return {{"artifacts": [result], "cost": None}}
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint."""
+    return {{"status": "ok", "agent": agent.name}}
 
 
 if __name__ == "__main__":
@@ -191,8 +202,15 @@ def _resolve_dsl_source(
     sys.exit(1)
 
 
-@scaffold_group.command("workflow")
-@click.argument("dsl", nargs=-1)
+@scaffold_group.command("workflow", epilog="""\b
+Examples:
+  binex scaffold workflow "A -> B -> C"          Linear pipeline
+  binex scaffold workflow "A -> B, C -> D"       Fan-out / fan-in
+  binex scaffold workflow --pattern diamond       Use predefined pattern
+  binex scaffold workflow --list-patterns         Show all patterns
+  binex scaffold workflow "A -> B" --no-interactive  Non-interactive stubs
+""")
+@click.argument("dsl", nargs=-1, metavar="DSL")
 @click.option("--name", default="pipeline.yaml", help="Output filename")
 @click.option("--pattern", "pattern_name", default=None, help="Use a predefined pattern")
 @click.option("--list-patterns", is_flag=True, help="Show available patterns")
@@ -206,7 +224,12 @@ def scaffold_workflow(
     no_interactive: bool,
     gen_env: bool,
 ) -> None:
-    """Scaffold a workflow YAML from a DSL topology string."""
+    """Scaffold a workflow YAML from a DSL topology string.
+
+    DSL is a positional topology expression using arrows: "A -> B, C -> D".
+    Nodes separated by commas run in parallel. Use --pattern for predefined
+    topologies or --list-patterns to see all available patterns.
+    """
 
     # --list-patterns: show table and exit
     if list_patterns:

@@ -55,9 +55,8 @@ def hello_cmd() -> None:
 
     click.echo(
         f"\nRun completed ({summary.completed_nodes}/{summary.total_nodes} nodes)",
-        err=True,
     )
-    click.echo(f"Run ID: {summary.run_id}", err=True)
+    click.echo(f"Run ID: {summary.run_id}")
 
     _print_next_steps(summary)
 
@@ -80,23 +79,20 @@ def _print_next_steps(summary) -> None:
         lines.append("  binex run examples/simple.yaml", style="cyan")
         lines.append("   \u2014 try a workflow file")
 
-        get_console(stderr=True).print(make_panel(lines, title="Get Started"))
+        get_console(stderr=False).print(make_panel(lines, title="Get Started"))
     else:
-        click.echo("\nNext steps:", err=True)
+        click.echo("\nNext steps:")
         click.echo(
             f"  binex debug {summary.run_id}               "
             "\u2014 inspect the run",
-            err=True,
         )
         click.echo(
             "  binex start                      "
             "\u2014 create your own project",
-            err=True,
         )
         click.echo(
             "  binex run examples/simple.yaml   "
             "\u2014 try a workflow file",
-            err=True,
         )
 
 

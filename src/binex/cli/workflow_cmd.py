@@ -39,10 +39,14 @@ def version_cmd(workflow_file: str) -> None:
         click.echo(f"Version: {version}")
 
 
-@workflow_group.command("diff")
+@workflow_group.command("compare", epilog="""\b
+Examples:
+  binex workflow compare <run1> <run2>   Compare workflow YAML between two runs
+  binex workflow compare abc123 def456   Show unified diff of workflow snapshots
+""")
 @click.argument("run_id_1")
 @click.argument("run_id_2")
-def diff_cmd(run_id_1: str, run_id_2: str) -> None:
+def compare_cmd(run_id_1: str, run_id_2: str) -> None:
     """Compare workflows used in two different runs."""
     asyncio.run(_diff(run_id_1, run_id_2))
 

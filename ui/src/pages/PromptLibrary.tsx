@@ -6,6 +6,10 @@ import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 
 // --- Category colors ---
 
@@ -209,12 +213,12 @@ function PromptLibraryCore({ onUse, compact = false }: PromptLibraryCoreProps) {
         <div className="p-3 border-b border-slate-700">
           <div className="relative">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
-            <input
+            <Input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search prompts..."
-              className="w-full bg-slate-900 border border-slate-700 rounded-md pl-8 pr-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500"
+              className="pl-8"
             />
           </div>
         </div>
@@ -366,14 +370,12 @@ function NewPromptForm({ onClose }: { onClose: () => void }) {
         <div className="p-4 space-y-4 flex-1 overflow-auto">
           <div>
             <label className="block text-xs text-slate-400 mb-1">Name</label>
-            <input
+            <Input
               type="text"
               value={name}
               onChange={handleNameChange}
               placeholder="e.g. my-custom-reviewer"
-              className={`w-full bg-slate-800 border rounded-md px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none ${
-                !nameValid ? 'border-red-500 focus:border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
+              className={!nameValid ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
             {name.trim() && nameValid && (
               <p className="text-[11px] text-slate-500 mt-1">
@@ -388,15 +390,16 @@ function NewPromptForm({ onClose }: { onClose: () => void }) {
           </div>
           <div>
             <label className="block text-xs text-slate-400 mb-1">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
-            >
-              {ALL_CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ALL_CATEGORIES.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="block text-xs text-slate-400 mb-1">Content</label>

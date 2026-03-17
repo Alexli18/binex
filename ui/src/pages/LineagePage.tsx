@@ -15,6 +15,7 @@ import 'reactflow/dist/style.css';
 import ELK, { type ElkNode } from 'elkjs/lib/elk.bundled.js';
 import { useLineage } from '../hooks/useAnalysis';
 import type { LineageNode as LineageNodeData } from '../hooks/useAnalysis';
+import { chartColors } from '@/lib/design-tokens';
 
 const elk = new ELK();
 
@@ -44,7 +45,7 @@ function ArtifactNode({ data }: NodeProps<ArtifactNodeData>) {
     >
       <Handle type="target" position={Position.Top} className="!bg-slate-500" />
       <div className="flex items-center gap-2 mb-1">
-        <span className="text-[10px] uppercase tracking-wider text-slate-500 bg-slate-700 px-1.5 py-0.5 rounded">
+        <span className="text-xs uppercase tracking-wider text-slate-500 bg-slate-700 px-1.5 py-0.5 rounded">
           {data.type}
         </span>
       </div>
@@ -52,13 +53,13 @@ function ArtifactNode({ data }: NodeProps<ArtifactNodeData>) {
         {data.id}
       </p>
       <p
-        className="text-[11px] text-slate-500 mt-1 truncate"
+        className="text-xs text-slate-500 mt-1 truncate"
         title={typeof data.content === 'string' ? data.content : ''}
       >
         {contentPreview}
         {(typeof data.content === 'string' ? data.content : JSON.stringify(data.content)).length > 50 && '...'}
       </p>
-      <p className="text-[10px] text-slate-600 mt-1">
+      <p className="text-xs text-slate-600 mt-1">
         by: {data.produced_by}
       </p>
       <Handle type="source" position={Position.Bottom} className="!bg-slate-500" />
@@ -107,7 +108,7 @@ async function layoutLineageGraph(
     source: e.source,
     target: e.target,
     animated: true,
-    style: { stroke: '#475569' },
+    style: { stroke: chartColors.tooltipBorder },
   }));
 
   return { nodes: rfNodes, edges: rfEdges };
@@ -234,10 +235,10 @@ export default function LineagePage() {
                 fitView
                 proOptions={{ hideAttribution: true }}
               >
-                <Background color="#334155" gap={20} />
+                <Background color={chartColors.grid} gap={20} />
                 <Controls />
                 <MiniMap
-                  nodeColor={() => '#475569'}
+                  nodeColor={() => chartColors.tooltipBorder}
                   style={{ background: '#0f172a' }}
                 />
               </ReactFlow>

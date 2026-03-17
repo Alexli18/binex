@@ -163,6 +163,29 @@ export const surface = {
 } as const;
 
 // ---------------------------------------------------------------------------
+// Chart colors — hex values for Recharts / SVG (not Tailwind classes)
+// ---------------------------------------------------------------------------
+export const chartColors = {
+  primary: '#3b82f6',       // blue-500
+  primaryFill: '#3b82f680', // blue-500/50
+  secondary: '#8b5cf6',     // violet-500
+  grid: '#334155',          // slate-700
+  axis: '#94a3b8',          // slate-400
+  edge: '#64748b',          // slate-500
+  tooltipBg: '#1e293b',     // slate-800
+  tooltipBorder: '#475569', // slate-600
+} as const;
+
+// ---------------------------------------------------------------------------
+// Diff colors — for inline diffs (additions/deletions)
+// ---------------------------------------------------------------------------
+export const diffColors = {
+  added: { bg: 'bg-green-900/40', text: 'text-green-300' },
+  removed: { bg: 'bg-red-900/40', text: 'text-red-300' },
+  hunk: 'text-blue-400',
+} as const;
+
+// ---------------------------------------------------------------------------
 // Typography helpers
 // ---------------------------------------------------------------------------
 export const typography = {

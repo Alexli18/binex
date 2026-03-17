@@ -1,14 +1,16 @@
+import { diffColors, typography } from '@/lib/design-tokens';
+
 function DiffLine({ line }: { line: string }) {
   if (line.startsWith('+')) {
-    return <div className="bg-green-900/40 text-green-300 px-2">{line}</div>;
+    return <div className={`${diffColors.added.bg} ${diffColors.added.text} px-2`}>{line}</div>;
   }
   if (line.startsWith('-')) {
-    return <div className="bg-red-900/40 text-red-300 px-2">{line}</div>;
+    return <div className={`${diffColors.removed.bg} ${diffColors.removed.text} px-2`}>{line}</div>;
   }
   if (line.startsWith('@@')) {
-    return <div className="text-blue-400 px-2">{line}</div>;
+    return <div className={`${diffColors.hunk} px-2`}>{line}</div>;
   }
-  return <div className="px-2 text-slate-300">{line}</div>;
+  return <div className={`px-2 ${typography.body}`}>{line}</div>;
 }
 
 export function ArtifactDiff({ diff }: { diff: string }) {

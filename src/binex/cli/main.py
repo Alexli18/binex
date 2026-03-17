@@ -26,6 +26,7 @@ from binex.cli.plugins_cmd import plugins_group
 from binex.cli.replay import replay_cmd
 from binex.cli.run import cancel_cmd, run_cmd
 from binex.cli.scaffold import scaffold_group
+from binex.cli.scheduler import scheduler_group
 from binex.cli.start import start_cmd
 from binex.cli.trace import trace_cmd
 from binex.cli.ui_cmd import ui_cmd
@@ -82,6 +83,7 @@ cli.add_command(plugins_group, "plugins")
 cli.add_command(export_cmd, "export")
 cli.add_command(workflow_group, "workflow")
 cli.add_command(ui_cmd, "ui")
+cli.add_command(scheduler_group, "scheduler")
 
 
 def main() -> None:

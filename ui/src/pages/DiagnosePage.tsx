@@ -118,7 +118,7 @@ export default function DiagnosePage() {
           <div>
             <span className="text-xs text-slate-500">Total Cost</span>
             <p className="mt-0.5 font-mono font-medium">
-              ${data?.total_cost.toFixed(4)}
+              ${(data?.total_cost ?? 0).toFixed(4)}
             </p>
           </div>
         </div>
@@ -176,20 +176,20 @@ export default function DiagnosePage() {
                     {la.node_id}
                   </span>
                   <span className="text-xs text-yellow-400">
-                    {la.ratio.toFixed(1)}x expected
+                    {(la.ratio ?? 0).toFixed(1)}x expected
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="text-xs text-slate-500">Actual</span>
                     <p className="font-mono text-yellow-300">
-                      {la.duration_s.toFixed(3)}s
+                      {(la.duration_s ?? 0).toFixed(3)}s
                     </p>
                   </div>
                   <div>
                     <span className="text-xs text-slate-500">Expected</span>
                     <p className="font-mono text-slate-400">
-                      {la.expected_s.toFixed(3)}s
+                      {(la.expected_s ?? 0).toFixed(3)}s
                     </p>
                   </div>
                 </div>

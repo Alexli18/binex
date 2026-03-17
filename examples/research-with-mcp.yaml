@@ -1,0 +1,21 @@
+name: research-with-files
+description: Research agent with filesystem access via MCP server
+
+mcp_servers:
+  files:
+    command: npx
+    args: ["@anthropic/mcp-filesystem", "./data"]
+
+nodes:
+  analyst:
+    agent: llm://anthropic/claude-sonnet-4-20250514
+    system_prompt: |
+      Analyze data files in the ./data directory.
+      Use the filesystem tools to read files, then summarize findings.
+      Use the calculator for any numerical analysis.
+    inputs:
+      task: "Summarize all CSV files in the data directory"
+    outputs: [report]
+    tools:
+      - builtin://calculator
+      - mcp://files

@@ -31,7 +31,7 @@ nodes:
     agent: "local://echo"
     system_prompt: "file://prompts/gen-content-reviewer.md"
     inputs:
-      text: "${node.draft.text}"
+      text: "${draft.text}"
     outputs: [feedback]
     depends_on: [draft]
 
@@ -39,8 +39,8 @@ nodes:
     agent: "local://echo"
     system_prompt: "file://prompts/gen-content-reviser.md"
     inputs:
-      text: "${node.draft.text}"
-      feedback: "${node.review.feedback}"
+      text: "${draft.text}"
+      feedback: "${review.feedback}"
     outputs: [revised]
     depends_on: [draft, review]
 
@@ -48,7 +48,7 @@ nodes:
     agent: "local://echo"
     system_prompt: "file://prompts/gen-content-editor.md"
     inputs:
-      text: "${node.revise.revised}"
+      text: "${revise.revised}"
     outputs: [final]
     depends_on: [revise]
 

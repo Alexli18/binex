@@ -25,6 +25,27 @@ class BackEdge(BaseModel):
         return v
 
 
+class McpServerConfig(BaseModel):
+    """MCP server configuration — stdio or HTTP/SSE transport."""
+
+    command: str | None = None
+    args: list[str] = Field(default_factory=list)
+    env: dict[str, str] = Field(default_factory=dict)
+    url: str | None = None
+
+    @model_validator(mode="after")
+    def _must_have_transport(self) -> McpServerConfig:
+        if not self.command and not self.url:
+            raise ValueError(
+                "MCP server must have either 'command' (stdio) or 'url' (HTTP/SSE)"
+            )
+        if self.command and self.url:
+            raise ValueError(
+                "MCP server must have either 'command' OR 'url', not both"
+            )
+        return self
+
+
 class NodeSpec(BaseModel):
     """A single node definition within a workflow."""
 
@@ -76,6 +97,8 @@ class WorkflowSpec(BaseModel):
     defaults: DefaultsSpec | None = None
     budget: BudgetConfig | None = None
     webhook: WebhookConfig | None = None
+    mcp_servers: dict[str, McpServerConfig] = Field(default_factory=dict)
+    schedule: str | None = None
     source_path: str | None = None
 
     @field_validator("version")
@@ -93,4 +116,11 @@ class WorkflowSpec(BaseModel):
         return self
 
 
-__all__ = ["BackEdge", "DefaultsSpec", "NodeSpec", "WebhookConfig", "WorkflowSpec"]
+__all__ = [
+    "BackEdge",
+    "DefaultsSpec",
+    "McpServerConfig",
+    "NodeSpec",
+    "WebhookConfig",
+    "WorkflowSpec",
+]

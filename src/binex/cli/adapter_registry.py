@@ -39,14 +39,28 @@ def register_workflow_adapters(
     gateway_url: str | None = None,
     plugin_registry: Any | None = None,
     web_mode: bool = False,
+    mcp_manager: Any | None = None,
 ) -> None:
     """Register adapters for all agents in a workflow spec.
 
     Handles local://, llm://, human://, and a2a:// prefixes.
     Skips agents already registered in the dispatcher.
+
+    If *mcp_manager* is None but ``spec.mcp_servers`` is non-empty,
+    a new :class:`McpClientManager` is created automatically.
+    Returns the *mcp_manager* (may be newly created or the one passed in).
     """
     # Reset gateway cache per call so tests stay isolated
     _gateway_cache.clear()
+
+    # Auto-create MCP manager if workflow declares mcp_servers
+    if mcp_manager is None and spec.mcp_servers:
+        from binex.tools.mcp_client import McpClientManager
+
+        mcp_manager = McpClientManager(spec.mcp_servers)
+
+    # Store on dispatcher for lifecycle management (orchestrator calls close)
+    dispatcher._mcp_manager = mcp_manager  # type: ignore[attr-defined]
 
     for node in spec.nodes.values():
         if agent_swaps:
@@ -75,6 +89,7 @@ def register_workflow_adapters(
                     temperature=config.get("temperature"),
                     max_tokens=config.get("max_tokens"),
                     workflow_dir=workflow_dir,
+                    mcp_manager=mcp_manager,
                 ),
             )
         elif agent == "human://output":

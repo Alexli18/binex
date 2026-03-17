@@ -112,7 +112,7 @@ def _print_dashboard_menu() -> None:
             ("t", "trace"), ("g", "graph"), ("d", "debug"),
             ("c", "cost"), ("a", "artifacts"), ("n", "node"),
             ("r", "replay"), ("i", "diagnose"), ("f", "diff"),
-            ("b", "bisect"), ("q", "back"), ("Q", "quit"),
+            ("b", "bisect"), ("?", "help"), ("q", "back"), ("Q", "quit"),
         ]:
             hint.append("  [", style="dim")
             hint.append(key, style="cyan bold")
@@ -121,8 +121,46 @@ def _print_dashboard_menu() -> None:
     else:
         click.echo(
             "  [t]race [g]raph [d]ebug [c]ost [a]rtifacts [n]ode"
-            " [r]eplay [i] d[i]agnose [f] dif[f] [b]isect [q] back [Q] quit"
+            " [r]eplay [i]diagnose [f]diff [b]isect [?]help [q]back [Q]quit"
         )
+
+
+def _print_help_table() -> None:
+    """Print a help table of all dashboard keys and their descriptions."""
+    keys = [
+        ("t", "trace", "Show execution trace for the run"),
+        ("g", "graph", "Display the DAG node graph"),
+        ("d", "debug", "Post-mortem debug inspection"),
+        ("c", "cost", "Show cost breakdown per node"),
+        ("a", "artifacts", "List all artifacts produced"),
+        ("n", "node", "Inspect a specific node in detail"),
+        ("r", "replay", "Replay the workflow run"),
+        ("i", "diagnose", "Run diagnostic analysis (root cause, anomalies)"),
+        ("f", "diff", "Compare this run with another run"),
+        ("b", "bisect", "Bisect two runs to find divergence"),
+        ("?", "help", "Show this help table"),
+        ("q", "back", "Return to run list"),
+        ("Q", "quit", "Exit explore entirely"),
+    ]
+    if has_rich():
+        from binex.cli.ui import get_console, make_table
+
+        table = make_table(
+            ("Key", {"style": "cyan bold", "width": 5, "justify": "center"}),
+            ("Command", {"style": "bold", "min_width": 12}),
+            ("Description", {"min_width": 40}),
+            title="Dashboard Keys",
+        )
+        for key, cmd, desc in keys:
+            table.add_row(key, cmd, desc)
+        get_console().print(table)
+    else:
+        click.echo()
+        click.echo("  Dashboard Keys:")
+        click.echo("  " + "-" * 56)
+        for key, cmd, desc in keys:
+            click.echo(f"    {key:<5} {cmd:<12} {desc}")
+        click.echo()
 
 
 def _wait_for_enter() -> bool:

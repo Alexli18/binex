@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { ErrorState } from '@/components/layout/ErrorState';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type FormatOption = 'csv' | 'json';
 
@@ -111,13 +112,13 @@ export default function ExportPage() {
           {useLastN ? (
             <div className="flex items-center gap-3">
               <label className="text-sm text-slate-400">Number of runs:</label>
-              <input
+              <Input
                 type="number"
                 min={1}
                 max={1000}
                 value={lastN}
                 onChange={(e) => setLastN(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-24 bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                className="w-24"
               />
             </div>
           ) : (
