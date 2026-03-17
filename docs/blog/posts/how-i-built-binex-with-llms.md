@@ -229,4 +229,4 @@ pip install binex && binex ui
 
 **[Star on GitHub →](https://github.com/Alexli18/binex)** · MIT License · No cloud required
 
-*Questions about the process? Drop them in the comments.*
+*Questions about the process? Open a [GitHub Discussion](https://github.com/Alexli18/binex/discussions) or find me on Reddit.*
