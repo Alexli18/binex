@@ -1,6 +1,6 @@
 import { memo, useState, useCallback } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from 'reactflow';
-import { RefreshCw, Settings, Trash2, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Settings, Trash2, AlertTriangle, Plus } from 'lucide-react';
 import type { LoopContainerData } from '@/lib/loop-types';
 import { LoopFooterBadge } from './LoopFooterBadge';
 import { LoopRuntimeBadge } from './LoopRuntimeBadge';
@@ -67,7 +67,13 @@ function LoopContainerNodeInner({ data, id }: NodeProps<LoopContainerData>) {
         'min-w-[400px] min-h-[200px]',
         'relative',
       )}
-      style={{ borderColor: hasCondition ? LOOP_COLOR : '#ef4444' }}
+      style={{
+        borderColor: data.isDragOver ? '#2dd4bf' : hasCondition ? LOOP_COLOR : '#ef4444',
+        ...(data.isDragOver && {
+          boxShadow: '0 0 20px rgba(20, 184, 166, 0.3)',
+        }),
+        transition: 'box-shadow 0.2s, border-color 0.2s',
+      }}
     >
       <Handle
         type="target"
@@ -105,6 +111,18 @@ function LoopContainerNodeInner({ data, id }: NodeProps<LoopContainerData>) {
             <Settings size={13} />
           </button>
           <button
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(
+                new CustomEvent('binex:loop-add-node', { detail: { loopId: id } }),
+              );
+            }}
+            className="nodrag p-1 text-slate-400 hover:text-teal-300 transition-colors"
+            title="Add node to loop"
+          >
+            <Plus size={13} />
+          </button>
+          <button
             onClick={handleDelete}
             className="nodrag p-1 text-red-500 hover:text-red-400 transition-colors"
             title="Delete loop"
@@ -117,8 +135,11 @@ function LoopContainerNodeInner({ data, id }: NodeProps<LoopContainerData>) {
       {/* Content area — child nodes are rendered here by React Flow */}
       <div style={{ minHeight: 100, padding: '10px 20px 50px 20px' }}>
         {childNodes.length === 0 && (
-          <div className="flex items-center justify-center h-[100px] text-slate-600 text-xs">
-            Drag nodes here to add to loop
+          <div className="flex flex-col items-center justify-center h-[120px] gap-2">
+            <div className="w-16 h-16 rounded-lg border-2 border-dashed border-teal-500/30 flex items-center justify-center">
+              <Plus size={24} className="text-teal-500/40" />
+            </div>
+            <span className="text-slate-500 text-xs">Drop nodes here to add to loop</span>
           </div>
         )}
       </div>

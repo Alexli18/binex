@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   useReactFlow,
@@ -15,9 +15,14 @@ import { toast } from 'sonner';
 import { EditableNode } from './EditableNode';
 import { LoopContainerNode } from './LoopContainerNode';
 import { LoopConfigModal } from './LoopConfigModal';
-import { NodePalette, type NodeTypeConfig } from './NodePalette';
+import { NodePalette, type NodeTypeConfig, NODE_TYPES } from './NodePalette';
 import type { LoopContainerData } from '@/lib/loop-types';
-import { findParentLoop, getAbsolutePosition } from '@/lib/loop-utils';
+import {
+  findParentLoop,
+  getAbsolutePosition,
+  getNextFreePosition,
+  calculateLoopSize,
+} from '@/lib/loop-utils';
 
 const rfNodeTypes = {
   editable: EditableNode,
@@ -48,6 +53,50 @@ function InnerCanvas({
   const { screenToFlowPosition, getNodes } = useReactFlow();
   const [pendingLoopConfig, setPendingLoopConfig] = useState<string | null>(null);
 
+  const dragOverRef = useRef<string | null>(null);
+
+  // Handle "+" button event from LoopContainerNode
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { loopId } = (e as CustomEvent<{ loopId: string }>).detail;
+      const allNodes = getNodes();
+      const loop = allNodes.find((n) => n.id === loopId);
+      if (!loop) return;
+      const children = allNodes.filter((n) => n.parentNode === loopId);
+      const pos = getNextFreePosition(loop, children);
+      nodeIdCounter += 1;
+      const id = `llm_${nodeIdCounter}`;
+      const defaultLlm = NODE_TYPES.find((t) => t.type === 'llm')!;
+      const newNode: Node = {
+        id,
+        type: 'editable',
+        position: pos,
+        parentNode: loopId,
+        extent: 'parent' as const,
+        data: {
+          label: id,
+          nodeType: 'llm',
+          agent: defaultLlm.defaultAgent,
+          config: {},
+          color: defaultLlm.color,
+        },
+      };
+      setRfNodes((nds) => {
+        const updated = [...nds, newNode];
+        const loopChildren = updated.filter((n) => n.parentNode === loopId);
+        const newSize = calculateLoopSize(loopChildren);
+        return updated.map((n) =>
+          n.id === loopId
+            ? { ...n, style: { ...n.style, width: newSize.width, height: newSize.height } }
+            : n,
+        );
+      });
+      onGraphChange();
+    };
+    window.addEventListener('binex:loop-add-node', handler);
+    return () => window.removeEventListener('binex:loop-add-node', handler);
+  }, [getNodes, setRfNodes, onGraphChange]);
+
   const onConnect = useCallback(
     (connection: Connection) => {
       setRfEdges((eds) => addEdge(connection, eds));
@@ -56,14 +105,49 @@ function InnerCanvas({
     [setRfEdges, onGraphChange],
   );
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
+  const onDragOver = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      const pos = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      const loopNodes = getNodes().filter((n) => n.type === 'loopContainer');
+      const overLoop = findParentLoop(pos, loopNodes);
+      if (overLoop !== dragOverRef.current) {
+        dragOverRef.current = overLoop;
+        // Update loop node data for highlight
+        setRfNodes((nds) =>
+          nds.map((n) =>
+            n.type === 'loopContainer'
+              ? { ...n, data: { ...n.data, isDragOver: n.id === overLoop } }
+              : n,
+          ),
+        );
+      }
+    },
+    [screenToFlowPosition, getNodes, setRfNodes],
+  );
+
+  const onDragLeave = useCallback(
+    (event: React.DragEvent) => {
+      // Only clear when leaving the canvas entirely
+      if (event.currentTarget.contains(event.relatedTarget as Element)) return;
+      dragOverRef.current = null;
+      setRfNodes((nds) =>
+        nds.map((n) =>
+          n.type === 'loopContainer' && n.data?.isDragOver
+            ? { ...n, data: { ...n.data, isDragOver: false } }
+            : n,
+        ),
+      );
+    },
+    [setRfNodes],
+  );
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
+      // Clear drag highlight
+      dragOverRef.current = null;
       const raw = event.dataTransfer.getData('application/reactflow');
       if (!raw) return;
       const ntConfig: NodeTypeConfig = JSON.parse(raw);
@@ -110,18 +194,18 @@ function InnerCanvas({
         );
       }
 
+      const loop = parentLoop ? loopNodes.find((n) => n.id === parentLoop)! : null;
+      const existingChildren = parentLoop
+        ? getNodes().filter((n) => n.parentNode === parentLoop)
+        : [];
+      const nodePosition = loop
+        ? getNextFreePosition(loop, existingChildren)
+        : position;
+
       const newNode: Node = {
         id,
         type: 'editable',
-        position: parentLoop
-          ? (() => {
-              const loop = loopNodes.find((n) => n.id === parentLoop)!;
-              return {
-                x: position.x - loop.position.x,
-                y: position.y - loop.position.y,
-              };
-            })()
-          : position,
+        position: nodePosition,
         data: {
           label: id,
           nodeType: ntConfig.type,
@@ -133,7 +217,18 @@ function InnerCanvas({
           ? { parentNode: parentLoop, extent: 'parent' as const }
           : {}),
       };
-      setRfNodes((nds) => [...nds, newNode]);
+      setRfNodes((nds) => {
+        const updated = [...nds, newNode];
+        if (!parentLoop) return updated;
+        // Auto-resize loop container
+        const loopChildren = updated.filter((n) => n.parentNode === parentLoop);
+        const newSize = calculateLoopSize(loopChildren);
+        return updated.map((n) =>
+          n.id === parentLoop
+            ? { ...n, style: { ...n.style, width: newSize.width, height: newSize.height } }
+            : n,
+        );
+      });
       setTimeout(onGraphChange, 0);
     },
     [screenToFlowPosition, setRfNodes, getNodes, onGraphChange],
@@ -168,18 +263,19 @@ function InnerCanvas({
         );
       }
 
-      setRfNodes((nds) =>
-        nds.map((n) => {
+      setRfNodes((nds) => {
+        const moved = nds.map((n) => {
           if (n.id !== draggedNode.id) return n;
 
           if (newParent) {
             const loop = loopNodes.find((l) => l.id === newParent)!;
+            const existingChildren = nds.filter(
+              (c) => c.parentNode === newParent && c.id !== draggedNode.id,
+            );
+            const pos = getNextFreePosition(loop, existingChildren);
             return {
               ...n,
-              position: {
-                x: absPos.x - loop.position.x,
-                y: absPos.y - loop.position.y,
-              },
+              position: pos,
               parentNode: newParent,
               extent: 'parent' as const,
             };
@@ -190,16 +286,48 @@ function InnerCanvas({
             delete updated.extent;
             return updated;
           }
-        }),
-      );
+        });
+
+        // Auto-resize affected loops
+        const affectedLoops = new Set<string>();
+        if (newParent) affectedLoops.add(newParent);
+        if (currentParent) affectedLoops.add(currentParent);
+
+        return moved.map((n) => {
+          if (!affectedLoops.has(n.id)) return n;
+          const children = moved.filter((c) => c.parentNode === n.id);
+          const newSize = calculateLoopSize(children);
+          return { ...n, style: { ...n.style, width: newSize.width, height: newSize.height } };
+        });
+      });
       setTimeout(onGraphChange, 0);
     },
     [getNodes, setRfNodes, onGraphChange],
   );
 
-  const onNodesDelete = useCallback(() => {
-    setTimeout(onGraphChange, 0);
-  }, [onGraphChange]);
+  const onNodesDelete = useCallback(
+    (deleted: Node[]) => {
+      // Auto-resize loops that lost children
+      const affectedLoops = new Set<string>();
+      for (const d of deleted) {
+        if (d.parentNode) affectedLoops.add(d.parentNode);
+      }
+      if (affectedLoops.size > 0) {
+        setRfNodes((nds) =>
+          nds.map((n) => {
+            if (!affectedLoops.has(n.id)) return n;
+            const children = nds.filter(
+              (c) => c.parentNode === n.id && !deleted.some((d) => d.id === c.id),
+            );
+            const newSize = calculateLoopSize(children);
+            return { ...n, style: { ...n.style, width: newSize.width, height: newSize.height } };
+          }),
+        );
+      }
+      setTimeout(onGraphChange, 0);
+    },
+    [onGraphChange, setRfNodes],
+  );
 
   const onEdgesDelete = useCallback(() => {
     setTimeout(onGraphChange, 0);
@@ -214,6 +342,7 @@ function InnerCanvas({
         onEdgesChange={onRfEdgesChange}
         onConnect={onConnect}
         onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
         onDrop={onDrop}
         onNodeDragStop={onNodeDragStop}
         onNodesDelete={onNodesDelete}

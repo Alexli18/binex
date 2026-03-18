@@ -1,6 +1,65 @@
 import type { Node } from 'reactflow';
 import type { ExitCondition } from './loop-types';
 
+/* ── Layout constants ── */
+export const LOOP_PADDING = { top: 60, bottom: 60, left: 20, right: 20 };
+export const NODE_W = 180;
+export const NODE_H = 50;
+export const GAP = 20;
+
+/**
+ * Find the next free grid position inside a loop container.
+ * Scans row-by-row, column-by-column for an unoccupied cell.
+ */
+export function getNextFreePosition(
+  loopNode: Node,
+  existingChildren: Node[],
+): { x: number; y: number } {
+  const loopW = (loopNode.style?.width as number) || 450;
+  const usableW = loopW - LOOP_PADDING.left - LOOP_PADDING.right;
+  const cols = Math.max(1, Math.floor((usableW + GAP) / (NODE_W + GAP)));
+
+  const occupied = new Set<string>();
+  for (const child of existingChildren) {
+    const col = Math.round((child.position.x - LOOP_PADDING.left) / (NODE_W + GAP));
+    const row = Math.round((child.position.y - LOOP_PADDING.top) / (NODE_H + GAP));
+    occupied.add(`${col},${row}`);
+  }
+
+  for (let row = 0; row < 100; row++) {
+    for (let col = 0; col < cols; col++) {
+      if (!occupied.has(`${col},${row}`)) {
+        return {
+          x: LOOP_PADDING.left + col * (NODE_W + GAP),
+          y: LOOP_PADDING.top + row * (NODE_H + GAP),
+        };
+      }
+    }
+  }
+  return { x: LOOP_PADDING.left, y: LOOP_PADDING.top };
+}
+
+/**
+ * Calculate required loop container size to fit all children.
+ */
+export function calculateLoopSize(
+  children: Node[],
+): { width: number; height: number } {
+  if (children.length === 0) return { width: 450, height: 200 };
+
+  let maxX = 0;
+  let maxY = 0;
+  for (const child of children) {
+    maxX = Math.max(maxX, child.position.x + NODE_W);
+    maxY = Math.max(maxY, child.position.y + NODE_H);
+  }
+
+  return {
+    width: Math.max(450, maxX + LOOP_PADDING.right),
+    height: Math.max(200, maxY + LOOP_PADDING.bottom),
+  };
+}
+
 /**
  * Find if a drop position falls inside a loop container node.
  * Returns the loop node ID or null.
