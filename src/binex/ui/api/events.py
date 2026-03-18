@@ -55,6 +55,14 @@ async def stream_events(run_id: str) -> StreamingResponse:
     except Exception:
         pass
 
+    # Collect any pending human prompts before subscribing (race condition fix)
+    pending_human_prompts = []
+    try:
+        from binex.ui.api.prompts import pending_prompts
+        pending_human_prompts = pending_prompts.list_pending(run_id=run_id)
+    except Exception:
+        pass
+
     queue = event_bus.subscribe(run_id)
 
     async def generate():
@@ -68,6 +76,18 @@ async def stream_events(run_id: str) -> StreamingResponse:
                 }
                 yield f"event: run:completed\ndata: {json.dumps(event)}\n\n"
                 return
+
+            # Re-emit any pending human prompts missed before SSE connected
+            for prompt in pending_human_prompts:
+                event = {
+                    "type": "human:prompt_needed",
+                    "prompt_id": prompt["prompt_id"],
+                    "prompt_type": prompt.get("prompt_type", "input"),
+                    "node_id": prompt.get("node_id", ""),
+                    "message": prompt.get("message", "Enter your input"),
+                    "artifacts": [],  # artifacts not stored in metadata; UI can still respond
+                }
+                yield f"event: human:prompt_needed\ndata: {json.dumps(event)}\n\n"
 
             while True:
                 try:

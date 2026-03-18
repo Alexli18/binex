@@ -53,6 +53,7 @@ class WebHumanApprovalAdapter:
             "run_id": task.run_id,
             "node_id": task.node_id,
             "prompt_type": "approval",
+            "message": "Review and approve output from upstream nodes",
         })
 
         await self._event_bus.publish(task.run_id, {
@@ -149,6 +150,7 @@ class WebHumanInputAdapter:
             "run_id": task.run_id,
             "node_id": task.node_id,
             "prompt_type": "input",
+            "message": prompt_text,
         })
 
         await self._event_bus.publish(task.run_id, {
