@@ -30,9 +30,8 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
     }
   }
 
-  // Process top-level regular nodes (not inside any loop)
+  // Process ALL regular nodes (including loop children — they stay at top-level in backend format)
   for (const node of regularNodes) {
-    if (childNodeIds.has(node.id)) continue;
     nodesObj[node.data.label || node.id] = buildNodeEntry(node, nodes, deps);
   }
 
@@ -40,10 +39,6 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
   for (const loop of loopContainers) {
     const loopData = loop.data as LoopContainerData;
     const children = regularNodes.filter((n) => n.parentNode === loop.id);
-    const loopChildren: Record<string, Record<string, unknown>> = {};
-    for (const child of children) {
-      loopChildren[child.data.label || child.id] = buildNodeEntry(child, nodes, deps);
-    }
 
     // Build loop spec (backend format: loop.exit.field + loop.contains)
     const loopSpec: Record<string, unknown> = {
