@@ -34,7 +34,7 @@ export function LoopConfigModal({
   const [label, setLabel] = useState(initialData?.label || '');
   const [maxIterations, setMaxIterations] = useState(initialData?.maxIterations || 5);
   const [exitCondition, setExitCondition] = useState<ExitCondition>(
-    initialData?.exitCondition || { jsonpath: '', operator: '>=', value: '' },
+    initialData?.exitCondition || { field: '', operator: '>=', value: '' },
   );
   const [testJson, setTestJson] = useState('');
   const [testResult, setTestResult] = useState<{
@@ -50,9 +50,9 @@ export function LoopConfigModal({
   }, [label]);
 
   const conditionError = useMemo(() => {
-    if (!exitCondition.jsonpath.trim()) return 'JSONPath is required';
-    if (!exitCondition.jsonpath.startsWith('$.')) return 'Must start with $.';
-    if (!exitCondition.value.trim()) return 'Value is required';
+    if (!exitCondition.field.trim()) return 'JSONPath is required';
+    if (!exitCondition.field.startsWith('$.')) return 'Must start with $.';
+    if (!String(exitCondition.value).trim()) return 'Value is required';
     return null;
   }, [exitCondition]);
 
@@ -131,7 +131,7 @@ export function LoopConfigModal({
             <ExitConditionBuilder
               value={exitCondition}
               onChange={setExitCondition}
-              error={conditionError && exitCondition.jsonpath.trim() ? conditionError : undefined}
+              error={conditionError && exitCondition.field.trim() ? conditionError : undefined}
             />
           </div>
 

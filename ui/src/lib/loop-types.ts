@@ -1,7 +1,7 @@
 export interface ExitCondition {
-  jsonpath: string;
+  field: string;  // JSONPath field, e.g. "$.score"
   operator: '>=' | '<=' | '>' | '<' | '==' | '!=' | 'contains';
-  value: string;
+  value: string | number;
 }
 
 export interface LoopContainerData {

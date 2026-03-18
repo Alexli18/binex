@@ -9,7 +9,7 @@ interface LoopFooterBadgeProps {
 }
 
 export function LoopFooterBadge({ exitCondition, maxIterations, childCount }: LoopFooterBadgeProps) {
-  const hasCondition = exitCondition && exitCondition.jsonpath.trim() && exitCondition.value.trim();
+  const hasCondition = exitCondition && exitCondition.field.trim() && String(exitCondition.value).trim();
 
   if (childCount === 0) {
     return (
@@ -37,7 +37,7 @@ export function LoopFooterBadge({ exitCondition, maxIterations, childCount }: Lo
     );
   }
 
-  const fieldName = exitCondition.jsonpath.replace('$.', '');
+  const fieldName = exitCondition.field.replace('$.', '');
   return (
     <div className={cn(
       'mx-3 mb-2 px-3 py-1.5 rounded-md',

@@ -72,7 +72,7 @@ export function LoopRuntimeBadge({
       {/* Current value vs target */}
       {currentValue && exitCondition && (
         <div className="text-[10px] text-slate-400 font-mono">
-          {exitCondition.jsonpath.replace('$.', '')}: {currentValue} →{' '}
+          {exitCondition.field.replace('$.', '')}: {currentValue} →{' '}
           <span className="text-slate-300">
             {exitCondition.operator} {exitCondition.value}
           </span>

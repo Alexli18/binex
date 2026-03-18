@@ -45,20 +45,25 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
       loopChildren[child.data.label || child.id] = buildNodeEntry(child, nodes, deps);
     }
 
-    const loopEntry: Record<string, unknown> = {
-      type: 'loop',
+    // Build loop spec (backend format: loop.exit.field + loop.contains)
+    const loopSpec: Record<string, unknown> = {
       max_iterations: loopData.maxIterations || 5,
-      nodes: loopChildren,
+      accumulate: false,
+      contains: children.map((c) => c.data.label || c.id),
     };
 
-    // Exit condition
-    if (loopData.exitCondition && loopData.exitCondition.jsonpath && loopData.exitCondition.value) {
-      loopEntry.exit_condition = {
-        jsonpath: loopData.exitCondition.jsonpath,
+    if (loopData.exitCondition && loopData.exitCondition.field && loopData.exitCondition.value !== undefined) {
+      loopSpec.exit = {
+        field: loopData.exitCondition.field,
         operator: loopData.exitCondition.operator,
         value: loopData.exitCondition.value,
       };
     }
+
+    const loopEntry: Record<string, unknown> = {
+      type: 'loop',
+      loop: loopSpec,
+    };
 
     // Loop-level dependencies
     if (deps[loop.id]?.length) {

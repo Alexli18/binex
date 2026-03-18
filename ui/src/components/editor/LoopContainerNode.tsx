@@ -55,8 +55,8 @@ function LoopContainerNodeInner({ data, id }: NodeProps<LoopContainerData>) {
 
   const hasCondition =
     data.exitCondition &&
-    data.exitCondition.jsonpath.trim() &&
-    data.exitCondition.value.trim();
+    data.exitCondition.field.trim() &&
+    String(data.exitCondition.value).trim();
 
   return (
     <div

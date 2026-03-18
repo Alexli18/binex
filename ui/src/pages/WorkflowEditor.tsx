@@ -44,13 +44,19 @@ function agentToNodeType(agent: string): { nodeType: string; color: string } {
   return { nodeType: 'local', color: '#06b6d4' };
 }
 
+interface LoopSpec {
+  max_iterations?: number;
+  timeout_minutes?: number;
+  accumulate?: boolean;
+  contains?: string[];
+  exit?: { field: string; operator: string; value: string | number };
+}
+
 interface LoopNodeSpec {
   type: 'loop';
-  max_iterations?: number;
-  exit_condition?: { jsonpath: string; operator: string; value: string };
+  loop?: LoopSpec;
   depends_on?: string[];
   inputs?: Record<string, string>;
-  nodes?: Record<string, RegularNodeSpec>;
 }
 
 interface RegularNodeSpec {
@@ -93,11 +99,23 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
   const edges: Edge[] = [];
   let yOffset = 50;
 
+  // Collect all node IDs that are inside a loop (to skip them in the main loop)
+  const containedNodeIds = new Set<string>();
+  for (const [, spec] of entries) {
+    if (isLoopSpec(spec) && spec.loop?.contains) {
+      for (const childId of spec.loop.contains) containedNodeIds.add(childId);
+    }
+  }
+
   for (const [id, spec] of entries) {
+    // Skip nodes that are children of a loop container (handled inside loop branch)
+    if (containedNodeIds.has(id)) continue;
+
     if (isLoopSpec(spec)) {
-      // Create loop container node
-      const childEntries = Object.entries(spec.nodes || {});
-      const containerHeight = Math.max(250, childEntries.length * 120 + 80);
+      // Create loop container node (backend format: spec.loop contains LoopSpec)
+      const loopSpec = spec.loop || {};
+      const containsIds = loopSpec.contains || [];
+      const containerHeight = Math.max(250, containsIds.length * 120 + 80);
 
       nodes.push({
         id,
@@ -106,9 +124,9 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
         style: { width: 450, height: containerHeight },
         data: {
           label: id,
-          maxIterations: spec.max_iterations || 5,
-          exitCondition: spec.exit_condition
-            ? { jsonpath: spec.exit_condition.jsonpath, operator: spec.exit_condition.operator, value: spec.exit_condition.value }
+          maxIterations: loopSpec.max_iterations || 5,
+          exitCondition: loopSpec.exit
+            ? { field: loopSpec.exit.field, operator: loopSpec.exit.operator, value: String(loopSpec.exit.value) }
             : null,
         },
       });
@@ -120,8 +138,10 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
         }
       }
 
-      // Create child nodes inside the loop
-      childEntries.forEach(([childId, childSpec], ci) => {
+      // Create child nodes from contains list — look them up in parsed.nodes
+      containsIds.forEach((childId, ci) => {
+        const childSpec = (parsed.nodes as Record<string, RegularNodeSpec>)[childId];
+        if (!childSpec) return;
         const agent = childSpec.agent || 'local://echo';
         const { nodeType, color } = agentToNodeType(agent);
         nodes.push({

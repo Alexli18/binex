@@ -121,8 +121,8 @@ export function evaluateExitCondition(
   condition: ExitCondition,
   artifact: unknown,
 ): { pass: boolean; expression: string; details: string } {
-  const resolved = resolveJsonPath(artifact, condition.jsonpath);
-  const fieldName = condition.jsonpath.replace('$.', '');
+  const resolved = resolveJsonPath(artifact, condition.field);
+  const fieldName = condition.field.replace('$.', '');
   const expression = `${fieldName}: ${JSON.stringify(resolved)} ${condition.operator} ${condition.value}`;
 
   if (resolved == null) {
@@ -136,10 +136,10 @@ export function evaluateExitCondition(
   let pass = false;
   switch (condition.operator) {
     case '==':
-      pass = String(resolved) === condition.value;
+      pass = String(resolved) === String(condition.value);
       break;
     case '!=':
-      pass = String(resolved) !== condition.value;
+      pass = String(resolved) !== String(condition.value);
       break;
     case '>':
       pass = isNumeric && numResolved > numTarget;
@@ -154,7 +154,7 @@ export function evaluateExitCondition(
       pass = isNumeric && numResolved <= numTarget;
       break;
     case 'contains':
-      pass = String(resolved).includes(condition.value);
+      pass = String(resolved).includes(String(condition.value));
       break;
   }
 

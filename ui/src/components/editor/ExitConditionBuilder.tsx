@@ -26,8 +26,8 @@ export function ExitConditionBuilder({ value, onChange, error }: ExitConditionBu
         <div>
           <label className="text-[11px] text-slate-400 mb-1 block">JSONPath</label>
           <Input
-            value={value.jsonpath}
-            onChange={(e) => onChange({ ...value, jsonpath: e.target.value })}
+            value={value.field}
+            onChange={(e) => onChange({ ...value, field: e.target.value })}
             placeholder="$.score"
             className="h-8 bg-slate-800 border-slate-600 font-mono text-sm"
           />
