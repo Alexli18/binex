@@ -2,6 +2,7 @@ import { memo, useState, useCallback } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from 'reactflow';
 import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2, BookOpen, Wrench } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { ModelSelect } from './ModelSelect';
 import { CollapsibleSection } from './CollapsibleSection';
 import { ToolChip } from './ToolChip';
@@ -20,6 +21,7 @@ export interface EditableNodeData {
   config: Record<string, unknown>;
   color: string;
   tools?: string[];
+  loopRole?: 'entry' | 'exit' | 'entry+exit' | null;
 }
 
 function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
@@ -90,6 +92,21 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
         onClick={() => setExpanded(true)}
       >
         <Handle type="target" position={Position.Top} className="!bg-slate-500 !border-slate-400" />
+        {data.loopRole && (
+          <div className={cn(
+            'absolute -top-2 text-[8px] font-bold tracking-wide uppercase',
+            'px-1.5 py-0.5 rounded-full',
+            'pointer-events-none select-none',
+            'shadow-sm',
+            data.loopRole === 'entry' && '-left-2 bg-blue-600/90 text-blue-100',
+            data.loopRole === 'exit' && '-right-8 bg-emerald-600/90 text-emerald-100',
+            data.loopRole === 'entry+exit' && '-left-2 bg-teal-600/90 text-teal-100',
+          )}>
+            {data.loopRole === 'entry' && '\u25B8 in'}
+            {data.loopRole === 'exit' && 'out \u25C2'}
+            {data.loopRole === 'entry+exit' && 'in/out'}
+          </div>
+        )}
         <button
           onClick={handleDelete}
           className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"

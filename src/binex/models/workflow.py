@@ -83,6 +83,8 @@ class LoopSpec(BaseModel):
     timeout_minutes: float | None = None
     accumulate: bool = False
     contains: list[str]
+    entry_node: str | None = None
+    output_node: str | None = None
 
     @field_validator("max_iterations")
     @classmethod

@@ -55,6 +55,9 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
       };
     }
 
+    if (loopData.entryNode) loopSpec.entry_node = loopData.entryNode;
+    if (loopData.outputNode) loopSpec.output_node = loopData.outputNode;
+
     const loopEntry: Record<string, unknown> = {
       type: 'loop',
       loop: loopSpec,

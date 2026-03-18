@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from binex.adapters.local import LocalPythonAdapter
+from binex.adapters.local import LocalPythonAdapter, LocalShellAdapter
 from binex.models.artifact import Artifact, Lineage
 from binex.models.task import TaskNode
 from binex.models.workflow import WorkflowSpec
@@ -72,9 +72,17 @@ def register_workflow_adapters(
             continue
 
         if agent.startswith("local://"):
-            dispatcher.register_adapter(
-                agent, LocalPythonAdapter(handler=_default_handler),
-            )
+            command = agent.removeprefix("local://").strip()
+            # Shell adapter for commands with arguments or paths (contain space, /)
+            # Default handler for identifiers: local://, local://stub, local://echo, local://mynode
+            if command and (" " in command or "/" in command):
+                dispatcher.register_adapter(
+                    agent, LocalShellAdapter(command=command),
+                )
+            else:
+                dispatcher.register_adapter(
+                    agent, LocalPythonAdapter(handler=_default_handler),
+                )
         elif agent.startswith("llm://"):
             from binex.adapters.llm import LLMAdapter
 

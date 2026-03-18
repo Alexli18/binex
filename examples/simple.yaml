@@ -1,42 +1,48 @@
-# Simple Pipeline Example
-# ========================
-# The most basic Binex workflow: a 2-node linear pipeline.
-#
-# Topology:  producer -> consumer
-#
-# Uses local://echo agents, which simply echo inputs as outputs.
-# No API keys or external services required.
-#
-# The ${user.input} variable is resolved at load time from user-provided data.
-# The ${producer.result} reference is resolved at runtime from the producer's output.
-#
-# Run:  binex run examples/simple.yaml
-# Debug: binex debug <run_id>
-
-name: simple-pipeline
-description: "Simple 2-node pipeline with local adapters"
-
+name: simple
 nodes:
-  # First node: produces data from user input
-  producer:
-    agent: "local://echo"
-    system_prompt: produce
+  human-input_1:
+    agent: human://input
+    outputs:
+      - output
     inputs:
-      data: "${user.input}"       # resolved at load time from user variables
-    outputs: [result]
-
-  # Second node: consumes the producer's output
+      query: ${user.query}
+  human-output_2:
+    agent: human://output
+    outputs:
+      - output
+    depends_on:
+      - consumer
+    inputs:
+      consumer: ${consumer.output}
   consumer:
-    agent: "local://echo"
+    agent: local://echo
+    outputs:
+      - output
     system_prompt: consume
+    depends_on:
+      - producer
     inputs:
-      data: "${producer.result}"  # runtime artifact reference to producer's output
-    outputs: [final]
-    depends_on: [producer]
-
-# Global defaults applied to all nodes
-defaults:
-  deadline_ms: 30000              # 30-second timeout per node
-  retry_policy:
-    max_retries: 1
-    backoff: exponential
+      producer: ${producer.output}
+  producer:
+    agent: local://echo
+    outputs:
+      - output
+    system_prompt: produce
+    depends_on:
+      - human-input_1
+    inputs:
+      human-input_1: ${human-input_1.output}
+  test:
+    type: loop
+    loop:
+      max_iterations: 5
+      accumulate: false
+      contains:
+        - consumer
+        - producer
+      exit:
+        field: $.status
+        operator: '=='
+        value: 'true'
+      entry_node: producer
+      output_node: consumer

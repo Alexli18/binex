@@ -84,8 +84,12 @@ def check_exit_condition(exit_cond: LoopExitCondition, data: Any) -> bool:
         return False
 
     try:
-        # Coerce types for comparison
-        if isinstance(exit_cond.value, (int, float)) and isinstance(actual, str):
+        # Coerce types for comparison (bool ⊂ int in Python, so exclude it)
+        if (
+            isinstance(exit_cond.value, (int, float))
+            and not isinstance(exit_cond.value, bool)
+            and isinstance(actual, str)
+        ):
             actual = float(actual)
         elif isinstance(exit_cond.value, str) and isinstance(actual, (int, float)):
             actual = str(actual)
@@ -105,6 +109,10 @@ def _parse_artifact_content(artifact: Artifact) -> Any:
 class LoopExecutor:
     """Executes a loop container node iteratively."""
 
+    # Minimum interval between loop:iteration SSE events (milliseconds).
+    # Prevents flooding the SSE channel when loops run 100+ iterations.
+    LOOP_EVENT_THROTTLE_MS: int = 500
+
     def __init__(
         self,
         artifact_store: ArtifactStore,
@@ -114,6 +122,7 @@ class LoopExecutor:
         stream: bool = False,
         stream_callback: Callable[[str], None] | None = None,
         event_callback: Callable[[dict], Any] | None = None,
+        loop_event_throttle_ms: int | None = None,
     ) -> None:
         self.artifact_store = artifact_store
         self.execution_store = execution_store
@@ -121,12 +130,36 @@ class LoopExecutor:
         self._stream = stream
         self._stream_callback = stream_callback
         self._event_callback = event_callback
+        self._loop_event_throttle_ms = (
+            loop_event_throttle_ms
+            if loop_event_throttle_ms is not None
+            else self.LOOP_EVENT_THROTTLE_MS
+        )
 
     async def _emit_event(self, event: dict) -> None:
         if self._event_callback is not None:
             result = self._event_callback(event)
             if asyncio.iscoroutine(result):
                 await result
+
+    async def _emit_loop_iteration_throttled(
+        self,
+        event: dict,
+        last_emit_time: float,
+        *,
+        force: bool = False,
+    ) -> float:
+        """Emit loop:iteration event with time-based throttling.
+
+        Returns the updated last_emit_time (monotonic seconds).
+        If the event is throttled (not emitted), returns the original time unchanged.
+        """
+        now = time.monotonic()
+        elapsed_ms = (now - last_emit_time) * 1000
+        if force or elapsed_ms >= self._loop_event_throttle_ms:
+            await self._emit_event(event)
+            return now
+        return last_emit_time
 
     async def execute_loop(
         self,
@@ -161,12 +194,27 @@ class LoopExecutor:
         all_iteration_outputs: list[list[Artifact]] = []
         current_input = input_artifacts
         last_output: list[Artifact] = []
+        last_iter_emit_time = 0.0  # force first iteration to emit
 
         for iteration in range(1, loop_spec.max_iterations + 1):
+            is_last = iteration == loop_spec.max_iterations
+
             # Check timeout
             if loop_spec.timeout_minutes is not None:
                 elapsed = time.monotonic() - start_time
                 if elapsed > loop_spec.timeout_minutes * 60:
+                    # Force-emit final iteration state before timeout event
+                    await self._emit_loop_iteration_throttled(
+                        {
+                            "type": "loop:iteration",
+                            "run_id": run_id,
+                            "node_id": loop_node_id,
+                            "iteration": iteration,
+                            "timestamp": datetime.now(UTC).isoformat(),
+                        },
+                        last_iter_emit_time,
+                        force=True,
+                    )
                     await self._emit_event({
                         "type": "loop:timeout",
                         "run_id": run_id,
@@ -179,13 +227,17 @@ class LoopExecutor:
                         f" {loop_spec.timeout_minutes} minutes"
                     )
 
-            await self._emit_event({
-                "type": "loop:iteration",
-                "run_id": run_id,
-                "node_id": loop_node_id,
-                "iteration": iteration,
-                "timestamp": datetime.now(UTC).isoformat(),
-            })
+            last_iter_emit_time = await self._emit_loop_iteration_throttled(
+                {
+                    "type": "loop:iteration",
+                    "run_id": run_id,
+                    "node_id": loop_node_id,
+                    "iteration": iteration,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                },
+                last_iter_emit_time,
+                force=is_last,  # always emit last possible iteration
+            )
 
             # Execute inner nodes
             inner_artifacts, error = await self._execute_inner_iteration(
@@ -206,6 +258,18 @@ class LoopExecutor:
             # Check exit condition
             exit_met = self._check_exit(loop_spec.exit, last_node_artifacts)
             if exit_met:
+                # Force-emit final iteration state before completion
+                await self._emit_loop_iteration_throttled(
+                    {
+                        "type": "loop:iteration",
+                        "run_id": run_id,
+                        "node_id": loop_node_id,
+                        "iteration": iteration,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    },
+                    last_iter_emit_time,
+                    force=True,
+                )
                 await self._emit_event({
                     "type": "loop:completed",
                     "run_id": run_id,
@@ -227,7 +291,7 @@ class LoopExecutor:
             else:
                 current_input = last_output
 
-        # Max iterations exceeded
+        # Max iterations exceeded — final iteration already force-emitted (is_last=True)
         await self._emit_event({
             "type": "loop:max_iterations",
             "run_id": run_id,
@@ -256,10 +320,16 @@ class LoopExecutor:
         inner_scheduler = Scheduler(sub_dag)
         node_artifacts: dict[str, list[Artifact]] = {}
 
-        # Entry nodes (no internal deps) get input artifacts
-        entry_nodes = sub_dag.entry_nodes()
-        for entry_id in entry_nodes:
-            node_artifacts[entry_id] = input_artifacts
+        # Entry nodes get input artifacts
+        loop_spec = spec.nodes[loop_node_id].loop
+        if loop_spec and loop_spec.entry_node:
+            # Explicit entry_node — only it receives input
+            node_artifacts[loop_spec.entry_node] = input_artifacts
+        else:
+            # Default: all nodes with no internal deps receive input
+            entry_nodes = sub_dag.entry_nodes()
+            for entry_id in entry_nodes:
+                node_artifacts[entry_id] = input_artifacts
 
         while not inner_scheduler.is_complete() and not inner_scheduler.is_blocked():
             ready = inner_scheduler.ready_nodes()
@@ -281,15 +351,25 @@ class LoopExecutor:
             if tasks:
                 await asyncio.gather(*tasks)
 
+        # Determine output node
+        if loop_spec and loop_spec.output_node:
+            out_node = loop_spec.output_node
+        else:
+            topo = sub_dag.topological_order()
+            out_node = topo[-1] if topo else contains[-1]
+
         # Check for failures
         if inner_scheduler._failed:
+            # Hard fail if the designated output_node failed
+            if out_node in inner_scheduler._failed:
+                return [], (
+                    f"Loop '{loop_node_id}' iteration {iteration}: "
+                    f"output node '{out_node}' failed"
+                )
             failed = ", ".join(sorted(inner_scheduler._failed))
             return [], f"Loop '{loop_node_id}' iteration {iteration}: nodes failed: {failed}"
 
-        # Return output of the last node in topological order
-        topo = sub_dag.topological_order()
-        last_node = topo[-1] if topo else contains[-1]
-        return node_artifacts.get(last_node, []), None
+        return node_artifacts.get(out_node, []), None
 
     async def _execute_inner_node(
         self,

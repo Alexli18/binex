@@ -54,6 +54,7 @@ nav:
     - Execution: concepts/execution.md
     - Lineage: concepts/lineage.md
     - Loops: concepts/loops.md
+    - Tools & MCP: concepts/tools.md
   - CLI Reference:
     - run: cli/run.md
     - debug: cli/debug.md
@@ -66,6 +67,7 @@ nav:
     - validate: cli/validate.md
     - scaffold: cli/scaffold.md
     - cost: cli/cost.md
+    - budget-guide: cli/budget-guide.md
     - list: cli/list.md
     - start: cli/start.md
     - explore: cli/explore.md
@@ -75,6 +77,7 @@ nav:
     - plugins: cli/plugins.md
     - export: cli/export.md
     - workflow: cli/workflow.md
+    - scheduler: cli/scheduler.md
     - ui: cli/ui.md
   - Architecture:
     - Overview: architecture/overview.md

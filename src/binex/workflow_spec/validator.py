@@ -311,6 +311,22 @@ def _check_loop_nodes(
                 f"{node.loop.exit.field!r} (expected $.field.path)"
             )
 
+        # 7. entry_node must be in contains
+        if node.loop.entry_node is not None:
+            if node.loop.entry_node not in node.loop.contains:
+                errors.append(
+                    f"Loop '{node_id}': entry_node '{node.loop.entry_node}' "
+                    f"is not in contains"
+                )
+
+        # 8. output_node must be in contains
+        if node.loop.output_node is not None:
+            if node.loop.output_node not in node.loop.contains:
+                errors.append(
+                    f"Loop '{node_id}': output_node '{node.loop.output_node}' "
+                    f"is not in contains"
+                )
+
 
 def _check_loop_internal_cycles(
     loop_id: str,

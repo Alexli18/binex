@@ -50,6 +50,8 @@ interface LoopSpec {
   accumulate?: boolean;
   contains?: string[];
   exit?: { field: string; operator: string; value: string | number };
+  entry_node?: string;
+  output_node?: string;
 }
 
 interface LoopNodeSpec {
@@ -128,6 +130,8 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
           exitCondition: loopSpec.exit
             ? { field: loopSpec.exit.field, operator: loopSpec.exit.operator, value: String(loopSpec.exit.value) }
             : null,
+          entryNode: loopSpec.entry_node || undefined,
+          outputNode: loopSpec.output_node || undefined,
         },
       });
 

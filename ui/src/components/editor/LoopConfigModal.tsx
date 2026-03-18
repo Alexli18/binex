@@ -10,6 +10,13 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ExitConditionBuilder } from './ExitConditionBuilder';
 import type { ExitCondition, LoopContainerData } from '@/lib/loop-types';
 import { evaluateExitCondition } from '@/lib/loop-utils';
@@ -20,6 +27,7 @@ interface LoopConfigModalProps {
   onSave: (config: LoopContainerData) => void;
   mode: 'create' | 'edit';
   initialData?: LoopContainerData;
+  containsNodes?: string[];
 }
 
 const NAME_PATTERN = /^[a-z][a-z0-9_]*$/;
@@ -30,12 +38,15 @@ export function LoopConfigModal({
   onSave,
   mode,
   initialData,
+  containsNodes = [],
 }: LoopConfigModalProps) {
   const [label, setLabel] = useState(initialData?.label || '');
   const [maxIterations, setMaxIterations] = useState(initialData?.maxIterations || 5);
   const [exitCondition, setExitCondition] = useState<ExitCondition>(
     initialData?.exitCondition || { field: '', operator: '>=', value: '' },
   );
+  const [entryNode, setEntryNode] = useState(initialData?.entryNode || '');
+  const [outputNode, setOutputNode] = useState(initialData?.outputNode || '');
   const [testJson, setTestJson] = useState('');
   const [testResult, setTestResult] = useState<{
     pass: boolean;
@@ -64,6 +75,8 @@ export function LoopConfigModal({
       label,
       exitCondition,
       maxIterations,
+      entryNode: entryNode || undefined,
+      outputNode: outputNode || undefined,
     });
   };
 
@@ -152,6 +165,54 @@ export function LoopConfigModal({
               Hard limit. Loop stops regardless of condition.
             </p>
           </div>
+
+          {/* Entry / Output Node overrides */}
+          {containsNodes.length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-slate-400 block mb-1 font-medium">
+                  Entry Node (optional)
+                </label>
+                <Select value={entryNode} onValueChange={(v) => setEntryNode(v === '__auto__' ? '' : v)}>
+                  <SelectTrigger className="h-9 bg-slate-800 border-slate-600 text-xs">
+                    <SelectValue placeholder="Auto-detect" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="__auto__" className="text-xs text-slate-400">
+                      Auto-detect
+                    </SelectItem>
+                    {containsNodes.map((n) => (
+                      <SelectItem key={n} value={n} className="text-xs">
+                        {n}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-slate-500 mt-0.5">Receives input data</p>
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 block mb-1 font-medium">
+                  Output Node (optional)
+                </label>
+                <Select value={outputNode} onValueChange={(v) => setOutputNode(v === '__auto__' ? '' : v)}>
+                  <SelectTrigger className="h-9 bg-slate-800 border-slate-600 text-xs">
+                    <SelectValue placeholder="Auto-detect" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="__auto__" className="text-xs text-slate-400">
+                      Auto-detect
+                    </SelectItem>
+                    {containsNodes.map((n) => (
+                      <SelectItem key={n} value={n} className="text-xs">
+                        {n}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-slate-500 mt-0.5">Checked for exit condition</p>
+              </div>
+            </div>
+          )}
 
           {/* Test Condition */}
           <div>

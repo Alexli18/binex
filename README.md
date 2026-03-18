@@ -186,6 +186,13 @@ Debug any node → click Replay → swap the model or prompt → re-run just tha
 ### CLI
 
 ```bash
+# Set your API key (or create a .env file)
+export OPENAI_API_KEY=sk-...
+```
+
+> **Tip:** For fully local runs with no API key, use [Ollama](https://ollama.com/): `ollama pull llama3.2`
+
+```bash
 # Zero-config demo
 binex hello
 ```
@@ -481,9 +488,28 @@ I'm a solo developer building this in the open. Every star, issue, and PR makes 
 
 ---
 
-## Configuration
+## Environment Variables
 
-Binex can be configured via environment variables:
+Binex loads `.env` files automatically via [python-dotenv](https://github.com/theskumar/python-dotenv) at startup. Create a `.env` file in your project root — no extra flags needed.
+
+### LLM Provider API Keys
+
+Set the key for the provider(s) you use. Binex routes LLM calls through [LiteLLM](https://docs.litellm.ai/), so any LiteLLM-supported key works.
+
+| Variable | Provider |
+|----------|----------|
+| `OPENAI_API_KEY` | OpenAI (gpt-4o, gpt-4o-mini, etc.) |
+| `ANTHROPIC_API_KEY` | Anthropic (claude-sonnet, claude-opus, etc.) |
+| `GEMINI_API_KEY` | Google Gemini (gemini-2.5-flash, etc.) |
+| `GROQ_API_KEY` | Groq (llama, mixtral, etc.) |
+| `MISTRAL_API_KEY` | Mistral (mistral-large, etc.) |
+| `DEEPSEEK_API_KEY` | DeepSeek (deepseek-chat, etc.) |
+| `TOGETHER_API_KEY` | Together AI |
+| `OPENROUTER_API_KEY` | OpenRouter (includes free models) |
+
+> **Ollama** runs locally and does not require an API key. Use `llm://ollama/llama3.2` in your workflows.
+
+### Binex Runtime Settings
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -492,10 +518,52 @@ Binex can be configured via environment variables:
 | `BINEX_DEFAULT_MAX_RETRIES` | `1` | Default retry count for failed nodes |
 | `BINEX_DEFAULT_BACKOFF` | `exponential` | Retry backoff strategy (`fixed` or `exponential`) |
 | `BINEX_REGISTRY_URL` | `http://localhost:8000` | Default A2A agent registry URL |
+| `BINEX_WEBHOOK_URL` | none | Webhook URL for run completion notifications |
+
+### Default LLM Configuration
+
+Override default LLM settings used by the `binex hello` demo and agent defaults:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BINEX_LLM_MODEL` | `ollama/llama3.2` | Default model for LLM agents |
+| `BINEX_LLM_API_BASE` | none | Override API base URL |
+| `BINEX_LLM_API_KEY` | none | Override API key (per-node `config.api_key` takes priority) |
+| `BINEX_LLM_TEMPERATURE` | `0.7` | Default temperature |
+| `BINEX_LLM_MAX_TOKENS` | `2048` | Default max tokens |
+
+### OpenTelemetry (optional)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | none | OTLP endpoint for traces (enables telemetry) |
+| `OTEL_TRACES_EXPORTER` | `otlp` | Exporter type (`otlp` or `console`) |
+| `OTEL_SERVICE_NAME` | `binex` | Service name in traces |
+
+### Example `.env` File
+
+```bash
+# Provider keys (set one or more)
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Optional: OpenRouter for free models
+OPENROUTER_API_KEY=sk-or-...
+
+# Optional: runtime overrides
+# BINEX_STORE_PATH=.binex
+# BINEX_LLM_MODEL=ollama/llama3.2
+# BINEX_LLM_TEMPERATURE=0.7
+```
+
+> **Tip:** `.env` is loaded from the current working directory. The `binex start` wizard generates a `.env` with your chosen provider key. All `.env` files should be in `.gitignore`.
+
+### Data Storage
 
 All data is stored in `.binex/` (gitignored by default):
 - `.binex/binex.db` — SQLite database (runs, execution records, cost records)
 - `.binex/artifacts/` — JSON artifact files
+- `.binex/scheduler.json` — Scheduler state (registered workflows, execution history)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

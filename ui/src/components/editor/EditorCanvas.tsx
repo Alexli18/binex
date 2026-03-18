@@ -22,6 +22,7 @@ import {
   getAbsolutePosition,
   getNextFreePosition,
   calculateLoopSize,
+  getLoopFlowInfo,
 } from '@/lib/loop-utils';
 
 const rfNodeTypes = {
@@ -346,6 +347,42 @@ function InnerCanvas({
   const onEdgesDelete = useCallback(() => {
     setTimeout(onGraphChange, 0);
   }, [onGraphChange]);
+
+  // Sync loopRole on child nodes when edges change
+  useEffect(() => {
+    const loopNodes = rfNodes.filter((n) => n.type === 'loopContainer');
+    if (loopNodes.length === 0) return;
+
+    let changed = false;
+    const updatedNodes = rfNodes.map((node) => {
+      if (!node.parentNode) return node;
+
+      const loopNode = loopNodes.find((l) => l.id === node.parentNode);
+      if (!loopNode) return node;
+
+      const flowInfo = getLoopFlowInfo(
+        loopNode.id, rfNodes, rfEdges,
+        loopNode.data?.entryNode, loopNode.data?.outputNode,
+      );
+
+      const isEntry = flowInfo.entryNodeIds.includes(node.id);
+      const isExit = flowInfo.exitNodeIds.includes(node.id);
+      const role = isEntry && isExit ? 'entry+exit'
+        : isEntry ? 'entry'
+        : isExit ? 'exit'
+        : null;
+
+      if (node.data?.loopRole !== role) {
+        changed = true;
+        return { ...node, data: { ...node.data, loopRole: role } };
+      }
+      return node;
+    });
+
+    if (changed) setRfNodes(updatedNodes);
+    // Only recompute when edges change to avoid infinite loop from setRfNodes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rfEdges]);
 
   return (
     <>

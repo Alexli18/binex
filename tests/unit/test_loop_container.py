@@ -14,6 +14,7 @@ Covers:
 
 from __future__ import annotations
 
+import asyncio
 import json
 
 import pytest
@@ -1348,3 +1349,326 @@ class TestDAGLoopSubgraph:
         dag = DAG.from_workflow(ws)
         with pytest.raises(KeyError, match="No loop subgraph"):
             dag.get_loop_subgraph("nonexistent")
+
+
+# ---------------------------------------------------------------------------
+# 16. Loop iteration event throttling tests
+# ---------------------------------------------------------------------------
+
+
+class TestLoopIterationThrottling:
+    """Tests for loop:iteration SSE event throttling."""
+
+    @pytest.mark.asyncio
+    async def test_throttle_suppresses_rapid_events(self):
+        """Events emitted faster than throttle interval are suppressed."""
+        from binex.runtime.loop_executor import LoopExecutor
+
+        emitted: list[dict] = []
+
+        async def capture(event: dict) -> None:
+            emitted.append(event)
+
+        executor = LoopExecutor(
+            artifact_store=None,
+            execution_store=None,
+            dispatcher=None,
+            event_callback=capture,
+            loop_event_throttle_ms=100_000,  # very long — suppress everything
+        )
+
+        event = {"type": "loop:iteration", "iteration": 1}
+        # First call: time=0, should emit (0 >= any threshold from epoch)
+        t = await executor._emit_loop_iteration_throttled(event, 0.0)
+        assert len(emitted) == 1
+        assert t > 0
+
+        # Second call with updated time — should be suppressed
+        event2 = {"type": "loop:iteration", "iteration": 2}
+        t2 = await executor._emit_loop_iteration_throttled(event2, t)
+        assert len(emitted) == 1  # still 1, suppressed
+        assert t2 == t  # time unchanged
+
+    @pytest.mark.asyncio
+    async def test_throttle_allows_after_interval(self):
+        """Events are emitted after throttle interval has passed."""
+        from binex.runtime.loop_executor import LoopExecutor
+
+        emitted: list[dict] = []
+
+        async def capture(event: dict) -> None:
+            emitted.append(event)
+
+        executor = LoopExecutor(
+            artifact_store=None,
+            execution_store=None,
+            dispatcher=None,
+            event_callback=capture,
+            loop_event_throttle_ms=1,  # 1ms — almost everything passes
+        )
+
+        event1 = {"type": "loop:iteration", "iteration": 1}
+        t = await executor._emit_loop_iteration_throttled(event1, 0.0)
+        assert len(emitted) == 1
+
+        # tiny sleep to exceed 1ms
+        await asyncio.sleep(0.01)
+
+        event2 = {"type": "loop:iteration", "iteration": 2}
+        t2 = await executor._emit_loop_iteration_throttled(event2, t)
+        assert len(emitted) == 2
+        assert t2 > t
+
+    @pytest.mark.asyncio
+    async def test_force_bypasses_throttle(self):
+        """force=True always emits regardless of throttle interval."""
+        from binex.runtime.loop_executor import LoopExecutor
+
+        emitted: list[dict] = []
+
+        async def capture(event: dict) -> None:
+            emitted.append(event)
+
+        executor = LoopExecutor(
+            artifact_store=None,
+            execution_store=None,
+            dispatcher=None,
+            event_callback=capture,
+            loop_event_throttle_ms=100_000,
+        )
+
+        event = {"type": "loop:iteration", "iteration": 1}
+        t = await executor._emit_loop_iteration_throttled(event, 0.0)
+        assert len(emitted) == 1
+
+        # Force emit even though interval not passed
+        event2 = {"type": "loop:iteration", "iteration": 50}
+        t2 = await executor._emit_loop_iteration_throttled(event2, t, force=True)
+        assert len(emitted) == 2
+        assert t2 > t
+        assert emitted[1]["iteration"] == 50
+
+    @pytest.mark.asyncio
+    async def test_default_throttle_class_constant(self):
+        """Default throttle uses class constant LOOP_EVENT_THROTTLE_MS."""
+        from binex.runtime.loop_executor import LoopExecutor
+        executor = LoopExecutor(
+            artifact_store=None,
+            execution_store=None,
+            dispatcher=None,
+        )
+        assert executor._loop_event_throttle_ms == LoopExecutor.LOOP_EVENT_THROTTLE_MS
+        assert executor._loop_event_throttle_ms == 500
+
+    @pytest.mark.asyncio
+    async def test_custom_throttle_override(self):
+        """Custom throttle_ms overrides class default."""
+        from binex.runtime.loop_executor import LoopExecutor
+        executor = LoopExecutor(
+            artifact_store=None,
+            execution_store=None,
+            dispatcher=None,
+            loop_event_throttle_ms=2000,
+        )
+        assert executor._loop_event_throttle_ms == 2000
+
+    @pytest.mark.asyncio
+    async def test_no_callback_noop(self):
+        """Throttled emit with no callback does not raise."""
+        from binex.runtime.loop_executor import LoopExecutor
+        executor = LoopExecutor(
+            artifact_store=None,
+            execution_store=None,
+            dispatcher=None,
+            event_callback=None,
+            loop_event_throttle_ms=0,
+        )
+        event = {"type": "loop:iteration", "iteration": 1}
+        t = await executor._emit_loop_iteration_throttled(event, 0.0)
+        # Should not raise, returns updated time
+        assert t > 0
+
+
+# ---------------------------------------------------------------------------
+# 17. LoopSpec entry_node / output_node tests
+# ---------------------------------------------------------------------------
+
+
+class TestLoopSpecEntryOutputNode:
+    """Tests for entry_node and output_node fields on LoopSpec."""
+
+    def test_entry_node_default_none(self):
+        spec = LoopSpec(
+            exit=LoopExitCondition(field="$.x", operator=">=", value=1),
+            contains=["a", "b"],
+        )
+        assert spec.entry_node is None
+
+    def test_output_node_default_none(self):
+        spec = LoopSpec(
+            exit=LoopExitCondition(field="$.x", operator=">=", value=1),
+            contains=["a", "b"],
+        )
+        assert spec.output_node is None
+
+    def test_entry_node_set(self):
+        spec = LoopSpec(
+            exit=LoopExitCondition(field="$.x", operator=">=", value=1),
+            contains=["a", "b"],
+            entry_node="a",
+        )
+        assert spec.entry_node == "a"
+
+    def test_output_node_set(self):
+        spec = LoopSpec(
+            exit=LoopExitCondition(field="$.x", operator=">=", value=1),
+            contains=["a", "b"],
+            output_node="b",
+        )
+        assert spec.output_node == "b"
+
+    def test_both_entry_and_output_set(self):
+        spec = LoopSpec(
+            exit=LoopExitCondition(field="$.x", operator=">=", value=1),
+            contains=["a", "b"],
+            entry_node="a",
+            output_node="b",
+        )
+        assert spec.entry_node == "a"
+        assert spec.output_node == "b"
+
+    def test_serialization_roundtrip(self):
+        spec = LoopSpec(
+            exit=LoopExitCondition(field="$.x", operator=">=", value=1),
+            contains=["a", "b"],
+            entry_node="a",
+            output_node="b",
+        )
+        data = spec.model_dump()
+        assert data["entry_node"] == "a"
+        assert data["output_node"] == "b"
+        restored = LoopSpec.model_validate(data)
+        assert restored.entry_node == "a"
+        assert restored.output_node == "b"
+
+    def test_none_omitted_in_dump(self):
+        spec = LoopSpec(
+            exit=LoopExitCondition(field="$.x", operator=">=", value=1),
+            contains=["a"],
+        )
+        data = spec.model_dump()
+        assert data["entry_node"] is None
+        assert data["output_node"] is None
+
+
+class TestLoopValidationEntryOutputNode:
+    """Tests for validator checks on entry_node / output_node."""
+
+    def test_valid_entry_node_in_contains(self):
+        from binex.workflow_spec.validator import validate_workflow
+        ws = WorkflowSpec(
+            name="valid-entry",
+            nodes={
+                "a": {"agent": "local://echo", "outputs": ["o"]},
+                "b": {
+                    "agent": "local://echo", "outputs": ["o"],
+                    "depends_on": ["a"],
+                },
+                "loop1": {
+                    "type": "loop", "outputs": ["out"],
+                    "loop": {
+                        "exit": {"field": "$.x", "operator": ">=", "value": 1},
+                        "contains": ["a", "b"],
+                        "entry_node": "a",
+                    },
+                },
+            },
+        )
+        errors = validate_workflow(ws)
+        assert not errors
+
+    def test_valid_output_node_in_contains(self):
+        from binex.workflow_spec.validator import validate_workflow
+        ws = WorkflowSpec(
+            name="valid-output",
+            nodes={
+                "a": {"agent": "local://echo", "outputs": ["o"]},
+                "b": {
+                    "agent": "local://echo", "outputs": ["o"],
+                    "depends_on": ["a"],
+                },
+                "loop1": {
+                    "type": "loop", "outputs": ["out"],
+                    "loop": {
+                        "exit": {"field": "$.x", "operator": ">=", "value": 1},
+                        "contains": ["a", "b"],
+                        "output_node": "b",
+                    },
+                },
+            },
+        )
+        errors = validate_workflow(ws)
+        assert not errors
+
+    def test_invalid_entry_node_not_in_contains(self):
+        from binex.workflow_spec.validator import validate_workflow
+        ws = WorkflowSpec(
+            name="bad-entry",
+            nodes={
+                "a": {"agent": "local://echo", "outputs": ["o"]},
+                "b": {"agent": "local://echo", "outputs": ["o"]},
+                "loop1": {
+                    "type": "loop", "outputs": ["out"],
+                    "loop": {
+                        "exit": {"field": "$.x", "operator": ">=", "value": 1},
+                        "contains": ["a"],
+                        "entry_node": "b",
+                    },
+                },
+            },
+        )
+        errors = validate_workflow(ws)
+        assert any("entry_node" in e and "'b'" in e for e in errors)
+
+    def test_invalid_output_node_not_in_contains(self):
+        from binex.workflow_spec.validator import validate_workflow
+        ws = WorkflowSpec(
+            name="bad-output",
+            nodes={
+                "a": {"agent": "local://echo", "outputs": ["o"]},
+                "b": {"agent": "local://echo", "outputs": ["o"]},
+                "loop1": {
+                    "type": "loop", "outputs": ["out"],
+                    "loop": {
+                        "exit": {"field": "$.x", "operator": ">=", "value": 1},
+                        "contains": ["a"],
+                        "output_node": "b",
+                    },
+                },
+            },
+        )
+        errors = validate_workflow(ws)
+        assert any("output_node" in e and "'b'" in e for e in errors)
+
+    def test_both_invalid_entry_and_output(self):
+        from binex.workflow_spec.validator import validate_workflow
+        ws = WorkflowSpec(
+            name="both-bad",
+            nodes={
+                "a": {"agent": "local://echo", "outputs": ["o"]},
+                "x": {"agent": "local://echo", "outputs": ["o"]},
+                "y": {"agent": "local://echo", "outputs": ["o"]},
+                "loop1": {
+                    "type": "loop", "outputs": ["out"],
+                    "loop": {
+                        "exit": {"field": "$.x", "operator": ">=", "value": 1},
+                        "contains": ["a"],
+                        "entry_node": "x",
+                        "output_node": "y",
+                    },
+                },
+            },
+        )
+        errors = validate_workflow(ws)
+        assert any("entry_node" in e for e in errors)
+        assert any("output_node" in e for e in errors)

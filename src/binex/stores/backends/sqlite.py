@@ -64,7 +64,8 @@ class SqliteExecutionStore:
                 latency_ms INTEGER NOT NULL,
                 timestamp TEXT NOT NULL,
                 trace_id TEXT NOT NULL,
-                error TEXT
+                error TEXT,
+                iteration_number INTEGER
             );
             CREATE TABLE IF NOT EXISTS cost_records (
                 id TEXT PRIMARY KEY,

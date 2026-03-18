@@ -219,6 +219,9 @@ class TestExampleWorkflowsQA:
             assert "nodes" in data, f"{path.name}: missing 'nodes'"
             assert len(data["nodes"]) >= 1, f"{path.name}: no nodes"
             for nid, node in data["nodes"].items():
+                # Loop container nodes have type=loop and agent is auto-set
+                if node.get("type") == "loop":
+                    continue
                 assert "agent" in node, f"{path.name}:{nid}: missing 'agent'"
                 assert "outputs" in node, f"{path.name}:{nid}: missing 'outputs'"
 

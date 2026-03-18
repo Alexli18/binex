@@ -469,7 +469,8 @@ class TestAllExampleYAMLsStrict:
             "STORAGE_KEY": "test-storage-key",
         }
         known_prefixes = ("local://", "llm://", "a2a://", "human://",
-                          "langchain://", "crewai://", "autogen://")
+                          "langchain://", "crewai://", "autogen://",
+                          "loop://")
         yaml_files = sorted(EXAMPLES_DIR.glob("*.yaml"))
         violations: list[str] = []
         original_env = os.environ.copy()

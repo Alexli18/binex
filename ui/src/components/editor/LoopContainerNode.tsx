@@ -1,7 +1,10 @@
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useMemo } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from 'reactflow';
 import { RefreshCw, Settings, Trash2, AlertTriangle, Plus } from 'lucide-react';
 import type { LoopContainerData } from '@/lib/loop-types';
+import { getLoopFlowInfo } from '@/lib/loop-utils';
+import { LoopInputZone } from './LoopInputZone';
+import { LoopOutputZone } from './LoopOutputZone';
 import { LoopFooterBadge } from './LoopFooterBadge';
 import { LoopRuntimeBadge } from './LoopRuntimeBadge';
 import { LoopConfigModal } from './LoopConfigModal';
@@ -10,7 +13,7 @@ import { cn } from '@/lib/utils';
 const LOOP_COLOR = '#14b8a6'; // teal-500
 
 function LoopContainerNodeInner({ data, id }: NodeProps<LoopContainerData>) {
-  const { deleteElements, getNodes } = useReactFlow();
+  const { deleteElements, getNodes, getEdges } = useReactFlow();
   const [configOpen, setConfigOpen] = useState(false);
 
   const childNodes = getNodes().filter((n) => n.parentNode === id);
@@ -18,6 +21,21 @@ function LoopContainerNodeInner({ data, id }: NodeProps<LoopContainerData>) {
   const hasHumanApproval = childNodes.some(
     (n) => n.data?.nodeType === 'human-approve',
   );
+
+  // Compute flow info with override support
+  const edges = getEdges();
+  const flowInfo = useMemo(
+    () => getLoopFlowInfo(id, getNodes(), edges, data.entryNode, data.outputNode),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [id, childNodes.length, edges.length, data.entryNode, data.outputNode],
+  );
+
+  // connectedFrom: external node feeding into loop's input handle
+  const incomingEdge = edges.find((e) => e.target === id);
+  const connectedFromNode = incomingEdge
+    ? getNodes().find((n) => n.id === incomingEdge.source)
+    : null;
+  const connectedFrom = connectedFromNode?.data?.label ?? connectedFromNode?.id;
 
   const handleDelete = useCallback(
     (e: React.MouseEvent) => {
@@ -47,6 +65,8 @@ function LoopContainerNodeInner({ data, id }: NodeProps<LoopContainerData>) {
       data.label = config.label;
       data.exitCondition = config.exitCondition;
       data.maxIterations = config.maxIterations;
+      data.entryNode = config.entryNode;
+      data.outputNode = config.outputNode;
       setConfigOpen(false);
       notifyChange();
     },
@@ -132,17 +152,32 @@ function LoopContainerNodeInner({ data, id }: NodeProps<LoopContainerData>) {
         </div>
       </div>
 
+      {/* INPUT zone */}
+      <LoopInputZone
+        entryLabels={flowInfo.entryLabels}
+        connectedFrom={connectedFrom}
+      />
+
       {/* Content area — child nodes are rendered here by React Flow */}
       <div style={{ minHeight: 100, padding: '10px 20px 50px 20px' }}>
         {childNodes.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-[120px] gap-2">
+          <div className="flex flex-col items-center justify-center h-[100px] gap-2">
             <div className="w-16 h-16 rounded-lg border-2 border-dashed border-teal-500/30 flex items-center justify-center">
               <Plus size={24} className="text-teal-500/40" />
             </div>
-            <span className="text-slate-500 text-xs">Drop nodes here to add to loop</span>
+            <span className="text-slate-500 text-xs text-center leading-relaxed">
+              Drop nodes here or click +
+            </span>
           </div>
         )}
       </div>
+
+      {/* OUTPUT zone */}
+      <LoopOutputZone
+        exitLabels={flowInfo.exitLabels}
+        exitCondition={data.exitCondition}
+        onClick={() => setConfigOpen(true)}
+      />
 
       {/* Warnings */}
       {(hasNestedLoop || hasHumanApproval) && (
@@ -194,6 +229,7 @@ function LoopContainerNodeInner({ data, id }: NodeProps<LoopContainerData>) {
           open={configOpen}
           mode="edit"
           initialData={data}
+          containsNodes={childNodes.map((n) => n.data?.label || n.id)}
           onClose={() => setConfigOpen(false)}
           onSave={handleConfigSave}
         />

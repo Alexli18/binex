@@ -37,3 +37,9 @@ src/binex/ui/static/*
 ui/node_modules/
 ui/dist/
 .playwright-mcp/
+
+# Local dev artifacts
+LOOP_CONTAINER_DESIGN_PLAN.md
+NEW.yaml
+new-multi-agent.yaml
+*_DESIGN_PLAN.md

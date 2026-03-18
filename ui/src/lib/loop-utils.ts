@@ -1,8 +1,8 @@
-import type { Node } from 'reactflow';
+import type { Node, Edge } from 'reactflow';
 import type { ExitCondition } from './loop-types';
 
 /* ── Layout constants ── */
-export const LOOP_PADDING = { top: 60, bottom: 60, left: 20, right: 20 };
+export const LOOP_PADDING = { top: 80, bottom: 80, left: 20, right: 20 };
 export const NODE_W = 180;
 export const NODE_H = 50;
 export const GAP = 20;
@@ -96,6 +96,66 @@ export function getAbsolutePosition(
   return {
     x: parent.position.x + node.position.x,
     y: parent.position.y + node.position.y,
+  };
+}
+
+export interface LoopFlowInfo {
+  entryNodeIds: string[];
+  exitNodeIds: string[];
+  entryLabels: string[];
+  exitLabels: string[];
+}
+
+/**
+ * Determine entry/exit nodes of a loop container from the React Flow graph.
+ * Entry = no internal incoming edges. Exit = no internal outgoing edges.
+ * Supports explicit overrides via entryNode/outputNode labels.
+ */
+export function getLoopFlowInfo(
+  loopId: string,
+  nodes: Node[],
+  edges: Edge[],
+  overrideEntry?: string,
+  overrideOutput?: string,
+): LoopFlowInfo {
+  const children = nodes.filter((n) => n.parentNode === loopId);
+  const childIds = new Set(children.map((n) => n.id));
+
+  if (children.length === 0) {
+    return { entryNodeIds: [], exitNodeIds: [], entryLabels: [], exitLabels: [] };
+  }
+
+  const internalEdges = edges.filter(
+    (e) => childIds.has(e.source) && childIds.has(e.target),
+  );
+
+  const hasInternalIncoming = new Set(internalEdges.map((e) => e.target));
+  const hasInternalOutgoing = new Set(internalEdges.map((e) => e.source));
+
+  let entryNodes = children.filter((n) => !hasInternalIncoming.has(n.id));
+  let exitNodes = children.filter((n) => !hasInternalOutgoing.has(n.id));
+
+  // Apply overrides if set
+  if (overrideEntry) {
+    const found = children.filter((n) => n.data?.label === overrideEntry);
+    if (found.length > 0) entryNodes = found;
+  }
+  if (overrideOutput) {
+    const found = children.filter((n) => n.data?.label === overrideOutput);
+    if (found.length > 0) exitNodes = found;
+  }
+
+  // Fallback: single node is both entry and exit
+  if (children.length === 1) {
+    entryNodes = children;
+    exitNodes = children;
+  }
+
+  return {
+    entryNodeIds: entryNodes.map((n) => n.id),
+    exitNodeIds: exitNodes.map((n) => n.id),
+    entryLabels: entryNodes.map((n) => n.data?.label ?? n.id),
+    exitLabels: exitNodes.map((n) => n.data?.label ?? n.id),
   };
 }
 
