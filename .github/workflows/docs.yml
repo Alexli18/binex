@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install mkdocs-material
+      - run: pip install mkdocs-material mkdocs-glightbox
 
       - name: Build MkDocs into docs/ subdirectory
         run: mkdocs build -d _site/docs
