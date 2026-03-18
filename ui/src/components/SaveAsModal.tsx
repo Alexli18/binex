@@ -4,10 +4,11 @@ interface SaveAsModalProps {
   onSave: (path: string) => void;
   onClose: () => void;
   isPending: boolean;
+  initialFilename?: string;
 }
 
-export function SaveAsModal({ onSave, onClose, isPending }: SaveAsModalProps) {
-  const [filename, setFilename] = useState('my-workflow.yaml');
+export function SaveAsModal({ onSave, onClose, isPending, initialFilename }: SaveAsModalProps) {
+  const [filename, setFilename] = useState(initialFilename ?? 'my-workflow.yaml');
 
   const handleSubmit = () => {
     const path = filename.endsWith('.yaml') ? filename : `${filename}.yaml`;

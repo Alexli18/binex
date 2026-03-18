@@ -15,6 +15,7 @@ export interface EditorToolbarProps {
   onSwitchToVisual: () => void;
   onSwitchToYaml: () => void;
   onSave: () => void;
+  onSaveAs: () => void;
   onRun: () => void;
   onOpenSettings?: () => void;
 }
@@ -30,6 +31,7 @@ export function EditorToolbar({
   onSwitchToVisual,
   onSwitchToYaml,
   onSave,
+  onSaveAs,
   onRun,
   onOpenSettings,
 }: EditorToolbarProps) {
@@ -98,6 +100,18 @@ export function EditorToolbar({
         </Button>
       )}
 
+      {selectedPath && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onSaveAs}
+          disabled={isSaving}
+          className="text-slate-400 hover:text-slate-200"
+          title="Save a copy with a new name"
+        >
+          Save As...
+        </Button>
+      )}
       <Button
         variant="outline"
         size="sm"
@@ -108,7 +122,7 @@ export function EditorToolbar({
           isSaving
         }
       >
-        {isSaving ? 'Saving...' : 'Save'}
+        {isSaving ? 'Saving...' : selectedPath ? 'Save' : 'Save As...'}
       </Button>
       <Button
         size="sm"

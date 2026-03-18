@@ -245,6 +245,7 @@ export default function WorkflowEditor() {
   const [mcpServers, setMcpServers] = useState<Record<string, McpServerConfig>>({});
   const [schedule, setSchedule] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [workflowName, setWorkflowName] = useState('my-workflow');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const syncDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -265,6 +266,11 @@ export default function WorkflowEditor() {
     if (workflowData?.content != null) {
       setContent(workflowData.content);
       setOriginalContent(workflowData.content);
+      // Derive workflow name from filename
+      if (selectedPath) {
+        const stem = selectedPath.split('/').pop()?.replace(/\.ya?ml$/, '') ?? 'my-workflow';
+        setWorkflowName(stem);
+      }
       // Extract workflow-level settings from YAML
       try {
         const result = yamlToRfGraph(workflowData.content);
@@ -345,7 +351,7 @@ export default function WorkflowEditor() {
   const syncVisualToYaml = useCallback(() => {
     if (syncDebounceRef.current) clearTimeout(syncDebounceRef.current);
     syncDebounceRef.current = setTimeout(() => {
-      const yamlStr = graphToYaml(rfNodes, rfEdges, 'my-workflow', { mcpServers, schedule });
+      const yamlStr = graphToYaml(rfNodes, rfEdges, workflowName, { mcpServers, schedule });
       setContent(yamlStr);
     }, 500);
   }, [rfNodes, rfEdges, mcpServers, schedule]);
@@ -371,7 +377,7 @@ export default function WorkflowEditor() {
   }, [content, setRfNodes, setRfEdges]);
 
   const switchToYaml = useCallback(() => {
-    const yamlStr = graphToYaml(rfNodes, rfEdges, 'my-workflow', { mcpServers, schedule });
+    const yamlStr = graphToYaml(rfNodes, rfEdges, workflowName, { mcpServers, schedule });
     setContent(yamlStr);
     setMode('yaml');
   }, [rfNodes, rfEdges, mcpServers, schedule]);
@@ -386,12 +392,24 @@ export default function WorkflowEditor() {
 
   const handleSaveAs = useCallback(
     (path: string) => {
+      const stem = path.split('/').pop()?.replace(/\.ya?ml$/, '') ?? 'my-workflow';
+      // Update name: field in the YAML to match the chosen filename
+      let updatedContent = content;
+      try {
+        const doc = yaml.load(content) as Record<string, unknown>;
+        if (doc && typeof doc === 'object') {
+          doc.name = stem;
+          updatedContent = yaml.dump(doc, { indent: 2, lineWidth: 120, noRefs: true });
+        }
+      } catch { /* keep original content on parse error */ }
       saveMutation.mutate(
-        { path, content },
+        { path, content: updatedContent },
         {
           onSuccess: () => {
             setSelectedPath(path);
-            setOriginalContent(content);
+            setWorkflowName(stem);
+            setContent(updatedContent);
+            setOriginalContent(updatedContent);
             setShowSaveAs(false);
             toast.success('Workflow saved');
           },
@@ -491,6 +509,7 @@ export default function WorkflowEditor() {
         onSwitchToVisual={switchToVisual}
         onSwitchToYaml={switchToYaml}
         onSave={() => (selectedPath ? handleSave() : setShowSaveAs(true))}
+        onSaveAs={() => setShowSaveAs(true)}
         onRun={handleRun}
         onOpenSettings={() => setSettingsOpen(true)}
       />
@@ -628,6 +647,7 @@ export default function WorkflowEditor() {
         yamlContent={content}
         showSaveAs={showSaveAs}
         isSaving={saveMutation.isPending}
+        saveAsInitialFilename={selectedPath?.split('/').pop() ?? 'my-workflow.yaml'}
         onSaveAs={handleSaveAs}
         onCloseSaveAs={() => setShowSaveAs(false)}
       />

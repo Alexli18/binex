@@ -7,6 +7,7 @@ export interface EditorSidebarProps {
   yamlContent: string;
   showSaveAs: boolean;
   isSaving: boolean;
+  saveAsInitialFilename?: string;
   onSaveAs: (path: string) => void;
   onCloseSaveAs: () => void;
 }
@@ -18,6 +19,7 @@ export function EditorSidebar({
   yamlContent,
   showSaveAs,
   isSaving,
+  saveAsInitialFilename,
   onSaveAs,
   onCloseSaveAs,
 }: EditorSidebarProps) {
@@ -29,6 +31,7 @@ export function EditorSidebar({
           onSave={onSaveAs}
           onClose={onCloseSaveAs}
           isPending={isSaving}
+          initialFilename={saveAsInitialFilename}
         />
       )}
     </>

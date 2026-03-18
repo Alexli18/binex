@@ -15,6 +15,7 @@ function makeProps(overrides: Partial<EditorToolbarProps> = {}): EditorToolbarPr
     onSwitchToVisual: vi.fn(),
     onSwitchToYaml: vi.fn(),
     onSave: vi.fn(),
+    onSaveAs: vi.fn(),
     onRun: vi.fn(),
     ...overrides,
   };
@@ -27,9 +28,9 @@ describe('EditorToolbar', () => {
     expect(screen.getByText('YAML')).toBeInTheDocument();
   });
 
-  it('renders Save and Run buttons', () => {
+  it('renders Save As and Run buttons for new workflow', () => {
     render(<EditorToolbar {...makeProps()} />);
-    expect(screen.getByText('Save')).toBeInTheDocument();
+    expect(screen.getByText('Save As...')).toBeInTheDocument();
     expect(screen.getByText('Run')).toBeInTheDocument();
   });
 
