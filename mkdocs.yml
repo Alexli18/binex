@@ -53,6 +53,7 @@ nav:
     - Artifacts: concepts/artifacts.md
     - Execution: concepts/execution.md
     - Lineage: concepts/lineage.md
+    - Loops: concepts/loops.md
   - CLI Reference:
     - run: cli/run.md
     - debug: cli/debug.md

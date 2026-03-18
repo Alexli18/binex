@@ -23,6 +23,7 @@ class ExecutionRecord(BaseModel):
     latency_ms: int
     trace_id: str
     error: str | None = None
+    iteration_number: int | None = None
 ```
 
 An execution record captures everything that happened when a node ran: which agent handled it, what went in, what came out, how long it took, and whether it succeeded or failed.
@@ -52,8 +53,18 @@ binex replay show <run-id>
 
 The `replay` commands read from the SQLite store and display the execution history with status, latency, and error details.
 
+## Loop Iterations
+
+When a node executes inside a [loop container](loops.md), its execution record includes additional context:
+
+- **`iteration_number`** — 1-based iteration index (e.g., 1, 2, 3). `None` for non-loop nodes.
+- **`task_id` format** — `{loop_node_id}.{node_id}` (dotted notation), allowing you to identify which loop and which inner node the record belongs to.
+
+This enables per-iteration debugging and cost analysis. Use `binex debug <run-id>` to inspect loop executions, or the Loops API (`GET /api/v1/loops/{run_id}`) for programmatic access.
+
 ## Related Concepts
 
 - [Workflows](workflows.md) -- each workflow run produces execution records
 - [Artifacts](artifacts.md) -- execution records reference input and output artifacts
 - [Lineage](lineage.md) -- lineage traces which execution produced each artifact
+- [Loops](loops.md) -- loop containers create execution records with `iteration_number`

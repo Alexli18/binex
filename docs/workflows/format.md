@@ -374,6 +374,81 @@ nodes:
     outputs: [report]
 ```
 
+## Loop Container
+
+Loop containers enable iterative execution of a group of child nodes until an exit condition is met. See [Loop Containers](../concepts/loops.md) for a full conceptual guide.
+
+### Node Fields for Loops
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | `"loop"` | yes | Must be `"loop"` for loop container nodes |
+| `loop` | `LoopSpec` | yes | Loop configuration (see below) |
+
+The `agent` field is automatically set to `loop://container` when `type` is `"loop"`.
+
+### `LoopSpec`
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `exit` | `LoopExitCondition` | — | Exit condition evaluated after each iteration |
+| `max_iterations` | `int` | `5` | Maximum iterations before `MaxIterationsExceededError` (>= 1) |
+| `timeout_minutes` | `float` | `None` | Wall-clock timeout for the entire loop |
+| `accumulate` | `bool` | `false` | Collect all iteration outputs into a single artifact |
+| `contains` | `list[str]` | — | Node IDs that belong to this loop (must be non-empty) |
+
+### `LoopExitCondition`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `field` | `str` | yes | JSONPath expression (must start with `$.`, e.g., `$.score`) |
+| `operator` | `str` | yes | One of: `>=`, `<=`, `>`, `<`, `==`, `!=` |
+| `value` | `float`, `str`, or `bool` | yes | Value to compare against |
+
+### Example
+
+```yaml
+name: iterative-refinement
+nodes:
+  refine_loop:
+    type: loop
+    outputs: [result]
+    loop:
+      exit:
+        field: "$.score"
+        operator: ">="
+        value: 8.0
+      max_iterations: 5
+      timeout_minutes: 10
+      contains:
+        - generate
+        - evaluate
+
+  generate:
+    agent: "llm://openai/gpt-4o"
+    system_prompt: "Write a paragraph about the topic"
+    inputs:
+      topic: "${user.topic}"
+    outputs: [draft]
+
+  evaluate:
+    agent: "llm://openai/gpt-4o"
+    system_prompt: "Score the draft 1-10. Return JSON: {\"score\": N}"
+    inputs:
+      draft: "${generate.draft}"
+    outputs: [evaluation]
+    depends_on: [generate]
+```
+
+### Validation Rules
+
+- A node with `type: "loop"` must have a `loop` spec, and vice versa
+- No nested loops — a loop cannot contain another loop
+- Each node can belong to at most one loop
+- Nodes inside a loop cannot depend on nodes inside a different loop
+- The internal subgraph of contained nodes must be acyclic
+- JSONPath `field` must match the pattern `$.field.nested` (dot notation only)
+
 ## Variable Interpolation
 
 Two variable scopes are available inside `inputs` values:

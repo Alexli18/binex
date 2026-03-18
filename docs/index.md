@@ -20,6 +20,7 @@ Binex orchestrates multi-agent workflows defined in YAML. It executes DAG-based 
 - **OpenTelemetry tracing** — Optional run-level and node-level spans for external collectors (Jaeger, Tempo), with zero overhead when disabled.
 - **Workflow versioning** — Schema versioning with migration framework, plus workflow snapshots stored in SQLite for run reproducibility.
 - **Export & webhooks** — Export run data to CSV/JSON, webhook notifications on run lifecycle events.
+- **Loop containers** — Iterative refinement pipelines with configurable exit conditions, max iterations, timeouts, and per-iteration cost tracking.
 - **Interactive CLI** — Project scaffolding, workflow validation, a built-in doctor command, and a start wizard to get you productive quickly.
 
 ## Install
