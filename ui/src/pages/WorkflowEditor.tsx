@@ -182,6 +182,13 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
     }
   }
 
+  // Ensure parent nodes come before children (React Flow requirement)
+  nodes.sort((a, b) => {
+    if (!a.parentNode && b.parentNode) return -1;
+    if (a.parentNode && !b.parentNode) return 1;
+    return 0;
+  });
+
   return {
     nodes,
     edges,
@@ -469,8 +476,13 @@ export default function WorkflowEditor() {
       />
 
       <WorkflowEditorProvider value={{ mcpServerNames: Object.keys(mcpServers) }}>
-      <div className="flex flex-1 min-h-0">
-        {mode === 'visual' ? (
+      <div className="flex flex-1 min-h-0 relative">
+        {/* Keep EditorCanvas always mounted to preserve ReactFlowProvider state
+            across YAML↔Visual switches. Hidden via display:none when inactive. */}
+        <div
+          className="flex flex-1 min-w-0"
+          style={{ display: mode === 'visual' ? 'flex' : 'none' }}
+        >
           <EditorCanvas
             rfNodes={rfNodes}
             rfEdges={rfEdges}
@@ -479,8 +491,10 @@ export default function WorkflowEditor() {
             onRfNodesChange={onRfNodesChange}
             onRfEdgesChange={onRfEdgesChange}
             onGraphChange={syncVisualToYaml}
+            isVisible={mode === 'visual'}
           />
-        ) : (
+        </div>
+        {mode === 'yaml' && (
           <EditorYaml
             content={content}
             selectedPath={selectedPath}

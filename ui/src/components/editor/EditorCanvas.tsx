@@ -39,6 +39,7 @@ export interface EditorCanvasProps {
   onRfNodesChange: Parameters<typeof ReactFlow>[0]['onNodesChange'];
   onRfEdgesChange: Parameters<typeof ReactFlow>[0]['onEdgesChange'];
   onGraphChange: () => void;
+  isVisible?: boolean;
 }
 
 function InnerCanvas({
@@ -49,11 +50,24 @@ function InnerCanvas({
   onRfNodesChange,
   onRfEdgesChange,
   onGraphChange,
+  isVisible,
 }: EditorCanvasProps) {
-  const { screenToFlowPosition, getNodes } = useReactFlow();
+  const { screenToFlowPosition, getNodes, fitView } = useReactFlow();
   const [pendingLoopConfig, setPendingLoopConfig] = useState<string | null>(null);
 
   const dragOverRef = useRef<string | null>(null);
+  const prevVisibleRef = useRef(isVisible);
+
+  // Re-fit view when becoming visible (YAML → Visual switch)
+  // React Flow needs a frame to measure node dimensions after display:none → flex
+  useEffect(() => {
+    if (isVisible && !prevVisibleRef.current) {
+      requestAnimationFrame(() => {
+        fitView({ duration: 200 });
+      });
+    }
+    prevVisibleRef.current = isVisible;
+  }, [isVisible, fitView]);
 
   // Handle "+" button event from LoopContainerNode
   useEffect(() => {
