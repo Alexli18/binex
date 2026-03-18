@@ -42,10 +42,33 @@ event_bus = EventBus()  # module-level singleton
 @router.get("/{run_id}/events")
 async def stream_events(run_id: str) -> StreamingResponse:
     """Stream SSE events for a workflow run."""
+    # Check if run already completed before SSE connects (race condition fix)
+    from binex.cli import get_stores
+
+    initial_status = None
+    try:
+        store, _ = get_stores()
+        run = await store.get_run(run_id)
+        if run and run.status in ("completed", "failed", "cancelled", "over_budget"):
+            initial_status = run.status
+        await store.close()
+    except Exception:
+        pass
+
     queue = event_bus.subscribe(run_id)
 
     async def generate():
         try:
+            # If run already finished, emit terminal event immediately
+            if initial_status is not None:
+                event = {
+                    "type": "run:completed",
+                    "status": initial_status,
+                    "timestamp": json.dumps(None),
+                }
+                yield f"event: run:completed\ndata: {json.dumps(event)}\n\n"
+                return
+
             while True:
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=30.0)
