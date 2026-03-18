@@ -461,6 +461,12 @@ class Orchestrator:
         )
 
         start_ms = now_ms()
+        await self._emit_event({
+            "type": "node:started",
+            "run_id": run_id,
+            "node_id": node_id,
+            "timestamp": datetime.now(UTC).isoformat(),
+        })
         executor = LoopExecutor(
             artifact_store=self.artifact_store,
             execution_store=self.execution_store,

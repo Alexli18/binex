@@ -131,6 +131,10 @@ def register_workflow_adapters(
                 from binex.adapters.human import HumanApprovalAdapter
 
                 dispatcher.register_adapter(agent, HumanApprovalAdapter())
+        elif agent.startswith("loop://"):
+            # Loop containers are handled directly by LoopExecutor in the orchestrator.
+            # No adapter needed — skip registration.
+            continue
         elif agent.startswith("a2a://"):
             endpoint = agent.removeprefix("a2a://")
 

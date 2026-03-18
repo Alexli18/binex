@@ -109,16 +109,34 @@ async def _execute_workflow(
     plugin_registry = PluginRegistry()
     plugin_registry.discover()
 
-    register_workflow_adapters(
-        orch.dispatcher, spec, plugin_registry=plugin_registry,
-        web_mode=True,
-    )
-
     try:
+        register_workflow_adapters(
+            orch.dispatcher, spec, plugin_registry=plugin_registry,
+            web_mode=True,
+        )
         summary = await orch.run_workflow(spec, run_id=run_id)
         return {"run_id": summary.run_id, "status": summary.status}
     finally:
         await exec_store.close()
+
+
+async def _mark_run_failed(run_id: str, error: str) -> None:
+    """Update a run to 'failed' in the DB so it doesn't stay stuck as 'running'."""
+    from datetime import UTC, datetime
+
+    store, _ = _get_stores()
+    try:
+        run = await store.get_run(run_id)
+        if run and run.status == "running":
+            run = run.model_copy(update={
+                "status": "failed",
+                "completed_at": datetime.now(UTC),
+            })
+            await store.update_run(run)
+    except Exception:
+        logger.exception("Failed to update run status to failed")
+    finally:
+        await store.close()
 
 
 async def _execute_workflow_background(
@@ -129,6 +147,7 @@ async def _execute_workflow_background(
         result = await _execute_workflow(workflow_path, variables, run_id=run_id)
         status = result.get("status", "failed")
         if "error" in result:
+            await _mark_run_failed(run_id, result["error"])
             await event_bus.publish(run_id, {
                 "type": "run:completed",
                 "status": "failed",
@@ -143,6 +162,7 @@ async def _execute_workflow_background(
             })
     except Exception as exc:
         logger.exception("Background workflow execution failed")
+        await _mark_run_failed(run_id, str(exc))
         await event_bus.publish(run_id, {
             "type": "run:completed",
             "status": "failed",
