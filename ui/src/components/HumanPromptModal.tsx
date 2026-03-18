@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '../lib/api';
 import type { HumanPromptEvent } from '../lib/types';
 
@@ -12,6 +12,28 @@ export function HumanPromptModal({ prompt, runId, onDone }: Props) {
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const modal = modalRef.current;
+    if (!modal) return;
+    const focusable = modal.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first?.focus();
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
+    };
+    modal.addEventListener('keydown', trap);
+    return () => modal.removeEventListener('keydown', trap);
+  }, []);
 
   const submit = async (action: string) => {
     setSubmitting(true);
@@ -32,13 +54,19 @@ export function HumanPromptModal({ prompt, runId, onDone }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-slate-800 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="human-prompt-modal-title"
+        className="bg-slate-800 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto"
+      >
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-700">
           <div className="flex items-center gap-2">
             <span className="text-2xl">👤</span>
             <div>
-              <h3 className="font-bold text-slate-100">
+              <h3 id="human-prompt-modal-title" className="font-bold text-slate-100">
                 {prompt.prompt_type === 'approval' ? 'Approval Required' : 'Input Required'}
               </h3>
               <p className="text-sm text-slate-400">

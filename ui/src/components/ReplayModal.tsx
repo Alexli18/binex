@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RotateCcw, Loader2 } from 'lucide-react';
 import { ModelSelect } from './editor/ModelSelect';
@@ -26,6 +26,36 @@ export function ReplayModal({
   const [newPrompt, setNewPrompt] = useState(currentPrompt || '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !submitting) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, submitting]);
+
+  useEffect(() => {
+    const modal = modalRef.current;
+    if (!modal) return;
+    const focusable = modal.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first?.focus();
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
+    };
+    modal.addEventListener('keydown', trap);
+    return () => modal.removeEventListener('keydown', trap);
+  }, []);
 
   const handleReplay = async () => {
     if (!workflowPath) {
@@ -61,6 +91,10 @@ export function ReplayModal({
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={submitting ? undefined : onClose}>
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="replay-modal-title"
         className="bg-slate-800 rounded-lg shadow-xl border border-slate-700 w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
@@ -75,7 +109,7 @@ export function ReplayModal({
 
         <div className="flex items-center gap-2 mb-4">
           <RotateCcw size={18} className="text-blue-400" />
-          <h3 className="text-lg font-semibold text-slate-100">Replay Node</h3>
+          <h3 id="replay-modal-title" className="text-lg font-semibold text-slate-100">Replay Node</h3>
         </div>
 
         <div className="space-y-4">
