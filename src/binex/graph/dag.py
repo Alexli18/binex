@@ -23,23 +23,102 @@ class DAG:
         self._nodes = nodes
         self._forward = forward  # node -> set of dependents
         self._backward = backward  # node -> set of dependencies
+        self._loop_contains: dict[str, list[str]] = {}
+        self._loop_subgraphs: dict[str, DAG] = {}
 
     @classmethod
     def from_workflow(cls, spec: WorkflowSpec) -> DAG:
-        node_ids = set(spec.nodes.keys())
-        forward: dict[str, set[str]] = {nid: set() for nid in node_ids}
-        backward: dict[str, set[str]] = {nid: set() for nid in node_ids}
-
+        # Identify loop containers and their contained nodes
+        loop_contains: dict[str, list[str]] = {}
+        contained_nodes: set[str] = set()
         for node_id, node in spec.nodes.items():
-            for dep in node.depends_on:
-                if dep not in node_ids:
-                    raise ValueError(f"Node '{node_id}' depends on unknown node '{dep}'")
-                forward[dep].add(node_id)
-                backward[node_id].add(dep)
+            if node.type == "loop" and node.loop:
+                loop_contains[node_id] = node.loop.contains
+                contained_nodes.update(node.loop.contains)
 
-        dag = cls(nodes=node_ids, forward=forward, backward=backward)
+        # Top-level nodes = all nodes minus contained nodes
+        top_level_ids = set(spec.nodes.keys()) - contained_nodes
+        forward: dict[str, set[str]] = {nid: set() for nid in top_level_ids}
+        backward: dict[str, set[str]] = {nid: set() for nid in top_level_ids}
+
+        for node_id in top_level_ids:
+            node = spec.nodes[node_id]
+            if node.type == "loop" and node.loop:
+                # Loop container inherits dependencies of its entry nodes
+                # (contained nodes whose deps are outside the loop)
+                contains_set = set(node.loop.contains)
+                for child_id in node.loop.contains:
+                    if child_id not in spec.nodes:
+                        continue
+                    child = spec.nodes[child_id]
+                    for dep in child.depends_on:
+                        if dep not in contains_set and dep in top_level_ids:
+                            backward[node_id].add(dep)
+                            forward[dep].add(node_id)
+                # Also add explicit depends_on of the loop container itself
+                for dep in node.depends_on:
+                    if dep in top_level_ids:
+                        backward[node_id].add(dep)
+                        forward[dep].add(node_id)
+            else:
+                for dep in node.depends_on:
+                    if dep in contained_nodes:
+                        # This node depends on a contained node → depends on its loop container
+                        for loop_id, children in loop_contains.items():
+                            if dep in children:
+                                backward[node_id].add(loop_id)
+                                forward[loop_id].add(node_id)
+                                break
+                    elif dep in top_level_ids:
+                        forward[dep].add(node_id)
+                        backward[node_id].add(dep)
+                    else:
+                        raise ValueError(
+                            f"Node '{node_id}' depends on unknown node '{dep}'"
+                        )
+
+        dag = cls(nodes=top_level_ids, forward=forward, backward=backward)
+        dag._loop_contains = loop_contains
         dag.topological_order()  # validates acyclicity
+
+        # Build sub-graphs for each loop
+        for loop_id, children in loop_contains.items():
+            dag._loop_subgraphs[loop_id] = cls._build_loop_subgraph(
+                spec, loop_id, children,
+            )
+
         return dag
+
+    @classmethod
+    def _build_loop_subgraph(
+        cls, spec: WorkflowSpec, loop_id: str, contains: list[str],
+    ) -> DAG:
+        """Build internal DAG for a loop's contained nodes."""
+        child_ids = set(contains)
+        forward: dict[str, set[str]] = {nid: set() for nid in child_ids}
+        backward: dict[str, set[str]] = {nid: set() for nid in child_ids}
+
+        for nid in child_ids:
+            if nid not in spec.nodes:
+                continue
+            for dep in spec.nodes[nid].depends_on:
+                if dep in child_ids:
+                    forward[dep].add(nid)
+                    backward[nid].add(dep)
+
+        sub = cls(nodes=child_ids, forward=forward, backward=backward)
+        sub.topological_order()
+        return sub
+
+    def get_loop_subgraph(self, loop_node_id: str) -> DAG:
+        """Return the internal DAG for a loop container."""
+        if loop_node_id not in self._loop_subgraphs:
+            raise KeyError(f"No loop subgraph for '{loop_node_id}'")
+        return self._loop_subgraphs[loop_node_id]
+
+    def get_loop_contains(self, loop_node_id: str) -> list[str]:
+        """Return contained node IDs for a loop container."""
+        return self._loop_contains.get(loop_node_id, [])
 
     @property
     def nodes(self) -> set[str]:

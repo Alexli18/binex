@@ -191,9 +191,9 @@ class TestNodeSpecEdgeCases:
         assert node.outputs == []
 
     def test_empty_agent_string(self):
-        """Pydantic allows empty string for agent (no min_length constraint)."""
-        node = NodeSpec(agent="", outputs=["x"])
-        assert node.agent == ""
+        """Empty agent is rejected for non-loop nodes."""
+        with pytest.raises(ValidationError, match="Non-loop nodes must have an 'agent' field"):
+            NodeSpec(agent="", outputs=["x"])
 
     def test_very_long_agent_string(self):
         long_agent = "a2a://agent-" + "x" * 10_000
@@ -255,10 +255,10 @@ class TestNodeSpecEdgeCases:
             NodeSpec(outputs=["r"])
         assert "agent" in str(exc_info.value)
 
-    def test_missing_required_outputs_raises(self):
-        with pytest.raises(ValidationError) as exc_info:
-            NodeSpec(agent="llm://gpt-4")
-        assert "outputs" in str(exc_info.value)
+    def test_outputs_defaults_to_empty_list(self):
+        """outputs defaults to empty list when not provided."""
+        node = NodeSpec(agent="llm://gpt-4")
+        assert node.outputs == []
 
 
 # ===================================================================

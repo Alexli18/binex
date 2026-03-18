@@ -14,7 +14,7 @@ React frontend for the Binex workflow orchestrator. Provides a visual drag-and-d
 - **Recharts** — cost & timeline charts
 - **Lucide React** — icons
 
-## Pages (18)
+## Pages (19)
 
 | Category | Pages |
 |----------|-------|
@@ -23,7 +23,7 @@ React frontend for the Binex workflow orchestrator. Provides a visual drag-and-d
 | **Analysis** | DebugPage, TracePage, DiagnosePage, LineagePage |
 | **Comparison** | DiffPage (filter bar, compare with previous), BisectPage (NodeMap, DAG viz, divergence metrics) |
 | **Costs** | CostDashboard, BudgetPage |
-| **System** | DoctorPage, PluginsPage, GatewayPage, ExportPage |
+| **System** | DoctorPage, PluginsPage, GatewayPage, ExportPage, SchedulerPage |
 
 ## Sidebar Navigation
 
@@ -69,7 +69,7 @@ ui/
 │   │   ├── common/      # Shared UI (NewRunModal, ArtifactDiff, etc.)
 │   │   ├── dag/         # React Flow DAG components (CustomNode, BisectNode)
 │   │   ├── debug/       # Debug detail panels
-│   │   ├── editor/      # Visual workflow editor
+│   │   ├── editor/      # Visual workflow editor (incl. LoopContainerNode, LoopConfigModal, ExitConditionBuilder)
 │   │   ├── layout/      # PageShell, Breadcrumb, layout primitives
 │   │   ├── trace/       # Gantt timeline components
 │   │   └── ui/          # shadcn/ui primitives

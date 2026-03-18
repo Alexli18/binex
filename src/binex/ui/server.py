@@ -22,6 +22,7 @@ from binex.ui.api.events import router as events_router
 from binex.ui.api.export import router as export_router
 from binex.ui.api.gateway import router as gateway_router
 from binex.ui.api.lineage import router as lineage_router
+from binex.ui.api.loops import router as loops_router
 from binex.ui.api.prompt_templates import router as prompt_templates_router
 from binex.ui.api.prompts import router as prompts_router
 from binex.ui.api.providers import router as providers_router
@@ -100,6 +101,7 @@ def create_app(*, dev: bool = False) -> FastAPI:
     app.include_router(export_router, prefix="/api/v1")
     app.include_router(gateway_router, prefix="/api/v1")
     app.include_router(lineage_router, prefix="/api/v1")
+    app.include_router(loops_router, prefix="/api/v1")
     app.include_router(prompt_templates_router, prefix="/api/v1")
     app.include_router(prompts_router, prefix="/api/v1")
     app.include_router(providers_router, prefix="/api/v1")

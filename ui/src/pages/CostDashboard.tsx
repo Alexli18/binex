@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, TrendingUp, Activity, Shield, Download } from 'lucide-react';
+import { DollarSign, TrendingUp, Activity, Shield, Download, RefreshCw } from 'lucide-react';
 import { useCostDashboard, type DashboardData } from '../hooks/useCostDashboard';
 import { useRuns } from '../hooks/useRuns';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
@@ -166,6 +166,47 @@ export default function CostDashboard() {
             emptyMessage="No node cost data"
           />
         </div>
+
+        {/* Loop Cost Breakdown */}
+        {(() => {
+          const loopNodes = (costData?.cost_by_node ?? []).filter((n) => n.node_id.includes('.'));
+          if (loopNodes.length === 0) return null;
+          const grouped: Record<string, { iterations: Record<string, number>; total: number }> = {};
+          for (const n of loopNodes) {
+            const dotIdx = n.node_id.indexOf('.');
+            const loopId = n.node_id.slice(0, dotIdx);
+            if (!grouped[loopId]) grouped[loopId] = { iterations: {}, total: 0 };
+            grouped[loopId].total += n.cost;
+            const innerNode = n.node_id.slice(dotIdx + 1);
+            grouped[loopId].iterations[innerNode] = (grouped[loopId].iterations[innerNode] ?? 0) + n.cost;
+          }
+          return (
+            <div className="bg-slate-900 rounded-card border border-slate-700/60 p-4">
+              <h2 className="text-sm font-semibold text-slate-100 mb-4 flex items-center gap-2">
+                <RefreshCw size={14} className="text-teal-400" />
+                Loop Cost Breakdown
+              </h2>
+              <div className="space-y-3">
+                {Object.entries(grouped).map(([loopId, data]) => (
+                  <div key={loopId} className="border border-dashed border-teal-500/30 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-teal-300">{loopId}</span>
+                      <span className="text-xs font-mono text-slate-400">${data.total.toFixed(4)}</span>
+                    </div>
+                    <div className="space-y-1">
+                      {Object.entries(data.iterations).map(([innerNode, cost]) => (
+                        <div key={innerNode} className="flex justify-between text-xs">
+                          <span className="font-mono text-slate-400">{innerNode}</span>
+                          <span className="font-mono text-slate-500">${cost.toFixed(6)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Runs Table */}
         <div>

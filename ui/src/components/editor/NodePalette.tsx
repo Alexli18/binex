@@ -1,4 +1,4 @@
-import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye } from 'lucide-react';
+import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, RefreshCw } from 'lucide-react';
 
 export interface NodeTypeConfig {
   type: string;
@@ -19,6 +19,10 @@ export const NODE_TYPES: NodeTypeConfig[] = [
   { type: 'a2a', label: 'A2A Agent', icon: Globe, color: '#06b6d4', agentPrefix: 'a2a://', defaultAgent: 'a2a://localhost:8001' },
 ];
 
+export const CONTAINER_TYPES: NodeTypeConfig[] = [
+  { type: 'loopContainer', label: 'Loop', icon: RefreshCw, color: '#14b8a6', agentPrefix: 'loop://', defaultAgent: 'loop://container' },
+];
+
 export function NodePalette() {
   const onDragStart = (event: React.DragEvent, nodeType: NodeTypeConfig) => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify(nodeType));
@@ -27,6 +31,7 @@ export function NodePalette() {
 
   return (
     <div className="flex flex-col gap-1 p-2 border-r border-slate-700 bg-slate-900 w-48 shrink-0">
+      {/* Nodes section */}
       <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
         Nodes
       </div>
@@ -42,6 +47,26 @@ export function NodePalette() {
           >
             <Icon size={18} style={{ color: nt.color }} className="shrink-0" />
             <span className="text-sm text-slate-300">{nt.label}</span>
+          </div>
+        );
+      })}
+
+      {/* Containers section */}
+      <div className="px-2 py-1.5 mt-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        Containers
+      </div>
+      {CONTAINER_TYPES.map((ct) => {
+        const Icon = ct.icon;
+        return (
+          <div
+            key={ct.type}
+            draggable
+            onDragStart={(e) => onDragStart(e, ct)}
+            className="flex items-center gap-2 px-2 py-2 rounded cursor-grab active:cursor-grabbing hover:bg-slate-800 transition-colors border border-dashed border-transparent hover:border-teal-500/40"
+            title={`Drag to add ${ct.label} container`}
+          >
+            <Icon size={18} style={{ color: ct.color }} className="shrink-0" />
+            <span className="text-sm text-slate-300">{ct.label}</span>
           </div>
         );
       })}

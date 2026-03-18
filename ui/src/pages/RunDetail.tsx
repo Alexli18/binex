@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ReplayModal } from '../components/ReplayModal';
 import { Pencil, RotateCcw, X } from 'lucide-react';
+import { useLoopIterations } from '../hooks/useLoopIterations';
+import { LoopIterationsPanel } from '../components/LoopIterationsPanel';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { WorkflowNode, WorkflowEdge } from '../lib/yaml-to-graph';
@@ -47,6 +49,7 @@ export default function RunDetail() {
   const createRun = useCreateRun();
 
   const { data: previousRun } = usePreviousRun(runId);
+  const { data: loopsData } = useLoopIterations(runId);
 
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -334,6 +337,11 @@ export default function RunDetail() {
                 </table>
               )}
             </div>
+
+            {/* Loop Iterations */}
+            {loopsData && loopsData.loops.length > 0 && (
+              <LoopIterationsPanel loops={loopsData.loops} />
+            )}
 
             {/* Costs table */}
             <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">

@@ -92,6 +92,12 @@ export const nodeTypeColors = {
     border: 'border-amber-500/40',
     icon: 'text-amber-400',
   },
+  loop: {
+    bg: 'bg-teal-500/15',
+    text: 'text-teal-400',
+    border: 'border-teal-500/40',
+    icon: 'text-teal-400',
+  },
 } as const;
 
 export type NodeType = keyof typeof nodeTypeColors;

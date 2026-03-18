@@ -58,13 +58,13 @@ def _minimal_task_node(**overrides) -> dict:
 class TestNodeSpecAgentValidation:
     """TC-MOD-001: empty, whitespace-only, and no-protocol-prefix agent strings."""
 
-    def test_empty_agent_string_accepted(self) -> None:
-        """Empty string is accepted — no min_length constraint on agent."""
-        node = NodeSpec(agent="", outputs=["result"])
-        assert node.agent == ""
+    def test_empty_agent_string_rejected(self) -> None:
+        """Empty agent string is rejected for non-loop nodes."""
+        with pytest.raises(ValidationError, match="Non-loop nodes must have an 'agent' field"):
+            NodeSpec(agent="", outputs=["result"])
 
     def test_whitespace_only_agent_accepted(self) -> None:
-        """Whitespace-only string is accepted — no strip/validation constraint."""
+        """Whitespace-only string is accepted — treated as non-empty agent."""
         node = NodeSpec(agent="   ", outputs=["result"])
         assert node.agent == "   "
 

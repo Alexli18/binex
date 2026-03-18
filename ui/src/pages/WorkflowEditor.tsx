@@ -44,11 +44,36 @@ function agentToNodeType(agent: string): { nodeType: string; color: string } {
   return { nodeType: 'local', color: '#06b6d4' };
 }
 
+interface LoopNodeSpec {
+  type: 'loop';
+  max_iterations?: number;
+  exit_condition?: { jsonpath: string; operator: string; value: string };
+  depends_on?: string[];
+  inputs?: Record<string, string>;
+  nodes?: Record<string, RegularNodeSpec>;
+}
+
+interface RegularNodeSpec {
+  agent: string;
+  depends_on?: string[];
+  config?: Record<string, unknown>;
+  system_prompt?: string;
+  inputs?: Record<string, string>;
+  outputs?: string[];
+  tools?: string[];
+}
+
+type NodeSpec = RegularNodeSpec | LoopNodeSpec;
+
+function isLoopSpec(spec: NodeSpec): spec is LoopNodeSpec {
+  return (spec as LoopNodeSpec).type === 'loop';
+}
+
 interface ParsedYamlWorkflow {
   name?: string;
   schedule?: string;
   mcp_servers?: Record<string, unknown>;
-  nodes?: Record<string, { agent: string; depends_on?: string[]; config?: Record<string, unknown>; system_prompt?: string; inputs?: Record<string, string>; outputs?: string[]; tools?: string[] }>;
+  nodes?: Record<string, NodeSpec>;
 }
 
 interface YamlParseResult {
@@ -64,35 +89,99 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
   if (!parsed?.nodes) return { nodes: [], edges: [], mcpServers: {}, schedule: '' };
 
   const entries = Object.entries(parsed.nodes);
-  const nodes: Node[] = entries.map(([id, spec], i) => {
-    const agent = spec.agent || 'local://echo';
-    const { nodeType, color } = agentToNodeType(agent);
-    return {
-      id,
-      type: 'editable',
-      position: { x: 250, y: i * 120 + 50 },
-      data: {
-        label: id,
-        nodeType,
-        agent,
-        config: { ...spec.config, ...(spec.system_prompt ? { system_prompt: spec.system_prompt } : {}) },
-        system_prompt: spec.system_prompt,
-        inputs: spec.inputs,
-        outputs: spec.outputs,
-        tools: spec.tools || [],
-        color,
-      },
-    };
-  });
-
+  const nodes: Node[] = [];
   const edges: Edge[] = [];
+  let yOffset = 50;
+
   for (const [id, spec] of entries) {
-    if (spec.depends_on) {
-      for (const dep of spec.depends_on) {
-        edges.push({ id: `${dep}->${id}`, source: dep, target: id });
+    if (isLoopSpec(spec)) {
+      // Create loop container node
+      const childEntries = Object.entries(spec.nodes || {});
+      const containerHeight = Math.max(250, childEntries.length * 120 + 80);
+
+      nodes.push({
+        id,
+        type: 'loopContainer',
+        position: { x: 100, y: yOffset },
+        style: { width: 450, height: containerHeight },
+        data: {
+          label: id,
+          maxIterations: spec.max_iterations || 5,
+          exitCondition: spec.exit_condition
+            ? { jsonpath: spec.exit_condition.jsonpath, operator: spec.exit_condition.operator, value: spec.exit_condition.value }
+            : null,
+        },
+      });
+
+      // Loop-level dependencies
+      if (spec.depends_on) {
+        for (const dep of spec.depends_on) {
+          edges.push({ id: `${dep}->${id}`, source: dep, target: id });
+        }
       }
+
+      // Create child nodes inside the loop
+      childEntries.forEach(([childId, childSpec], ci) => {
+        const agent = childSpec.agent || 'local://echo';
+        const { nodeType, color } = agentToNodeType(agent);
+        nodes.push({
+          id: childId,
+          type: 'editable',
+          position: { x: 50, y: ci * 120 + 80 },
+          parentNode: id,
+          extent: 'parent' as const,
+          data: {
+            label: childId,
+            nodeType,
+            agent,
+            config: { ...childSpec.config, ...(childSpec.system_prompt ? { system_prompt: childSpec.system_prompt } : {}) },
+            system_prompt: childSpec.system_prompt,
+            inputs: childSpec.inputs,
+            outputs: childSpec.outputs,
+            tools: childSpec.tools || [],
+            color,
+          },
+        });
+
+        if (childSpec.depends_on) {
+          for (const dep of childSpec.depends_on) {
+            edges.push({ id: `${dep}->${childId}`, source: dep, target: childId });
+          }
+        }
+      });
+
+      yOffset += containerHeight + 40;
+    } else {
+      // Regular node
+      const agent = spec.agent || 'local://echo';
+      const { nodeType, color } = agentToNodeType(agent);
+      nodes.push({
+        id,
+        type: 'editable',
+        position: { x: 250, y: yOffset },
+        data: {
+          label: id,
+          nodeType,
+          agent,
+          config: { ...spec.config, ...(spec.system_prompt ? { system_prompt: spec.system_prompt } : {}) },
+          system_prompt: spec.system_prompt,
+          inputs: spec.inputs,
+          outputs: spec.outputs,
+          tools: spec.tools || [],
+          color,
+        },
+      });
+
+      if (spec.depends_on) {
+        for (const dep of spec.depends_on) {
+          edges.push({ id: `${dep}->${id}`, source: dep, target: id });
+        }
+      }
+
+      yOffset += 120;
     }
   }
+
   return {
     nodes,
     edges,

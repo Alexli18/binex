@@ -5,6 +5,8 @@ import { StatusBadge } from '../components/common/StatusBadge';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { useRun, useCancelRun } from '../hooks/useRuns';
 import { useSSE } from '../hooks/useSSE';
+import { useLoopIterations } from '../hooks/useLoopIterations';
+import { LoopIterationsPanel } from '../components/LoopIterationsPanel';
 import type { RunEvent } from '../lib/types';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -32,6 +34,7 @@ export default function RunLive() {
   const { data: run, isLoading } = useRun(runId);
   const { events, connected, pendingPrompt, clearPrompt, outputResult, clearOutput } = useSSE(runId);
   const cancelRun = useCancelRun();
+  const { data: loopsData } = useLoopIterations(runId);
   const logRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll event log to bottom
@@ -185,6 +188,13 @@ export default function RunLive() {
           </div>
         </div>
       </div>
+
+      {/* Live loop iterations */}
+      {loopsData && loopsData.loops.length > 0 && (
+        <div className="mt-6">
+          <LoopIterationsPanel loops={loopsData.loops} />
+        </div>
+      )}
 
       {/* Human-in-the-loop prompt modal */}
       {pendingPrompt && runId && (

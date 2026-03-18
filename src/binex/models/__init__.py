@@ -12,7 +12,13 @@ from binex.models.cost import (
 )
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import RetryPolicy, TaskNode, TaskStatus
-from binex.models.workflow import DefaultsSpec, NodeSpec, WorkflowSpec
+from binex.models.workflow import (
+    DefaultsSpec,
+    LoopExitCondition,
+    LoopSpec,
+    NodeSpec,
+    WorkflowSpec,
+)
 
 __all__ = [
     "AgentHealth",
@@ -25,6 +31,8 @@ __all__ = [
     "ExecutionRecord",
     "ExecutionResult",
     "Lineage",
+    "LoopExitCondition",
+    "LoopSpec",
     "NodeBudget",
     "NodeCostHint",
     "NodeSpec",

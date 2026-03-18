@@ -58,6 +58,7 @@ def load_workflow_from_string(
     except ValidationError as exc:
         raise ValueError(f"Invalid workflow spec: {exc}") from exc
     _validate_back_edges(spec)
+    _validate_loops(spec)
     return spec
 
 
@@ -161,6 +162,17 @@ def _validate_back_edges(spec: WorkflowSpec) -> None:
             raise ValueError(
                 f"Node '{node_id}': back_edge has invalid when condition syntax: {be.when!r}"
             )
+
+
+def _validate_loops(spec: WorkflowSpec) -> None:
+    """Validate loop containers at load time."""
+    from binex.workflow_spec.validator import validate_workflow
+
+    errors = [e for e in validate_workflow(spec) if "Loop '" in e]
+    if errors:
+        raise ValueError(
+            "Loop validation errors:\n" + "\n".join(f"  - {e}" for e in errors)
+        )
 
 
 def _parse_raw(content: str, fmt: str) -> dict[str, Any]:

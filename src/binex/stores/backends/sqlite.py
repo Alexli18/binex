@@ -103,6 +103,14 @@ class SqliteExecutionStore:
             await self._db.commit()
         except Exception as exc:
             logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add iteration_number column to execution_records
+        try:
+            await self._db.execute(
+                "ALTER TABLE execution_records ADD COLUMN iteration_number INTEGER"
+            )
+            await self._db.commit()
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
         await self._db.commit()
         self._initialized = True
 
@@ -183,8 +191,9 @@ class SqliteExecutionStore:
         await db.execute(
             """INSERT INTO execution_records (id, run_id, task_id, parent_task_id,
                agent_id, status, input_artifact_refs, output_artifact_refs,
-               prompt, model, tool_calls, latency_ms, timestamp, trace_id, error)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               prompt, model, tool_calls, latency_ms, timestamp, trace_id, error,
+               iteration_number)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 execution_record.id,
                 execution_record.run_id,
@@ -201,6 +210,7 @@ class SqliteExecutionStore:
                 execution_record.timestamp.isoformat(),
                 execution_record.trace_id,
                 execution_record.error,
+                execution_record.iteration_number,
             ),
         )
         await db.commit()
@@ -317,6 +327,7 @@ class SqliteExecutionStore:
             timestamp=datetime.fromisoformat(row[12]),
             trace_id=row[13],
             error=row[14],
+            iteration_number=row[15] if len(row) > 15 else None,
         )
 
     async def store_workflow_snapshot(self, content: str, version: int) -> str:

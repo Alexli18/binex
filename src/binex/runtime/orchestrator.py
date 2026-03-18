@@ -368,6 +368,15 @@ class Orchestrator:
         if node_artifacts_history is None:
             node_artifacts_history = {}
         node_spec = spec.nodes[node_id]
+
+        # Delegate loop containers to LoopExecutor
+        if node_spec.type == "loop":
+            await self._execute_loop_node(
+                spec, dag, scheduler, run_id, trace_id,
+                node_id, node_artifacts, accumulated_cost,
+            )
+            return
+
         retry_policy = node_spec.retry_policy or (
             spec.defaults.retry_policy if spec.defaults else None
         )
@@ -424,6 +433,74 @@ class Orchestrator:
             run_id=run_id,
             node_id=node_id,
             agent_id=node_spec.agent,
+            status=status,
+            input_artifacts=input_artifacts,
+            output_artifacts=output_artifacts,
+            latency_ms=latency_ms,
+            trace_id=trace_id,
+            error=error_msg,
+        )
+
+    async def _execute_loop_node(
+        self,
+        spec: WorkflowSpec,
+        dag: DAG,
+        scheduler: Scheduler,
+        run_id: str,
+        trace_id: str,
+        node_id: str,
+        node_artifacts: dict[str, list[Artifact]],
+        accumulated_cost: float = 0.0,
+    ) -> None:
+        """Execute a loop container node using LoopExecutor."""
+        from binex.runtime.loop_executor import LoopExecutor
+
+        input_artifacts = collect_input_artifacts(
+            dag, node_id, node_artifacts,
+            self._pending_feedback.pop(node_id, []),
+        )
+
+        start_ms = now_ms()
+        executor = LoopExecutor(
+            artifact_store=self.artifact_store,
+            execution_store=self.execution_store,
+            dispatcher=self.dispatcher,
+            stream=self._stream,
+            stream_callback=self._stream_callback,
+            event_callback=self._event_callback,
+        )
+
+        output_artifacts, error_msg = await executor.execute_loop(
+            spec, dag, run_id, trace_id,
+            node_id, input_artifacts, accumulated_cost,
+        )
+
+        if error_msg is None:
+            scheduler.mark_completed(node_id)
+            node_artifacts[node_id] = output_artifacts
+            for art in output_artifacts:
+                await self.artifact_store.store(art)
+        else:
+            scheduler.mark_failed(node_id)
+
+        latency_ms = now_ms() - start_ms
+        from binex.models.task import TaskStatus
+        status = TaskStatus("completed") if error_msg is None else TaskStatus("failed")
+
+        await self._emit_event({
+            "type": f"node:{'completed' if error_msg is None else 'failed'}",
+            "run_id": run_id,
+            "node_id": node_id,
+            "timestamp": datetime.now(UTC).isoformat(),
+            "latency_ms": latency_ms,
+            **({"error": error_msg} if error_msg else {}),
+        })
+
+        await record_execution(
+            self.execution_store,
+            run_id=run_id,
+            node_id=node_id,
+            agent_id="loop://container",
             status=status,
             input_artifacts=input_artifacts,
             output_artifacts=output_artifacts,

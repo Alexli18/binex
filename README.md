@@ -125,7 +125,7 @@ binex ui
 
 <br>
 
-6 node types: **LLM Agent**, **Local Script**, **Human Input**, **Human Approve**, **Human Output**, **A2A Agent**
+7 node types: **LLM Agent**, **Local Script**, **Human Input**, **Human Approve**, **Human Output**, **A2A Agent**, **Loop Container**
 
 - 20+ preset models including 8 free OpenRouter models
 - Built-in prompt library (Planner, Researcher, Analyzer, Writer, Reviewer, Summarizer)
@@ -158,7 +158,7 @@ binex ui
   <br><sub>Side-by-side diff with filtering: changed, failed, cost delta</sub>
 </div>
 
-### 19 Pages — Full CLI Parity
+### 20 Pages — Full CLI Parity
 
 | Category | Pages |
 |----------|-------|
@@ -251,6 +251,86 @@ nodes:
 
 ---
 
+## Loop Containers
+
+Loop containers let you iterate a group of nodes until an exit condition is met — perfect for refinement loops, retry patterns, and iterative improvement workflows.
+
+```yaml
+name: iterative-refinement
+nodes:
+  refine_loop:
+    type: loop
+    exit:
+      field: "$.score"
+      operator: ">="
+      value: 0.9
+    max_iterations: 5
+    timeout_minutes: 60
+    accumulate: false
+    contains:
+      - generate
+      - evaluate
+    depends_on: [input]
+    outputs: [output]
+
+  input:
+    agent: "human://input"
+    outputs: [output]
+
+  generate:
+    agent: "llm://openai/gpt-4o"
+    system_prompt: "Generate or improve the draft based on feedback"
+    depends_on: []
+    outputs: [output]
+
+  evaluate:
+    agent: "llm://openai/gpt-4o"
+    system_prompt: "Score the draft 0-1 and provide feedback. Return JSON: {score, feedback}"
+    depends_on: [generate]
+    outputs: [output]
+    output_schema:
+      type: object
+      properties:
+        score: { type: number }
+        feedback: { type: string }
+      required: [score, feedback]
+```
+
+### How it works
+
+1. The loop container executes its `contains` nodes in dependency order each iteration
+2. After each iteration, the exit condition is checked against the last node's output
+3. If the condition is met, the loop exits and passes output downstream
+4. If `max_iterations` is reached without meeting the condition, the loop fails with `MaxIterationsExceeded`
+5. If `timeout_minutes` is exceeded, the loop fails with `LoopTimeoutExceeded`
+
+### Exit condition operators
+
+| Operator | Description |
+|----------|-------------|
+| `>=` | Greater than or equal |
+| `<=` | Less than or equal |
+| `>` | Greater than |
+| `<` | Less than |
+| `==` | Equal |
+| `!=` | Not equal |
+
+The `field` uses JSONPath notation (`$.score`, `$.result.quality`) to extract a value from the last node's JSON output.
+
+### Options
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| `max_iterations` | `5` | Maximum number of iterations before error |
+| `timeout_minutes` | `null` | Optional time limit for the entire loop |
+| `accumulate` | `false` | If true, all iteration outputs are collected into a single accumulated artifact |
+
+> **Note:** Nested loops are not supported in v1. A loop's `contains` nodes cannot themselves be loop containers.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
 ## Features
 
 ### Agent Adapters
@@ -259,6 +339,7 @@ nodes:
 |--------|-------------|
 | `local://` | In-process Python callable |
 | `llm://` | LLM via LiteLLM (40+ providers) |
+| `loop://` | Loop container — iterative execution with exit conditions |
 | `a2a://` | Remote agent via A2A protocol |
 | `human://input` | Free-text input from user |
 | `human://approve` | Approval gate with conditional branching |

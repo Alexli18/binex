@@ -46,14 +46,75 @@ class McpServerConfig(BaseModel):
         return self
 
 
+_LOOP_EXIT_OPERATORS = {">=", "<=", ">", "<", "==", "!="}
+
+
+class LoopExitCondition(BaseModel):
+    """Exit condition for a loop container — evaluated after each iteration."""
+
+    field: str
+    operator: str
+    value: float | str | bool
+
+    @field_validator("operator")
+    @classmethod
+    def _valid_operator(cls, v: str) -> str:
+        if v not in _LOOP_EXIT_OPERATORS:
+            raise ValueError(
+                f"operator must be one of {sorted(_LOOP_EXIT_OPERATORS)}, got {v!r}"
+            )
+        return v
+
+    @field_validator("field")
+    @classmethod
+    def _valid_jsonpath(cls, v: str) -> str:
+        if not v.startswith("$."):
+            raise ValueError(
+                f"field must be a JSONPath starting with '$.' , got {v!r}"
+            )
+        return v
+
+
+class LoopSpec(BaseModel):
+    """Loop container specification — iterative execution of child nodes."""
+
+    exit: LoopExitCondition
+    max_iterations: int = 5
+    timeout_minutes: float | None = None
+    accumulate: bool = False
+    contains: list[str]
+
+    @field_validator("max_iterations")
+    @classmethod
+    def _max_iterations_positive(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError("max_iterations must be >= 1")
+        return v
+
+    @field_validator("timeout_minutes")
+    @classmethod
+    def _timeout_positive(cls, v: float | None) -> float | None:
+        if v is not None and v <= 0:
+            raise ValueError("timeout_minutes must be > 0")
+        return v
+
+    @field_validator("contains")
+    @classmethod
+    def _contains_non_empty(cls, v: list[str]) -> list[str]:
+        if not v:
+            raise ValueError("contains must have at least one node")
+        return v
+
+
 class NodeSpec(BaseModel):
     """A single node definition within a workflow."""
 
     id: str = ""
-    agent: str
+    type: str | None = None
+    agent: str = ""
     system_prompt: str | None = None
     inputs: dict[str, Any] = Field(default_factory=dict)
-    outputs: list[str]
+    outputs: list[str] = Field(default_factory=list)
     depends_on: list[str] = Field(default_factory=list)
     config: dict[str, Any] = Field(default_factory=dict)
     retry_policy: RetryPolicy | None = None
@@ -65,12 +126,34 @@ class NodeSpec(BaseModel):
     back_edge: BackEdge | None = None
     output_schema: dict[str, Any] | None = None
     routing: dict[str, Any] | None = None
+    loop: LoopSpec | None = None
 
     @model_validator(mode="after")
     def _normalize_budget(self) -> NodeSpec:
         """Convert float/int shorthand to NodeBudget."""
         if isinstance(self.budget, (int, float)):
             self.budget = NodeBudget(max_cost=float(self.budget))
+        return self
+
+    @model_validator(mode="after")
+    def _validate_loop_fields(self) -> NodeSpec:
+        """Validate loop-specific field constraints."""
+        if self.type == "loop":
+            if self.loop is None:
+                raise ValueError(
+                    "Node with type='loop' must have a 'loop' specification"
+                )
+            if not self.agent:
+                self.agent = "loop://container"
+        else:
+            if self.loop is not None:
+                raise ValueError(
+                    "Node with loop specification must have type='loop'"
+                )
+            if not self.agent:
+                raise ValueError(
+                    "Non-loop nodes must have an 'agent' field"
+                )
         return self
 
 
@@ -119,6 +202,8 @@ class WorkflowSpec(BaseModel):
 __all__ = [
     "BackEdge",
     "DefaultsSpec",
+    "LoopExitCondition",
+    "LoopSpec",
     "McpServerConfig",
     "NodeSpec",
     "WebhookConfig",
