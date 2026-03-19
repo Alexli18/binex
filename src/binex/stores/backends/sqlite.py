@@ -78,6 +78,15 @@ class SqliteExecutionStore:
                 model TEXT,
                 timestamp TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS cao_sessions (
+                terminal_id  TEXT PRIMARY KEY,
+                run_id       TEXT NOT NULL,
+                node_name    TEXT NOT NULL,
+                session_name TEXT,
+                started_at   TEXT NOT NULL,
+                completed_at TEXT,
+                status       TEXT NOT NULL DEFAULT 'active'
+            );
             CREATE TABLE IF NOT EXISTS workflow_snapshots (
                 hash TEXT PRIMARY KEY,
                 content TEXT NOT NULL,
@@ -104,6 +113,23 @@ class SqliteExecutionStore:
         except Exception as exc:
             logger.debug("Migration already applied or failed: %s", exc)
         await self._db.commit()
+
+        # Auto-orphan any active CAO sessions from previous crashed runs
+        try:
+            cursor = await self._db.execute(
+                "SELECT terminal_id FROM cao_sessions WHERE status = 'active'"
+            )
+            rows = await cursor.fetchall()
+            stale_ids = [r[0] for r in rows]
+            if stale_ids:
+                await self.mark_cao_sessions_orphaned(stale_ids)
+                logger.info(
+                    "Marked %d stale CAO sessions as orphaned on startup",
+                    len(stale_ids),
+                )
+        except Exception as exc:
+            logger.debug("CAO session orphan check failed: %s", exc)
+
         self._initialized = True
 
     async def close(self) -> None:
@@ -318,6 +344,87 @@ class SqliteExecutionStore:
             trace_id=row[13],
             error=row[14],
         )
+
+    # ------------------------------------------------------------------
+    # CAO session registry
+    # ------------------------------------------------------------------
+
+    async def create_cao_session(
+        self, terminal_id: str, run_id: str, node_name: str,
+        session_name: str | None = None,
+    ) -> None:
+        """Persist an active CAO session."""
+        db = await self._ensure_initialized()
+        await db.execute(
+            "INSERT INTO cao_sessions (terminal_id, run_id, node_name, started_at, status, session_name) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (terminal_id, run_id, node_name, datetime.now(UTC).isoformat(), "active", session_name),
+        )
+        await db.commit()
+
+    async def complete_cao_session(self, terminal_id: str) -> None:
+        """Mark session as completed (soft delete)."""
+        db = await self._ensure_initialized()
+        await db.execute(
+            "UPDATE cao_sessions SET status = 'completed', completed_at = datetime('now') "
+            "WHERE terminal_id = ?",
+            (terminal_id,),
+        )
+        await db.commit()
+
+    async def get_cao_sessions(
+        self, status: str | None = None,
+    ) -> list[dict[str, str]]:
+        """List CAO sessions, optionally filtered by status."""
+        db = await self._ensure_initialized()
+        if status:
+            cursor = await db.execute(
+                "SELECT terminal_id, run_id, node_name, started_at, status, session_name "
+                "FROM cao_sessions WHERE status = ?",
+                (status,),
+            )
+        else:
+            cursor = await db.execute(
+                "SELECT terminal_id, run_id, node_name, started_at, status, session_name "
+                "FROM cao_sessions",
+            )
+        rows = await cursor.fetchall()
+        return [
+            {
+                "terminal_id": r[0],
+                "run_id": r[1],
+                "node_name": r[2],
+                "started_at": r[3],
+                "status": r[4],
+                "session_name": r[5],
+            }
+            for r in rows
+        ]
+
+    async def get_orphaned_cao_sessions(self) -> list[dict[str, str]]:
+        """Return sessions with status 'orphaned'."""
+        return await self.get_cao_sessions(status="orphaned")
+
+    async def mark_cao_sessions_orphaned(self, terminal_ids: list[str]) -> None:
+        """Mark active sessions as orphaned (crash recovery)."""
+        if not terminal_ids:
+            return
+        db = await self._ensure_initialized()
+        for tid in terminal_ids:
+            await db.execute(
+                "UPDATE cao_sessions SET status = 'orphaned' WHERE terminal_id = ?",
+                (tid,),
+            )
+        await db.commit()
+
+    async def delete_cao_session(self, terminal_id: str) -> bool:
+        """Delete a session by terminal_id. Returns True if deleted."""
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
+            "DELETE FROM cao_sessions WHERE terminal_id = ?", (terminal_id,),
+        )
+        await db.commit()
+        return cursor.rowcount > 0
 
     async def store_workflow_snapshot(self, content: str, version: int) -> str:
         """Store workflow YAML content, deduplicated by SHA256 hash. Returns hash."""
