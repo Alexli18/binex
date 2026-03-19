@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -46,6 +46,29 @@ class McpServerConfig(BaseModel):
         return self
 
 
+class CaoConfig(BaseModel):
+    """Per-node CAO configuration — embedded in NodeSpec as optional field."""
+
+    mode: Literal["handoff", "assign", "send_message"] = "handoff"
+    provider: Literal["claude_code", "kiro_cli", "q_cli"] | None = None
+    output_format: Literal["auto", "json", "text"] = "auto"
+    output_field: str | None = None
+    timeout_minutes: int = 60
+    max_human_prompts: int = 3
+
+    @model_validator(mode="after")
+    def _validate_cao_config(self) -> CaoConfig:
+        if self.output_field and self.output_format != "json":
+            raise ValueError("output_field requires output_format='json'")
+        if self.output_field and not self.output_field.startswith("$."):
+            raise ValueError("output_field must be a JSONPath starting with '$.'")
+        if self.timeout_minutes < 1:
+            raise ValueError("timeout_minutes must be >= 1")
+        if self.max_human_prompts < 1:
+            raise ValueError("max_human_prompts must be >= 1")
+        return self
+
+
 class NodeSpec(BaseModel):
     """A single node definition within a workflow."""
 
@@ -65,6 +88,7 @@ class NodeSpec(BaseModel):
     back_edge: BackEdge | None = None
     output_schema: dict[str, Any] | None = None
     routing: dict[str, Any] | None = None
+    cao: CaoConfig | None = None
 
     @model_validator(mode="after")
     def _normalize_budget(self) -> NodeSpec:
@@ -118,6 +142,7 @@ class WorkflowSpec(BaseModel):
 
 __all__ = [
     "BackEdge",
+    "CaoConfig",
     "DefaultsSpec",
     "McpServerConfig",
     "NodeSpec",
