@@ -112,6 +112,7 @@ async def _execute_workflow(
     register_workflow_adapters(
         orch.dispatcher, spec, plugin_registry=plugin_registry,
         web_mode=True,
+        event_callback=orch._event_callback,
     )
 
     try:

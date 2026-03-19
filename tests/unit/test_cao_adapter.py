@@ -908,3 +908,33 @@ class TestClose:
         complete_calls = mock_store.complete_cao_session.call_args_list
         terminal_ids = {c[0][0] for c in complete_calls}
         assert terminal_ids == {"term_1", "term_2"}
+
+
+# ---------------------------------------------------------------------------
+# Adapter registry wiring
+# ---------------------------------------------------------------------------
+
+class TestAdapterRegistryWiring:
+    def test_register_cao_adapter_passes_event_callback(self):
+        from unittest.mock import patch
+
+        from binex.cli.adapter_registry import _register_cao_adapter
+        from binex.runtime.dispatcher import Dispatcher
+
+        dispatcher = Dispatcher()
+        callback = lambda e: None  # noqa: E731
+        node = MagicMock()
+        node.cao = CaoConfig()
+
+        with patch("binex.settings.Settings") as MockSettings:
+            s = MockSettings.return_value
+            s.cao_server_url = "http://localhost:9889"
+            s.cao_agent_store_dir = "/tmp/store"
+            _register_cao_adapter(
+                dispatcher, "cao://dev", node,
+                session_store=None, event_callback=callback,
+            )
+
+        adapter = dispatcher._adapters["cao://dev"]
+        assert adapter._event_callback is callback
+        assert adapter._human_input_fn is not None
