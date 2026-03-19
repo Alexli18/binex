@@ -1,0 +1,701 @@
+"""Unit tests for CAOAdapter — mock httpx, full handoff lifecycle."""
+
+from __future__ import annotations
+
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import httpx
+import pytest
+
+from binex.adapters.cao import (
+    CAOAdapter,
+    CAOAgentError,
+    CAOOutputParseError,
+    CAOProfileNotFoundError,
+    CAOServerUnavailableError,
+    CAOTimeoutError,
+)
+from binex.models.agent import AgentHealth
+from binex.models.artifact import Artifact, Lineage
+from binex.models.task import TaskNode
+from binex.models.workflow import CaoConfig
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+@pytest.fixture()
+def tmp_agent_store(tmp_path):
+    """Create a temp agent-store with a test profile."""
+    store = tmp_path / "agent-store"
+    store.mkdir()
+    (store / "test_profile.md").write_text("# Test Agent Profile\nA test agent.")
+    return str(store)
+
+
+@pytest.fixture()
+def make_adapter(tmp_agent_store):
+    """Factory for CAOAdapter with defaults."""
+    def _make(
+        profile="test_profile",
+        server_url="http://localhost:9889",
+        cao_config=None,
+        session_store=None,
+    ):
+        return CAOAdapter(
+            profile=profile,
+            server_url=server_url,
+            agent_store_dir=tmp_agent_store,
+            session_store=session_store,
+            cao_config=cao_config or CaoConfig(),
+        )
+    return _make
+
+
+@pytest.fixture()
+def task():
+    """Minimal TaskNode for testing."""
+    return TaskNode(
+        id="task_1",
+        run_id="run_abc",
+        node_id="review",
+        agent="cao://test_profile",
+        system_prompt="Review the code changes",
+    )
+
+
+@pytest.fixture()
+def input_artifacts():
+    """Sample input artifacts."""
+    return [
+        Artifact(
+            id="art_prev",
+            run_id="run_abc",
+            type="result",
+            content="Code diff here",
+            lineage=Lineage(produced_by="prev_node"),
+        )
+    ]
+
+
+def _mock_response(status_code=200, json_data=None):
+    """Create a mock httpx.Response."""
+    resp = MagicMock(spec=httpx.Response)
+    resp.status_code = status_code
+    resp.json.return_value = json_data or {}
+    resp.raise_for_status = MagicMock()
+    if status_code >= 400:
+        resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "Error", request=MagicMock(), response=resp,
+        )
+    return resp
+
+
+# ---------------------------------------------------------------------------
+# Health
+# ---------------------------------------------------------------------------
+
+class TestHealth:
+    async def test_health_alive(self, make_adapter):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(return_value=_mock_response(200, {"status": "ok"}))
+            mock_client.return_value = client
+
+            result = await adapter.health()
+            assert result == AgentHealth.ALIVE
+
+    async def test_health_down(self, make_adapter):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(side_effect=httpx.ConnectError("refused"))
+            mock_client.return_value = client
+
+            result = await adapter.health()
+            assert result == AgentHealth.DOWN
+
+    async def test_health_degraded(self, make_adapter):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(return_value=_mock_response(503))
+            mock_client.return_value = client
+
+            result = await adapter.health()
+            assert result == AgentHealth.DEGRADED
+
+
+# ---------------------------------------------------------------------------
+# Pre-flight checks
+# ---------------------------------------------------------------------------
+
+class TestPreFlightChecks:
+    async def test_check_health_ok(self, make_adapter):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(return_value=_mock_response(200, {"status": "ok"}))
+            mock_client.return_value = client
+
+            await adapter._check_health()  # should not raise
+
+    async def test_check_health_unavailable(self, make_adapter):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(side_effect=httpx.ConnectError("refused"))
+            mock_client.return_value = client
+
+            with pytest.raises(CAOServerUnavailableError, match="unavailable"):
+                await adapter._check_health()
+
+    def test_check_profile_ok(self, make_adapter):
+        adapter = make_adapter(profile="test_profile")
+        adapter._check_profile()  # should not raise
+
+    def test_check_profile_not_found(self, make_adapter):
+        adapter = make_adapter(profile="nonexistent")
+        with pytest.raises(CAOProfileNotFoundError, match="nonexistent"):
+            adapter._check_profile()
+
+
+# ---------------------------------------------------------------------------
+# Get or create session
+# ---------------------------------------------------------------------------
+
+class TestGetOrCreateSession:
+    async def test_create_session_success(self, make_adapter):
+        adapter = make_adapter()
+        CAOAdapter._run_sessions.clear()
+        CAOAdapter._run_session_locks.clear()
+        mock_store = AsyncMock()
+        adapter.session_store = mock_store
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.post = AsyncMock(return_value=
+                _mock_response(201, {"id": "term_abc"}),
+            )
+            mock_client.return_value = client
+
+            session = await adapter._get_or_create_session("run_1", "node_a")
+
+            assert session.terminal_id == "term_abc"
+            assert session.session_name == "binex-run_1"
+            assert session.run_id == "run_1"
+            assert session.status == "active"
+            assert "run_1" in CAOAdapter._run_sessions
+            mock_store.create_cao_session.assert_awaited_once_with(
+                terminal_id="term_abc", run_id="run_1", node_name="node_a",
+                session_name="binex-run_1",
+            )
+
+
+# ---------------------------------------------------------------------------
+# Wait for init
+# ---------------------------------------------------------------------------
+
+class TestWaitForInit:
+    async def test_wait_init_immediate(self, make_adapter):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(return_value=_mock_response(200, {"status": "idle"}))
+            mock_client.return_value = client
+
+            with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
+                await adapter._wait_for_init("term_1")
+
+    async def test_wait_init_error_status(self, make_adapter):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(return_value=_mock_response(200, {"status": "error"}))
+            mock_client.return_value = client
+
+            with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
+                with pytest.raises(CAOAgentError, match="error state"):
+                    await adapter._wait_for_init("term_1")
+
+    async def test_wait_init_timeout(self, make_adapter):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(return_value=_mock_response(200, {"status": "processing"}))
+            mock_client.return_value = client
+
+            with patch("binex.adapters.cao._INIT_TIMEOUT_S", 2):
+                with patch("binex.adapters.cao._INIT_POLL_INTERVAL_S", 1.0):
+                    with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
+                        with pytest.raises(CAOTimeoutError, match="did not initialize"):
+                            await adapter._wait_for_init("term_1")
+
+
+# ---------------------------------------------------------------------------
+# Send task
+# ---------------------------------------------------------------------------
+
+class TestSendTask:
+    async def test_send_task_with_artifacts(self, make_adapter, task, input_artifacts):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.post = AsyncMock(return_value=_mock_response(200, {"success": True}))
+            mock_client.return_value = client
+
+            await adapter._send_task("term_1", task, input_artifacts)
+
+            client.post.assert_awaited_once()
+            call_kwargs = client.post.call_args
+            assert "message" in call_kwargs.kwargs.get("data", call_kwargs[1].get("data", {}))
+
+    async def test_send_task_empty_inputs(self, make_adapter):
+        t = TaskNode(
+            id="t1", run_id="r1", node_id="n1",
+            agent="cao://test_profile",
+        )
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.post = AsyncMock(return_value=_mock_response(200, {"success": True}))
+            mock_client.return_value = client
+
+            await adapter._send_task("term_1", t, [])
+            client.post.assert_awaited_once()
+
+
+# ---------------------------------------------------------------------------
+# Poll until done
+# ---------------------------------------------------------------------------
+
+class TestPollUntilDone:
+    async def test_poll_completes(self, make_adapter):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(side_effect=[
+                # poll 1: processing
+                _mock_response(200, {"status": "processing"}),
+                # poll 2: processing
+                _mock_response(200, {"status": "processing"}),
+                # poll 3: completed
+                _mock_response(200, {"status": "completed"}),
+                # output probe (distinguishes pre/post idle)
+                _mock_response(200, {"output": "done"}),
+            ])
+            mock_client.return_value = client
+
+            with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
+                await adapter._poll_until_done("term_1", timeout_s=600)
+
+    async def test_poll_error_status(self, make_adapter):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(
+                return_value=_mock_response(200, {"status": "error"}),
+            )
+            mock_client.return_value = client
+
+            with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
+                with pytest.raises(CAOAgentError, match="error state"):
+                    await adapter._poll_until_done("term_1", timeout_s=600)
+
+    async def test_poll_timeout(self, make_adapter):
+        adapter = make_adapter(cao_config=CaoConfig(timeout_minutes=1))
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(
+                return_value=_mock_response(200, {"status": "processing"}),
+            )
+            mock_client.return_value = client
+
+            with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
+                with pytest.raises(CAOTimeoutError, match="timed out"):
+                    await adapter._poll_until_done("term_1", timeout_s=4)
+
+    async def test_poll_waiting_user_answer_fails_fast(self, make_adapter):
+        """waiting_user_answer raises CAOAgentError immediately."""
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(side_effect=[
+                _mock_response(200, {"status": "waiting_user_answer"}),
+            ])
+            mock_client.return_value = client
+
+            with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
+                with pytest.raises(CAOAgentError, match="waiting for user input"):
+                    await adapter._poll_until_done("term_1", timeout_s=600)
+
+
+# ---------------------------------------------------------------------------
+# Fetch output
+# ---------------------------------------------------------------------------
+
+class TestFetchOutput:
+    async def test_fetch_output_success(self, make_adapter):
+        adapter = make_adapter()
+        mock_store = AsyncMock()
+        adapter.session_store = mock_store
+        adapter._active_sessions["node_a"] = MagicMock(terminal_id="term_1")
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(
+                return_value=_mock_response(200, {"output": "Hello world"}),
+            )
+            client.post = AsyncMock(return_value=_mock_response(200))
+            mock_client.return_value = client
+
+            raw_output, truncated = await adapter._fetch_output("term_1")
+            assert raw_output == "Hello world"
+            assert truncated is False
+            mock_store.complete_cao_session.assert_awaited_once_with("term_1")
+            assert "node_a" not in adapter._active_sessions
+
+    async def test_fetch_output_truncation_detected(self, make_adapter):
+        adapter = make_adapter()
+        adapter._active_sessions["node_a"] = MagicMock(terminal_id="term_1")
+        # Build output with exactly 200 lines
+        long_output = "\n".join(f"line {i}" for i in range(200))
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(
+                return_value=_mock_response(200, {"output": long_output}),
+            )
+            client.post = AsyncMock(return_value=_mock_response(200))
+            mock_client.return_value = client
+
+            raw_output, truncated = await adapter._fetch_output("term_1")
+            assert raw_output == long_output
+            assert truncated is True
+
+
+# ---------------------------------------------------------------------------
+# Parse output
+# ---------------------------------------------------------------------------
+
+class TestParseOutput:
+    def test_parse_text(self, make_adapter):
+        adapter = make_adapter(cao_config=CaoConfig(output_format="text"))
+        assert adapter._parse_output("hello") == "hello"
+
+    def test_parse_json(self, make_adapter):
+        adapter = make_adapter(cao_config=CaoConfig(output_format="json"))
+        result = adapter._parse_output('{"key": "value"}')
+        assert result == {"key": "value"}
+
+    def test_parse_json_invalid(self, make_adapter):
+        adapter = make_adapter(cao_config=CaoConfig(output_format="json"))
+        with pytest.raises(CAOOutputParseError, match="invalid JSON"):
+            adapter._parse_output("not json")
+
+    def test_parse_auto_json(self, make_adapter):
+        adapter = make_adapter(cao_config=CaoConfig(output_format="auto"))
+        result = adapter._parse_output('{"key": "value"}')
+        assert result == {"key": "value"}
+
+    def test_parse_auto_text_fallback(self, make_adapter):
+        adapter = make_adapter(cao_config=CaoConfig(output_format="auto"))
+        result = adapter._parse_output("plain text output")
+        assert result == "plain text output"
+
+    def test_parse_json_with_output_field(self, make_adapter):
+        adapter = make_adapter(
+            cao_config=CaoConfig(output_format="json", output_field="$.result"),
+        )
+        result = adapter._parse_output('{"result": "approved", "details": "ok"}')
+        assert result == "approved"
+
+    def test_parse_json_output_field_no_match(self, make_adapter):
+        adapter = make_adapter(
+            cao_config=CaoConfig(output_format="json", output_field="$.missing"),
+        )
+        with pytest.raises(CAOOutputParseError, match="matched nothing"):
+            adapter._parse_output('{"result": "approved"}')
+
+
+# ---------------------------------------------------------------------------
+# Build artifacts
+# ---------------------------------------------------------------------------
+
+class TestBuildArtifacts:
+    def test_build_artifacts_text(self):
+        artifacts = CAOAdapter._build_artifacts(
+            "review", "run_1", "raw stdout", "parsed text", ["art_prev"],
+        )
+        assert len(artifacts) == 2
+        assert artifacts[0].id == "review_cao_raw"
+        assert artifacts[0].type == "cao_raw_output"
+        assert artifacts[0].content == "raw stdout"
+
+        assert artifacts[1].id == "review_cao_output"
+        assert artifacts[1].type == "cao_output"
+        assert artifacts[1].content == "parsed text"
+        assert artifacts[1].lineage.derived_from == ["art_prev"]
+
+    def test_build_artifacts_json(self):
+        artifacts = CAOAdapter._build_artifacts(
+            "n1", "run_1", '{"a":1}', {"a": 1}, [],
+        )
+        assert artifacts[1].type == "json"
+        assert artifacts[1].content == {"a": 1}
+
+    def test_build_artifacts_truncated(self):
+        artifacts = CAOAdapter._build_artifacts(
+            "n1", "run_1", "long output", "long output", [],
+            possibly_truncated=True,
+        )
+        raw = artifacts[0]
+        assert isinstance(raw.content, dict)
+        assert raw.content["possibly_truncated"] is True
+        assert raw.content["output"] == "long output"
+        assert raw.content["truncation_limit"] == 200
+
+
+# ---------------------------------------------------------------------------
+# Full execute
+# ---------------------------------------------------------------------------
+
+class TestExecute:
+    async def test_execute_full_handoff(self, make_adapter, task, input_artifacts):
+        adapter = make_adapter()
+        CAOAdapter._run_sessions.clear()
+        CAOAdapter._run_session_locks.clear()
+        mock_store = AsyncMock()
+        adapter.session_store = mock_store
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+
+            # Sequence: health check, init poll, task poll, output probe, fetch output
+            client.get = AsyncMock(side_effect=[
+                # _check_health
+                _mock_response(200, {"status": "ok"}),
+                # _wait_for_init
+                _mock_response(200, {"status": "idle"}),
+                # _poll_until_done: status check
+                _mock_response(200, {"status": "completed"}),
+                # _poll_until_done: output probe
+                _mock_response(200, {"output": "Review complete: LGTM"}),
+                # _fetch_output
+                _mock_response(200, {"output": "Review complete: LGTM"}),
+            ])
+            client.post = AsyncMock(side_effect=[
+                # _get_or_create_session: create session (first node in run)
+                _mock_response(201, {"id": "term_abc"}),
+                # send task
+                _mock_response(200, {"success": True}),
+                # exit
+                _mock_response(200, {"success": True}),
+            ])
+            mock_client.return_value = client
+
+            with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
+                result = await adapter.execute(task, input_artifacts, "trace_1")
+
+            assert len(result.artifacts) == 2
+            assert result.artifacts[0].type == "cao_raw_output"
+            assert result.artifacts[1].content == "Review complete: LGTM"
+            assert result.cost is not None
+            assert result.cost.cost == 0.0
+            assert result.cost.source == "subscription_based"
+            assert result.cost.model == "cao/claude_code"
+
+    async def test_execute_server_unavailable(self, make_adapter, task, input_artifacts):
+        adapter = make_adapter()
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(side_effect=httpx.ConnectError("refused"))
+            mock_client.return_value = client
+
+            with pytest.raises(CAOServerUnavailableError):
+                await adapter.execute(task, input_artifacts, "trace_1")
+
+    async def test_execute_profile_not_found(self, make_adapter, task, input_artifacts):
+        adapter = make_adapter(profile="nonexistent")
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(return_value=_mock_response(200, {"status": "ok"}))
+            mock_client.return_value = client
+
+            with pytest.raises(CAOProfileNotFoundError):
+                await adapter.execute(task, input_artifacts, "trace_1")
+
+
+# ---------------------------------------------------------------------------
+# Cancel
+# ---------------------------------------------------------------------------
+
+class TestCancel:
+    async def test_cancel_no_active_session(self, make_adapter):
+        adapter = make_adapter()
+        await adapter.cancel("run_abc_review")  # should not raise
+
+    async def test_cancel_with_active_session(self, make_adapter):
+        adapter = make_adapter()
+        adapter._active_sessions["review"] = MagicMock(terminal_id="term_1", node_name="review")
+        mock_store = AsyncMock()
+        adapter.session_store = mock_store
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.post = AsyncMock(return_value=_mock_response(200))
+            client.delete = AsyncMock(return_value=_mock_response(200))
+            mock_client.return_value = client
+
+            await adapter.cancel("run_abc_review")
+
+            client.post.assert_awaited()
+            client.delete.assert_awaited()
+            mock_store.complete_cao_session.assert_awaited_once_with("term_1")
+            assert "review" not in adapter._active_sessions
+
+    async def test_cancel_swallows_errors(self, make_adapter):
+        adapter = make_adapter()
+        adapter._active_sessions["review"] = MagicMock(terminal_id="term_1", node_name="review")
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.post = AsyncMock(side_effect=httpx.ConnectError("refused"))
+            client.delete = AsyncMock(side_effect=httpx.ConnectError("refused"))
+            mock_client.return_value = client
+
+            await adapter.cancel("run_abc_review")  # should not raise
+
+    async def test_cancel_fallback_suffix_match(self, make_adapter):
+        """cancel() finds session by node_name suffix when exact key doesn't match."""
+        adapter = make_adapter()
+        adapter._active_sessions["review"] = MagicMock(terminal_id="term_1", node_name="review")
+
+        with patch.object(adapter, "_cleanup_terminal", new_callable=AsyncMock) as mock_cleanup:
+            await adapter.cancel("run_abc_review")
+            mock_cleanup.assert_awaited_once_with("term_1")
+
+    async def test_parallel_sessions_cancel_correct(self, make_adapter):
+        """Two nodes with same profile — cancel only affects the correct session."""
+        adapter = make_adapter()
+        adapter._active_sessions["node_a"] = MagicMock(terminal_id="term_1", node_name="node_a")
+        adapter._active_sessions["node_b"] = MagicMock(terminal_id="term_2", node_name="node_b")
+
+        with patch.object(adapter, "_cleanup_terminal", new_callable=AsyncMock) as mock_cleanup:
+            await adapter.cancel("run_1_node_a")
+            mock_cleanup.assert_awaited_once_with("term_1")
+
+        # node_b session should still be present (cleanup_terminal removes by terminal_id)
+        assert "node_b" in adapter._active_sessions
+
+
+# ---------------------------------------------------------------------------
+# Shared sessions (run-level session reuse)
+# ---------------------------------------------------------------------------
+
+class TestSharedSessions:
+    async def test_shared_session_first_node_creates_session(self, make_adapter):
+        """First CAO node in a run creates a new session."""
+        CAOAdapter._run_sessions.clear()
+        CAOAdapter._run_session_locks.clear()
+        adapter = make_adapter()
+        mock_store = AsyncMock()
+        adapter.session_store = mock_store
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.post = AsyncMock(
+                return_value=_mock_response(201, {"id": "term_001"}),
+            )
+            mock_client.return_value = client
+
+            session = await adapter._get_or_create_session("run_x", "node_a")
+
+            assert session.terminal_id == "term_001"
+            assert session.session_name == "binex-run_x"
+            assert session.run_id == "run_x"
+            assert "run_x" in CAOAdapter._run_sessions
+            assert CAOAdapter._run_sessions["run_x"] == "binex-run_x"
+            # Should have posted to /sessions (not /sessions/.../terminals)
+            client.post.assert_awaited_once()
+            call_args = client.post.call_args
+            assert call_args[0][0] == "/sessions"
+
+    async def test_shared_session_second_node_reuses(self, make_adapter):
+        """Second CAO node reuses existing session, posts to terminals endpoint."""
+        CAOAdapter._run_sessions.clear()
+        CAOAdapter._run_session_locks.clear()
+        adapter = make_adapter()
+        mock_store = AsyncMock()
+        adapter.session_store = mock_store
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.post = AsyncMock(side_effect=[
+                _mock_response(201, {"id": "term_001"}),
+                _mock_response(201, {"id": "term_002"}),
+            ])
+            mock_client.return_value = client
+
+            session_a = await adapter._get_or_create_session("run_y", "node_a")
+            session_b = await adapter._get_or_create_session("run_y", "node_b")
+
+            # Both have the same session_name but different terminal_ids
+            assert session_a.session_name == session_b.session_name == "binex-run_y"
+            assert session_a.terminal_id == "term_001"
+            assert session_b.terminal_id == "term_002"
+
+            # First call: POST /sessions, second: POST /sessions/cao-binex-run_y/terminals
+            calls = client.post.call_args_list
+            assert len(calls) == 2
+            assert calls[0][0][0] == "/sessions"
+            assert calls[1][0][0] == "/sessions/cao-binex-run_y/terminals"
+
+    async def test_shared_session_different_runs_separate(self, make_adapter):
+        """Different run_ids get separate sessions."""
+        CAOAdapter._run_sessions.clear()
+        CAOAdapter._run_session_locks.clear()
+        adapter = make_adapter()
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.post = AsyncMock(side_effect=[
+                _mock_response(201, {"id": "term_r1"}),
+                _mock_response(201, {"id": "term_r2"}),
+            ])
+            mock_client.return_value = client
+
+            s1 = await adapter._get_or_create_session("run_1", "node_a")
+            s2 = await adapter._get_or_create_session("run_2", "node_b")
+
+            assert s1.session_name == "binex-run_1"
+            assert s2.session_name == "binex-run_2"
+            # Both should create new sessions via POST /sessions
+            calls = client.post.call_args_list
+            assert calls[0][0][0] == "/sessions"
+            assert calls[1][0][0] == "/sessions"
+
+    async def test_shared_session_sqlite_persistence_with_session_name(self, make_adapter):
+        """Session name is passed to SQLite store for crash recovery."""
+        CAOAdapter._run_sessions.clear()
+        CAOAdapter._run_session_locks.clear()
+        adapter = make_adapter()
+        mock_store = AsyncMock()
+        adapter.session_store = mock_store
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.post = AsyncMock(
+                return_value=_mock_response(201, {"id": "term_999"}),
+            )
+            mock_client.return_value = client
+
+            await adapter._get_or_create_session("run_z", "node_x")
+
+            mock_store.create_cao_session.assert_awaited_once_with(
+                terminal_id="term_999",
+                run_id="run_z",
+                node_name="node_x",
+                session_name="binex-run_z",
+            )
