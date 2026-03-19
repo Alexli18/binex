@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { HumanPromptModal } from '../components/HumanPromptModal';
+import { CaoInputModal } from '../components/cao/CaoInputModal';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { useRun, useCancelRun } from '../hooks/useRuns';
@@ -26,11 +27,33 @@ function EventLogItem({ event }: { event: RunEvent }) {
   );
 }
 
+/** Live elapsed timer for running CAO nodes — updates every second. */
+function CaoLiveTimer({ startedAt }: { startedAt: string }) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const start = new Date(startedAt).getTime();
+    const tick = () => setElapsed(Math.floor((Date.now() - start) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [startedAt]);
+
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+
+  return (
+    <span className="text-xs font-mono text-purple-400 ml-auto shrink-0">
+      {mins}m {secs}s
+    </span>
+  );
+}
+
 export default function RunLive() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { data: run, isLoading } = useRun(runId);
-  const { events, connected, pendingPrompt, clearPrompt, outputResult, clearOutput } = useSSE(runId);
+  const { events, connected, pendingPrompt, clearPrompt, pendingCaoPrompt, clearCaoPrompt, outputResult, clearOutput } = useSSE(runId);
   const cancelRun = useCancelRun();
   const logRef = useRef<HTMLDivElement>(null);
 
@@ -58,14 +81,22 @@ export default function RunLive() {
     }
   }, [events, navigate, runId, outputResult]);
 
-  // Build node status map from events
+  // Build node status map from events (with start timestamps and agent info)
   const nodeStatuses = useMemo(() => {
-    const statuses: Record<string, string> = {};
+    const statuses: Record<string, { status: string; startedAt?: string; agent?: string }> = {};
     for (const event of events) {
       if (event.node_id) {
-        if (event.type === 'node:started') statuses[event.node_id] = 'running';
-        else if (event.type === 'node:completed') statuses[event.node_id] = 'completed';
-        else if (event.type === 'node:failed') statuses[event.node_id] = 'failed';
+        if (event.type === 'node:started') {
+          statuses[event.node_id] = {
+            status: 'running',
+            startedAt: event.timestamp,
+            agent: (event as RunEvent & { agent?: string }).agent,
+          };
+        } else if (event.type === 'node:completed') {
+          statuses[event.node_id] = { ...statuses[event.node_id], status: 'completed' };
+        } else if (event.type === 'node:failed') {
+          statuses[event.node_id] = { ...statuses[event.node_id], status: 'failed' };
+        }
       }
     }
     return statuses;
@@ -142,19 +173,22 @@ export default function RunLive() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Node status summary */}
         <div className="lg:col-span-2">
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
             <h3 className="text-sm font-semibold text-slate-200 mb-3">Node Status</h3>
             {Object.keys(nodeStatuses).length === 0 ? (
               <p className="text-slate-400 text-sm">Waiting for events...</p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {Object.entries(nodeStatuses).map(([nodeId, status]) => (
+                {Object.entries(nodeStatuses).map(([nodeId, info]) => (
                   <div
                     key={nodeId}
                     className="flex items-center gap-2 bg-slate-700 rounded px-3 py-2"
                   >
-                    <StatusBadge status={status} />
+                    <StatusBadge status={info.status} />
                     <span className="font-mono text-xs truncate">{nodeId}</span>
+                    {info.status === 'running' && info.agent?.startsWith('cao://') && info.startedAt && (
+                      <CaoLiveTimer startedAt={info.startedAt} />
+                    )}
                   </div>
                 ))}
               </div>
@@ -164,7 +198,7 @@ export default function RunLive() {
 
         {/* Event log */}
         <div className="lg:col-span-1">
-          <div className="bg-slate-800 border border-slate-700 rounded-lg">
+          <div className="bg-slate-800 border border-slate-700 rounded-card">
             <div className="px-4 py-3 border-b border-slate-700">
               <h3 className="text-sm font-semibold text-slate-200">
                 Event Log ({events.length})
@@ -195,14 +229,22 @@ export default function RunLive() {
         />
       )}
 
+      {/* CAO agent waiting-for-input modal */}
+      {pendingCaoPrompt && (
+        <CaoInputModal
+          prompt={pendingCaoPrompt}
+          onDone={clearCaoPrompt}
+        />
+      )}
+
       {/* Workflow output display */}
       {outputResult && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={clearOutput}>
           <div
-            className="bg-slate-800 rounded-lg shadow-xl border border-slate-700 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+            className="bg-slate-900 rounded-modal shadow-xl border border-slate-700/60 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/60">
               <h3 className="text-lg font-semibold text-emerald-400">{outputResult.label}</h3>
               <button
                 onClick={clearOutput}
@@ -227,7 +269,7 @@ export default function RunLive() {
                 </div>
               ))}
             </div>
-            <div className="px-6 py-3 border-t border-slate-700 flex justify-end">
+            <div className="px-6 py-4 border-t border-slate-700/60 flex justify-end">
               <button
                 onClick={clearOutput}
                 className="px-4 py-1.5 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-500"
