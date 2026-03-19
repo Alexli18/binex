@@ -26,7 +26,7 @@ import os
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Literal
 from uuid import uuid4
 
 import httpx
@@ -124,12 +124,17 @@ class CAOAdapter:
         agent_store_dir: str,
         session_store: SqliteExecutionStore | None = None,
         cao_config: CaoConfig | None = None,
+        event_callback: Callable | None = None,
+        human_input_fn: Callable | None = None,
     ) -> None:
         self.profile = profile
         self.server_url = server_url.rstrip("/")
         self.agent_store_dir = agent_store_dir
         self.session_store = session_store
         self.cao_config = cao_config or CaoConfig()
+        self._event_callback = event_callback
+        self._human_input_fn = human_input_fn
+        self._human_prompt_count: int = 0
         self._active_sessions: dict[str, CAOSession] = {}
         self._client: httpx.AsyncClient | None = None
 
@@ -342,11 +347,42 @@ class CAOAdapter:
                 )
 
             if status == "waiting_user_answer":
-                raise CAOAgentError(
-                    f"CAO agent on terminal {terminal_id} is waiting for "
-                    f"user input (status: waiting_user_answer). Binex cannot "
-                    f"provide interactive stdin to CAO agents."
+                self._human_prompt_count += 1
+                if self._human_prompt_count > self.cao_config.max_human_prompts:
+                    raise CAOAgentError(
+                        f"CAO agent on terminal {terminal_id} exceeded "
+                        f"max_human_prompts ({self.cao_config.max_human_prompts})"
+                    )
+
+                # Emit event for UI
+                if self._event_callback is not None:
+                    event = {
+                        "type": "cao:waiting_input",
+                        "terminal_id": terminal_id,
+                        "prompt_number": self._human_prompt_count,
+                    }
+                    cb_result = self._event_callback(event)
+                    if asyncio.iscoroutine(cb_result):
+                        await cb_result
+
+                # Get human input
+                if self._human_input_fn is not None:
+                    answer = self._human_input_fn(self.profile, terminal_id)
+                    if asyncio.iscoroutine(answer):
+                        answer = await answer
+                else:
+                    # CLI fallback
+                    import click
+                    answer = click.prompt(
+                        f"CAO agent '{self.profile}' is waiting for input"
+                    )
+
+                # Send answer back to CAO terminal
+                await client.post(
+                    f"/terminals/{terminal_id}/input",
+                    data={"message": str(answer)},
                 )
+                continue  # Resume polling
 
             if status == "processing":
                 _saw_processing = True

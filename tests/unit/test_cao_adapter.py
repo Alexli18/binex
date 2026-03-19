@@ -316,18 +316,82 @@ class TestPollUntilDone:
                 with pytest.raises(CAOTimeoutError, match="timed out"):
                     await adapter._poll_until_done("term_1", timeout_s=4)
 
-    async def test_poll_waiting_user_answer_fails_fast(self, make_adapter):
-        """waiting_user_answer raises CAOAgentError immediately."""
+    async def test_poll_waiting_user_answer_with_human_input(self, make_adapter):
+        """waiting_user_answer gets human input, sends it, and resumes polling."""
         adapter = make_adapter()
+        adapter._human_input_fn = lambda p, t: "yes"
+        adapter._human_prompt_count = 0
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(side_effect=[
+                # poll 1: waiting_user_answer
+                _mock_response(200, {"status": "waiting_user_answer"}),
+                # poll 2: processing (after human input sent)
+                _mock_response(200, {"status": "processing"}),
+                # poll 3: idle (done)
+                _mock_response(200, {"status": "idle"}),
+            ])
+            client.post = AsyncMock(return_value=_mock_response(200))
+            mock_client.return_value = client
+
+            with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
+                await adapter._poll_until_done("term_1", timeout_s=600)
+
+            # Verify input was sent to terminal
+            post_calls = client.post.call_args_list
+            assert len(post_calls) == 1
+            assert post_calls[0][0][0] == "/terminals/term_1/input"
+            assert post_calls[0][1]["data"]["message"] == "yes"
+
+    async def test_waiting_user_answer_emits_event(self, make_adapter):
+        """waiting_user_answer should emit cao:waiting_input event."""
+        events = []
+        async def capture(e):
+            events.append(e)
+
+        adapter = make_adapter()
+        adapter._event_callback = capture
+        adapter._human_input_fn = lambda p, t: "yes"
+        adapter._human_prompt_count = 0
+
         with patch.object(adapter, "_get_client") as mock_client:
             client = AsyncMock()
             client.get = AsyncMock(side_effect=[
                 _mock_response(200, {"status": "waiting_user_answer"}),
+                _mock_response(200, {"status": "processing"}),
+                _mock_response(200, {"status": "idle"}),
             ])
+            client.post = AsyncMock(return_value=_mock_response(200))
             mock_client.return_value = client
 
             with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
-                with pytest.raises(CAOAgentError, match="waiting for user input"):
+                await adapter._poll_until_done("term_1", timeout_s=600)
+
+        assert len(events) == 1
+        assert events[0]["type"] == "cao:waiting_input"
+        assert events[0]["terminal_id"] == "term_1"
+        assert events[0]["prompt_number"] == 1
+
+    async def test_waiting_user_answer_max_prompts_exceeded(self, make_adapter):
+        """Exceeding max_human_prompts raises CAOAgentError."""
+        adapter = make_adapter(cao_config=CaoConfig(max_human_prompts=1))
+        adapter._human_input_fn = lambda p, t: "yes"
+        adapter._human_prompt_count = 0
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(side_effect=[
+                # First waiting_user_answer — allowed (count becomes 1)
+                _mock_response(200, {"status": "waiting_user_answer"}),
+                # After input sent, still waiting — second prompt
+                _mock_response(200, {"status": "waiting_user_answer"}),
+            ])
+            client.post = AsyncMock(return_value=_mock_response(200))
+            mock_client.return_value = client
+
+            with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
+                with pytest.raises(CAOAgentError, match="max_human_prompts"):
                     await adapter._poll_until_done("term_1", timeout_s=600)
 
 
