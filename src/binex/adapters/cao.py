@@ -649,7 +649,42 @@ class CAOAdapter:
         }
 
     async def close(self) -> None:
-        """Close the HTTP client."""
+        """Clean up all active sessions and close HTTP client."""
+        client = None
+        if self._client is not None and not self._client.is_closed:
+            client = self._client
+
+        # Exit any still-active terminals
+        for session in list(self._active_sessions.values()):
+            if client:
+                try:
+                    await client.post(f"/terminals/{session.terminal_id}/exit")
+                except httpx.HTTPError:
+                    pass
+            if self.session_store is not None:
+                try:
+                    await self.session_store.complete_cao_session(session.terminal_id)
+                except Exception:
+                    pass
+
+        # Delete entire CAO sessions (removes session + all terminals at once)
+        run_ids_to_clean = {s.run_id for s in self._active_sessions.values()}
+        for run_id in run_ids_to_clean:
+            session_name = self._run_sessions.get(run_id)
+            if session_name and client:
+                try:
+                    await client.delete(f"/sessions/cao-{session_name}")
+                except httpx.HTTPError:
+                    logger.debug("Failed to delete CAO session cao-%s", session_name)
+
+        # Clean up class-level state
+        for run_id in run_ids_to_clean:
+            self._run_sessions.pop(run_id, None)
+            self._run_session_locks.pop(run_id, None)
+
+        self._active_sessions.clear()
+
+        # Close HTTP client
         if self._client is not None and not self._client.is_closed:
             await self._client.aclose()
             self._client = None
