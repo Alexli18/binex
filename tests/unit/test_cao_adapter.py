@@ -374,6 +374,29 @@ class TestFetchOutput:
             assert raw_output == long_output
             assert truncated is True
 
+    async def test_fetch_output_exit_only_no_delete(self, make_adapter):
+        """Happy path should POST exit but NOT call DELETE on terminal."""
+        adapter = make_adapter()
+        mock_store = AsyncMock()
+        adapter.session_store = mock_store
+        adapter._active_sessions["node_a"] = MagicMock(terminal_id="term_1")
+
+        with patch.object(adapter, "_get_client") as mock_client:
+            client = AsyncMock()
+            client.get = AsyncMock(
+                return_value=_mock_response(200, {"output": "result"}),
+            )
+            client.post = AsyncMock(return_value=_mock_response(200))
+            client.delete = AsyncMock(return_value=_mock_response(200))
+            mock_client.return_value = client
+
+            await adapter._fetch_output("term_1")
+
+            # POST exit MUST be called
+            client.post.assert_awaited_once_with("/terminals/term_1/exit")
+            # DELETE MUST NOT be called in happy path
+            client.delete.assert_not_awaited()
+
 
 # ---------------------------------------------------------------------------
 # Parse output
@@ -699,3 +722,125 @@ class TestSharedSessions:
                 node_name="node_x",
                 session_name="binex-run_z",
             )
+
+
+# ---------------------------------------------------------------------------
+# Close (full cleanup)
+# ---------------------------------------------------------------------------
+
+class TestClose:
+    async def test_close_exits_active_terminals(self, make_adapter):
+        """close() sends POST /terminals/{id}/exit for each active terminal."""
+        adapter = make_adapter()
+        from binex.adapters.cao import CAOSession
+        adapter._active_sessions["node_a"] = CAOSession(
+            terminal_id="term_1", session_name="binex-run_1",
+            run_id="run_1", node_name="node_a",
+        )
+        adapter._active_sessions["node_b"] = CAOSession(
+            terminal_id="term_2", session_name="binex-run_1",
+            run_id="run_1", node_name="node_b",
+        )
+        client = AsyncMock()
+        client.is_closed = False
+        client.post = AsyncMock(return_value=_mock_response(200))
+        client.delete = AsyncMock(return_value=_mock_response(200))
+        client.aclose = AsyncMock()
+        adapter._client = client
+
+        CAOAdapter._run_sessions["run_1"] = "binex-run_1"
+        CAOAdapter._run_session_locks["run_1"] = MagicMock()
+
+        await adapter.close()
+
+        # Should have called exit on both terminals
+        exit_calls = [
+            c for c in client.post.call_args_list
+            if "/terminals/" in str(c) and "/exit" in str(c)
+        ]
+        assert len(exit_calls) == 2
+
+    async def test_close_deletes_sessions(self, make_adapter):
+        """close() sends DELETE /sessions/cao-{name} for each run."""
+        adapter = make_adapter()
+        from binex.adapters.cao import CAOSession
+        adapter._active_sessions["node_a"] = CAOSession(
+            terminal_id="term_1", session_name="binex-run_1",
+            run_id="run_1", node_name="node_a",
+        )
+        client = AsyncMock()
+        client.is_closed = False
+        client.post = AsyncMock(return_value=_mock_response(200))
+        client.delete = AsyncMock(return_value=_mock_response(200))
+        client.aclose = AsyncMock()
+        adapter._client = client
+
+        CAOAdapter._run_sessions["run_1"] = "binex-run_1"
+        CAOAdapter._run_session_locks["run_1"] = MagicMock()
+
+        await adapter.close()
+
+        client.delete.assert_awaited_once_with("/sessions/cao-binex-run_1")
+
+    async def test_close_clears_class_state(self, make_adapter):
+        """close() clears _active_sessions, _run_sessions, and _run_session_locks."""
+        adapter = make_adapter()
+        from binex.adapters.cao import CAOSession
+        adapter._active_sessions["node_a"] = CAOSession(
+            terminal_id="term_1", session_name="binex-run_1",
+            run_id="run_1", node_name="node_a",
+        )
+        adapter._active_sessions["node_b"] = CAOSession(
+            terminal_id="term_2", session_name="binex-run_2",
+            run_id="run_2", node_name="node_b",
+        )
+        client = AsyncMock()
+        client.is_closed = False
+        client.post = AsyncMock(return_value=_mock_response(200))
+        client.delete = AsyncMock(return_value=_mock_response(200))
+        client.aclose = AsyncMock()
+        adapter._client = client
+
+        CAOAdapter._run_sessions["run_1"] = "binex-run_1"
+        CAOAdapter._run_sessions["run_2"] = "binex-run_2"
+        CAOAdapter._run_session_locks["run_1"] = MagicMock()
+        CAOAdapter._run_session_locks["run_2"] = MagicMock()
+
+        await adapter.close()
+
+        assert len(adapter._active_sessions) == 0
+        assert "run_1" not in CAOAdapter._run_sessions
+        assert "run_2" not in CAOAdapter._run_sessions
+        assert "run_1" not in CAOAdapter._run_session_locks
+        assert "run_2" not in CAOAdapter._run_session_locks
+        assert adapter._client is None
+
+    async def test_close_marks_sessions_completed_in_sqlite(self, make_adapter):
+        """close() calls complete_cao_session for each active terminal."""
+        adapter = make_adapter()
+        from binex.adapters.cao import CAOSession
+        mock_store = AsyncMock()
+        adapter.session_store = mock_store
+        adapter._active_sessions["node_a"] = CAOSession(
+            terminal_id="term_1", session_name="binex-run_1",
+            run_id="run_1", node_name="node_a",
+        )
+        adapter._active_sessions["node_b"] = CAOSession(
+            terminal_id="term_2", session_name="binex-run_1",
+            run_id="run_1", node_name="node_b",
+        )
+        client = AsyncMock()
+        client.is_closed = False
+        client.post = AsyncMock(return_value=_mock_response(200))
+        client.delete = AsyncMock(return_value=_mock_response(200))
+        client.aclose = AsyncMock()
+        adapter._client = client
+
+        CAOAdapter._run_sessions["run_1"] = "binex-run_1"
+        CAOAdapter._run_session_locks["run_1"] = MagicMock()
+
+        await adapter.close()
+
+        complete_calls = mock_store.complete_cao_session.call_args_list
+        terminal_ids = {c[0][0] for c in complete_calls}
+        assert terminal_ids == {"term_1", "term_2"}
