@@ -1,6 +1,6 @@
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useEffect, useRef } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from 'reactflow';
-import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2, BookOpen, Wrench, Terminal } from 'lucide-react';
+import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2, BookOpen, Wrench, Terminal, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ModelSelect } from './ModelSelect';
 import { CollapsibleSection } from './CollapsibleSection';
@@ -38,6 +38,8 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
   const [config, setConfig] = useState<Record<string, unknown>>(data.config || {});
   const [tools, setTools] = useState<string[]>(data.tools || []);
   const [promptPanelOpen, setPromptPanelOpen] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -49,7 +51,12 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
 
   const notifyChange = useCallback(() => {
     window.dispatchEvent(new CustomEvent('binex:node-data-change'));
+    setShowSaved(true);
+    clearTimeout(savedTimer.current);
+    savedTimer.current = setTimeout(() => setShowSaved(false), 1500);
   }, []);
+
+  useEffect(() => () => clearTimeout(savedTimer.current), []);
 
   const updateConfig = useCallback((key: string, value: unknown) => {
     setConfig((prev) => {
@@ -330,6 +337,13 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
           />
         )}
       </div>
+
+      {showSaved && (
+        <div className="flex items-center justify-center gap-1 py-1 text-[10px] text-emerald-400/80 border-t border-slate-700/30">
+          <Check size={10} />
+          <span>Auto-saved</span>
+        </div>
+      )}
 
       <Handle type="source" position={Position.Bottom} className="!w-2.5 !h-2.5 !border-2 !border-slate-700 !bg-slate-400 hover:!bg-blue-400 hover:!border-blue-500 transition-colors" />
 

@@ -111,3 +111,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — nodes now appear smoothly instead of popping
 **Decision:** kept
 **Reason:** Dropping a node onto the canvas gave no visual confirmation — it just appeared. Added `node-appear` keyframes (scale 0.92→1, opacity 0→1, 200ms ease-out) applied via `animate-node-appear` class on collapsed nodes. Subtle enough to not feel heavy, noticeable enough to confirm the drop action succeeded.
+
+## Iteration 17 — 2026-03-20
+**Change:** Added "Auto-saved" indicator in expanded node footer after settings changes
+**File:** ui/src/components/editor/EditableNode.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — users now see confirmation that changes are applied
+**Decision:** kept
+**Reason:** program.md says "Save/Apply action should be obvious and feel responsive." Settings auto-save via notifyChange() but with no visual feedback. Now a brief green "Auto-saved" indicator with check icon appears for 1.5s in the expanded node footer after any change. Timer cleanup on unmount prevents leaks.
