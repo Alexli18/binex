@@ -93,6 +93,14 @@ class SqliteExecutionStore:
                 version INTEGER NOT NULL,
                 created_at TEXT NOT NULL
             );
+            CREATE INDEX IF NOT EXISTS idx_execution_records_run_id
+                ON execution_records (run_id);
+            CREATE INDEX IF NOT EXISTS idx_execution_records_run_task
+                ON execution_records (run_id, task_id);
+            CREATE INDEX IF NOT EXISTS idx_cost_records_run_id
+                ON cost_records (run_id);
+            CREATE INDEX IF NOT EXISTS idx_cost_records_run_task
+                ON cost_records (run_id, task_id);
         """)
         # Migration: add total_cost column to existing runs table
         try:
