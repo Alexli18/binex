@@ -16,9 +16,9 @@ const ICONS: Record<string, React.ElementType> = {
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  llm: 'LLM Agent', local: 'Script', 'human-approve': 'Approval',
-  'human-input': 'Input', 'human-output': 'Output', a2a: 'A2A Agent',
-  cao: 'CAO Agent',
+  llm: 'LLM', local: 'Script', 'human-approve': 'Approve',
+  'human-input': 'Input', 'human-output': 'Output', a2a: 'A2A',
+  cao: 'CAO',
 };
 
 export interface EditableNodeData {
@@ -96,42 +96,29 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
     notifyChange();
   }, [data, notifyChange]);
 
+  const handleStyle = "!w-2 !h-2 !border-[1.5px] !border-slate-600 !bg-slate-400 hover:!bg-blue-400 hover:!border-blue-500 !transition-colors";
+
   // Collapsed view
   if (!expanded) {
     return (
       <div
-        className={`group rounded-lg border shadow-lg shadow-black/20 min-w-[180px] max-w-[220px] cursor-pointer hover:shadow-xl transition-all duration-150 relative overflow-hidden animate-node-appear ${selected ? 'border-blue-500/60 ring-2 ring-blue-500/20' : 'border-slate-700/60 hover:border-slate-600'}`}
-        style={{ backgroundColor: `${data.color}08` }}
+        className={`group rounded-md bg-slate-800/90 border shadow-md shadow-black/25 cursor-pointer hover:shadow-lg transition-all duration-150 relative animate-node-appear ${selected ? 'border-slate-500 shadow-[0_0_0_1px_rgba(148,163,184,0.15)]' : 'border-slate-700/50 hover:border-slate-600'}`}
+        style={{ borderLeftWidth: 3, borderLeftColor: data.color }}
         onClick={() => setExpanded(true)}
       >
-        {/* Color accent strip */}
-        <div className="h-[3px] w-full" style={{ backgroundColor: data.color }} />
-        <Handle type="target" position={Position.Top} className="!w-2.5 !h-2.5 !border-2 !border-slate-700 !bg-slate-400 hover:!bg-blue-400 hover:!border-blue-500 transition-colors" />
-        <button
-          onClick={handleDelete}
-          className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 z-10"
-          title="Delete node"
-        >
-          <Trash2 size={10} />
-        </button>
-        <div className="px-3 py-2.5">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${data.color}20` }}>
-              <Icon size={15} style={{ color: data.color }} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium text-slate-100 truncate leading-tight">{label}</div>
-              <div className="text-[10px] text-slate-500 leading-tight mt-0.5">{TYPE_LABELS[data.nodeType] || data.nodeType}</div>
-            </div>
-            {tools.length > 0 && (
-              <span className="flex items-center gap-0.5 text-[9px] text-blue-400 bg-blue-500/10 px-1 py-0.5 rounded shrink-0">
-                <Wrench size={9} />
-                {tools.length}
-              </span>
-            )}
-          </div>
+        <Handle type="target" position={Position.Top} className={handleStyle} />
+        <div className="px-2.5 py-2 flex items-center gap-2">
+          <Icon size={14} style={{ color: data.color }} className="shrink-0" />
+          <span className="text-[13px] font-medium text-slate-200 truncate">{label}</span>
+          <span className="text-[10px] text-slate-500 shrink-0">{TYPE_LABELS[data.nodeType] || data.nodeType}</span>
+          {tools.length > 0 && (
+            <span className="flex items-center gap-0.5 text-[9px] text-blue-400 bg-blue-500/10 px-1 py-0.5 rounded shrink-0">
+              <Wrench size={8} />
+              {tools.length}
+            </span>
+          )}
         </div>
-        <Handle type="source" position={Position.Bottom} className="!w-2.5 !h-2.5 !border-2 !border-slate-700 !bg-slate-400 hover:!bg-blue-400 hover:!border-blue-500 transition-colors" />
+        <Handle type="source" position={Position.Bottom} className={handleStyle} />
       </div>
     );
   }
@@ -139,44 +126,33 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
   // Expanded view
   return (
     <div
-      className={`rounded-lg border shadow-xl shadow-black/30 w-[280px] nowheel overflow-hidden ${selected ? 'border-blue-500/60 ring-2 ring-blue-500/20' : 'border-slate-700/60'}`}
-      style={{ backgroundColor: `${data.color}08` }}
+      className={`rounded-md bg-slate-800/90 border shadow-xl shadow-black/30 w-[260px] nowheel ${selected ? 'border-slate-500' : 'border-slate-700/50'}`}
+      style={{ borderLeftWidth: 3, borderLeftColor: data.color }}
     >
-      {/* Color accent strip */}
-      <div className="h-[3px] w-full" style={{ backgroundColor: data.color }} />
-      <Handle type="target" position={Position.Top} className="!w-2.5 !h-2.5 !border-2 !border-slate-700 !bg-slate-400 hover:!bg-blue-400 hover:!border-blue-500 transition-colors" />
+      <Handle type="target" position={Position.Top} className={handleStyle} />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-700/50">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${data.color}20` }}>
-            <Icon size={15} style={{ color: data.color }} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <input
-              value={label}
-              onChange={(e) => updateLabel(e.target.value)}
-              className="bg-transparent text-sm font-medium text-slate-100 border-none outline-none w-full"
-              onClick={(e) => e.stopPropagation()}
-            />
-            <div className="text-[10px] text-slate-500 leading-tight">{TYPE_LABELS[data.nodeType] || data.nodeType}</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-1 shrink-0 ml-1">
-          <button onClick={handleDelete} className="text-red-500 hover:text-red-400" title="Delete node">
-            <Trash2 size={13} />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); setExpanded(false); }} className="text-slate-500 hover:text-slate-300">
-            <X size={14} />
-          </button>
-        </div>
+      <div className="flex items-center gap-2 px-2.5 py-2 border-b border-slate-700/40">
+        <Icon size={14} style={{ color: data.color }} className="shrink-0" />
+        <input
+          value={label}
+          onChange={(e) => updateLabel(e.target.value)}
+          className="bg-transparent text-[13px] font-medium text-slate-200 border-none outline-none min-w-0 flex-1"
+          onClick={(e) => e.stopPropagation()}
+        />
+        <span className="text-[10px] text-slate-500 shrink-0">{TYPE_LABELS[data.nodeType]}</span>
+        <button onClick={handleDelete} className="text-slate-600 hover:text-red-400 transition-colors shrink-0" title="Delete">
+          <Trash2 size={12} />
+        </button>
+        <button onClick={(e) => { e.stopPropagation(); setExpanded(false); }} className="text-slate-600 hover:text-slate-300 transition-colors shrink-0">
+          <X size={13} />
+        </button>
       </div>
 
       {/* Sections */}
       <div className="text-xs">
         {data.nodeType === 'llm' && (
           <>
-            {/* Model Section */}
             <CollapsibleSection title="Model" defaultOpen>
               <div>
                 <label className="text-slate-400 block mb-0.5">Model</label>
@@ -188,13 +164,12 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                   onChange={(e) => updateConfig('max_tokens', parseInt(e.target.value) || 4096)}
                   className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                   onClick={(e) => e.stopPropagation()} />
-                <p className="text-slate-600 mt-0.5">Maximum response length</p>
               </div>
               <div>
                 <label className="text-slate-400 block mb-0.5">
                   Temperature: {(config.temperature as number) ?? 0.7}
-                  <span className="ml-1.5 text-slate-600 font-normal normal-case tracking-normal">
-                    {((config.temperature as number) ?? 0.7) <= 0.3 ? '(precise)' : ((config.temperature as number) ?? 0.7) >= 1.2 ? '(creative)' : '(balanced)'}
+                  <span className="ml-1 text-slate-600 font-normal normal-case tracking-normal">
+                    {((config.temperature as number) ?? 0.7) <= 0.3 ? '· precise' : ((config.temperature as number) ?? 0.7) >= 1.2 ? '· creative' : '· balanced'}
                   </span>
                 </label>
                 <input type="range" min="0" max="2" step="0.1" value={(config.temperature as number) ?? 0.7}
@@ -203,8 +178,7 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
               </div>
             </CollapsibleSection>
 
-            {/* Prompt Section */}
-            <CollapsibleSection title="Prompt" defaultOpen>
+            <CollapsibleSection title="Prompt">
               <div>
                 <div className="flex items-center justify-between mb-0.5">
                   <label className="text-slate-400">System Prompt</label>
@@ -213,20 +187,19 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                     className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
                     title="Browse prompt library"
                   >
-                    <BookOpen size={11} />
+                    <BookOpen size={10} />
                     <span className="text-[10px]">Browse</span>
                   </button>
                 </div>
                 <textarea value={(config.system_prompt as string) || ''}
                   onChange={(e) => updateConfig('system_prompt', e.target.value)}
-                  placeholder="Write your prompt or click Browse to pick one..."
-                  rows={4}
-                  className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 resize-none"
+                  placeholder="System prompt..."
+                  rows={3}
+                  className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 resize-none text-xs"
                   onClick={(e) => e.stopPropagation()} />
               </div>
             </CollapsibleSection>
 
-            {/* Tools Section */}
             <CollapsibleSection
               title="Tools"
               badge={tools.length > 0 ? (
@@ -247,7 +220,6 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
               </div>
             </CollapsibleSection>
 
-            {/* Advanced Section */}
             <CollapsibleSection title="Advanced">
               <div>
                 <label className="text-slate-400 block mb-0.5">Budget Limit ($)</label>
@@ -256,14 +228,13 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                   placeholder="No limit"
                   className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                   onClick={(e) => e.stopPropagation()} />
-                <p className="text-slate-600 mt-0.5">Stop this node if cost exceeds limit</p>
               </div>
             </CollapsibleSection>
           </>
         )}
 
         {data.nodeType === 'local' && (
-          <CollapsibleSection title="Configuration" defaultOpen>
+          <CollapsibleSection title="Config" defaultOpen>
             <div>
               <label className="text-slate-400 block mb-0.5">Module Path</label>
               <Input value={agent.replace('local://', '')}
@@ -271,13 +242,12 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                 placeholder="my_module.my_function"
                 className="h-7 bg-slate-700 border-slate-600 text-slate-200 font-mono"
                 onClick={(e) => e.stopPropagation()} />
-              <p className="text-slate-600 mt-0.5">Python module.function to execute</p>
             </div>
           </CollapsibleSection>
         )}
 
         {data.nodeType === 'human-output' && (
-          <CollapsibleSection title="Configuration" defaultOpen>
+          <CollapsibleSection title="Config" defaultOpen>
             <div>
               <label className="text-slate-400 block mb-0.5">Display Label</label>
               <Input value={(config.display_label as string) || ''}
@@ -285,22 +255,20 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                 placeholder="Final Result"
                 className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                 onClick={(e) => e.stopPropagation()} />
-              <p className="text-slate-600 mt-0.5">Shows output to user when workflow completes</p>
             </div>
           </CollapsibleSection>
         )}
 
         {(data.nodeType === 'human-approve' || data.nodeType === 'human-input') && (
-          <CollapsibleSection title="Configuration" defaultOpen>
+          <CollapsibleSection title="Config" defaultOpen>
             <div>
               <label className="text-slate-400 block mb-0.5">Prompt Message</label>
               <textarea value={(config.prompt_message as string) || ''}
                 onChange={(e) => updateConfig('prompt_message', e.target.value)}
                 placeholder={data.nodeType === 'human-approve' ? 'Please review and approve...' : 'Please provide input...'}
                 rows={2}
-                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 resize-none"
+                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 resize-none text-xs"
                 onClick={(e) => e.stopPropagation()} />
-              <p className="text-slate-600 mt-0.5">{data.nodeType === 'human-approve' ? 'Shown when asking for approval' : 'Shown when asking for input'}</p>
             </div>
           </CollapsibleSection>
         )}
@@ -314,7 +282,6 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                 placeholder="localhost:8001"
                 className="h-7 bg-slate-700 border-slate-600 text-slate-200 font-mono"
                 onClick={(e) => e.stopPropagation()} />
-              <p className="text-slate-600 mt-0.5">Remote A2A agent host:port</p>
             </div>
             <div>
               <label className="text-slate-400 block mb-0.5">Skill</label>
@@ -323,7 +290,6 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                 placeholder="summarize"
                 className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                 onClick={(e) => e.stopPropagation()} />
-              <p className="text-slate-600 mt-0.5">Agent skill to invoke</p>
             </div>
           </CollapsibleSection>
         )}
@@ -339,13 +305,13 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
       </div>
 
       {showSaved && (
-        <div className="flex items-center justify-center gap-1 py-1 text-[10px] text-emerald-400/80 border-t border-slate-700/30">
-          <Check size={10} />
-          <span>Auto-saved</span>
+        <div className="flex items-center justify-center gap-1 py-1 text-[10px] text-emerald-400/70 border-t border-slate-700/30">
+          <Check size={9} />
+          <span>Saved</span>
         </div>
       )}
 
-      <Handle type="source" position={Position.Bottom} className="!w-2.5 !h-2.5 !border-2 !border-slate-700 !bg-slate-400 hover:!bg-blue-400 hover:!border-blue-500 transition-colors" />
+      <Handle type="source" position={Position.Bottom} className={handleStyle} />
 
       {promptPanelOpen && (
         <PromptLibraryPanel

@@ -139,3 +139,19 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — large workflows now navigable
 **Decision:** kept
 **Reason:** Large workflows have no overview — users lose orientation when zoomed in. Added compact MiniMap (120x80px) with dark theme (slate-900 bg, 70% opacity mask) and node colors matching each agent type. No new deps — MiniMap is built into reactflow.
+
+## Iteration 21 — 2026-03-20
+**Change:** Complete redesign of node visual style based on user feedback from screenshots
+**File:** ui/src/components/editor/EditableNode.tsx
+**Eval:** tsc: pass | vite build: pass | visual: redesigned per feedback
+**Decision:** kept
+**Reason:** User said "i dont like how it looks" with screenshots showing: nodes too wide, accent strip too thick, selected state too aggressive (blue glow), icon badge too chunky, delete button protruding. Redesigned with:
+- Left border accent (3px) instead of top strip — more subtle, IDE-like
+- Flat single-row collapsed view: icon + name + type badge inline — compact, not stacked
+- No icon badge box — bare 14px icon, cleaner
+- Selected state: subtle `border-slate-500` instead of aggressive blue ring+glow
+- Delete button inside header row (slate-600, red on hover) — not protruding circle
+- Expanded width 260px (was 280px), Prompt section closed by default
+- Smaller handles (8px), thinner border
+- Removed helper text clutter from fields
+- bg-slate-800/90 instead of tinted color background
