@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   useReactFlow,
@@ -11,6 +11,7 @@ import ReactFlow, {
   type Edge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { MousePointerClick } from 'lucide-react';
 import { EditableNode } from './EditableNode';
 import { NodePalette, type NodeTypeConfig } from './NodePalette';
 
@@ -93,6 +94,8 @@ function InnerCanvas({
     setTimeout(onGraphChange, 0);
   }, [onGraphChange]);
 
+  const isEmpty = useMemo(() => rfNodes.length === 0, [rfNodes.length]);
+
   return (
     <ReactFlow
       nodes={rfNodes}
@@ -112,6 +115,15 @@ function InnerCanvas({
     >
       <Background color="#334155" gap={20} />
       <Controls className="!bg-slate-800 !border-slate-700 !shadow-lg" />
+      {isEmpty && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <div className="text-center space-y-3">
+            <MousePointerClick size={40} className="text-slate-600 mx-auto" />
+            <p className="text-sm text-slate-500">Drag a node from the sidebar to get started</p>
+            <p className="text-xs text-slate-600">or open a workflow YAML file</p>
+          </div>
+        </div>
+      )}
     </ReactFlow>
   );
 }

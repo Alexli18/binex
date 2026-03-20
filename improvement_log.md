@@ -27,3 +27,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — each palette item now self-explanatory
 **Decision:** kept
 **Reason:** Palette items were icon+label only, no context for new users. Added `description` field to NodeTypeConfig, visible as a second line under each label. Icon now in tinted badge (matching node style). Added GripVertical indicator on hover to signal draggability. Sidebar widened from w-48 to w-52 to fit descriptions. Category header renamed "Nodes" → "Agents" for clarity.
+
+## Iteration 5 — 2026-03-20
+**Change:** Added empty canvas state — icon + "Drag a node from the sidebar to get started" message
+**File:** ui/src/components/editor/EditorCanvas.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — empty canvas is no longer confusing
+**Decision:** kept
+**Reason:** When canvas has no nodes, it was just a blank grid with no guidance. Now shows a centered MousePointerClick icon with two lines of instructional text. Uses pointer-events-none so drop events still work through the overlay. Disappears as soon as first node is added.
