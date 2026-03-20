@@ -88,3 +88,14 @@
   max-width: 14px;
   max-height: 14px;
 }
+
+/* React Flow minimap — subtle dark theme */
+.react-flow__minimap {
+  border-radius: 6px !important;
+  border: 1px solid rgb(51 65 85 / 0.5) !important;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.react-flow__minimap:hover {
+  opacity: 1;
+}

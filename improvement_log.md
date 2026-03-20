@@ -162,3 +162,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: consistent with new node design
 **Decision:** kept
 **Reason:** Palette still had chunky icon badges and two-line layout from earlier iterations, inconsistent with the new compact left-accent node style. Now: left border accent matching node color, single-line with inline description, w-48 (was w-52), removed GripVertical, shorter descriptions.
+
+## Iteration 23 — 2026-03-20
+**Change:** Subtle MiniMap — 60% opacity by default, full on hover, rounded border
+**File:** ui/src/index.css
+**Eval:** vite build: pass | visual: better — minimap doesn't compete for attention
+**Decision:** kept
+**Reason:** MiniMap was fully opaque and visually noisy. Now starts at 60% opacity and fades in on hover. Added rounded corners and subtle border to match the dark theme.
