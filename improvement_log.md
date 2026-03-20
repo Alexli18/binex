@@ -69,3 +69,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — controls match the dark theme instead of looking like a white widget
 **Decision:** kept
 **Reason:** React Flow's default controls are white with light borders — jarring in a slate-950 dark theme. Overrode with slate-800 background, slate-700 borders, proper hover colors, rounded corners, and 28px compact buttons. CSS-only change, no JS modifications.
+
+## Iteration 11 — 2026-03-20
+**Change:** Highlight connected edges when a node is selected — blue animated for connected, dimmed for others
+**File:** ui/src/components/editor/EditorCanvas.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — data flow paths immediately visible on node selection
+**Decision:** kept
+**Reason:** When a node was selected, all edges looked the same — impossible to trace data flow. Now connected edges turn blue (#3b82f6), thicken to 2.5px, and animate. Unconnected edges dim to 40% opacity. Uses memoized computation from selected node IDs.

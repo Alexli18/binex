@@ -104,10 +104,24 @@ function InnerCanvas({
 
   const isEmpty = useMemo(() => rfNodes.length === 0, [rfNodes.length]);
 
+  const selectedNodeIds = useMemo(
+    () => new Set(rfNodes.filter((n) => n.selected).map((n) => n.id)),
+    [rfNodes],
+  );
+
+  const styledEdges = useMemo(() => {
+    if (selectedNodeIds.size === 0) return rfEdges;
+    return rfEdges.map((edge) => {
+      const connected = selectedNodeIds.has(edge.source) || selectedNodeIds.has(edge.target);
+      if (!connected) return { ...edge, style: { ...edge.style, stroke: '#334155', strokeWidth: 1.5, opacity: 0.4 } };
+      return { ...edge, style: { ...edge.style, stroke: '#3b82f6', strokeWidth: 2.5 }, markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: '#3b82f6' }, animated: true };
+    });
+  }, [rfEdges, selectedNodeIds]);
+
   return (
     <ReactFlow
       nodes={rfNodes}
-      edges={rfEdges}
+      edges={styledEdges}
       onNodesChange={onRfNodesChange}
       onEdgesChange={onRfEdgesChange}
       onConnect={onConnect}
