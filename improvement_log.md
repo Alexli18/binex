@@ -125,3 +125,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — new users immediately understand drag interaction
 **Decision:** kept
 **Reason:** Palette items have GripVertical icon on hover but new users might not realize items are draggable. Added subtle hint text at the bottom of the sidebar (mt-auto pushes it to the bottom). Minimal addition, big discoverability gain.
+
+## Iteration 19 — 2026-03-20
+**Change:** Styled connection line during drag — blue dashed line instead of default grey
+**File:** ui/src/components/editor/EditorCanvas.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — creating connections feels intentional
+**Decision:** kept
+**Reason:** When dragging from a handle to create a connection, the preview line was default thin grey — hard to see on dark background. Now blue (#3b82f6), 2px, dashed (6 3) — clearly visible and distinct from finalized edges. One constant + one prop addition.

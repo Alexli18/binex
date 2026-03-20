@@ -24,6 +24,8 @@ const defaultEdgeOptions = {
   markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: '#475569' },
 };
 
+const connectionLineStyle = { stroke: '#3b82f6', strokeWidth: 2, strokeDasharray: '6 3' };
+
 let nodeIdCounter = 0;
 
 export interface EditorCanvasProps {
@@ -132,6 +134,7 @@ function InnerCanvas({
       onEdgesDelete={onEdgesDelete}
       nodeTypes={rfNodeTypes}
       defaultEdgeOptions={defaultEdgeOptions}
+      connectionLineStyle={connectionLineStyle}
       fitView
       deleteKeyCode="Delete"
       className={`bg-slate-950 transition-all duration-150 ${isDragOver ? 'ring-2 ring-inset ring-blue-500/30' : ''}`}
