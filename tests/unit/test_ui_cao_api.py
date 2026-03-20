@@ -1,4 +1,4 @@
-"""Tests for CAO UI API endpoints (profiles, sessions, delete, terminal input)."""
+"""Tests for CAO UI API endpoints (health, profiles, sessions, delete, terminal input)."""
 
 from __future__ import annotations
 
@@ -15,6 +15,71 @@ from binex.ui.server import create_app
 def client():
     app = create_app(dev=True)
     return TestClient(app, raise_server_exceptions=False)
+
+
+# ---------------------------------------------------------------------------
+# GET /cao/health
+# ---------------------------------------------------------------------------
+
+class TestCaoHealth:
+    def test_health_online(self, client):
+        """Returns online when CAO server responds 200."""
+        with patch("binex.ui.api.cao.Settings") as mock_settings:
+            mock_settings.return_value.cao_server_url = "http://localhost:9889"
+            with patch("binex.ui.api.cao.httpx.AsyncClient") as mock_http:
+                mock_resp = AsyncMock()
+                mock_resp.status_code = 200
+                mock_async_client = AsyncMock()
+                mock_async_client.get = AsyncMock(return_value=mock_resp)
+                mock_http.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_async_client,
+                )
+                mock_http.return_value.__aexit__ = AsyncMock(return_value=False)
+                resp = client.get("/api/v1/cao/health")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "online"
+        assert data["server_url"] == "http://localhost:9889"
+
+    def test_health_offline(self, client):
+        """Returns offline when CAO server is unreachable."""
+        with patch("binex.ui.api.cao.Settings") as mock_settings:
+            mock_settings.return_value.cao_server_url = "http://localhost:9889"
+            with patch("binex.ui.api.cao.httpx.AsyncClient") as mock_http:
+                mock_async_client = AsyncMock()
+                mock_async_client.get = AsyncMock(
+                    side_effect=httpx.ConnectError("refused"),
+                )
+                mock_http.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_async_client,
+                )
+                mock_http.return_value.__aexit__ = AsyncMock(return_value=False)
+                resp = client.get("/api/v1/cao/health")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "offline"
+
+    def test_health_degraded(self, client):
+        """Returns degraded when CAO server responds non-200."""
+        with patch("binex.ui.api.cao.Settings") as mock_settings:
+            mock_settings.return_value.cao_server_url = "http://localhost:9889"
+            with patch("binex.ui.api.cao.httpx.AsyncClient") as mock_http:
+                mock_resp = AsyncMock()
+                mock_resp.status_code = 503
+                mock_async_client = AsyncMock()
+                mock_async_client.get = AsyncMock(return_value=mock_resp)
+                mock_http.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_async_client,
+                )
+                mock_http.return_value.__aexit__ = AsyncMock(return_value=False)
+                resp = client.get("/api/v1/cao/health")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "degraded"
+        assert data["http_status"] == 503
 
 
 # ---------------------------------------------------------------------------
@@ -170,7 +235,7 @@ class TestSendTerminalInput:
         assert resp.json() == {"ok": True}
         mock_async_client.post.assert_awaited_once_with(
             "http://localhost:9889/terminals/term_42/input",
-            data={"message": "yes"},
+            params={"message": "yes"},
         )
 
     def test_send_input_cao_unavailable(self, client):

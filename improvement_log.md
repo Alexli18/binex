@@ -1,4 +1,4 @@
-# Binex UI/UX Improvement Log
+# Binex Improvement Log
 
 ## Iteration 1 — 2026-03-20
 **Change:** Added colored accent strip, icon badge with tinted background, and type subtitle to collapsed nodes for visual hierarchy
@@ -176,3 +176,47 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — sections feel lighter and less shouty
 **Decision:** kept
 **Reason:** Section headers were UPPERCASE with wide tracking — too heavy for compact node panels. Changed to sentence case, font-medium (was semibold), tighter padding (py-1.5, px-2.5), subtler dividers (30% opacity). Content spacing reduced to space-y-1.5 and pb-2.
+
+---
+
+## Session 2: Code Quality (2026-03-20)
+
+## Iteration 25 — 2026-03-20
+**Area:** tests
+**Finding:** 4 failing tests — hardcoded counts/categories not updated after CAO adapter addition
+**Change:** Updated pattern count 20→25, example count 33→39, added `"cao://"` to known_prefixes, added `"cao"` to valid categories
+**Metric:** 4 failed → 0 failed (2504→2508 passed)
+**Decision:** kept
+**Reason:** Tests were simply out of sync with new CAO features
+
+## Iteration 26 — 2026-03-20
+**Area:** backend
+**Finding:** 7 API endpoints calling `_get_stores()` without `await store.close()` in finally block — causes aiosqlite connection leaks
+**Change:** Added try/finally with `await exec_store.close()` to all 7 endpoints in costs.py, artifacts.py, lineage.py, runs.py
+**Metric:** 7 endpoints without close → 0
+**Decision:** kept
+**Reason:** CLAUDE.md explicitly documents this as required; prevents aiosqlite hangs
+
+## Iteration 27 — 2026-03-20
+**Area:** frontend
+**Finding:** 3 `.map()` calls in RunDetail.tsx using `key={i}` (array index) instead of unique identifiers
+**Change:** Replaced index keys with composite keys (`produced_by:type`, `node_id:model`), changed `expandedArtifact` state from `number` to `string`
+**Metric:** 3 index-based keys → 0
+**Decision:** kept
+**Reason:** Prevents incorrect re-rendering when lists are filtered/sorted
+
+## Iteration 28 — 2026-03-20
+**Area:** frontend
+**Finding:** 7 eslint issues: 2 missing useEffect dependencies (WorkflowEditor), 1 unused expression, 4 useless escapes in test
+**Change:** Added missing deps to useEffect arrays, replaced ternary with if/else, removed unnecessary backslash escapes in regex
+**Metric:** eslint issues 16 → 9 (remaining: react-refresh warnings + any in tests)
+**Decision:** kept
+**Reason:** Missing useEffect deps cause stale closures; other fixes are straightforward correctness
+
+## Iteration 29 — 2026-03-20
+**Area:** backend
+**Finding:** Deprecated `@app.on_event("startup")` in server.py generating 250 DeprecationWarnings across all UI tests
+**Change:** Replaced with FastAPI `lifespan` async context manager pattern
+**Metric:** 250 pytest warnings → 0
+**Decision:** kept
+**Reason:** Standard FastAPI migration; eliminates all test noise

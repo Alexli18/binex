@@ -171,18 +171,19 @@ function NodeMap({
 }
 
 function DivergenceMetrics({ details }: { details: BisectDetails }) {
-  const hasLatency = details.latency_good_ms != null && details.latency_bad_ms != null;
-  const hasCost = details.cost_good != null && details.cost_bad != null;
+  const { latency_good_ms, latency_bad_ms, cost_good, cost_bad } = details;
+  const hasLatency = latency_good_ms != null && latency_bad_ms != null;
+  const hasCost = cost_good != null && cost_bad != null;
 
   if (!hasLatency && !hasCost) return null;
 
-  const latencyDelta = hasLatency ? details.latency_bad_ms! - details.latency_good_ms! : 0;
-  const latencyPct = hasLatency && details.latency_good_ms! > 0
-    ? Math.round((latencyDelta / details.latency_good_ms!) * 100)
+  const latencyDelta = hasLatency ? latency_bad_ms - latency_good_ms : 0;
+  const latencyPct = hasLatency && latency_good_ms > 0
+    ? Math.round((latencyDelta / latency_good_ms) * 100)
     : null;
 
-  const costDelta = hasCost ? details.cost_bad! - details.cost_good! : 0;
-  const costWarning = hasCost && details.cost_good! > 0 && details.cost_bad! / details.cost_good! > 2;
+  const costDelta = hasCost ? cost_bad - cost_good : 0;
+  const costWarning = hasCost && cost_good > 0 && cost_bad / cost_good > 2;
 
   return (
     <div className="bg-slate-800/50 rounded-md p-3 my-3 border border-slate-700/50">
@@ -209,9 +210,9 @@ function DivergenceMetrics({ details }: { details: BisectDetails }) {
               {costWarning && <AlertTriangle size={12} className="text-amber-400" />}
             </span>
             <div className="flex items-center gap-2 font-mono text-xs">
-              <span className="text-slate-300">${details.cost_good!.toFixed(4)}</span>
+              <span className="text-slate-300">${cost_good.toFixed(4)}</span>
               <span className="text-slate-600">&rarr;</span>
-              <span className="text-slate-300">${details.cost_bad!.toFixed(4)}</span>
+              <span className="text-slate-300">${cost_bad.toFixed(4)}</span>
               <span className={`font-medium ${costDelta > 0 ? statusColors.failed.text : statusColors.completed.text}`}>
                 {costDelta > 0 ? '+' : ''}${costDelta.toFixed(4)}
               </span>
@@ -263,15 +264,12 @@ function BisectDAG({
     });
 
     // Connect nodes sequentially based on topological order from bisect report
-    const dagEdges: Edge[] = [];
-    for (let i = 0; i < nodeMap.length - 1; i++) {
-      dagEdges.push({
-        id: `${nodeMap[i].node_id}-${nodeMap[i + 1].node_id}`,
-        source: nodeMap[i].node_id,
-        target: nodeMap[i + 1].node_id,
-        style: { stroke: chartColors.tooltipBorder },
-      });
-    }
+    const dagEdges: Edge[] = nodeMap.slice(0, -1).map((n, i) => ({
+      id: `${n.node_id}-${nodeMap[i + 1].node_id}`,
+      source: n.node_id,
+      target: nodeMap[i + 1].node_id,
+      style: { stroke: chartColors.tooltipBorder },
+    }));
 
     return { nodes: dagNodes, edges: dagEdges };
   }, [nodeMap, divergenceNode, downstreamSet]);
@@ -315,7 +313,7 @@ export default function BisectPage() {
     }
   };
 
-  const similarityPercent = bisect.data?.similarity !== null && bisect.data?.similarity !== undefined
+  const similarityPercent = bisect.data?.similarity != null
     ? Math.round(bisect.data.similarity * 100)
     : null;
 

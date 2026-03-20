@@ -1,0 +1,112 @@
+# CAO Parallel Workers — Fan-Out / Fan-In
+# =========================================
+# Supervisor breaks a task into parts, three CAO workers execute
+# in parallel (one per subtask), LLM combines the results.
+#
+# Topology:  supervisor -> worker_impl    \
+#                       -> worker_tests    -> combine
+#                       -> worker_docs    /
+#
+# This is the recommended pattern for multi-agent collaboration
+# with CAO. Binex DAG handles the parallelism — no need for
+# CAO's assign/send_message.
+#
+# Prerequisites:
+#   1. Start CAO server: cao-server
+#   2. Install agent: cao install developer
+#   3. Set ANTHROPIC_API_KEY (for the LLM combiner node)
+#
+# Run:   binex run examples/cao-parallel-workers.yaml --var task="REST API for a todo app"
+# Debug: binex debug <run_id>
+
+name: cao-parallel-workers
+description: "Fan-out/fan-in: supervisor splits task, 3 workers in parallel, LLM combines"
+
+defaults:
+  deadline_ms: 1800000  # 30 minutes max per node
+
+nodes:
+  supervisor:
+    agent: "cao://developer"
+    system_prompt: |
+      You are a tech lead. Break this task into exactly 3 parts:
+      1. Core implementation
+      2. Test suite
+      3. Documentation
+
+      Task: ${user.task}
+
+      For each part, write a clear brief (2-3 sentences).
+      Answer in plain text with numbered sections.
+    cao:
+      provider: claude_code
+      output_format: text       # free-form briefs are easier as text
+      timeout_minutes: 5
+    outputs: [plan]
+
+  # Three workers run in parallel — all depend only on supervisor
+  worker_impl:
+    agent: "cao://developer"
+    depends_on: [supervisor]
+    inputs:
+      plan: "${supervisor.plan}"
+    system_prompt: |
+      Implement the core code based on the plan.
+      Focus only on the implementation — not tests or docs.
+      Save your code to files and report what you created.
+    cao:
+      provider: claude_code
+      timeout_minutes: 30       # coding tasks need more time
+    outputs: [code]
+
+  worker_tests:
+    agent: "cao://developer"
+    depends_on: [supervisor]
+    inputs:
+      plan: "${supervisor.plan}"
+    system_prompt: |
+      Write a comprehensive test suite based on the plan.
+      Use pytest. Save tests to test files.
+      Report: number of tests, what they cover, and pass/fail status.
+    cao:
+      provider: claude_code
+      timeout_minutes: 20
+    outputs: [tests]
+
+  worker_docs:
+    agent: "cao://developer"
+    depends_on: [supervisor]
+    inputs:
+      plan: "${supervisor.plan}"
+    system_prompt: |
+      Write documentation based on the plan:
+      - README.md with setup instructions
+      - API reference (if applicable)
+      - Usage examples
+      Report the files you created.
+    cao:
+      provider: kiro_cli        # Kiro for documentation tasks
+      timeout_minutes: 15
+    outputs: [docs]
+
+  # Combiner waits for ALL three workers
+  combine:
+    agent: "llm://anthropic/claude-sonnet-4-20250514"
+    depends_on: [worker_impl, worker_tests, worker_docs]
+    inputs:
+      code: "${worker_impl.code}"
+      tests: "${worker_tests.tests}"
+      docs: "${worker_docs.docs}"
+    system_prompt: |
+      Three agents worked in parallel on the same project:
+
+      Implementation: ${worker_impl.code}
+      Tests: ${worker_tests.tests}
+      Documentation: ${worker_docs.docs}
+
+      Combine their outputs into a project summary:
+      - What was built
+      - Test coverage and results
+      - Documentation completeness
+      - Any gaps or conflicts between the three outputs
+    outputs: [summary]

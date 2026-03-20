@@ -112,6 +112,14 @@ class SqliteExecutionStore:
             await self._db.commit()
         except Exception as exc:
             logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add session_name column to existing cao_sessions table
+        try:
+            await self._db.execute(
+                "ALTER TABLE cao_sessions ADD COLUMN session_name TEXT"
+            )
+            await self._db.commit()
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
         await self._db.commit()
 
         # Auto-orphan any active CAO sessions from previous crashed runs
@@ -356,9 +364,11 @@ class SqliteExecutionStore:
         """Persist an active CAO session."""
         db = await self._ensure_initialized()
         await db.execute(
-            "INSERT INTO cao_sessions (terminal_id, run_id, node_name, started_at, status, session_name) "
+            "INSERT INTO cao_sessions "
+            "(terminal_id, run_id, node_name, started_at, status, session_name) "
             "VALUES (?, ?, ?, ?, ?, ?)",
-            (terminal_id, run_id, node_name, datetime.now(UTC).isoformat(), "active", session_name),
+            (terminal_id, run_id, node_name,
+             datetime.now(UTC).isoformat(), "active", session_name),
         )
         await db.commit()
 

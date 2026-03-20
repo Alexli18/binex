@@ -1,0 +1,84 @@
+# CAO Multi-Provider — Three Different CLI Agents
+# =================================================
+# Demonstrates all three CAO providers working together:
+# Claude Code writes, Kiro CLI reviews style, Q CLI checks AWS best practices.
+# The review node uses output_field (JSONPath) to extract the verdict.
+#
+# Topology:  write -> review_style  -> summarize
+#                  -> review_aws    /
+#
+# Prerequisites:
+#   1. Start CAO server: cao-server
+#   2. Install agents:
+#      cao install developer
+#      cao install reviewer
+#
+# Run:   binex run examples/cao-multi-provider.yaml --var task="S3 upload Lambda function"
+# Debug: binex debug <run_id>
+
+name: cao-multi-provider
+description: "Three CAO providers: Claude Code writes, Kiro reviews, Q CLI audits"
+
+defaults:
+  deadline_ms: 900000  # 15 minutes max per node
+
+nodes:
+  write:
+    agent: "cao://developer"
+    system_prompt: |
+      Write an AWS Lambda function in Python for: ${user.task}
+      Save it as lambda_function.py.
+      Output the full code to stdout as raw JSON with fields:
+      "filename", "code", "description".
+      Output ONLY the JSON — no markdown fencing, no commentary.
+    cao:
+      provider: claude_code
+      output_format: json        # strict JSON parsing — agent must output valid JSON
+      timeout_minutes: 10
+    outputs: [implementation]
+
+  review_style:
+    agent: "cao://reviewer"
+    depends_on: [write]
+    inputs:
+      code: "${write.implementation}"
+    system_prompt: |
+      Review this Python code for style and quality.
+      Output raw JSON with "verdict" (pass/fail), "issues" (list of strings).
+      Output ONLY the JSON — no markdown, no explanation.
+    cao:
+      provider: kiro_cli          # Kiro CLI for IDE-style code review
+      output_format: json
+      output_field: "$.verdict"   # extract just the verdict via JSONPath
+      timeout_minutes: 10
+    outputs: [style_verdict]
+
+  review_aws:
+    agent: "cao://reviewer"
+    depends_on: [write]
+    inputs:
+      code: "${write.implementation}"
+    system_prompt: |
+      Review this Lambda function for AWS best practices:
+      IAM permissions, error handling, cold start, memory config.
+      Output raw JSON with "verdict" (pass/fail), "findings" (list of strings).
+      Output ONLY the JSON.
+    cao:
+      provider: q_cli             # Q CLI has built-in AWS context
+      output_format: json
+      output_field: "$.findings"  # extract the findings list
+      timeout_minutes: 10
+    outputs: [aws_findings]
+
+  summarize:
+    agent: "llm://anthropic/claude-sonnet-4-20250514"
+    depends_on: [review_style, review_aws]
+    inputs:
+      style: "${review_style.style_verdict}"
+      aws: "${review_aws.aws_findings}"
+    system_prompt: |
+      Combine the style review and AWS audit into a final assessment.
+      Style verdict: ${review_style.style_verdict}
+      AWS findings: ${review_aws.aws_findings}
+      Provide a go/no-go recommendation with action items.
+    outputs: [assessment]

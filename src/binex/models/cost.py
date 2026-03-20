@@ -14,6 +14,7 @@ CostSource = Literal[
     "llm_tokens_unavailable",
     "agent_report",
     "local",
+    "subscription_based",
     "unknown",
 ]
 

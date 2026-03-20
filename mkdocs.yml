@@ -81,6 +81,8 @@ nav:
     - Stores: architecture/stores.md
     - Adapters: architecture/adapters.md
     - Telemetry: architecture/telemetry.md
+  - Features:
+    - CAO Adapter: features/cao-adapter.md
   - Workflows:
     - Format: workflows/format.md
     - Examples: workflows/examples.md

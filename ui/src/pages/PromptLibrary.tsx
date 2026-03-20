@@ -299,7 +299,7 @@ export function PromptLibraryPanel({
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       {/* Panel */}
       <div className="relative w-[400px] h-full bg-slate-900 border-l border-slate-700 shadow-2xl flex flex-col">
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
@@ -359,15 +359,15 @@ function NewPromptForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-slate-900 border border-slate-700 rounded-lg shadow-2xl w-[560px] max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
-          <h2 className="text-sm font-medium text-slate-200">New Prompt</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-slate-900 border border-slate-700 rounded-modal shadow-xl w-[560px] max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/60">
+          <h2 className="text-lg font-semibold text-slate-100">New Prompt</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition-colors p-1 rounded hover:bg-slate-800">
             <X size={16} />
           </button>
         </div>
-        <div className="p-4 space-y-4 flex-1 overflow-auto">
+        <div className="px-6 py-5 space-y-4 flex-1 overflow-auto">
           <div>
             <label className="block text-xs text-slate-400 mb-1">Name</label>
             <Input
@@ -417,7 +417,7 @@ function NewPromptForm({ onClose }: { onClose: () => void }) {
             </div>
           )}
         </div>
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-700">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-700/60">
           <Button variant="outline" size="sm" onClick={onClose} className="h-8 text-xs">
             Cancel
           </Button>
@@ -459,7 +459,7 @@ export default function PromptLibrary() {
           </Button>
         }
       />
-      <div className="mt-6 border border-slate-700 rounded-lg overflow-hidden">
+      <div className="mt-6 border border-slate-700 rounded-card overflow-hidden">
         <PromptLibraryCore />
       </div>
       {showNewForm && <NewPromptForm onClose={() => setShowNewForm(false)} />}

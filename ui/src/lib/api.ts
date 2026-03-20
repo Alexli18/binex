@@ -38,6 +38,23 @@ export interface CaoSession {
   status: string;
 }
 
+export interface CaoHealthStatus {
+  status: 'online' | 'degraded' | 'offline';
+  server_url: string;
+}
+
+export function getCaoHealth(): Promise<CaoHealthStatus> {
+  return api.get('/cao/health');
+}
+
+export function startCaoServer(): Promise<{ status: string; pid?: number; error?: string }> {
+  return api.post('/cao/server/start');
+}
+
+export function stopCaoServer(): Promise<{ status: string }> {
+  return api.post('/cao/server/stop');
+}
+
 export function getCaoProfiles(): Promise<{ profiles: string[] }> {
   return api.get('/cao/profiles');
 }

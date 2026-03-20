@@ -16,6 +16,8 @@ import {
 import {
   Rocket, FileCode, Bug, Plus, Download, DollarSign,
 } from 'lucide-react';
+import { OrphanedSessionsBanner } from '@/components/cao/OrphanedSessionsBanner';
+import { CaoServerStatus } from '@/components/cao/CaoServerStatus';
 
 const STATUS_OPTIONS = ['all', 'completed', 'running', 'failed', 'cancelled'] as const;
 
@@ -50,7 +52,7 @@ export default function Dashboard() {
         <Breadcrumb items={[{ label: 'Dashboard' }]} className="mb-4" />
         <ErrorState
           title="Failed to load runs"
-          message={(error as Error).message}
+          message={error instanceof Error ? error.message : String(error)}
           onRetry={() => refetch()}
         />
       </PageShell>
@@ -82,6 +84,11 @@ export default function Dashboard() {
       />
 
       <NewRunModal open={showNewRun} onClose={() => setShowNewRun(false)} />
+
+      <div className="flex items-center justify-between mb-2">
+        <OrphanedSessionsBanner />
+        <CaoServerStatus />
+      </div>
 
       {/* Filters */}
       <div className="flex items-center gap-4 mt-4 mb-4">

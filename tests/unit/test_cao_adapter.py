@@ -249,7 +249,8 @@ class TestSendTask:
 
             client.post.assert_awaited_once()
             call_kwargs = client.post.call_args
-            assert "message" in call_kwargs.kwargs.get("data", call_kwargs[1].get("data", {}))
+            sent_params = call_kwargs.kwargs.get("params", {})
+            assert "message" in sent_params
 
     async def test_send_task_empty_inputs(self, make_adapter):
         t = TaskNode(
@@ -273,6 +274,7 @@ class TestSendTask:
 class TestPollUntilDone:
     async def test_poll_completes(self, make_adapter):
         adapter = make_adapter()
+        adapter.cao_config.min_wait_seconds = 1
         with patch.object(adapter, "_get_client") as mock_client:
             client = AsyncMock()
             client.get = AsyncMock(side_effect=[
@@ -321,6 +323,7 @@ class TestPollUntilDone:
         adapter = make_adapter()
         adapter._human_input_fn = lambda p, t: "yes"
         adapter._human_prompt_count = 0
+        adapter.cao_config.min_wait_seconds = 1  # disable min_wait for test
 
         with patch.object(adapter, "_get_client") as mock_client:
             client = AsyncMock()
@@ -342,7 +345,7 @@ class TestPollUntilDone:
             post_calls = client.post.call_args_list
             assert len(post_calls) == 1
             assert post_calls[0][0][0] == "/terminals/term_1/input"
-            assert post_calls[0][1]["data"]["message"] == "yes"
+            assert post_calls[0][1]["params"]["message"] == "yes"
 
     async def test_waiting_user_answer_emits_event(self, make_adapter):
         """waiting_user_answer should emit cao:waiting_input event."""
@@ -354,6 +357,7 @@ class TestPollUntilDone:
         adapter._event_callback = capture
         adapter._human_input_fn = lambda p, t: "yes"
         adapter._human_prompt_count = 0
+        adapter.cao_config.min_wait_seconds = 1
 
         with patch.object(adapter, "_get_client") as mock_client:
             client = AsyncMock()
@@ -368,10 +372,10 @@ class TestPollUntilDone:
             with patch("binex.adapters.cao.asyncio.sleep", new_callable=AsyncMock):
                 await adapter._poll_until_done("term_1", timeout_s=600)
 
-        assert len(events) == 1
-        assert events[0]["type"] == "cao:waiting_input"
-        assert events[0]["terminal_id"] == "term_1"
-        assert events[0]["prompt_number"] == 1
+        waiting_events = [e for e in events if e["type"] == "cao:waiting_input"]
+        assert len(waiting_events) == 1
+        assert waiting_events[0]["terminal_id"] == "term_1"
+        assert waiting_events[0]["prompt_number"] == 1
 
     async def test_waiting_user_answer_max_prompts_exceeded(self, make_adapter):
         """Exceeding max_human_prompts raises CAOAgentError."""
@@ -551,6 +555,7 @@ class TestBuildArtifacts:
 class TestExecute:
     async def test_execute_full_handoff(self, make_adapter, task, input_artifacts):
         adapter = make_adapter()
+        adapter.cao_config.min_wait_seconds = 1
         CAOAdapter._run_sessions.clear()
         CAOAdapter._run_session_locks.clear()
         mock_store = AsyncMock()
@@ -559,16 +564,18 @@ class TestExecute:
         with patch.object(adapter, "_get_client") as mock_client:
             client = AsyncMock()
 
-            # Sequence: health check, init poll, task poll, output probe, fetch output
+            # Sequence: health, init, baseline, poll (min_wait), poll (done), fetch
             client.get = AsyncMock(side_effect=[
                 # _check_health
                 _mock_response(200, {"status": "ok"}),
                 # _wait_for_init
                 _mock_response(200, {"status": "idle"}),
-                # _poll_until_done: status check
+                # baseline output capture (before task sent — empty)
+                _mock_response(200, {"output": ""}),
+                # _poll_until_done: during min_wait
                 _mock_response(200, {"status": "completed"}),
-                # _poll_until_done: output probe
-                _mock_response(200, {"output": "Review complete: LGTM"}),
+                # _poll_until_done: past min_wait → completed → return
+                _mock_response(200, {"status": "completed"}),
                 # _fetch_output
                 _mock_response(200, {"output": "Review complete: LGTM"}),
             ])

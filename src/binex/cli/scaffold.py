@@ -250,7 +250,16 @@ def scaffold_workflow(
     node_configs: dict[str, dict] = {}
     if no_interactive:
         for node_name in parsed.nodes:
-            if _is_human_node(node_name):
+            if _is_cao_node(node_name):
+                profile = _detect_cao_profile(node_name)
+                node_configs[node_name] = {
+                    "agent": f"cao://{profile}",
+                    "system_prompt": _CAO_PROMPTS.get(
+                        node_name, "Execute this task in the terminal",
+                    ),
+                    "cao": {"provider": "claude_code", "output_format": "text"},
+                }
+            elif _is_human_node(node_name):
                 htype = _detect_human_type(node_name)
                 node_configs[node_name] = {
                     "agent": f"human://{htype}",
@@ -293,6 +302,52 @@ AGENTIC_PROMPTS: dict[str, str] = {
     "agent": "file://prompts/wf-agent.md",
     "simulator": "file://prompts/wf-simulator.md",
 }
+
+_CAO_KEYWORDS = {"cao", "cli_agent", "terminal"}
+_CAO_PROFILE_MAP: dict[str, str] = {
+    "writer": "developer",
+    "impl": "developer",
+    "coder": "developer",
+    "fixer": "developer",
+    "tester": "developer",
+    "tests": "developer",
+    "docs": "developer",
+    "deps": "developer",
+    "lint": "developer",
+    "reviewer": "reviewer",
+    "security": "reviewer",
+    "supervisor": "code_supervisor",
+    "agent": "developer",
+}
+
+_CAO_PROMPTS: dict[str, str] = {
+    "cao_agent": "Analyze the project and report your findings.",
+    "cao_writer": "Write the code and save it to a file.",
+    "cao_tester": "Run the tests and report pass/fail results.",
+    "cao_reviewer": "Review the code for quality and correctness.",
+    "cao_supervisor": "Break the task into subtasks and assign them.",
+    "cao_fixer": "Apply the reviewer's feedback and fix all issues.",
+    "cao_impl": "Implement the core code based on the plan.",
+    "cao_tests": "Write and run a comprehensive test suite.",
+    "cao_docs": "Write documentation: README and API reference.",
+    "cao_deps": "Check dependencies for outdated or unused packages.",
+    "cao_security": "Run a security audit on the project.",
+    "cao_lint": "Run linters and report code quality issues.",
+}
+
+
+def _is_cao_node(node_name: str) -> bool:
+    """Check if node name suggests a CAO CLI agent step."""
+    lower = node_name.lower().replace("-", "_")
+    return lower.startswith("cao_") or any(kw in lower for kw in _CAO_KEYWORDS)
+
+
+def _detect_cao_profile(node_name: str) -> str:
+    """Map CAO node name to a profile name."""
+    lower = node_name.lower().replace("-", "_")
+    suffix = lower.removeprefix("cao_")
+    return _CAO_PROFILE_MAP.get(suffix, "developer")
+
 
 _HUMAN_APPROVE_KEYWORDS = {"approve", "confirm", "gate"}
 _HUMAN_INPUT_KEYWORDS = {"input", "feedback", "edit", "ask"}

@@ -199,6 +199,7 @@ def _register_cao_adapter(
     node: NodeSpec,
     session_store: Any | None,
     event_callback: Any | None = None,
+    web_mode: bool = False,
 ) -> None:
     from binex.adapters.cao import CAOAdapter
     from binex.settings import Settings
@@ -206,10 +207,20 @@ def _register_cao_adapter(
     profile = agent.removeprefix("cao://")
     settings = Settings()
 
-    # CLI fallback for human input
-    def _cli_human_input(profile_name, terminal_id):
-        import click
-        return click.prompt(f"CAO agent '{profile_name}' is waiting for input")
+    human_input_fn: Any = None
+    if web_mode:
+        # Web mode: no human_input_fn — adapter emits SSE event
+        # and user responds via POST /cao/terminals/{id}/input.
+        # The CAO server delivers input to the terminal automatically.
+        human_input_fn = None
+    else:
+        # CLI fallback for human input
+        def _cli_human_input(profile_name, terminal_id):
+            import click
+            return click.prompt(
+                f"CAO agent '{profile_name}' is waiting for input",
+            )
+        human_input_fn = _cli_human_input
 
     dispatcher.register_adapter(
         agent,
@@ -220,7 +231,7 @@ def _register_cao_adapter(
             session_store=session_store,
             cao_config=node.cao,
             event_callback=event_callback,
-            human_input_fn=_cli_human_input,
+            human_input_fn=human_input_fn,
         ),
     )
 
@@ -304,6 +315,9 @@ def register_workflow_adapters(
         elif agent.startswith("a2a://"):
             _register_a2a_adapter(dispatcher, agent, node, gateway_url)
         elif agent.startswith("cao://"):
-            _register_cao_adapter(dispatcher, agent, node, session_store, event_callback)
+            _register_cao_adapter(
+                dispatcher, agent, node, session_store,
+                event_callback, web_mode=web_mode,
+            )
         else:
             _register_plugin_adapter(dispatcher, agent, node, plugin_registry)

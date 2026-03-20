@@ -1,0 +1,47 @@
+# CAO Pipeline — Two Agents in Sequence
+# =======================================
+# First agent writes a Python script, second agent runs and tests it.
+# Demonstrates depends_on and artifact passing between CAO nodes.
+#
+# Topology:  write -> test
+#
+# Prerequisites:
+#   1. Start CAO server: cao-server
+#   2. Install agent: cao install developer
+#
+# Run:   binex run examples/cao-pipeline.yaml --var task="FizzBuzz function"
+# Debug: binex debug <run_id>
+
+name: cao-pipeline
+description: "Two CAO agents in sequence — write code then test it"
+
+defaults:
+  deadline_ms: 600000  # 10 minutes max per node
+
+nodes:
+  write:
+    agent: "cao://developer"
+    system_prompt: |
+      Write a Python script for: ${user.task}
+      Save the file as solution.py in the current directory.
+      Output only the filename you created. Do not run it yet.
+    cao:
+      provider: claude_code
+      output_format: text
+      timeout_minutes: 10
+    outputs: [code]
+
+  test:
+    agent: "cao://developer"
+    depends_on: [write]
+    inputs:
+      code: "${write.code}"     # passes the write node's output as context
+    system_prompt: |
+      A Python file was just written. Run it and verify it works.
+      If there are bugs, fix them and re-run.
+      Report: pass/fail, what you tested, and the final output.
+    cao:
+      provider: claude_code
+      output_format: text       # test output is free-form terminal text
+      timeout_minutes: 10
+    outputs: [test_result]

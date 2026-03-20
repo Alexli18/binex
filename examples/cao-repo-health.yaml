@@ -1,0 +1,134 @@
+# CAO Repo Health Check — The Killer Demo
+# ==========================================
+# Four CLI agents scan a repository in parallel, each checking a
+# different aspect. An LLM combines findings into a prioritized report.
+# Can be scheduled to run weekly via cron.
+#
+# Topology:  analyze_deps     \
+#            audit_security    \
+#            check_tests        -> generate_report
+#            lint_code         /
+#
+# This demonstrates:
+#   - 4 parallel CAO agents (maximum tmux utilization)
+#   - Multi-provider (Claude Code + Q CLI for AWS security context)
+#   - Real filesystem tasks (running actual tools: pip audit, pytest, ruff)
+#   - Scheduled execution via cron
+#   - Shared CAO session (all 4 agents share one tmux session)
+#
+# Prerequisites:
+#   1. Start CAO server: cao-server
+#   2. Install agents:
+#      cao install developer
+#      cao install reviewer
+#   3. Set ANTHROPIC_API_KEY (for the report generator)
+#   4. Run inside a Python project directory
+#
+# Run:   binex run examples/cao-repo-health.yaml
+# Debug: binex debug <run_id>
+
+name: cao-repo-health-check
+description: "Automated repo health: deps + security + tests + lint in parallel"
+
+# Uncomment to run every Monday at 9am:
+# schedule: "0 9 * * 1"
+
+defaults:
+  deadline_ms: 900000  # 15 minutes max per node
+
+nodes:
+  # All four agents run in parallel — no depends_on between them
+  analyze_deps:
+    agent: "cao://developer"
+    system_prompt: |
+      Analyze project dependencies:
+      1. List all dependencies (pip list or cat requirements.txt/pyproject.toml)
+      2. Check for outdated packages (pip list --outdated)
+      3. Identify unused dependencies if possible
+
+      Report findings as plain text with counts:
+      total packages, outdated count, and list of outdated ones.
+    cao:
+      provider: claude_code
+      output_format: text
+      timeout_minutes: 10
+    outputs: [deps_report]
+
+  audit_security:
+    agent: "cao://reviewer"
+    system_prompt: |
+      Run a security audit on this project:
+      1. Run: pip audit (or pip-audit if available)
+      2. Check for known CVEs in dependencies
+      3. Look for hardcoded secrets (grep for API keys, passwords, tokens)
+      4. Check file permissions on sensitive files (.env, credentials)
+
+      Report: number of vulnerabilities found, severity, and recommendations.
+    cao:
+      provider: q_cli            # Q CLI has security scanning context
+      output_format: text
+      timeout_minutes: 10
+    outputs: [security_report]
+
+  check_tests:
+    agent: "cao://developer"
+    system_prompt: |
+      Run the project's test suite:
+      1. Find test files (pytest --collect-only or find tests/)
+      2. Run tests: pytest --tb=short -q
+      3. Report: total tests, passed, failed, coverage if available
+
+      If tests fail, list the failing test names and error summaries.
+    cao:
+      provider: claude_code
+      output_format: text
+      timeout_minutes: 15        # test suites can be slow
+    outputs: [test_report]
+
+  lint_code:
+    agent: "cao://developer"
+    system_prompt: |
+      Run code quality checks:
+      1. Run ruff check . (or flake8/pylint if ruff is not available)
+      2. Run mypy . --ignore-missing-imports (if mypy is available)
+      3. Count: total errors, warnings, by category
+
+      Report the top 5 most common issues and total counts.
+    cao:
+      provider: claude_code
+      output_format: text
+      timeout_minutes: 10
+    outputs: [lint_report]
+
+  # Combiner waits for all four parallel agents
+  generate_report:
+    agent: "llm://anthropic/claude-sonnet-4-20250514"
+    depends_on: [analyze_deps, audit_security, check_tests, lint_code]
+    inputs:
+      deps: "${analyze_deps.deps_report}"
+      security: "${audit_security.security_report}"
+      tests: "${check_tests.test_report}"
+      lint: "${lint_code.lint_report}"
+    system_prompt: |
+      Generate a Repository Health Report from these four audits:
+
+      ## Dependencies
+      ${analyze_deps.deps_report}
+
+      ## Security
+      ${audit_security.security_report}
+
+      ## Tests
+      ${check_tests.test_report}
+
+      ## Code Quality
+      ${lint_code.lint_report}
+
+      Produce a prioritized report with:
+      1. Overall health score (A-F)
+      2. Critical issues (must fix immediately)
+      3. Warnings (should fix soon)
+      4. Suggestions (nice to have)
+
+      Use markdown formatting.
+    outputs: [health_report]

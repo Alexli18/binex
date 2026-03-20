@@ -4,7 +4,8 @@ import { api } from '../lib/api';
 export function useWorkflows() {
   return useQuery({
     queryKey: ['workflows'],
-    queryFn: () => api.get<{ workflows: string[] }>('/workflows').then((r) => r.workflows),
+    queryFn: () => api.get<{ workflows: string[] }>('/workflows'),
+    select: (data) => data.workflows,
   });
 }
 

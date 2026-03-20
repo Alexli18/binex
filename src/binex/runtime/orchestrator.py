@@ -192,6 +192,15 @@ class Orchestrator:
         if mcp_mgr is not None:
             await mcp_mgr.close_all()
 
+        # Close CAO adapter HTTP clients if any
+        for adapter in self.dispatcher._adapters.values():
+            close_fn = getattr(adapter, "close", None)
+            if close_fn is not None and callable(close_fn):
+                try:
+                    await close_fn()
+                except Exception:
+                    pass
+
         return summary
 
     def _schedule_ready_nodes(

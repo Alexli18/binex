@@ -5,7 +5,8 @@ import type { ExecutionRecord, RunSummary } from '../lib/types';
 export function useRuns() {
   return useQuery({
     queryKey: ['runs'],
-    queryFn: () => api.get<{ runs: RunSummary[] }>('/runs').then((r) => r.runs),
+    queryFn: () => api.get<{ runs: RunSummary[] }>('/runs'),
+    select: (data) => data.runs,
     refetchInterval: 5000,
   });
 }
@@ -24,10 +25,8 @@ export function useRun(runId: string | undefined) {
 export function useRecords(runId: string | undefined) {
   return useQuery({
     queryKey: ['records', runId],
-    queryFn: () =>
-      api
-        .get<{ records: ExecutionRecord[] }>(`/runs/${runId}/records`)
-        .then((r) => r.records),
+    queryFn: () => api.get<{ records: ExecutionRecord[] }>(`/runs/${runId}/records`),
+    select: (data) => data.records,
     enabled: !!runId,
   });
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wand2, Layout, FileText, ArrowRight, Copy, Check, GitBranch, Settings, User, Globe, Star, Brain } from 'lucide-react';
+import { Wand2, Layout, FileText, ArrowRight, Copy, Check, GitBranch, Settings, User, Globe, Star, Brain, TerminalSquare } from 'lucide-react';
 import { usePatterns, useScaffold } from '../hooks/useUtilities';
 import type { Pattern } from '../hooks/useUtilities';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
@@ -38,17 +38,19 @@ const CATEGORY_META: Record<string, { label: string; description: string; icon: 
   control:     { label: 'Workflow Control',   description: 'Review loops, validation, routing', icon: Settings,  color: 'purple' },
   human:       { label: 'Human-in-the-Loop',  description: 'Approval gates and feedback',       icon: User,      color: 'green' },
   integration: { label: 'Integration',        description: 'A2A, multi-provider, security',     icon: Globe,     color: 'orange' },
+  cao:         { label: 'CLI Agents (CAO)',   description: 'CLI AI agents via tmux terminals',  icon: TerminalSquare, color: 'cyan' },
   agentic:     { label: 'Agentic Patterns',  description: 'AI reasoning and self-improvement', icon: Brain,     color: 'rose' },
 };
 
 // Display order for categories
-const CATEGORY_ORDER = ['core', 'control', 'human', 'integration', 'agentic'];
+const CATEGORY_ORDER = ['core', 'control', 'human', 'integration', 'cao', 'agentic'];
 
 const CATEGORY_COLORS: Record<string, { border: string; text: string; dot: string; bg: string }> = {
   blue:   { border: 'border-l-blue-500',   text: 'text-blue-400',   dot: 'bg-blue-400',   bg: 'bg-blue-500/5' },
   purple: { border: 'border-l-purple-500', text: 'text-purple-400', dot: 'bg-purple-400', bg: 'bg-purple-500/5' },
   green:  { border: 'border-l-emerald-500', text: 'text-emerald-400', dot: 'bg-emerald-400', bg: 'bg-emerald-500/5' },
   orange: { border: 'border-l-orange-500', text: 'text-orange-400', dot: 'bg-orange-400', bg: 'bg-orange-500/5' },
+  cyan:   { border: 'border-l-cyan-500',   text: 'text-cyan-400',   dot: 'bg-cyan-400',   bg: 'bg-cyan-500/5' },
   rose:   { border: 'border-l-rose-500',   text: 'text-rose-400',   dot: 'bg-rose-400',   bg: 'bg-rose-500/5' },
 };
 
@@ -341,7 +343,7 @@ export default function Scaffold() {
                 ))}
               </div>
             ) : !patternsData?.patterns || patternsData.patterns.length === 0 ? (
-              <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-8 text-center">
+              <div className="border border-slate-700 rounded-card bg-slate-800/50 p-8 text-center">
                 <p className="text-slate-400">No patterns available.</p>
               </div>
             ) : (

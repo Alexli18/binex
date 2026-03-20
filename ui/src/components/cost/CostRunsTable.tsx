@@ -1,11 +1,14 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, Info } from 'lucide-react';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { RunSummary } from '@/lib/types';
 
@@ -26,9 +29,11 @@ function timeAgo(dateStr: string): string {
 
 interface CostRunsTableProps {
   runs: RunSummary[];
+  /** Run IDs that contain CAO adapter nodes (subscription-based cost). */
+  caoRunIds?: Set<string>;
 }
 
-export function CostRunsTable({ runs }: CostRunsTableProps) {
+export function CostRunsTable({ runs, caoRunIds }: CostRunsTableProps) {
   const [sortField, setSortField] = useState<SortField>('total_cost');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -146,7 +151,27 @@ export function CostRunsTable({ runs }: CostRunsTableProps) {
                   </td>
                   <td className="px-4 py-2.5 text-slate-200 truncate max-w-[200px]">{run.workflow_name}</td>
                   <td className="px-4 py-2.5"><StatusBadge status={run.status} /></td>
-                  <td className="px-4 py-2.5 text-right font-mono text-slate-300">${run.total_cost.toFixed(4)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-slate-300">
+                    {caoRunIds?.has(run.run_id) ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center gap-1 cursor-help">
+                              ${(run.total_cost ?? 0).toFixed(4)}
+                              <Info size={12} className="text-purple-400" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-[220px]">
+                            <p className="text-xs">
+                              Includes CAO adapter nodes with subscription-based pricing — no per-token cost reported.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <span>${(run.total_cost ?? 0).toFixed(4)}</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 text-center text-slate-300 hidden md:table-cell">
                     {run.completed_nodes}/{run.total_nodes}
                   </td>

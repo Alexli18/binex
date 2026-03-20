@@ -1,0 +1,37 @@
+# CAO Hello — Your First CLI Agent Workflow
+# ===========================================
+# A single CAO node that scans the current directory and summarizes
+# the project structure. This is something only a CLI agent can do —
+# it has filesystem access via tmux, unlike a plain llm:// node.
+#
+# Prerequisites:
+#   1. Install CAO:   pip install cli-agent-orchestrator
+#   2. Start server:  cao-server
+#   3. Install agent:  cao install developer
+#
+# Run:   binex run examples/cao-hello.yaml
+# Debug: binex debug <run_id>
+#
+# Troubleshooting:
+#   - CAOServerUnavailableError → run: cao-server
+#   - CAOProfileNotFoundError  → run: cao install developer
+
+name: cao-hello
+description: "CAO hello world — scan project structure with a CLI agent"
+
+defaults:
+  deadline_ms: 300000  # 5 minutes max per node
+
+nodes:
+  scan:
+    agent: "cao://developer"
+    system_prompt: |
+      List the files and directories in the current working directory.
+      Summarize the project structure: what language, what framework,
+      and what the main entry points are.
+      Answer directly in plain text. Do not create any files.
+    cao:
+      provider: claude_code
+      output_format: text    # terminal output is unstructured — use text
+      timeout_minutes: 5
+    outputs: [summary]

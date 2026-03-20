@@ -45,7 +45,7 @@ describe('DebugArtifactViewer', () => {
     const artifact = makeArtifact({ content: { key: 'value' } as unknown as string });
     render(<DebugArtifactViewer title="Test" artifacts={[artifact]} />);
     await user.click(screen.getByText('expand'));
-    expect(screen.getByText(/\"key\": \"value\"/)).toBeInTheDocument();
+    expect(screen.getByText(/"key": "value"/)).toBeInTheDocument();
   });
 
   it('renders multiple artifacts', () => {

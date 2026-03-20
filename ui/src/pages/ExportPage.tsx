@@ -1,5 +1,11 @@
 import { useState, useMemo } from 'react';
 import { Download, Check } from 'lucide-react';
+
+const statusClasses: Record<string, string> = {
+  completed: 'bg-green-500/20 text-green-400',
+  failed: 'bg-red-500/20 text-red-400',
+  running: 'bg-blue-500/20 text-blue-400',
+};
 import { useRuns } from '../hooks/useRuns';
 import { useExport } from '../hooks/useUtilities';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
@@ -128,7 +134,7 @@ export default function ExportPage() {
               ) : runsError ? (
                 <ErrorState
                   title="Failed to load runs"
-                  message={(runsError as Error).message}
+                  message={runsError instanceof Error ? runsError.message : String(runsError)}
                 />
               ) : sortedRuns.length === 0 ? (
                 <p className="text-slate-500 text-sm">No runs available.</p>
@@ -188,15 +194,7 @@ export default function ExportPage() {
                           </td>
                           <td className="px-3 py-2">
                             <span
-                              className={`text-xs px-1.5 py-0.5 rounded ${
-                                run.status === 'completed'
-                                  ? 'bg-green-500/20 text-green-400'
-                                  : run.status === 'failed'
-                                    ? 'bg-red-500/20 text-red-400'
-                                    : run.status === 'running'
-                                      ? 'bg-blue-500/20 text-blue-400'
-                                      : 'bg-slate-600/20 text-slate-400'
-                              }`}
+                              className={`text-xs px-1.5 py-0.5 rounded ${statusClasses[run.status] ?? 'bg-slate-600/20 text-slate-400'}`}
                             >
                               {run.status}
                             </span>

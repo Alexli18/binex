@@ -31,8 +31,9 @@ export function parseWorkflowYaml(yamlContent: string): { nodes: WorkflowNode[];
   if (!parsed?.nodes) return { nodes: [], edges: [] };
 
   const nodes: WorkflowNode[] = Object.entries(parsed.nodes).map(([id, spec]) => {
-    const agent = spec.agent || '';
-    const type = agent.split('://')[0] || 'local';
+    const agent = spec.agent ?? '';
+    const prefix = agent.split('://')[0] ?? 'local';
+    const type = prefix === 'cao' ? 'cao' : prefix;
     return { id, label: id, type };
   });
 

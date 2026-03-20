@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import pathlib
 import time
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +15,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from binex.ui.api.artifacts import router as artifacts_router
 from binex.ui.api.bisect import router as bisect_router
+from binex.ui.api.cao import router as cao_router
 from binex.ui.api.cost_dashboard import router as cost_dashboard_router
 from binex.ui.api.costs import router as costs_router
 from binex.ui.api.debug import router as debug_router
@@ -35,6 +40,8 @@ from binex.ui.api.tools import router as tools_router
 from binex.ui.api.trace import router as trace_router
 from binex.ui.api.workflows import router as workflows_router
 
+logger = logging.getLogger(__name__)
+
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 
 # Module-level start time for uptime calculation
@@ -48,6 +55,19 @@ def _get_version() -> str:
         return __version__
     except Exception:
         return "unknown"
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Lifespan handler — runs startup/shutdown logic."""
+    # --- CAO orphaned session recovery on startup ---
+    try:
+        await asyncio.wait_for(_scan_cao_orphans(), timeout=3.0)
+    except TimeoutError:
+        logger.warning("CAO orphan recovery timed out (3s limit)")
+    except Exception as exc:
+        logger.debug("CAO orphan recovery skipped: %s", exc)
+    yield
 
 
 def create_app(*, dev: bool = False) -> FastAPI:
@@ -64,7 +84,7 @@ def create_app(*, dev: bool = False) -> FastAPI:
     global _START_TIME  # noqa: PLW0603
     _START_TIME = time.monotonic()
 
-    app = FastAPI(title="Binex Web UI", version=_get_version())
+    app = FastAPI(title="Binex Web UI", version=_get_version(), lifespan=_lifespan)
 
     # Store mode flag on app state so endpoints can read it
     app.state.dev_mode = dev  # type: ignore[attr-defined]
@@ -90,6 +110,7 @@ def create_app(*, dev: bool = False) -> FastAPI:
     # --- Routers ---
     app.include_router(artifacts_router, prefix="/api/v1")
     app.include_router(bisect_router, prefix="/api/v1")
+    app.include_router(cao_router, prefix="/api/v1")
     app.include_router(cost_dashboard_router, prefix="/api/v1")
     app.include_router(costs_router, prefix="/api/v1")
     app.include_router(debug_router, prefix="/api/v1")
@@ -162,3 +183,40 @@ def create_app(*, dev: bool = False) -> FastAPI:
             return FileResponse(STATIC_DIR / "index.html")
 
     return app
+
+
+async def _scan_cao_orphans() -> None:
+    """Check active CAO sessions and mark unreachable ones as orphaned."""
+    import httpx
+
+    from binex.cli import get_stores
+    from binex.settings import Settings
+
+    exec_store, _ = get_stores()
+    try:
+        active = await exec_store.get_cao_sessions(status="active")
+        if not active:
+            return
+
+        settings = Settings()
+        server_url = settings.cao_server_url.rstrip("/")
+        orphaned_ids: list[str] = []
+
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            for session in active:
+                tid = session["terminal_id"]
+                try:
+                    resp = await client.get(f"{server_url}/terminals/{tid}")
+                    if resp.status_code != 200:
+                        orphaned_ids.append(tid)
+                except httpx.HTTPError:
+                    orphaned_ids.append(tid)
+
+        if orphaned_ids:
+            await exec_store.mark_cao_sessions_orphaned(orphaned_ids)
+            logger.info(
+                "Marked %d CAO session(s) as orphaned: %s",
+                len(orphaned_ids), orphaned_ids,
+            )
+    finally:
+        await exec_store.close()

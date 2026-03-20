@@ -9,8 +9,11 @@ debug introspection, and orphan detection.  Consumed by the Web UI for:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+import shutil
+import subprocess
 from pathlib import Path
 
 import httpx
@@ -24,6 +27,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/cao", tags=["cao"])
 
+# Module-level CAO server subprocess reference
+_cao_process: subprocess.Popen | None = None
+
 
 class TerminalInputRequest(BaseModel):
     message: str
@@ -34,6 +40,126 @@ def _get_stores():
     from binex.cli import get_stores
 
     return get_stores()
+
+
+# ---------------------------------------------------------------------------
+# GET /cao/health — check if CAO server is reachable
+# ---------------------------------------------------------------------------
+
+@router.get("/health")
+async def cao_health() -> JSONResponse:
+    """Check CAO server connectivity via GET /health."""
+    settings = Settings()
+    server_url = settings.cao_server_url.rstrip("/")
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            resp = await client.get(f"{server_url}/health")
+            if resp.status_code == 200:
+                return JSONResponse(content={
+                    "status": "online",
+                    "server_url": server_url,
+                })
+            return JSONResponse(content={
+                "status": "degraded",
+                "server_url": server_url,
+                "http_status": resp.status_code,
+            })
+    except httpx.HTTPError:
+        return JSONResponse(content={
+            "status": "offline",
+            "server_url": server_url,
+        })
+
+
+# ---------------------------------------------------------------------------
+# POST /cao/server/start — start CAO server as subprocess
+# ---------------------------------------------------------------------------
+
+@router.post("/server/start")
+async def cao_server_start() -> JSONResponse:
+    """Start the CAO server (cao-server) as a background subprocess."""
+    global _cao_process
+
+    # Already running (our subprocess)?
+    if _cao_process is not None and _cao_process.poll() is None:
+        return JSONResponse(content={
+            "status": "already_running",
+            "pid": _cao_process.pid,
+        })
+
+    # Check if already running externally
+    settings = Settings()
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            resp = await client.get(
+                f"{settings.cao_server_url.rstrip('/')}/health",
+            )
+            if resp.status_code == 200:
+                return JSONResponse(content={
+                    "status": "already_running",
+                    "message": "CAO server is already running externally",
+                })
+    except httpx.HTTPError:
+        pass  # Not running — proceed to start
+
+    # Find cao-server binary
+    cao_bin = shutil.which("cao-server")
+    if cao_bin is None:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": "cao-server not found in PATH. "
+                "Install with: pip install cli-agent-orchestrator"
+            },
+        )
+
+    _cao_process = subprocess.Popen(
+        [cao_bin],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    # Wait briefly for startup
+    await asyncio.sleep(1.0)
+
+    if _cao_process.poll() is not None:
+        _cao_process = None
+        return JSONResponse(
+            status_code=500,
+            content={"error": "CAO server failed to start"},
+        )
+
+    return JSONResponse(content={
+        "status": "started",
+        "pid": _cao_process.pid,
+    })
+
+
+# ---------------------------------------------------------------------------
+# POST /cao/server/stop — stop CAO server subprocess
+# ---------------------------------------------------------------------------
+
+@router.post("/server/stop")
+async def cao_server_stop() -> JSONResponse:
+    """Stop the CAO server subprocess (only if we started it)."""
+    global _cao_process
+
+    if _cao_process is None or _cao_process.poll() is not None:
+        _cao_process = None
+        return JSONResponse(content={"status": "not_managed"})
+
+    import signal
+
+    pid = _cao_process.pid
+    _cao_process.send_signal(signal.SIGINT)
+    try:
+        await asyncio.to_thread(_cao_process.wait, timeout=10)
+    except subprocess.TimeoutExpired:
+        _cao_process.kill()
+        await asyncio.to_thread(_cao_process.wait, timeout=5)
+    _cao_process = None
+
+    return JSONResponse(content={"status": "stopped", "pid": pid})
 
 
 # ---------------------------------------------------------------------------
@@ -137,7 +263,7 @@ async def send_terminal_input(
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(
                 f"{server_url}/terminals/{terminal_id}/input",
-                data={"message": body.message},
+                params={"message": body.message},
             )
             resp.raise_for_status()
             return JSONResponse(content={"ok": True})

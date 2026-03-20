@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import logging
+import os
 import re
 from collections import deque
 
 from binex.models.workflow import WorkflowSpec
+
+logger = logging.getLogger(__name__)
 
 _INTERPOLATION_RE = re.compile(r"\$\{(\w+)\.(\w+)\}")
 
@@ -26,6 +30,7 @@ def validate_workflow(spec: WorkflowSpec) -> list[str]:
     _check_output_schemas(spec, node_ids, errors)
     _check_schedule_cron(spec, errors)
     _check_tool_uris(spec, errors)
+    _check_cao_nodes(spec, errors)
 
     return errors
 
@@ -211,6 +216,32 @@ def _check_output_schemas(
             )
 
 
+def _validate_builtin_tool_uri(
+    node_id: str, tool_spec: str, available_builtins: set[str], errors: list[str],
+) -> None:
+    """Validate a single builtin:// tool URI."""
+    name = tool_spec[len("builtin://"):]
+    if name not in available_builtins:
+        errors.append(
+            f"Node '{node_id}': unknown built-in tool '{name}'. "
+            f"Available: {', '.join(sorted(available_builtins))}"
+        )
+
+
+def _validate_mcp_tool_uri(
+    node_id: str, tool_spec: str, mcp_server_names: set[str], errors: list[str],
+) -> None:
+    """Validate a single mcp:// tool URI."""
+    server = tool_spec[len("mcp://"):]
+    if server not in mcp_server_names:
+        errors.append(
+            f"Node '{node_id}': mcp:// references "
+            f"unknown server '{server}'. "
+            f"Declared mcp_servers: "
+            f"{', '.join(sorted(mcp_server_names)) or '(none)'}"
+        )
+
+
 def _check_tool_uris(
     spec: WorkflowSpec, errors: list[str],
 ) -> None:
@@ -225,18 +256,96 @@ def _check_tool_uris(
             if not isinstance(tool_spec, str):
                 continue
             if tool_spec.startswith("builtin://"):
-                name = tool_spec[len("builtin://"):]
-                if name not in available_builtins:
-                    errors.append(
-                        f"Node '{node_id}': unknown built-in tool '{name}'. "
-                        f"Available: {', '.join(sorted(available_builtins))}"
-                    )
+                _validate_builtin_tool_uri(node_id, tool_spec, available_builtins, errors)
             elif tool_spec.startswith("mcp://"):
-                server = tool_spec[len("mcp://"):]
-                if server not in mcp_server_names:
-                    errors.append(
-                        f"Node '{node_id}': mcp:// references "
-                        f"unknown server '{server}'. "
-                        f"Declared mcp_servers: "
-                        f"{', '.join(sorted(mcp_server_names)) or '(none)'}"
-                    )
+                _validate_mcp_tool_uri(node_id, tool_spec, mcp_server_names, errors)
+
+
+def _validate_cao_config(node_id: str, cao: object, errors: list[str]) -> None:
+    """Validate a single node's CaoConfig fields."""
+    if cao.output_field and cao.output_format != "json":
+        errors.append(
+            f"Node '{node_id}': cao output_field requires "
+            f"output_format='json', got '{cao.output_format}'"
+        )
+    if cao.output_field and not cao.output_field.startswith("$."):
+        errors.append(
+            f"Node '{node_id}': cao output_field must be a JSONPath "
+            f"starting with '$.' — got '{cao.output_field}'"
+        )
+    if cao.timeout_minutes < 1:
+        errors.append(
+            f"Node '{node_id}': cao timeout_minutes must be >= 1, "
+            f"got {cao.timeout_minutes}"
+        )
+
+
+def _check_cao_nodes(
+    spec: WorkflowSpec, errors: list[str],
+) -> None:
+    """Validate CAO-specific fields on cao:// nodes."""
+    for node_id, node in spec.nodes.items():
+        if not node.agent.startswith("cao://"):
+            continue
+        if node.cao is not None:
+            _validate_cao_config(node_id, node.cao, errors)
+
+
+def validate_cao_warnings(
+    spec: WorkflowSpec,
+    agent_store_dir: str | None = None,
+    cao_server_url: str | None = None,
+) -> list[str]:
+    """Soft-validate CAO nodes — returns warnings (not errors).
+
+    Checks:
+    1. CAO server reachable (grey info if not)
+    2. Profile .md file exists in agent-store (yellow warning if not)
+    """
+    warnings: list[str] = []
+    cao_nodes = {
+        nid: node for nid, node in spec.nodes.items()
+        if node.agent.startswith("cao://")
+    }
+    if not cao_nodes:
+        return warnings
+
+    store_dir = agent_store_dir or os.path.expanduser(
+        "~/.aws/cli-agent-orchestrator/agent-store"
+    )
+    server_url = (cao_server_url or "http://localhost:9889").rstrip("/")
+
+    # Check CAO server health (best-effort, sync-safe)
+    server_reachable = _cao_server_reachable(server_url)
+    if not server_reachable:
+        warnings.append(
+            f"Cannot validate CAO profiles: server not running at {server_url}"
+        )
+
+    # Check profiles exist on disk
+    for node_id, node in cao_nodes.items():
+        profile = node.agent.removeprefix("cao://")
+        profile_path = os.path.join(store_dir, f"{profile}.md")
+        if not os.path.isfile(profile_path):
+            warnings.append(
+                f"Node '{node_id}': CAO profile '{profile}' not found at "
+                f"{profile_path}. Install with: cao profile install {profile}"
+            )
+
+    return warnings
+
+
+def _cao_server_reachable(server_url: str) -> bool:
+    """Check if CAO server is reachable (sync, best-effort).
+
+    Note: uses synchronous httpx.get() — acceptable here because
+    validate_cao_warnings() is called from sync CLI context, not from
+    an async event loop. In async contexts, call from a thread pool.
+    """
+    try:
+        import httpx
+
+        resp = httpx.get(f"{server_url}/health", timeout=3.0)
+        return resp.status_code == 200
+    except Exception:
+        return False

@@ -53,9 +53,8 @@ class TestCaoConfigValidation:
             CaoConfig(timeout_minutes=-5)
 
     def test_valid_modes(self):
-        for mode in ("handoff", "assign", "send_message"):
-            cfg = CaoConfig(mode=mode)
-            assert cfg.mode == mode
+        cfg = CaoConfig(mode="handoff")
+        assert cfg.mode == "handoff"
 
     def test_invalid_mode(self):
         with pytest.raises(ValidationError):
@@ -75,7 +74,7 @@ class TestCaoConfigValidation:
 
     def test_cao_config_max_human_prompts_default(self):
         cfg = CaoConfig()
-        assert cfg.max_human_prompts == 3
+        assert cfg.max_human_prompts == 10
 
     def test_cao_config_max_human_prompts_custom(self):
         cfg = CaoConfig(max_human_prompts=5)

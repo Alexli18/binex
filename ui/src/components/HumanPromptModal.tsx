@@ -32,7 +32,7 @@ export function HumanPromptModal({ prompt, runId, onDone }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-slate-800 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-slate-900 rounded-modal shadow-xl border border-slate-700/60 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-700">
           <div className="flex items-center gap-2">

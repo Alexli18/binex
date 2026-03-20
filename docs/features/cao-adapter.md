@@ -54,7 +54,7 @@ nodes:
   my_node:
     agent: "cao://profile_name"
     cao:
-      mode: handoff               # handoff (default) | assign (v2) | send_message (v3)
+      mode: handoff               # only "handoff" is supported
       provider: claude_code       # optional — CLI provider hint
       output_format: json         # auto (default) | json | text
       output_field: "$.result"    # JSONPath — only valid with output_format: json
@@ -90,7 +90,7 @@ CaoConfig is a nested block under `cao:` on a node (similar to `LoopSpec` on `lo
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `mode` | `handoff` / `assign` / `send_message` | `handoff` | CAO orchestration pattern. v1 supports `handoff` only; `assign` and `send_message` raise a `ValueError` at load time. |
+| `mode` | `handoff` | `handoff` | CAO orchestration pattern. Only `handoff` is supported — use Binex DAG parallelism for fan-out/fan-in patterns instead of CAO assign. |
 | `provider` | string or null | `null` | CLI provider hint passed to the CAO server. When omitted, defaults to `claude_code` at runtime. See [Providers](#providers) below. |
 | `output_format` | `auto` / `json` / `text` | `auto` | How to parse agent stdout. `auto` tries JSON first, falls back to text. `json` requires valid JSON (fails otherwise). `text` returns raw stdout. |
 | `output_field` | string or null | `null` | JSONPath expression (must start with `$.`) to extract a specific field from JSON output. Only valid when `output_format` is `json`. |
@@ -102,7 +102,7 @@ CaoConfig is a nested block under `cao:` on a node (similar to `LoopSpec` on `lo
 - `output_field` requires `output_format: json` — raises `ValueError` at load time
 - `output_field` must start with `$.` — raises `ValueError` at load time
 - `timeout_minutes` must be >= 1 — raises `ValueError` at load time
-- `cao_mode: assign` or `send_message` — raises `ValueError` ("not supported in v1")
+- `mode` only accepts `handoff` — invalid modes rejected by Pydantic
 
 ## Providers
 
@@ -219,7 +219,53 @@ CAO providers are subscription-based — per-token cost is not available. Cost v
 ## Known Limitations
 
 - **Output capped at 200 lines**: CAO uses tmux with `TMUX_HISTORY_LINES=200`. Very long agent outputs may be truncated in `cao_raw_output`.
-- **Handoff only (v1)**: `assign` and `send_message` patterns are not implemented.
+- **Handoff only**: CAO's `assign` and `send_message` are not exposed — use Binex DAG parallelism instead (see [Parallel Workers](#parallel-workers) below).
 - **No authentication**: CAO server access is unauthenticated in v1.
 - **No nested CAO**: A CAO node cannot invoke another CAO node.
 - **Local server only**: Binex does not start or manage the `cao-server` process.
+
+## Parallel Workers (Recommended Pattern)
+
+Instead of CAO's `assign` pattern, use Binex DAG parallelism for supervisor-worker workflows:
+
+```yaml
+name: cao-parallel-workers
+nodes:
+  supervisor:
+    agent: cao://code_supervisor
+    system_prompt: "Break this into subtasks and output JSON with task_a and task_b fields"
+    cao:
+      output_format: json
+    outputs: [tasks]
+
+  worker_a:
+    agent: cao://developer
+    depends_on: [supervisor]
+    inputs:
+      task: ${supervisor.tasks}
+    cao:
+      provider: claude_code
+      timeout_minutes: 30
+    outputs: [result_a]
+
+  worker_b:
+    agent: cao://reviewer
+    depends_on: [supervisor]
+    inputs:
+      task: ${supervisor.tasks}
+    cao:
+      provider: q_cli
+      timeout_minutes: 30
+    outputs: [result_b]
+
+  collector:
+    agent: llm://gpt-4o
+    depends_on: [worker_a, worker_b]
+    inputs:
+      a: ${worker_a.result_a}
+      b: ${worker_b.result_b}
+    system_prompt: "Combine the results into a final summary"
+    outputs: [summary]
+```
+
+`worker_a` and `worker_b` execute concurrently (both depend only on `supervisor`). The `collector` waits for both to complete. This gives you the same fan-out/fan-in behavior as CAO's assign — with full observability, error handling, cost tracking, and retry support.

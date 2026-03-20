@@ -49,12 +49,15 @@ class McpServerConfig(BaseModel):
 class CaoConfig(BaseModel):
     """Per-node CAO configuration — embedded in NodeSpec as optional field."""
 
-    mode: Literal["handoff", "assign", "send_message"] = "handoff"
+    mode: Literal["handoff"] = "handoff"
     provider: Literal["claude_code", "kiro_cli", "q_cli"] | None = None
     output_format: Literal["auto", "json", "text"] = "auto"
     output_field: str | None = None
     timeout_minutes: int = 60
-    max_human_prompts: int = 3
+    max_human_prompts: int = 10
+    completion_marker: bool = False
+    min_wait_seconds: int = 0
+    quiescence_seconds: int = 30
 
     @model_validator(mode="after")
     def _validate_cao_config(self) -> CaoConfig:
