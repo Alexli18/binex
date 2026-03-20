@@ -132,23 +132,30 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
   // Expanded view
   return (
     <div
-      className="bg-slate-800 rounded-lg border-2 shadow-xl shadow-black/30 w-[280px] nowheel"
-      style={{ borderColor: data.color }}
+      className="rounded-lg border border-slate-700/60 shadow-xl shadow-black/30 w-[280px] nowheel overflow-hidden"
+      style={{ backgroundColor: `${data.color}08` }}
     >
+      {/* Color accent strip */}
+      <div className="h-[3px] w-full" style={{ backgroundColor: data.color }} />
       <Handle type="target" position={Position.Top} className="!bg-slate-500 !border-slate-400" />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700">
-        <div className="flex items-center gap-2">
-          <Icon size={14} style={{ color: data.color }} />
-          <input
-            value={label}
-            onChange={(e) => updateLabel(e.target.value)}
-            className="bg-transparent text-sm font-medium text-slate-100 border-none outline-none w-36"
-            onClick={(e) => e.stopPropagation()}
-          />
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-700/50">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${data.color}20` }}>
+            <Icon size={15} style={{ color: data.color }} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <input
+              value={label}
+              onChange={(e) => updateLabel(e.target.value)}
+              className="bg-transparent text-sm font-medium text-slate-100 border-none outline-none w-full"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="text-[10px] text-slate-500 leading-tight">{TYPE_LABELS[data.nodeType] || data.nodeType}</div>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0 ml-1">
           <button onClick={handleDelete} className="text-red-500 hover:text-red-400" title="Delete node">
             <Trash2 size={13} />
           </button>
