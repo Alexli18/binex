@@ -245,11 +245,17 @@ async def delete_session(terminal_id: str) -> JSONResponse:
                 try:
                     await client.post(f"{server_url}/terminals/{terminal_id}/exit")
                 except httpx.HTTPError:
-                    logger.debug("Failed to exit terminal %s on CAO server", terminal_id, exc_info=True)
+                    logger.debug(
+                        "Failed to exit terminal %s on CAO server",
+                        terminal_id, exc_info=True,
+                    )
                 try:
                     await client.delete(f"{server_url}/terminals/{terminal_id}")
                 except httpx.HTTPError:
-                    logger.debug("Failed to delete terminal %s on CAO server", terminal_id, exc_info=True)
+                    logger.debug(
+                        "Failed to delete terminal %s on CAO server",
+                        terminal_id, exc_info=True,
+                    )
         except Exception:
             logger.debug("Failed to cleanup terminal %s on CAO server", terminal_id)
 
