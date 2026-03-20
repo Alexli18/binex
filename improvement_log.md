@@ -62,3 +62,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — selected node immediately visible on canvas
 **Decision:** kept
 **Reason:** Clicking a node showed no visual selection feedback. Now uses React Flow's `selected` prop to apply blue border (border-blue-500/60) and subtle ring glow (ring-2 ring-blue-500/20) on both collapsed and expanded states. Makes it clear which node is active.
+
+## Iteration 10 — 2026-03-20
+**Change:** Styled zoom/pan controls — dark theme, rounded, proper hover states
+**File:** ui/src/index.css
+**Eval:** tsc: pass | vite build: pass | visual: better — controls match the dark theme instead of looking like a white widget
+**Decision:** kept
+**Reason:** React Flow's default controls are white with light borders — jarring in a slate-950 dark theme. Overrode with slate-800 background, slate-700 borders, proper hover colors, rounded corners, and 28px compact buttons. CSS-only change, no JS modifications.

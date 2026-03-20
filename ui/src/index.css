@@ -57,3 +57,25 @@
     animation: none;
   }
 }
+
+/* React Flow controls — override defaults for dark theme */
+.react-flow__controls {
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  background-color: rgb(30 41 59) !important; /* slate-800 */
+  border-color: rgb(51 65 85) !important; /* slate-700 */
+  color: rgb(148 163 184) !important; /* slate-400 */
+  width: 28px !important;
+  height: 28px !important;
+}
+.react-flow__controls-button:hover {
+  background-color: rgb(51 65 85) !important; /* slate-700 */
+  color: rgb(226 232 240) !important; /* slate-200 */
+}
+.react-flow__controls-button svg {
+  fill: currentColor !important;
+  max-width: 14px;
+  max-height: 14px;
+}
