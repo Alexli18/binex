@@ -99,7 +99,7 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
       >
         {/* Color accent strip */}
         <div className="h-[3px] w-full" style={{ backgroundColor: data.color }} />
-        <Handle type="target" position={Position.Top} className="!bg-slate-500 !border-slate-400" />
+        <Handle type="target" position={Position.Top} className="!w-2.5 !h-2.5 !border-2 !border-slate-700 !bg-slate-400 hover:!bg-blue-400 hover:!border-blue-500 transition-colors" />
         <button
           onClick={handleDelete}
           className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 z-10"
@@ -124,7 +124,7 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
             )}
           </div>
         </div>
-        <Handle type="source" position={Position.Bottom} className="!bg-slate-500 !border-slate-400" />
+        <Handle type="source" position={Position.Bottom} className="!w-2.5 !h-2.5 !border-2 !border-slate-700 !bg-slate-400 hover:!bg-blue-400 hover:!border-blue-500 transition-colors" />
       </div>
     );
   }
@@ -137,7 +137,7 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
     >
       {/* Color accent strip */}
       <div className="h-[3px] w-full" style={{ backgroundColor: data.color }} />
-      <Handle type="target" position={Position.Top} className="!bg-slate-500 !border-slate-400" />
+      <Handle type="target" position={Position.Top} className="!w-2.5 !h-2.5 !border-2 !border-slate-700 !bg-slate-400 hover:!bg-blue-400 hover:!border-blue-500 transition-colors" />
 
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-700/50">
@@ -320,7 +320,7 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
         )}
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!bg-slate-500 !border-slate-400" />
+      <Handle type="source" position={Position.Bottom} className="!w-2.5 !h-2.5 !border-2 !border-slate-700 !bg-slate-400 hover:!bg-blue-400 hover:!border-blue-500 transition-colors" />
 
       {promptPanelOpen && (
         <PromptLibraryPanel

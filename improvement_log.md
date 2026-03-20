@@ -41,3 +41,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — canvas now visually responds to drag events
 **Decision:** kept
 **Reason:** Dragging a node from the palette onto the canvas gave zero visual feedback — users couldn't tell if they were in a valid drop zone. Now the canvas shows a blue ring (ring-2 ring-blue-500/30) and the grid background tints blue when dragging over. Resets on drag leave and drop. Simple state + CSS, no logic changes.
+
+## Iteration 7 — 2026-03-20
+**Change:** Improved connection handles — larger (w-2.5 h-2.5), dark border, blue hover highlight
+**File:** ui/src/components/editor/EditableNode.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — handles now discoverable and interactive-feeling
+**Decision:** kept
+**Reason:** Default handles were tiny grey dots that blended into the node border. Now 10px with slate-700 border, slate-400 fill, and blue hover state. Makes connection points discoverable and signals interactivity. All 4 handles (2 collapsed + 2 expanded) updated consistently.
