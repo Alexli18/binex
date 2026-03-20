@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   useReactFlow,
@@ -45,6 +45,7 @@ function InnerCanvas({
   onGraphChange,
 }: EditorCanvasProps) {
   const { screenToFlowPosition } = useReactFlow();
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -57,11 +58,17 @@ function InnerCanvas({
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+  }, []);
+
+  const onDragLeave = useCallback(() => {
+    setIsDragOver(false);
   }, []);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
+      setIsDragOver(false);
       const raw = event.dataTransfer.getData('application/reactflow');
       if (!raw) return;
       const ntConfig: NodeTypeConfig = JSON.parse(raw);
@@ -104,6 +111,7 @@ function InnerCanvas({
       onEdgesChange={onRfEdgesChange}
       onConnect={onConnect}
       onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
       onDrop={onDrop}
       onNodesDelete={onNodesDelete}
       onEdgesDelete={onEdgesDelete}
@@ -111,9 +119,9 @@ function InnerCanvas({
       defaultEdgeOptions={defaultEdgeOptions}
       fitView
       deleteKeyCode="Delete"
-      className="bg-slate-950"
+      className={`bg-slate-950 transition-all duration-150 ${isDragOver ? 'ring-2 ring-inset ring-blue-500/30' : ''}`}
     >
-      <Background color="#334155" gap={20} />
+      <Background color={isDragOver ? '#3b82f620' : '#334155'} gap={20} />
       <Controls className="!bg-slate-800 !border-slate-700 !shadow-lg" />
       {isEmpty && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">

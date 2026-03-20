@@ -34,3 +34,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — empty canvas is no longer confusing
 **Decision:** kept
 **Reason:** When canvas has no nodes, it was just a blank grid with no guidance. Now shows a centered MousePointerClick icon with two lines of instructional text. Uses pointer-events-none so drop events still work through the overlay. Disappears as soon as first node is added.
+
+## Iteration 6 — 2026-03-20
+**Change:** Added drop zone highlight when dragging a node over the canvas
+**File:** ui/src/components/editor/EditorCanvas.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — canvas now visually responds to drag events
+**Decision:** kept
+**Reason:** Dragging a node from the palette onto the canvas gave zero visual feedback — users couldn't tell if they were in a valid drop zone. Now the canvas shows a blue ring (ring-2 ring-blue-500/30) and the grid background tints blue when dragging over. Resets on drag leave and drop. Simple state + CSS, no logic changes.
