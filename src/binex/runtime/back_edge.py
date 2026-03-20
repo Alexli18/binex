@@ -32,7 +32,10 @@ def evaluate_when(when_str: str, node_artifacts: dict[str, list[Artifact]]) -> b
 
     # Match artifact by type (output_name), fall back to first artifact
     matching = [a for a in artifacts if a.type == output_name]
-    actual = str(matching[0].content) if matching else str(artifacts[0].content)
+    first = matching[0] if matching else (artifacts[0] if artifacts else None)
+    if first is None:
+        return False
+    actual = str(first.content)
 
     if operator == "==":
         return actual == value

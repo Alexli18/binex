@@ -60,7 +60,7 @@ class BaseFrameworkAdapter(ABC):
 
     def _prepare_input(self, artifacts: list[Artifact]) -> Any:
         """Map input artifacts to framework input."""
-        if len(artifacts) == 0:
+        if not artifacts:
             return {}
         if len(artifacts) == 1:
             return artifacts[0].content

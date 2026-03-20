@@ -192,6 +192,10 @@ def _validate_schema(
     """
     from binex.runtime.schema_validator import validate_output
 
+    if not result.artifacts:
+        raise SchemaValidationError(
+            f"Task {task.id} produced no artifacts; cannot validate against output schema"
+        )
     content = result.artifacts[0].content
     validation = validate_output(content, output_schema)
     if validation.valid:
