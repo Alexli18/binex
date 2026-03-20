@@ -13,14 +13,23 @@ export interface NodeTypeConfig {
   category?: string;
 }
 
+// Colors aligned with design-tokens.ts nodeTypeColors
+const NODE_COLOR = {
+  llm: '#8b5cf6',     // violet-500
+  local: '#06b6d4',   // cyan-500
+  human: '#f59e0b',   // amber-500
+  a2a: '#6366f1',     // indigo-500
+  cao: chartColors.cao, // purple-500
+} as const;
+
 export const NODE_TYPES: NodeTypeConfig[] = [
-  { type: 'llm', label: 'LLM Agent', description: 'Call an LLM model via litellm', icon: Bot, color: '#3b82f6', agentPrefix: 'llm://', defaultAgent: 'llm://openrouter/google/gemma-3-27b-it:free' },
-  { type: 'local', label: 'Local Script', description: 'Run a Python function locally', icon: Monitor, color: '#22c55e', agentPrefix: 'local://', defaultAgent: 'local://echo' },
-  { type: 'human-approve', subtype: 'approve', label: 'Human Approve', description: 'Pause for human approval', icon: ShieldCheck, color: '#f97316', agentPrefix: 'human://', defaultAgent: 'human://approve' },
-  { type: 'human-input', subtype: 'input', label: 'Human Input', description: 'Ask human for free-form input', icon: MessageSquare, color: chartColors.cao, agentPrefix: 'human://', defaultAgent: 'human://input' },
-  { type: 'human-output', subtype: 'output', label: 'Human Output', description: 'Display results to the user', icon: Eye, color: '#10b981', agentPrefix: 'human://', defaultAgent: 'human://output' },
-  { type: 'a2a', label: 'A2A Agent', description: 'Call a remote A2A agent', icon: Globe, color: '#06b6d4', agentPrefix: 'a2a://', defaultAgent: 'a2a://localhost:8001' },
-  { type: 'cao', label: 'CAO Agent', description: 'Run via CLI Agent Orchestrator', icon: Terminal, color: chartColors.cao, agentPrefix: 'cao://', defaultAgent: 'cao://default', category: 'CLI AGENTS' },
+  { type: 'llm', label: 'LLM Agent', description: 'Call an LLM model via litellm', icon: Bot, color: NODE_COLOR.llm, agentPrefix: 'llm://', defaultAgent: 'llm://openrouter/google/gemma-3-27b-it:free' },
+  { type: 'local', label: 'Local Script', description: 'Run a Python function locally', icon: Monitor, color: NODE_COLOR.local, agentPrefix: 'local://', defaultAgent: 'local://echo' },
+  { type: 'human-approve', subtype: 'approve', label: 'Human Approve', description: 'Pause for human approval', icon: ShieldCheck, color: NODE_COLOR.human, agentPrefix: 'human://', defaultAgent: 'human://approve' },
+  { type: 'human-input', subtype: 'input', label: 'Human Input', description: 'Ask human for free-form input', icon: MessageSquare, color: NODE_COLOR.human, agentPrefix: 'human://', defaultAgent: 'human://input' },
+  { type: 'human-output', subtype: 'output', label: 'Human Output', description: 'Display results to the user', icon: Eye, color: NODE_COLOR.human, agentPrefix: 'human://', defaultAgent: 'human://output' },
+  { type: 'a2a', label: 'A2A Agent', description: 'Call a remote A2A agent', icon: Globe, color: NODE_COLOR.a2a, agentPrefix: 'a2a://', defaultAgent: 'a2a://localhost:8001' },
+  { type: 'cao', label: 'CAO Agent', description: 'Run via CLI Agent Orchestrator', icon: Terminal, color: NODE_COLOR.cao, agentPrefix: 'cao://', defaultAgent: 'cao://default', category: 'CLI AGENTS' },
 ];
 
 export function NodePalette() {

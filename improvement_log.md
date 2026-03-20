@@ -97,3 +97,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — all node types now have consistent settings panel structure
 **Decision:** kept
 **Reason:** Local, Human, A2A node configs were raw divs without the CollapsibleSection wrapper that LLM nodes use. Inconsistent UX. Now all node types use CollapsibleSection with proper titles ("Configuration", "Connection") and every field has a helper description. "Host:Port" renamed to "Endpoint" for clarity.
+
+## Iteration 15 — 2026-03-20
+**Change:** Synced palette colors with design tokens — LLM violet, Local cyan, Human amber, A2A indigo
+**File:** ui/src/components/editor/NodePalette.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — palette and canvas nodes now share exact same accent colors
+**Decision:** kept
+**Reason:** Palette used blue (#3b82f6) for LLM while canvas nodes used violet (#8b5cf6). Similar mismatches for Local (green vs cyan), A2A (cyan vs indigo), Human (mixed colors). Created NODE_COLOR constant aligned with design-tokens.ts nodeTypeColors. All human subtypes now consistently amber.
