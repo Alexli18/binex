@@ -104,3 +104,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — palette and canvas nodes now share exact same accent colors
 **Decision:** kept
 **Reason:** Palette used blue (#3b82f6) for LLM while canvas nodes used violet (#8b5cf6). Similar mismatches for Local (green vs cyan), A2A (cyan vs indigo), Human (mixed colors). Created NODE_COLOR constant aligned with design-tokens.ts nodeTypeColors. All human subtypes now consistently amber.
+
+## Iteration 16 — 2026-03-20
+**Change:** Added node entrance animation — subtle scale+fade when dropping onto canvas
+**Files:** ui/src/index.css, ui/src/components/editor/EditableNode.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — nodes now appear smoothly instead of popping
+**Decision:** kept
+**Reason:** Dropping a node onto the canvas gave no visual confirmation — it just appeared. Added `node-appear` keyframes (scale 0.92→1, opacity 0→1, 200ms ease-out) applied via `animate-node-appear` class on collapsed nodes. Subtle enough to not feel heavy, noticeable enough to confirm the drop action succeeded.

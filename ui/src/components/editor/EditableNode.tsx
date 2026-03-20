@@ -93,7 +93,7 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
   if (!expanded) {
     return (
       <div
-        className={`group rounded-lg border shadow-lg shadow-black/20 min-w-[180px] max-w-[220px] cursor-pointer hover:shadow-xl transition-all duration-150 relative overflow-hidden ${selected ? 'border-blue-500/60 ring-2 ring-blue-500/20' : 'border-slate-700/60 hover:border-slate-600'}`}
+        className={`group rounded-lg border shadow-lg shadow-black/20 min-w-[180px] max-w-[220px] cursor-pointer hover:shadow-xl transition-all duration-150 relative overflow-hidden animate-node-appear ${selected ? 'border-blue-500/60 ring-2 ring-blue-500/20' : 'border-slate-700/60 hover:border-slate-600'}`}
         style={{ backgroundColor: `${data.color}08` }}
         onClick={() => setExpanded(true)}
       >

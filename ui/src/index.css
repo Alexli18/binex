@@ -58,6 +58,15 @@
   }
 }
 
+/* Node entrance animation — plays when node first appears on canvas */
+@keyframes node-appear {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-node-appear {
+  animation: node-appear 0.2s ease-out;
+}
+
 /* React Flow controls — override defaults for dark theme */
 .react-flow__controls {
   border-radius: 8px !important;
