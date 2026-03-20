@@ -90,3 +90,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — fields now self-documenting
 **Decision:** kept
 **Reason:** Temperature slider showed only a number (0.7) with no meaning. Now shows "(precise)" for ≤0.3, "(balanced)" for 0.4-1.1, "(creative)" for ≥1.2. Added helper text under Max Tokens ("Maximum response length") and Budget Limit ("Stop this node if cost exceeds limit"). Small additions, big clarity gain for new users.
+
+## Iteration 14 — 2026-03-20
+**Change:** Wrapped non-LLM node settings in CollapsibleSections with helper text for all fields
+**File:** ui/src/components/editor/EditableNode.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — all node types now have consistent settings panel structure
+**Decision:** kept
+**Reason:** Local, Human, A2A node configs were raw divs without the CollapsibleSection wrapper that LLM nodes use. Inconsistent UX. Now all node types use CollapsibleSection with proper titles ("Configuration", "Connection") and every field has a helper description. "Host:Port" renamed to "Endpoint" for clarity.

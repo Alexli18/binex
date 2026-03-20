@@ -256,7 +256,7 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
         )}
 
         {data.nodeType === 'local' && (
-          <div className="p-3 space-y-2.5">
+          <CollapsibleSection title="Configuration" defaultOpen>
             <div>
               <label className="text-slate-400 block mb-0.5">Module Path</label>
               <Input value={agent.replace('local://', '')}
@@ -264,12 +264,13 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                 placeholder="my_module.my_function"
                 className="h-7 bg-slate-700 border-slate-600 text-slate-200 font-mono"
                 onClick={(e) => e.stopPropagation()} />
+              <p className="text-slate-600 mt-0.5">Python module.function to execute</p>
             </div>
-          </div>
+          </CollapsibleSection>
         )}
 
         {data.nodeType === 'human-output' && (
-          <div className="p-3 space-y-2.5">
+          <CollapsibleSection title="Configuration" defaultOpen>
             <div>
               <label className="text-slate-400 block mb-0.5">Display Label</label>
               <Input value={(config.display_label as string) || ''}
@@ -277,13 +278,13 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                 placeholder="Final Result"
                 className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                 onClick={(e) => e.stopPropagation()} />
-              <p className="text-slate-500 mt-1">Shows the output of connected nodes to the user when workflow completes.</p>
+              <p className="text-slate-600 mt-0.5">Shows output to user when workflow completes</p>
             </div>
-          </div>
+          </CollapsibleSection>
         )}
 
         {(data.nodeType === 'human-approve' || data.nodeType === 'human-input') && (
-          <div className="p-3 space-y-2.5">
+          <CollapsibleSection title="Configuration" defaultOpen>
             <div>
               <label className="text-slate-400 block mb-0.5">Prompt Message</label>
               <textarea value={(config.prompt_message as string) || ''}
@@ -292,19 +293,21 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                 rows={2}
                 className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 resize-none"
                 onClick={(e) => e.stopPropagation()} />
+              <p className="text-slate-600 mt-0.5">{data.nodeType === 'human-approve' ? 'Shown when asking for approval' : 'Shown when asking for input'}</p>
             </div>
-          </div>
+          </CollapsibleSection>
         )}
 
         {data.nodeType === 'a2a' && (
-          <div className="p-3 space-y-2.5">
+          <CollapsibleSection title="Connection" defaultOpen>
             <div>
-              <label className="text-slate-400 block mb-0.5">Host:Port</label>
+              <label className="text-slate-400 block mb-0.5">Endpoint</label>
               <Input value={agent.replace('a2a://', '')}
                 onChange={(e) => updateAgent(`a2a://${e.target.value}`)}
                 placeholder="localhost:8001"
                 className="h-7 bg-slate-700 border-slate-600 text-slate-200 font-mono"
                 onClick={(e) => e.stopPropagation()} />
+              <p className="text-slate-600 mt-0.5">Remote A2A agent host:port</p>
             </div>
             <div>
               <label className="text-slate-400 block mb-0.5">Skill</label>
@@ -313,8 +316,9 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                 placeholder="summarize"
                 className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                 onClick={(e) => e.stopPropagation()} />
+              <p className="text-slate-600 mt-0.5">Agent skill to invoke</p>
             </div>
-          </div>
+          </CollapsibleSection>
         )}
 
         {data.nodeType === 'cao' && (
