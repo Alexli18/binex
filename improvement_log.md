@@ -169,3 +169,10 @@
 **Eval:** vite build: pass | visual: better — minimap doesn't compete for attention
 **Decision:** kept
 **Reason:** MiniMap was fully opaque and visually noisy. Now starts at 60% opacity and fades in on hover. Added rounded corners and subtle border to match the dark theme.
+
+## Iteration 24 — 2026-03-20
+**Change:** Refined CollapsibleSection — sentence case headers, tighter spacing, subtler dividers
+**File:** ui/src/components/editor/CollapsibleSection.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — sections feel lighter and less shouty
+**Decision:** kept
+**Reason:** Section headers were UPPERCASE with wide tracking — too heavy for compact node panels. Changed to sentence case, font-medium (was semibold), tighter padding (py-1.5, px-2.5), subtler dividers (30% opacity). Content spacing reduced to space-y-1.5 and pb-2.
