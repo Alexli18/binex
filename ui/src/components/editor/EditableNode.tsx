@@ -1,16 +1,24 @@
 import { memo, useState, useCallback } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from 'reactflow';
-import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2, BookOpen, Wrench } from 'lucide-react';
+import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2, BookOpen, Wrench, Terminal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ModelSelect } from './ModelSelect';
 import { CollapsibleSection } from './CollapsibleSection';
 import { ToolChip } from './ToolChip';
 import { ToolPickerPopover } from './ToolPickerPopover';
 import { PromptLibraryPanel } from '../../pages/PromptLibrary';
+import { CaoNodePanel } from './CaoNodePanel';
 
 const ICONS: Record<string, React.ElementType> = {
   llm: Bot, local: Monitor, 'human-approve': ShieldCheck,
   'human-input': MessageSquare, 'human-output': Eye, a2a: Globe,
+  cao: Terminal,
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  llm: 'LLM Agent', local: 'Script', 'human-approve': 'Approval',
+  'human-input': 'Input', 'human-output': 'Output', a2a: 'A2A Agent',
+  cao: 'CAO Agent',
 };
 
 export interface EditableNodeData {
@@ -85,27 +93,36 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
   if (!expanded) {
     return (
       <div
-        className="group bg-slate-800 rounded-lg border-2 px-4 py-2.5 shadow-lg shadow-black/20 min-w-[180px] max-w-[220px] cursor-pointer hover:brightness-110 transition-all relative"
-        style={{ borderColor: data.color }}
+        className="group rounded-lg border border-slate-700/60 shadow-lg shadow-black/20 min-w-[180px] max-w-[220px] cursor-pointer hover:shadow-xl hover:border-slate-600 transition-all duration-150 relative overflow-hidden"
+        style={{ backgroundColor: `${data.color}08` }}
         onClick={() => setExpanded(true)}
       >
+        {/* Color accent strip */}
+        <div className="h-[3px] w-full" style={{ backgroundColor: data.color }} />
         <Handle type="target" position={Position.Top} className="!bg-slate-500 !border-slate-400" />
         <button
           onClick={handleDelete}
-          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+          className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 z-10"
           title="Delete node"
         >
           <Trash2 size={10} />
         </button>
-        <div className="flex items-center gap-2">
-          <Icon size={16} style={{ color: data.color }} className="shrink-0" />
-          <span className="text-sm font-medium text-slate-100 truncate">{label}</span>
-          {tools.length > 0 && (
-            <span className="flex items-center gap-0.5 text-[9px] text-blue-400 bg-blue-500/10 px-1 py-0.5 rounded">
-              <Wrench size={9} />
-              {tools.length}
-            </span>
-          )}
+        <div className="px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${data.color}20` }}>
+              <Icon size={15} style={{ color: data.color }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium text-slate-100 truncate leading-tight">{label}</div>
+              <div className="text-[10px] text-slate-500 leading-tight mt-0.5">{TYPE_LABELS[data.nodeType] || data.nodeType}</div>
+            </div>
+            {tools.length > 0 && (
+              <span className="flex items-center gap-0.5 text-[9px] text-blue-400 bg-blue-500/10 px-1 py-0.5 rounded shrink-0">
+                <Wrench size={9} />
+                {tools.length}
+              </span>
+            )}
+          </div>
         </div>
         <Handle type="source" position={Position.Bottom} className="!bg-slate-500 !border-slate-400" />
       </div>
@@ -284,6 +301,15 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
                 onClick={(e) => e.stopPropagation()} />
             </div>
           </div>
+        )}
+
+        {data.nodeType === 'cao' && (
+          <CaoNodePanel
+            agent={agent}
+            config={config}
+            onAgentChange={updateAgent}
+            onConfigChange={updateConfig}
+          />
         )}
       </div>
 
