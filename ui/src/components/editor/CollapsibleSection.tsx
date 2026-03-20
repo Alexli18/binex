@@ -17,16 +17,25 @@ export function CollapsibleSection({ title, defaultOpen = false, badge, children
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 w-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-300 transition-colors"
+        className="flex items-center gap-1.5 w-full px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-300 hover:bg-slate-800/40 transition-colors"
       >
         <ChevronRight
           size={12}
-          className={cn('transition-transform duration-150 shrink-0', open && 'rotate-90')}
+          className={cn('transition-transform duration-200 shrink-0', open && 'rotate-90')}
         />
         {title}
         {badge && <span className="ml-auto">{badge}</span>}
       </button>
-      {open && <div className="px-3 pb-2.5 space-y-2">{children}</div>}
+      <div
+        className={cn(
+          'grid transition-[grid-template-rows] duration-200 ease-out',
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="px-3 pb-2.5 space-y-2">{children}</div>
+        </div>
+      </div>
     </div>
   );
 }

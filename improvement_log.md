@@ -76,3 +76,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — data flow paths immediately visible on node selection
 **Decision:** kept
 **Reason:** When a node was selected, all edges looked the same — impossible to trace data flow. Now connected edges turn blue (#3b82f6), thicken to 2.5px, and animate. Unconnected edges dim to 40% opacity. Uses memoized computation from selected node IDs.
+
+## Iteration 12 — 2026-03-20
+**Change:** Smooth collapse/expand animation for node settings sections + hover highlight on headers
+**File:** ui/src/components/editor/CollapsibleSection.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — sections open/close smoothly instead of popping
+**Decision:** kept
+**Reason:** Sections toggled instantly (content appeared/disappeared). Replaced conditional render with CSS grid-template-rows transition (0fr ↔ 1fr) for smooth height animation. Also added hover bg on section headers for better interactivity feedback. Content always rendered (overflow hidden when collapsed) — no layout jank.
