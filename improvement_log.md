@@ -83,3 +83,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — sections open/close smoothly instead of popping
 **Decision:** kept
 **Reason:** Sections toggled instantly (content appeared/disappeared). Replaced conditional render with CSS grid-template-rows transition (0fr ↔ 1fr) for smooth height animation. Also added hover bg on section headers for better interactivity feedback. Content always rendered (overflow hidden when collapsed) — no layout jank.
+
+## Iteration 13 — 2026-03-20
+**Change:** Added helper text to fields and semantic temperature label (precise/balanced/creative)
+**File:** ui/src/components/editor/EditableNode.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — fields now self-documenting
+**Decision:** kept
+**Reason:** Temperature slider showed only a number (0.7) with no meaning. Now shows "(precise)" for ≤0.3, "(balanced)" for 0.4-1.1, "(creative)" for ≥1.2. Added helper text under Max Tokens ("Maximum response length") and Budget Limit ("Stop this node if cost exceeds limit"). Small additions, big clarity gain for new users.

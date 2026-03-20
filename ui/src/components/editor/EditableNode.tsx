@@ -181,9 +181,15 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                   onChange={(e) => updateConfig('max_tokens', parseInt(e.target.value) || 4096)}
                   className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                   onClick={(e) => e.stopPropagation()} />
+                <p className="text-slate-600 mt-0.5">Maximum response length</p>
               </div>
               <div>
-                <label className="text-slate-400 block mb-0.5">Temperature: {(config.temperature as number) ?? 0.7}</label>
+                <label className="text-slate-400 block mb-0.5">
+                  Temperature: {(config.temperature as number) ?? 0.7}
+                  <span className="ml-1.5 text-slate-600 font-normal normal-case tracking-normal">
+                    {((config.temperature as number) ?? 0.7) <= 0.3 ? '(precise)' : ((config.temperature as number) ?? 0.7) >= 1.2 ? '(creative)' : '(balanced)'}
+                  </span>
+                </label>
                 <input type="range" min="0" max="2" step="0.1" value={(config.temperature as number) ?? 0.7}
                   onChange={(e) => updateConfig('temperature', parseFloat(e.target.value))}
                   className="w-full accent-blue-500" />
@@ -243,6 +249,7 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
                   placeholder="No limit"
                   className="h-7 bg-slate-700 border-slate-600 text-slate-200"
                   onClick={(e) => e.stopPropagation()} />
+                <p className="text-slate-600 mt-0.5">Stop this node if cost exceeds limit</p>
               </div>
             </CollapsibleSection>
           </>
