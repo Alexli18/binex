@@ -118,3 +118,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — users now see confirmation that changes are applied
 **Decision:** kept
 **Reason:** program.md says "Save/Apply action should be obvious and feel responsive." Settings auto-save via notifyChange() but with no visual feedback. Now a brief green "Auto-saved" indicator with check icon appears for 1.5s in the expanded node footer after any change. Timer cleanup on unmount prevents leaks.
+
+## Iteration 18 — 2026-03-20
+**Change:** Added hint text at bottom of palette — "Drag any agent onto the canvas..."
+**File:** ui/src/components/editor/NodePalette.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — new users immediately understand drag interaction
+**Decision:** kept
+**Reason:** Palette items have GripVertical icon on hover but new users might not realize items are draggable. Added subtle hint text at the bottom of the sidebar (mt-auto pushes it to the bottom). Minimal addition, big discoverability gain.

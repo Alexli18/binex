@@ -77,6 +77,9 @@ export function NodePalette() {
           {cliAgents.map(renderItem)}
         </>
       )}
+      <div className="mt-auto px-2.5 py-2 text-[10px] text-slate-600 leading-relaxed border-t border-slate-700/30">
+        Drag any agent onto the canvas to add it to your workflow
+      </div>
     </div>
   );
 }
