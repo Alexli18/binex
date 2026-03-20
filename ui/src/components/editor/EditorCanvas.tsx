@@ -5,6 +5,7 @@ import ReactFlow, {
   addEdge,
   Background,
   Controls,
+  MarkerType,
   type Connection,
   type Node,
   type Edge,
@@ -14,6 +15,12 @@ import { EditableNode } from './EditableNode';
 import { NodePalette, type NodeTypeConfig } from './NodePalette';
 
 const rfNodeTypes = { editable: EditableNode };
+
+const defaultEdgeOptions = {
+  type: 'smoothstep',
+  style: { stroke: '#475569', strokeWidth: 2 },
+  markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: '#475569' },
+};
 
 let nodeIdCounter = 0;
 
@@ -98,6 +105,7 @@ function InnerCanvas({
       onNodesDelete={onNodesDelete}
       onEdgesDelete={onEdgesDelete}
       nodeTypes={rfNodeTypes}
+      defaultEdgeOptions={defaultEdgeOptions}
       fitView
       deleteKeyCode="Delete"
       className="bg-slate-950"

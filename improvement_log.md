@@ -13,3 +13,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — expanded and collapsed views now feel like the same component
 **Decision:** kept
 **Reason:** Expanded header previously had a bare icon and thick colored border, inconsistent with the new collapsed style. Now uses the same accent strip + icon badge + type label pattern. Also removed heavy border-2 in favor of subtle border with tinted background for a more refined look.
+
+## Iteration 3 — 2026-03-20
+**Change:** Styled edge connections — smoothstep routing, 2px stroke, arrow markers for clear directionality
+**File:** ui/src/components/editor/EditorCanvas.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — connections now have visible arrows and route cleanly between nodes
+**Decision:** kept
+**Reason:** Default React Flow edges are thin, straight bezier curves with no arrowheads — hard to follow direction. Added `defaultEdgeOptions` with smoothstep type (routes around nodes), 2px slate-600 stroke, and ArrowClosed markers. Single constant, no logic changes.
