@@ -4,6 +4,7 @@ import ReactFlow, {
   useReactFlow,
   addEdge,
   Background,
+  BackgroundVariant,
   Controls,
   MarkerType,
   type Connection,
@@ -121,7 +122,7 @@ function InnerCanvas({
       deleteKeyCode="Delete"
       className={`bg-slate-950 transition-all duration-150 ${isDragOver ? 'ring-2 ring-inset ring-blue-500/30' : ''}`}
     >
-      <Background color={isDragOver ? '#3b82f620' : '#334155'} gap={20} />
+      <Background variant={BackgroundVariant.Dots} color={isDragOver ? '#3b82f640' : '#334155'} gap={24} size={1.5} />
       <Controls className="!bg-slate-800 !border-slate-700 !shadow-lg" />
       {isEmpty && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">

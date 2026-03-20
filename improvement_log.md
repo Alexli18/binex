@@ -48,3 +48,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — handles now discoverable and interactive-feeling
 **Decision:** kept
 **Reason:** Default handles were tiny grey dots that blended into the node border. Now 10px with slate-700 border, slate-400 fill, and blue hover state. Makes connection points discoverable and signals interactivity. All 4 handles (2 collapsed + 2 expanded) updated consistently.
+
+## Iteration 8 — 2026-03-20
+**Change:** Switched canvas background from grid lines to dots pattern — cleaner, more professional
+**File:** ui/src/components/editor/EditorCanvas.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — canvas feels intentional, not like a spreadsheet
+**Decision:** kept
+**Reason:** Grid lines made the canvas feel like a spreadsheet. Dots (BackgroundVariant.Dots, size 1.5, gap 24) are subtler and more common in professional node editors (Figma, Miro). Dot color still tints blue during drag-over for visual feedback consistency.
