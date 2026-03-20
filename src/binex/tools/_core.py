@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import importlib
 import inspect
+import logging
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, get_type_hints
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -118,6 +121,7 @@ def build_tool_schema(func: Callable[..., Any]) -> dict[str, Any]:
     try:
         hints = get_type_hints(func)
     except Exception:
+        logger.debug("Failed to resolve type hints for %s", func.__name__, exc_info=True)
         hints = {}
 
     properties: dict[str, Any] = {}

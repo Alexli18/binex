@@ -873,11 +873,11 @@ class CAOAdapter:
             try:
                 await client.post(f"/terminals/{terminal_id}/exit")
             except httpx.HTTPError:
-                pass
+                logger.debug("Failed to exit terminal %s", terminal_id, exc_info=True)
             try:
                 await client.delete(f"/terminals/{terminal_id}")
             except httpx.HTTPError:
-                pass
+                logger.debug("Failed to delete terminal %s", terminal_id, exc_info=True)
         except httpx.HTTPError:
             logger.debug("Failed to cleanup terminal %s", terminal_id)
 
@@ -905,12 +905,12 @@ class CAOAdapter:
                 try:
                     await client.post(f"/terminals/{session.terminal_id}/exit")
                 except httpx.HTTPError:
-                    pass
+                    logger.debug("Failed to exit terminal %s during close", session.terminal_id, exc_info=True)
             if self.session_store is not None:
                 try:
                     await self.session_store.complete_cao_session(session.terminal_id)
                 except Exception:
-                    pass
+                    logger.debug("Failed to complete CAO session %s in store during close", session.terminal_id, exc_info=True)
 
         # Delete entire CAO sessions (removes session + all terminals at once)
         run_ids_to_clean = {s.run_id for s in self._active_sessions.values()}

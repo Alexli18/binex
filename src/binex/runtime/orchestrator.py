@@ -199,7 +199,7 @@ class Orchestrator:
                 try:
                     await close_fn()
                 except Exception:
-                    pass
+                    logger.debug("Failed to close adapter %s", adapter, exc_info=True)
 
         return summary
 

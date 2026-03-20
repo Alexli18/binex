@@ -10,6 +10,7 @@ debug introspection, and orphan detection.  Consumed by the Web UI for:
 from __future__ import annotations
 
 import asyncio
+import atexit
 import logging
 import os
 import shutil
@@ -29,6 +30,22 @@ router = APIRouter(prefix="/cao", tags=["cao"])
 
 # Module-level CAO server subprocess reference
 _cao_process: subprocess.Popen | None = None
+
+
+def _cleanup_cao_process() -> None:
+    """atexit handler: terminate orphaned CAO subprocess on interpreter shutdown."""
+    global _cao_process
+    if _cao_process is not None and _cao_process.poll() is None:
+        logger.debug("atexit: terminating orphaned CAO process pid=%s", _cao_process.pid)
+        _cao_process.terminate()
+        try:
+            _cao_process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            _cao_process.kill()
+        _cao_process = None
+
+
+atexit.register(_cleanup_cao_process)
 
 
 class TerminalInputRequest(BaseModel):
@@ -228,11 +245,11 @@ async def delete_session(terminal_id: str) -> JSONResponse:
                 try:
                     await client.post(f"{server_url}/terminals/{terminal_id}/exit")
                 except httpx.HTTPError:
-                    pass
+                    logger.debug("Failed to exit terminal %s on CAO server", terminal_id, exc_info=True)
                 try:
                     await client.delete(f"{server_url}/terminals/{terminal_id}")
                 except httpx.HTTPError:
-                    pass
+                    logger.debug("Failed to delete terminal %s on CAO server", terminal_id, exc_info=True)
         except Exception:
             logger.debug("Failed to cleanup terminal %s on CAO server", terminal_id)
 
