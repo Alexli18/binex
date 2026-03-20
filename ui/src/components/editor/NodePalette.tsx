@@ -1,4 +1,4 @@
-import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, Terminal, GripVertical } from 'lucide-react';
+import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, Terminal } from 'lucide-react';
 import { chartColors } from '@/lib/design-tokens';
 
 export interface NodeTypeConfig {
@@ -23,13 +23,13 @@ const NODE_COLOR = {
 } as const;
 
 export const NODE_TYPES: NodeTypeConfig[] = [
-  { type: 'llm', label: 'LLM Agent', description: 'Call an LLM model via litellm', icon: Bot, color: NODE_COLOR.llm, agentPrefix: 'llm://', defaultAgent: 'llm://openrouter/google/gemma-3-27b-it:free' },
-  { type: 'local', label: 'Local Script', description: 'Run a Python function locally', icon: Monitor, color: NODE_COLOR.local, agentPrefix: 'local://', defaultAgent: 'local://echo' },
-  { type: 'human-approve', subtype: 'approve', label: 'Human Approve', description: 'Pause for human approval', icon: ShieldCheck, color: NODE_COLOR.human, agentPrefix: 'human://', defaultAgent: 'human://approve' },
-  { type: 'human-input', subtype: 'input', label: 'Human Input', description: 'Ask human for free-form input', icon: MessageSquare, color: NODE_COLOR.human, agentPrefix: 'human://', defaultAgent: 'human://input' },
-  { type: 'human-output', subtype: 'output', label: 'Human Output', description: 'Display results to the user', icon: Eye, color: NODE_COLOR.human, agentPrefix: 'human://', defaultAgent: 'human://output' },
-  { type: 'a2a', label: 'A2A Agent', description: 'Call a remote A2A agent', icon: Globe, color: NODE_COLOR.a2a, agentPrefix: 'a2a://', defaultAgent: 'a2a://localhost:8001' },
-  { type: 'cao', label: 'CAO Agent', description: 'Run via CLI Agent Orchestrator', icon: Terminal, color: NODE_COLOR.cao, agentPrefix: 'cao://', defaultAgent: 'cao://default', category: 'CLI AGENTS' },
+  { type: 'llm', label: 'LLM Agent', description: 'Call an LLM model', icon: Bot, color: NODE_COLOR.llm, agentPrefix: 'llm://', defaultAgent: 'llm://openrouter/google/gemma-3-27b-it:free' },
+  { type: 'local', label: 'Local Script', description: 'Python function', icon: Monitor, color: NODE_COLOR.local, agentPrefix: 'local://', defaultAgent: 'local://echo' },
+  { type: 'human-approve', subtype: 'approve', label: 'Approve', description: 'Human approval gate', icon: ShieldCheck, color: NODE_COLOR.human, agentPrefix: 'human://', defaultAgent: 'human://approve' },
+  { type: 'human-input', subtype: 'input', label: 'Human Input', description: 'Free-form input', icon: MessageSquare, color: NODE_COLOR.human, agentPrefix: 'human://', defaultAgent: 'human://input' },
+  { type: 'human-output', subtype: 'output', label: 'Output', description: 'Display results', icon: Eye, color: NODE_COLOR.human, agentPrefix: 'human://', defaultAgent: 'human://output' },
+  { type: 'a2a', label: 'A2A Agent', description: 'Remote agent', icon: Globe, color: NODE_COLOR.a2a, agentPrefix: 'a2a://', defaultAgent: 'a2a://localhost:8001' },
+  { type: 'cao', label: 'CAO Agent', description: 'CLI orchestrator', icon: Terminal, color: NODE_COLOR.cao, agentPrefix: 'cao://', defaultAgent: 'cao://default', category: 'CLI AGENTS' },
 ];
 
 export function NodePalette() {
@@ -48,37 +48,35 @@ export function NodePalette() {
         key={nt.type}
         draggable
         onDragStart={(e) => onDragStart(e, nt)}
-        className="group/item flex items-start gap-2.5 px-2.5 py-2 rounded-md cursor-grab active:cursor-grabbing hover:bg-slate-800/80 transition-colors border border-transparent hover:border-slate-700/60"
+        className="flex items-center gap-2 px-2 py-1.5 rounded cursor-grab active:cursor-grabbing hover:bg-slate-800/60 transition-colors"
         title={nt.description}
+        style={{ borderLeft: `2px solid ${nt.color}` }}
       >
-        <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: `${nt.color}20` }}>
-          <Icon size={15} style={{ color: nt.color }} />
-        </div>
+        <Icon size={13} style={{ color: nt.color }} className="shrink-0" />
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium text-slate-200 leading-tight">{nt.label}</div>
-          <div className="text-[10px] text-slate-500 leading-tight mt-0.5">{nt.description}</div>
+          <span className="text-[12px] text-slate-300">{nt.label}</span>
+          <span className="text-[10px] text-slate-600 ml-1.5">{nt.description}</span>
         </div>
-        <GripVertical size={12} className="text-slate-600 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0 mt-1.5" />
       </div>
     );
   };
 
   return (
-    <div className="flex flex-col gap-0.5 p-2 border-r border-slate-700/60 bg-slate-900 w-52 shrink-0">
-      <div className="px-2.5 py-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+    <div className="flex flex-col gap-px p-1.5 border-r border-slate-700/50 bg-slate-900 w-48 shrink-0">
+      <div className="px-2 py-1 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
         Agents
       </div>
       {defaultNodes.map(renderItem)}
       {cliAgents.length > 0 && (
         <>
-          <div className="px-2.5 pt-3 py-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-t border-slate-700/40 mt-1">
-            CLI Agents
+          <div className="px-2 pt-2 py-1 text-[10px] font-medium text-slate-500 uppercase tracking-wider border-t border-slate-700/30 mt-1">
+            CLI
           </div>
           {cliAgents.map(renderItem)}
         </>
       )}
-      <div className="mt-auto px-2.5 py-2 text-[10px] text-slate-600 leading-relaxed border-t border-slate-700/30">
-        Drag any agent onto the canvas to add it to your workflow
+      <div className="mt-auto px-2 py-1.5 text-[9px] text-slate-600">
+        Drag onto canvas
       </div>
     </div>
   );

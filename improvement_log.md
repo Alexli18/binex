@@ -155,3 +155,10 @@
 - Smaller handles (8px), thinner border
 - Removed helper text clutter from fields
 - bg-slate-800/90 instead of tinted color background
+
+## Iteration 22 — 2026-03-20
+**Change:** Redesigned palette to match new compact node style — left border accent, inline layout, narrower
+**File:** ui/src/components/editor/NodePalette.tsx
+**Eval:** tsc: pass | vite build: pass | visual: consistent with new node design
+**Decision:** kept
+**Reason:** Palette still had chunky icon badges and two-line layout from earlier iterations, inconsistent with the new compact left-accent node style. Now: left border accent matching node color, single-line with inline description, w-48 (was w-52), removed GripVertical, shorter descriptions.
