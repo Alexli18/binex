@@ -55,3 +55,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — canvas feels intentional, not like a spreadsheet
 **Decision:** kept
 **Reason:** Grid lines made the canvas feel like a spreadsheet. Dots (BackgroundVariant.Dots, size 1.5, gap 24) are subtler and more common in professional node editors (Figma, Miro). Dot color still tints blue during drag-over for visual feedback consistency.
+
+## Iteration 9 — 2026-03-20
+**Change:** Added selected node focus state — blue border + ring glow
+**File:** ui/src/components/editor/EditableNode.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — selected node immediately visible on canvas
+**Decision:** kept
+**Reason:** Clicking a node showed no visual selection feedback. Now uses React Flow's `selected` prop to apply blue border (border-blue-500/60) and subtle ring glow (ring-2 ring-blue-500/20) on both collapsed and expanded states. Makes it clear which node is active.

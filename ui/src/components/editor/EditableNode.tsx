@@ -30,7 +30,7 @@ export interface EditableNodeData {
   tools?: string[];
 }
 
-function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
+function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) {
   const { deleteElements } = useReactFlow();
   const [expanded, setExpanded] = useState(false);
   const [label, setLabel] = useState(data.label);
@@ -93,7 +93,7 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
   if (!expanded) {
     return (
       <div
-        className="group rounded-lg border border-slate-700/60 shadow-lg shadow-black/20 min-w-[180px] max-w-[220px] cursor-pointer hover:shadow-xl hover:border-slate-600 transition-all duration-150 relative overflow-hidden"
+        className={`group rounded-lg border shadow-lg shadow-black/20 min-w-[180px] max-w-[220px] cursor-pointer hover:shadow-xl transition-all duration-150 relative overflow-hidden ${selected ? 'border-blue-500/60 ring-2 ring-blue-500/20' : 'border-slate-700/60 hover:border-slate-600'}`}
         style={{ backgroundColor: `${data.color}08` }}
         onClick={() => setExpanded(true)}
       >
@@ -132,7 +132,7 @@ function EditableNodeInner({ data, id }: NodeProps<EditableNodeData>) {
   // Expanded view
   return (
     <div
-      className="rounded-lg border border-slate-700/60 shadow-xl shadow-black/30 w-[280px] nowheel overflow-hidden"
+      className={`rounded-lg border shadow-xl shadow-black/30 w-[280px] nowheel overflow-hidden ${selected ? 'border-blue-500/60 ring-2 ring-blue-500/20' : 'border-slate-700/60'}`}
       style={{ backgroundColor: `${data.color}08` }}
     >
       {/* Color accent strip */}
