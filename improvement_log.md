@@ -132,3 +132,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — creating connections feels intentional
 **Decision:** kept
 **Reason:** When dragging from a handle to create a connection, the preview line was default thin grey — hard to see on dark background. Now blue (#3b82f6), 2px, dashed (6 3) — clearly visible and distinct from finalized edges. One constant + one prop addition.
+
+## Iteration 20 — 2026-03-20
+**Change:** Added MiniMap for canvas navigation — dark-themed, color-coded by node type
+**File:** ui/src/components/editor/EditorCanvas.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — large workflows now navigable
+**Decision:** kept
+**Reason:** Large workflows have no overview — users lose orientation when zoomed in. Added compact MiniMap (120x80px) with dark theme (slate-900 bg, 70% opacity mask) and node colors matching each agent type. No new deps — MiniMap is built into reactflow.

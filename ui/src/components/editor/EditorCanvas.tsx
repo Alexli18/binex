@@ -6,6 +6,7 @@ import ReactFlow, {
   Background,
   BackgroundVariant,
   Controls,
+  MiniMap,
   MarkerType,
   type Connection,
   type Node,
@@ -141,6 +142,12 @@ function InnerCanvas({
     >
       <Background variant={BackgroundVariant.Dots} color={isDragOver ? '#3b82f640' : '#334155'} gap={24} size={1.5} />
       <Controls className="!bg-slate-800 !border-slate-700 !shadow-lg" />
+      <MiniMap
+        nodeColor={(node) => node.data?.color || '#475569'}
+        maskColor="rgba(2, 6, 23, 0.7)"
+        className="!bg-slate-900 !border-slate-700/60"
+        style={{ width: 120, height: 80 }}
+      />
       {isEmpty && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <div className="text-center space-y-3">
