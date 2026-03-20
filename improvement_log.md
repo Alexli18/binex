@@ -20,3 +20,10 @@
 **Eval:** tsc: pass | vite build: pass | visual: better — connections now have visible arrows and route cleanly between nodes
 **Decision:** kept
 **Reason:** Default React Flow edges are thin, straight bezier curves with no arrowheads — hard to follow direction. Added `defaultEdgeOptions` with smoothstep type (routes around nodes), 2px slate-600 stroke, and ArrowClosed markers. Single constant, no logic changes.
+
+## Iteration 4 — 2026-03-20
+**Change:** Enhanced node palette — added descriptions, icon badges, drag grip indicator, wider sidebar
+**File:** ui/src/components/editor/NodePalette.tsx
+**Eval:** tsc: pass | vite build: pass | visual: better — each palette item now self-explanatory
+**Decision:** kept
+**Reason:** Palette items were icon+label only, no context for new users. Added `description` field to NodeTypeConfig, visible as a second line under each label. Icon now in tinted badge (matching node style). Added GripVertical indicator on hover to signal draggability. Sidebar widened from w-48 to w-52 to fit descriptions. Category header renamed "Nodes" → "Agents" for clarity.
