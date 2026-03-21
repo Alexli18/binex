@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 
 import click
@@ -10,6 +11,8 @@ from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
 from binex.models.artifact import Artifact
 from binex.models.workflow import WorkflowSpec
+
+logger = logging.getLogger(__name__)
 
 _WHEN_RE = re.compile(r"^\$\{([\w-]+)\.([\w-]+)\}\s*(==|!=)\s*(.+)$")
 
@@ -51,6 +54,8 @@ async def evaluate_back_edge(
     node_artifacts: dict[str, list[Artifact]],
     node_artifacts_history: dict[str, list[list[Artifact]]],
     pending_feedback: dict[str, list[Artifact]],
+    *,
+    interactive: bool = True,
 ) -> None:
     """Evaluate back_edge after successful node execution. Resets chain if triggered."""
     back_edge = spec.nodes[node_id].back_edge
@@ -62,12 +67,20 @@ async def evaluate_back_edge(
 
     iteration = scheduler.get_execution_count(node_id)
     if iteration >= back_edge.max_iterations:
-        decision = click.prompt(
-            f"  Max iterations ({back_edge.max_iterations}) reached for '{node_id}'. "
-            f"[a]ccept last draft · [f]ail workflow",
-            type=click.Choice(["a", "f"]),
-            show_choices=False,
-        )
+        if interactive:
+            decision = click.prompt(
+                f"  Max iterations ({back_edge.max_iterations}) reached for '{node_id}'. "
+                f"[a]ccept last draft · [f]ail workflow",
+                type=click.Choice(["a", "f"]),
+                show_choices=False,
+            )
+        else:
+            decision = "a"
+            logger.info(
+                "Node '%s': max iterations (%d) reached, "
+                "non-interactive mode — accepting last draft",
+                node_id, back_edge.max_iterations,
+            )
         if decision == "f":
             scheduler.mark_failed(node_id)
         return

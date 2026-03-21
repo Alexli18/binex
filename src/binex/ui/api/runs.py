@@ -104,6 +104,7 @@ async def _execute_workflow(
         execution_store=exec_store,
         stream=False,
         event_callback=_on_event,
+        interactive=False,
     )
 
     plugin_registry = PluginRegistry()

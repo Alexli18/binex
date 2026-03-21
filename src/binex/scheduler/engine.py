@@ -126,6 +126,7 @@ class SchedulerEngine:
             orchestrator = Orchestrator(
                 artifact_store=artifact_store,
                 execution_store=execution_store,
+                interactive=False,
             )
             result = await orchestrator.run_workflow(spec)
             duration = time.monotonic() - start

@@ -48,6 +48,7 @@ class Orchestrator:
         stream: bool = False,
         stream_callback: Callable[[str], None] | None = None,
         event_callback: Callable[[dict], Any] | None = None,
+        interactive: bool = True,
     ) -> None:
         self.artifact_store = artifact_store
         self.execution_store = execution_store
@@ -56,6 +57,7 @@ class Orchestrator:
         self._stream = stream
         self._stream_callback = stream_callback
         self._event_callback = event_callback
+        self._interactive = interactive
 
     async def _emit_event(self, event: dict) -> None:
         """Emit a lifecycle event if a callback is configured."""
@@ -316,13 +318,20 @@ class Orchestrator:
             click.echo(f"\u26a0 {msg}", err=True)
             return msg
 
-        # warn — interactive prompt
-        proceed = click.confirm(
-            f"\u26a0 Node '{node_id}' retry will likely exceed budget "
-            f"(${remaining:.2f} remaining of ${node_max:.2f}). "
-            f"Continue?",
-            default=False,
-        )
+        # warn — interactive prompt or safe default
+        if self._interactive:
+            proceed = click.confirm(
+                f"\u26a0 Node '{node_id}' retry will likely exceed budget "
+                f"(${remaining:.2f} remaining of ${node_max:.2f}). "
+                f"Continue?",
+                default=False,
+            )
+        else:
+            proceed = False
+            logger.info(
+                "Node '%s': non-interactive mode, declining over-budget retry",
+                node_id,
+            )
         if not proceed:
             return f"Node '{node_id}': retry cancelled by user (budget)"
         return None
@@ -410,6 +419,7 @@ class Orchestrator:
                 spec, scheduler, dag, node_id,
                 node_artifacts, node_artifacts_history,
                 self._pending_feedback,
+                interactive=self._interactive,
             )
         else:
             scheduler.mark_failed(node_id)
