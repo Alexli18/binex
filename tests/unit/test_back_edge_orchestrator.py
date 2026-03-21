@@ -177,3 +177,33 @@ class TestEvaluateBackEdge:
                 spec, sched, dag, "review", node_artifacts, history, pending_feedback,
             )
         assert "review" in sched._failed
+
+    @pytest.mark.asyncio
+    async def test_max_iterations_non_interactive_accepts(self) -> None:
+        """Non-interactive mode defaults to 'accept' at max iterations (no stdin hang)."""
+        spec = _make_spec_with_back_edge(max_iter=1)
+        dag = DAG.from_workflow(spec)
+        sched = Scheduler(dag)
+
+        sched.mark_running("review")
+        sched.mark_completed("review")
+        sched.mark_pending_again("review")
+        sched.mark_running("review")
+        sched.mark_completed("review")
+
+        rejected_art = Artifact(
+            id="art_1", run_id="r", type="decision", content="rejected",
+            lineage=Lineage(produced_by="review"),
+        )
+        node_artifacts = {"review": [rejected_art], "generate": []}
+        history: dict[str, list[list[Artifact]]] = {}
+        pending_feedback: dict[str, list[Artifact]] = {}
+
+        # No patching of click.prompt — it should NOT be called
+        await evaluate_back_edge(
+            spec, sched, dag, "review", node_artifacts, history, pending_feedback,
+            interactive=False,
+        )
+        # Non-interactive defaults to accept — review stays completed, not failed
+        assert "review" in sched._completed
+        assert "review" not in sched._failed

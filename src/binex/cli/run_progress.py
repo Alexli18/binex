@@ -11,7 +11,7 @@ from __future__ import annotations
 import sys
 import time as _time
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import click
 
@@ -33,7 +33,7 @@ def can_use_live() -> bool:
 def install_verbose_wrapper(
     orch: Orchestrator,
     *,
-    on_node_done: Callable[[str, dict], None] | None = None,
+    on_node_done: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> None:
     """Monkey-patch *orch* to print per-node progress lines.
 
@@ -50,9 +50,12 @@ def install_verbose_wrapper(
     counter = [0]
 
     async def _verbose_execute(
-        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-        accumulated_cost_=0.0, node_artifacts_history_=None,
-    ):
+        spec_: Any, dag_: Any, scheduler_: Any,
+        run_id_: str, trace_id_: str, node_id_: str,
+        node_artifacts_: Any,
+        accumulated_cost_: float = 0.0,
+        node_artifacts_history_: Any = None,
+    ) -> None:
         counter[0] += 1
         total = len(spec_.nodes)
         click.echo(f"\n  [{counter[0]}/{total}] {node_id_} ...", err=True)
@@ -70,7 +73,7 @@ def install_verbose_wrapper(
         if on_node_done is not None:
             on_node_done(node_id_, node_artifacts_)
 
-    orch._execute_node = _verbose_execute
+    orch._execute_node = _verbose_execute  # type: ignore[assignment]
 
 
 # ---------------------------------------------------------------------------
@@ -79,10 +82,10 @@ def install_verbose_wrapper(
 
 def install_live_wrapper(
     orch: Orchestrator,
-    live_table,
-    live,
+    live_table: Any,
+    live: Any,
     *,
-    on_node_done: Callable[[str, dict], None] | None = None,
+    on_node_done: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> None:
     """Monkey-patch *orch* to update a ``LiveRunTable`` on each node.
 
@@ -101,9 +104,12 @@ def install_live_wrapper(
     original_execute = orch._execute_node
 
     async def _live_execute(
-        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-        accumulated_cost_=0.0, node_artifacts_history_=None,
-    ):
+        spec_: Any, dag_: Any, scheduler_: Any,
+        run_id_: str, trace_id_: str, node_id_: str,
+        node_artifacts_: Any,
+        accumulated_cost_: float = 0.0,
+        node_artifacts_history_: Any = None,
+    ) -> None:
         live_table.update_node(node_id_, "running")
         live.update(live_table.build())
         t0 = _time.monotonic()
@@ -129,4 +135,4 @@ def install_live_wrapper(
                 on_node_done(node_id_, node_artifacts_)
             live.update(live_table.build())
 
-    orch._execute_node = _live_execute
+    orch._execute_node = _live_execute  # type: ignore[assignment]

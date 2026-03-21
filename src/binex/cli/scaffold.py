@@ -5,12 +5,13 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from binex.cli.dsl_parser import PATTERNS, ParsedDSL, parse_dsl
-from binex.cli.providers import PROVIDERS
+from binex.cli.providers import PROVIDERS, ProviderConfig
 
 
 @click.group("scaffold")
@@ -247,10 +248,19 @@ def scaffold_workflow(
         sys.exit(1)
 
     # Build node configs (interactive or stub)
-    node_configs: dict[str, dict] = {}
+    node_configs: dict[str, dict[str, Any]] = {}
     if no_interactive:
         for node_name in parsed.nodes:
-            if _is_human_node(node_name):
+            if _is_cao_node(node_name):
+                profile = _detect_cao_profile(node_name)
+                node_configs[node_name] = {
+                    "agent": f"cao://{profile}",
+                    "system_prompt": _CAO_PROMPTS.get(
+                        node_name, "Execute this task in the terminal",
+                    ),
+                    "cao": {"provider": "claude_code", "output_format": "text"},
+                }
+            elif _is_human_node(node_name):
                 htype = _detect_human_type(node_name)
                 node_configs[node_name] = {
                     "agent": f"human://{htype}",
@@ -294,6 +304,52 @@ AGENTIC_PROMPTS: dict[str, str] = {
     "simulator": "file://prompts/wf-simulator.md",
 }
 
+_CAO_KEYWORDS = {"cao", "cli_agent", "terminal"}
+_CAO_PROFILE_MAP: dict[str, str] = {
+    "writer": "developer",
+    "impl": "developer",
+    "coder": "developer",
+    "fixer": "developer",
+    "tester": "developer",
+    "tests": "developer",
+    "docs": "developer",
+    "deps": "developer",
+    "lint": "developer",
+    "reviewer": "reviewer",
+    "security": "reviewer",
+    "supervisor": "code_supervisor",
+    "agent": "developer",
+}
+
+_CAO_PROMPTS: dict[str, str] = {
+    "cao_agent": "Analyze the project and report your findings.",
+    "cao_writer": "Write the code and save it to a file.",
+    "cao_tester": "Run the tests and report pass/fail results.",
+    "cao_reviewer": "Review the code for quality and correctness.",
+    "cao_supervisor": "Break the task into subtasks and assign them.",
+    "cao_fixer": "Apply the reviewer's feedback and fix all issues.",
+    "cao_impl": "Implement the core code based on the plan.",
+    "cao_tests": "Write and run a comprehensive test suite.",
+    "cao_docs": "Write documentation: README and API reference.",
+    "cao_deps": "Check dependencies for outdated or unused packages.",
+    "cao_security": "Run a security audit on the project.",
+    "cao_lint": "Run linters and report code quality issues.",
+}
+
+
+def _is_cao_node(node_name: str) -> bool:
+    """Check if node name suggests a CAO CLI agent step."""
+    lower = node_name.lower().replace("-", "_")
+    return lower.startswith("cao_") or any(kw in lower for kw in _CAO_KEYWORDS)
+
+
+def _detect_cao_profile(node_name: str) -> str:
+    """Map CAO node name to a profile name."""
+    lower = node_name.lower().replace("-", "_")
+    suffix = lower.removeprefix("cao_")
+    return _CAO_PROFILE_MAP.get(suffix, "developer")
+
+
 _HUMAN_APPROVE_KEYWORDS = {"approve", "confirm", "gate"}
 _HUMAN_INPUT_KEYWORDS = {"input", "feedback", "edit", "ask"}
 _HUMAN_ALL_KEYWORDS = _HUMAN_APPROVE_KEYWORDS | _HUMAN_INPUT_KEYWORDS | {"human", "review"}
@@ -313,7 +369,7 @@ def _detect_human_type(node_name: str) -> str:
     return "approve"
 
 
-def _configure_human_node(node_name: str) -> dict | None:
+def _configure_human_node(node_name: str) -> dict[str, Any] | None:
     """Try to configure a human node interactively. Return config or None."""
     if not _is_human_node(node_name):
         return None
@@ -342,10 +398,10 @@ def _configure_human_node(node_name: str) -> dict | None:
 
 
 def _configure_llm_node(
-    provider_list: list,
-    prev_provider: object | None,
+    provider_list: list[ProviderConfig],
+    prev_provider: ProviderConfig | None,
     prev_model: str | None,
-) -> dict:
+) -> dict[str, Any]:
     """Prompt user for provider/model/system_prompt for an LLM node.
 
     Returns dict with keys: config, provider, model.
@@ -398,10 +454,10 @@ def _configure_llm_node(
     }
 
 
-def _interactive_node_config(parsed: ParsedDSL) -> dict[str, dict]:
+def _interactive_node_config(parsed: ParsedDSL) -> dict[str, dict[str, Any]]:
     """Prompt user for provider/model/system_prompt per node."""
     provider_list = list(PROVIDERS.values())
-    configs: dict[str, dict] = {}
+    configs: dict[str, dict[str, Any]] = {}
     prev_provider = None
     prev_model = None
 
@@ -424,12 +480,12 @@ def _interactive_node_config(parsed: ParsedDSL) -> dict[str, dict]:
 
 def _build_workflow_yaml(
     parsed: ParsedDSL,
-    node_configs: dict[str, dict],
+    node_configs: dict[str, dict[str, Any]],
     filename: str,
-) -> dict:
+) -> dict[str, Any]:
     """Build workflow dict suitable for YAML serialization."""
     stem = Path(filename).stem
-    nodes: dict[str, dict] = {}
+    nodes: dict[str, dict[str, Any]] = {}
 
     for node_name in parsed.nodes:
         cfg = node_configs[node_name]
@@ -443,7 +499,7 @@ def _build_workflow_yaml(
         else:
             inputs["query"] = "${user.query}"
 
-        node_spec: dict = {
+        node_spec: dict[str, Any] = {
             "agent": cfg["agent"],
             "system_prompt": cfg["system_prompt"],
             "inputs": inputs,

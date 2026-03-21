@@ -8,13 +8,19 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from binex.cli import get_stores
+from binex.stores.backends.filesystem import FilesystemArtifactStore
+from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
+from binex.stores.backends.sqlite import SqliteExecutionStore
 
 router = APIRouter(prefix="/runs", tags=["trace"])
 
 ANOMALY_THRESHOLD = 2.0
 
 
-def _get_stores():
+def _get_stores() -> tuple[
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
+]:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 

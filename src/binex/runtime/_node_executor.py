@@ -8,6 +8,7 @@ import uuid
 from binex.graph.dag import DAG
 from binex.models.artifact import Artifact
 from binex.models.execution import ExecutionRecord
+from binex.models.task import TaskStatus
 from binex.stores.execution_store import ExecutionStore
 
 
@@ -37,7 +38,7 @@ async def record_execution(
     run_id: str,
     node_id: str,
     agent_id: str,
-    status,
+    status: TaskStatus,
     input_artifacts: list[Artifact],
     output_artifacts: list[Artifact],
     latency_ms: int,

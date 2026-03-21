@@ -75,12 +75,16 @@ nav:
     - export: cli/export.md
     - workflow: cli/workflow.md
     - ui: cli/ui.md
+    - scheduler: cli/scheduler.md
   - Architecture:
     - Overview: architecture/overview.md
     - Runtime: architecture/runtime.md
     - Stores: architecture/stores.md
     - Adapters: architecture/adapters.md
     - Telemetry: architecture/telemetry.md
+  - Features:
+    - Tools & MCP: features/tools-mcp.md
+    - CAO Adapter: features/cao-adapter.md
   - Workflows:
     - Format: workflows/format.md
     - Examples: workflows/examples.md

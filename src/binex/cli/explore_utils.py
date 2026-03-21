@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
+from typing import Any
 
 
 def _short_id(run_id: str) -> str:
@@ -10,7 +12,7 @@ def _short_id(run_id: str) -> str:
     return run_id[:16] if len(run_id) > 16 else run_id
 
 
-def _time_ago(dt) -> str:
+def _time_ago(dt: datetime) -> str:
     """Human-readable relative time."""
     from datetime import UTC, datetime
 
@@ -31,7 +33,7 @@ def _time_ago(dt) -> str:
     return f"{days}d ago"
 
 
-def _preview(content, max_len: int = 50) -> str:
+def _preview(content: Any, max_len: int = 50) -> str:
     """Truncate content for preview."""
     if content is None:
         return "(empty)"

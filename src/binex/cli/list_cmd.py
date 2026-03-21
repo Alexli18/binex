@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import click
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 
-def _find_workflows(directory: Path) -> list[dict]:
+def _find_workflows(directory: Path) -> list[dict[str, Any]]:
     """Scan directory for .yaml/.yml files that look like Binex workflows."""
-    results = []
+    results: list[dict[str, Any]] = []
     if not directory.is_dir():
         return results
     for p in sorted(directory.glob("*.yaml")) + sorted(directory.glob("*.yml")):
@@ -69,7 +70,7 @@ def list_cmd(as_json: bool) -> None:
         _render_plain(local_workflows, example_workflows)
 
 
-def _render_rich(local: list[dict], examples: list[dict]) -> None:
+def _render_rich(local: list[dict[str, Any]], examples: list[dict[str, Any]]) -> None:
     from binex.cli.ui import get_console
 
     console = get_console()
@@ -103,7 +104,7 @@ def _render_rich(local: list[dict], examples: list[dict]) -> None:
         console.print("[dim]Tip: run [cyan]binex start[/cyan] to create a new workflow.[/dim]\n")
 
 
-def _render_plain(local: list[dict], examples: list[dict]) -> None:
+def _render_plain(local: list[dict[str, Any]], examples: list[dict[str, Any]]) -> None:
     if local:
         click.echo("\nLocal workflows:")
         for wf in local:

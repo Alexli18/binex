@@ -61,7 +61,7 @@ export function ReplayModal({
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={submitting ? undefined : onClose}>
       <div
-        className="bg-slate-800 rounded-lg shadow-xl border border-slate-700 w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 relative"
+        className="bg-slate-900 rounded-modal shadow-xl border border-slate-700/60 w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Loading overlay */}

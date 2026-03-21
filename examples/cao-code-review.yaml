@@ -1,0 +1,80 @@
+# CAO Code Review — Pipeline with Human Approval
+# ================================================
+# A multi-stage code review pipeline: write code, review it,
+# human approves or rejects, then apply fixes if approved.
+# Demonstrates human-in-the-loop and conditional execution.
+#
+# Topology:  write -> review -> approve -> fix
+#                                       \-> (skip if rejected)
+#
+# Prerequisites:
+#   1. Start CAO server: cao-server
+#   2. Install agents:
+#      cao install developer
+#      cao install reviewer
+#
+# Run:   binex run examples/cao-code-review.yaml --var feature="Add retry logic to HTTP client"
+# Debug: binex debug <run_id>
+
+name: cao-code-review
+description: "Code review pipeline: write -> review -> human approve -> fix"
+
+defaults:
+  deadline_ms: 1200000  # 20 minutes max per node
+
+nodes:
+  write:
+    agent: "cao://developer"
+    system_prompt: |
+      Implement this feature: ${user.feature}
+      Write the code and save it to a file.
+      Report what you created: filename, what it does, and any dependencies.
+    cao:
+      provider: claude_code
+      output_format: text       # code output is natural terminal text
+      timeout_minutes: 20
+    outputs: [implementation]
+
+  review:
+    agent: "cao://reviewer"
+    depends_on: [write]
+    inputs:
+      code: "${write.implementation}"
+    system_prompt: |
+      Review the code that was just written.
+      Check for: correctness, error handling, naming, test coverage.
+      Summarize: what is good, what needs fixing, and overall verdict.
+    cao:
+      provider: q_cli            # different provider for independent review
+      output_format: text
+      timeout_minutes: 15
+    outputs: [review_result]
+
+  approve:
+    agent: "human://approval"
+    depends_on: [review]
+    system_prompt: |
+      Code review complete.
+
+      Review result: ${review.review_result}
+
+      Approve to apply fixes, or reject to stop the workflow.
+    outputs: [decision]          # "approved" or "rejected"
+
+  fix:
+    agent: "cao://developer"
+    depends_on: [approve]
+    when: "${approve.decision} == approved"   # skipped if human rejects
+    inputs:
+      review: "${review.review_result}"
+      code: "${write.implementation}"
+    system_prompt: |
+      Apply the reviewer's feedback to the code.
+      Fix all issues mentioned in the review.
+      Run tests to verify your fixes work.
+      Report what you changed and test results.
+    cao:
+      provider: claude_code
+      output_format: text
+      timeout_minutes: 20
+    outputs: [final_code]

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
 from fastapi import FastAPI
 
@@ -16,7 +17,7 @@ _agent = PlannerAgent(LLMClient(LLMConfig()))
 
 
 @app.post("/execute")
-async def execute(payload: dict) -> dict:
+async def execute(payload: dict[str, Any]) -> dict[str, Any]:
     task_id = payload.get("task_id", "unknown")
     run_id = payload.get("run_id", f"run_{uuid.uuid4().hex[:8]}")
     input_artifacts = [
@@ -40,10 +41,10 @@ async def execute(payload: dict) -> dict:
 
 
 @app.post("/cancel")
-async def cancel(payload: dict) -> dict:
+async def cancel(payload: dict[str, Any]) -> dict[str, Any]:
     return {"status": "acknowledged"}
 
 
 @app.get("/health")
-async def health() -> dict:
+async def health() -> dict[str, str]:
     return {"status": "healthy", "agent": "planner"}

@@ -96,7 +96,7 @@ class HumanApprovalAdapter:
     @staticmethod
     def _collect_feedback() -> str:
         """Collect feedback: single-line or multiline ('m' to switch)."""
-        text = click.prompt("  Feedback (or 'm' for multiline)")
+        text: str = click.prompt("  Feedback (or 'm' for multiline)")
         if text.strip().lower() != "m":
             return text
 

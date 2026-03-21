@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import Any
 
 import click
 
@@ -26,7 +27,7 @@ def _output_errors(errors: list[str], json_out: bool, *, show_tip: bool = False)
     sys.exit(2)
 
 
-def _output_success(spec, json_out: bool) -> None:
+def _output_success(spec: Any, json_out: bool) -> None:
     """Output validation success summary."""
     node_count = len(spec.nodes)
     edge_count = sum(len(n.depends_on) for n in spec.nodes.values())

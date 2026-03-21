@@ -50,7 +50,7 @@ export default function RunDetail() {
 
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [expandedArtifact, setExpandedArtifact] = useState<number | null>(null);
+  const [expandedArtifact, setExpandedArtifact] = useState<string | null>(null);
 
   // Debug data (lazy — only fetched when debug tab is active)
   const [errorsOnly, setErrorsOnly] = useState(false);
@@ -245,7 +245,7 @@ export default function RunDetail() {
         {activeTab === 'overview' && (
           <div className="p-6 flex flex-col gap-6" role="tabpanel" id="run-tabpanel-overview" aria-labelledby="run-tab-overview">
             {/* Summary card */}
-            <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+            <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-300">
                 <div>
                   <span className="font-medium text-slate-100">Run ID</span>
@@ -276,7 +276,7 @@ export default function RunDetail() {
             </div>
 
             {/* Artifacts table */}
-            <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+            <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
               <h3 className="text-sm font-medium text-slate-200 mb-3">Artifacts</h3>
               {!artifacts || artifacts.length === 0 ? (
                 <p className="text-slate-500 text-sm">No artifacts</p>
@@ -291,15 +291,16 @@ export default function RunDetail() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800">
-                    {artifacts.map((a, i) => {
+                    {artifacts.map((a) => {
                       const content = typeof a.content === 'string' ? a.content : JSON.stringify(a.content, null, 2);
+                      const artKey = `${a.lineage.produced_by}:${a.type}`;
                       const isLong = content.length > 120;
-                      const isExpanded = expandedArtifact === i;
+                      const isExpanded = expandedArtifact === artKey;
                       return (
-                        <Fragment key={i}>
+                        <Fragment key={artKey}>
                           <tr
                             className={isLong ? 'cursor-pointer hover:bg-slate-900' : ''}
-                            onClick={() => isLong && setExpandedArtifact(isExpanded ? null : i)}
+                            onClick={() => isLong && setExpandedArtifact(isExpanded ? null : artKey)}
                           >
                             <td className="py-2 font-mono text-xs">{a.lineage.produced_by}</td>
                             <td className="py-2">{a.type}</td>
@@ -336,7 +337,7 @@ export default function RunDetail() {
             </div>
 
             {/* Costs table */}
-            <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+            <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
               <h3 className="text-sm font-medium text-slate-200 mb-3">Costs</h3>
               {!costSummary || costSummary.records.length === 0 ? (
                 <p className="text-slate-500 text-sm">No cost records</p>
@@ -355,8 +356,8 @@ export default function RunDetail() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
-                      {costSummary.records.map((c, i) => (
-                        <tr key={i}>
+                      {costSummary.records.map((c) => (
+                        <tr key={`${c.node_id}:${c.model ?? 'unknown'}`}>
                           <td className="py-2 font-mono text-xs">{c.node_id}</td>
                           <td className="py-2">{c.model ?? '-'}</td>
                           <td className="py-2">{c.source}</td>
@@ -436,10 +437,10 @@ export default function RunDetail() {
                   <div className="text-sm border-t pt-2">
                     <span className="text-slate-400">Artifacts ({selectedArtifacts.length})</span>
                     <div className="mt-1 space-y-2">
-                      {selectedArtifacts.map((a, i) => {
+                      {selectedArtifacts.map((a) => {
                         const content = typeof a.content === 'string' ? a.content : JSON.stringify(a.content, null, 2);
                         return (
-                          <div key={i} className="bg-slate-900 rounded p-2 text-xs break-all">
+                          <div key={`${a.lineage.produced_by}:${a.type}`} className="bg-slate-900 rounded p-2 text-xs break-all">
                             <span className="font-medium">{a.type}</span>
                             <pre className="text-slate-300 mt-0.5 whitespace-pre-wrap max-h-60 overflow-y-auto">
                               {content}
@@ -475,7 +476,7 @@ export default function RunDetail() {
                   totalDuration={traceQuery.data?.total_duration_s ?? 0}
                   anomalies={traceQuery.data?.anomalies ?? []}
                 />
-                <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-4">
+                <div className="border border-slate-700 rounded-card bg-slate-800/50 p-4">
                   <h2 className="text-sm font-medium text-slate-300 mb-3">Execution Timeline</h2>
                   {traceQuery.data && traceQuery.data.timeline.length > 0 ? (
                     <TraceGantt

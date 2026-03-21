@@ -2,16 +2,24 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from binex.cli import get_stores
+from binex.stores.backends.filesystem import FilesystemArtifactStore
+from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
+from binex.stores.backends.sqlite import SqliteExecutionStore
 
 router = APIRouter(prefix="/bisect", tags=["bisect"])
 
 
-def _get_stores():
+def _get_stores() -> tuple[
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
+]:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -41,7 +49,7 @@ async def bisect_runs(body: BisectRequest) -> JSONResponse:
 
         # Reshape to match the API contract
         dp = report.divergence_point
-        response: dict = {
+        response: dict[str, Any] = {
             "good_run": body.good_run,
             "bad_run": body.bad_run,
             "divergence_node": dp.node_id if dp else None,

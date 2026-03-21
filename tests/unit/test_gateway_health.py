@@ -29,7 +29,6 @@ def _agent(name: str, endpoint: str = "http://localhost:9000") -> AgentEntry:
 async def test_check_all_marks_alive_on_success():
     agent = _agent("alpha", "http://alpha:8000")
     registry = _make_registry(agent)
-    checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
 
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -37,10 +36,9 @@ async def test_check_all_marks_alive_on_success():
 
     mock_client = AsyncMock(spec=httpx.AsyncClient)
     mock_client.get = AsyncMock(return_value=mock_response)
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
 
     with patch("binex.gateway.health.httpx.AsyncClient", return_value=mock_client):
+        checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
         result = await checker.check_all()
 
     assert result["alpha"] == "alive"
@@ -57,14 +55,12 @@ async def test_check_all_marks_alive_on_success():
 async def test_check_all_marks_down_on_error():
     agent = _agent("beta", "http://beta:8000")
     registry = _make_registry(agent)
-    checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
 
     mock_client = AsyncMock(spec=httpx.AsyncClient)
     mock_client.get = AsyncMock(side_effect=httpx.ConnectError("connection refused"))
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
 
     with patch("binex.gateway.health.httpx.AsyncClient", return_value=mock_client):
+        checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
         result = await checker.check_all()
 
     assert result["beta"] == "down"
@@ -81,7 +77,6 @@ async def test_check_all_marks_down_on_error():
 async def test_check_all_updates_latency():
     agent = _agent("gamma", "http://gamma:8000")
     registry = _make_registry(agent)
-    checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
 
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -89,10 +84,9 @@ async def test_check_all_updates_latency():
 
     mock_client = AsyncMock(spec=httpx.AsyncClient)
     mock_client.get = AsyncMock(return_value=mock_response)
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
 
     with patch("binex.gateway.health.httpx.AsyncClient", return_value=mock_client):
+        checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
         await checker.check_all()
 
     health = registry.get_health("gamma")
@@ -108,7 +102,11 @@ async def test_check_all_updates_latency():
 async def test_start_stop_lifecycle():
     agent = _agent("delta", "http://delta:8000")
     registry = _make_registry(agent)
-    checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
+
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+
+    with patch("binex.gateway.health.httpx.AsyncClient", return_value=mock_client):
+        checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
 
     assert checker._task is None
 
@@ -133,7 +131,11 @@ async def test_background_loop_calls_check_all():
     agent = _agent("epsilon", "http://epsilon:8000")
     registry = _make_registry(agent)
     config = HealthConfig(interval_s=10, timeout_ms=5000)
-    checker = HealthChecker(registry, config)
+
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+
+    with patch("binex.gateway.health.httpx.AsyncClient", return_value=mock_client):
+        checker = HealthChecker(registry, config)
 
     call_count = 0
 
@@ -170,7 +172,6 @@ async def test_one_agent_failure_doesnt_block_others():
     agent_a = _agent("agent-ok", "http://ok:8000")
     agent_b = _agent("agent-fail", "http://fail:8000")
     registry = _make_registry(agent_a, agent_b)
-    checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
 
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -183,10 +184,9 @@ async def test_one_agent_failure_doesnt_block_others():
 
     mock_client = AsyncMock(spec=httpx.AsyncClient)
     mock_client.get = AsyncMock(side_effect=_mock_get)
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
 
     with patch("binex.gateway.health.httpx.AsyncClient", return_value=mock_client):
+        checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
         result = await checker.check_all()
 
     assert result["agent-ok"] == "alive"
@@ -205,7 +205,6 @@ async def test_one_agent_failure_doesnt_block_others():
 async def test_check_all_marks_down_on_http_error():
     agent = _agent("zeta", "http://zeta:8000")
     registry = _make_registry(agent)
-    checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
 
     mock_response = MagicMock()
     mock_response.status_code = 500
@@ -215,10 +214,9 @@ async def test_check_all_marks_down_on_http_error():
 
     mock_client = AsyncMock(spec=httpx.AsyncClient)
     mock_client.get = AsyncMock(return_value=mock_response)
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
 
     with patch("binex.gateway.health.httpx.AsyncClient", return_value=mock_client):
+        checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
         result = await checker.check_all()
 
     assert result["zeta"] == "down"
@@ -283,14 +281,12 @@ async def test_gateway_start_stop_no_config():
 async def test_consecutive_failures_increment():
     agent = _agent("eta", "http://eta:8000")
     registry = _make_registry(agent)
-    checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
 
     mock_client = AsyncMock(spec=httpx.AsyncClient)
     mock_client.get = AsyncMock(side_effect=httpx.ConnectError("refused"))
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
 
     with patch("binex.gateway.health.httpx.AsyncClient", return_value=mock_client):
+        checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
         await checker.check_all()
         assert registry.get_health("eta").consecutive_failures == 1
         await checker.check_all()
@@ -304,28 +300,24 @@ async def test_consecutive_failures_increment():
 async def test_success_resets_consecutive_failures():
     agent = _agent("theta", "http://theta:8000")
     registry = _make_registry(agent)
-    checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
 
     # First: fail
     mock_client_fail = AsyncMock(spec=httpx.AsyncClient)
     mock_client_fail.get = AsyncMock(side_effect=httpx.ConnectError("refused"))
-    mock_client_fail.__aenter__ = AsyncMock(return_value=mock_client_fail)
-    mock_client_fail.__aexit__ = AsyncMock(return_value=False)
 
     with patch("binex.gateway.health.httpx.AsyncClient", return_value=mock_client_fail):
+        checker = HealthChecker(registry, HealthConfig(interval_s=30, timeout_ms=5000))
         await checker.check_all()
     assert registry.get_health("theta").consecutive_failures == 1
 
-    # Then: succeed
+    # Then: succeed — need to replace the client on the checker
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.raise_for_status = MagicMock()
 
     mock_client_ok = AsyncMock(spec=httpx.AsyncClient)
     mock_client_ok.get = AsyncMock(return_value=mock_response)
-    mock_client_ok.__aenter__ = AsyncMock(return_value=mock_client_ok)
-    mock_client_ok.__aexit__ = AsyncMock(return_value=False)
+    checker._client = mock_client_ok
 
-    with patch("binex.gateway.health.httpx.AsyncClient", return_value=mock_client_ok):
-        await checker.check_all()
+    await checker.check_all()
     assert registry.get_health("theta").consecutive_failures == 0

@@ -175,6 +175,47 @@ PATTERN_METADATA: dict[str, PatternInfo] = {
         node_count=3,
         tags=("multi-model", "providers"),
     ),
+    # === CAO (CLI Agents) ===
+    "cao-simple": PatternInfo(
+        dsl="cao_agent -> output",
+        description="Single CAO CLI agent — filesystem-aware task",
+        use_case="Code generation, project analysis, shell automation",
+        category="cao",
+        node_count=2,
+        tags=("cao", "simple", "cli"),
+    ),
+    "cao-pipeline": PatternInfo(
+        dsl="cao_writer -> cao_tester",
+        description="Two CAO agents in sequence — write then test",
+        use_case="Write code, then run and verify it",
+        category="cao",
+        node_count=2,
+        tags=("cao", "sequential"),
+    ),
+    "cao-code-review": PatternInfo(
+        dsl="cao_writer -> cao_reviewer -> approve -> cao_fixer",
+        description="CAO code review pipeline with human approval gate",
+        use_case="Automated code review with human sign-off",
+        category="cao",
+        node_count=4,
+        tags=("cao", "review", "human"),
+    ),
+    "cao-parallel": PatternInfo(
+        dsl="cao_supervisor -> cao_impl, cao_tests, cao_docs -> summarizer",
+        description="Supervisor splits task, 3 CAO workers in parallel, LLM combines",
+        use_case="Parallel coding, testing, and documentation",
+        category="cao",
+        node_count=5,
+        tags=("cao", "parallel", "fan-out"),
+    ),
+    "cao-repo-health": PatternInfo(
+        dsl="cao_deps, cao_security, cao_tests, cao_lint -> report",
+        description="4 parallel CAO agents scan repo health → combined report",
+        use_case="Automated dependency, security, test, and lint audit",
+        category="cao",
+        node_count=5,
+        tags=("cao", "parallel", "devops"),
+    ),
     # === Agentic ===
     "reflection": PatternInfo(
         dsl="generator -> critic -> refiner",

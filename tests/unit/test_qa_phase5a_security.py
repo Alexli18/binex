@@ -168,7 +168,6 @@ class TestA2AResponseSchemaValidation:
     @pytest.mark.asyncio
     async def test_empty_json_response_returns_empty_list(self) -> None:
         """Response with empty JSON `{}` (no 'artifacts' key) returns empty list."""
-        adapter = A2AAgentAdapter(endpoint="http://example.com")
         task = _make_task()
 
         mock_response = MagicMock()
@@ -178,10 +177,9 @@ class TestA2AResponseSchemaValidation:
 
         with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_cls:
             mock_client = AsyncMock()
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_cls.return_value = mock_client
+            adapter = A2AAgentAdapter(endpoint="http://example.com")
 
             result = await adapter.execute(task, [], "trace_1")
 
@@ -190,7 +188,6 @@ class TestA2AResponseSchemaValidation:
     @pytest.mark.asyncio
     async def test_response_with_artifacts_missing_type_uses_unknown(self) -> None:
         """Artifact data without 'type' key defaults to 'unknown'."""
-        adapter = A2AAgentAdapter(endpoint="http://example.com")
         task = _make_task()
 
         mock_response = MagicMock()
@@ -202,10 +199,9 @@ class TestA2AResponseSchemaValidation:
 
         with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_cls:
             mock_client = AsyncMock()
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_cls.return_value = mock_client
+            adapter = A2AAgentAdapter(endpoint="http://example.com")
 
             result = await adapter.execute(task, [], "trace_1")
 
@@ -217,7 +213,6 @@ class TestA2AResponseSchemaValidation:
     @pytest.mark.asyncio
     async def test_response_with_non_json_body_raises(self) -> None:
         """Non-JSON response body should raise an error."""
-        adapter = A2AAgentAdapter(endpoint="http://example.com")
         task = _make_task()
 
         mock_response = MagicMock()
@@ -227,10 +222,9 @@ class TestA2AResponseSchemaValidation:
 
         with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_cls:
             mock_client = AsyncMock()
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_cls.return_value = mock_client
+            adapter = A2AAgentAdapter(endpoint="http://example.com")
 
             with pytest.raises(json.JSONDecodeError):
                 await adapter.execute(task, [], "trace_1")
@@ -238,7 +232,6 @@ class TestA2AResponseSchemaValidation:
     @pytest.mark.asyncio
     async def test_response_with_artifacts_none_content(self) -> None:
         """Artifact data with content=None should be handled."""
-        adapter = A2AAgentAdapter(endpoint="http://example.com")
         task = _make_task()
 
         mock_response = MagicMock()
@@ -250,10 +243,9 @@ class TestA2AResponseSchemaValidation:
 
         with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_cls:
             mock_client = AsyncMock()
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_cls.return_value = mock_client
+            adapter = A2AAgentAdapter(endpoint="http://example.com")
 
             result = await adapter.execute(task, [], "trace_1")
 
@@ -264,7 +256,6 @@ class TestA2AResponseSchemaValidation:
     @pytest.mark.asyncio
     async def test_response_lineage_tracks_input_artifacts(self) -> None:
         """Output artifacts should have derived_from pointing to input artifact IDs."""
-        adapter = A2AAgentAdapter(endpoint="http://example.com")
         task = _make_task()
         input_art = _make_artifact(id="input_art_1")
 
@@ -277,10 +268,9 @@ class TestA2AResponseSchemaValidation:
 
         with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_cls:
             mock_client = AsyncMock()
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_cls.return_value = mock_client
+            adapter = A2AAgentAdapter(endpoint="http://example.com")
 
             result = await adapter.execute(task, [input_art], "trace_1")
 
@@ -420,8 +410,8 @@ class TestAllExampleYAMLsStrict:
     def test_exactly_20_example_files_exist(self) -> None:
         """Verify the expected number of example YAML files."""
         yaml_files = sorted(EXAMPLES_DIR.glob("*.yaml"))
-        assert len(yaml_files) == 33, (
-            f"Expected 33 example YAML files, found {len(yaml_files)}: "
+        assert len(yaml_files) == 39, (
+            f"Expected 39 example YAML files, found {len(yaml_files)}: "
             f"{[f.name for f in yaml_files]}"
         )
 
@@ -469,7 +459,7 @@ class TestAllExampleYAMLsStrict:
             "STORAGE_KEY": "test-storage-key",
         }
         known_prefixes = ("local://", "llm://", "a2a://", "human://",
-                          "langchain://", "crewai://", "autogen://")
+                          "langchain://", "crewai://", "autogen://", "cao://")
         yaml_files = sorted(EXAMPLES_DIR.glob("*.yaml"))
         violations: list[str] = []
         original_env = os.environ.copy()

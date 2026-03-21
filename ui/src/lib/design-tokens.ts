@@ -65,7 +65,7 @@ export const statusColors = {
 export type Status = keyof typeof statusColors;
 
 // ---------------------------------------------------------------------------
-// Node type colors — agent type prefixes (llm://, local://, a2a://, human://)
+// Node type colors — agent type prefixes (llm://, local://, a2a://, human://, cao://)
 // ---------------------------------------------------------------------------
 export const nodeTypeColors = {
   llm: {
@@ -91,6 +91,12 @@ export const nodeTypeColors = {
     text: 'text-amber-400',
     border: 'border-amber-500/40',
     icon: 'text-amber-400',
+  },
+  cao: {
+    bg: 'bg-purple-500/15',
+    text: 'text-purple-400',
+    border: 'border-purple-500/40',
+    icon: 'text-purple-400',
   },
 } as const;
 
@@ -174,6 +180,7 @@ export const chartColors = {
   edge: '#64748b',          // slate-500
   tooltipBg: '#1e293b',     // slate-800
   tooltipBorder: '#475569', // slate-600
+  cao: '#a855f7',           // purple-500
 } as const;
 
 // ---------------------------------------------------------------------------

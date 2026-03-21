@@ -8,6 +8,7 @@ they publish SSE events and await browser responses via PendingPrompts.
 from __future__ import annotations
 
 import logging
+from typing import Any
 from uuid import uuid4
 
 from binex.models.agent import AgentHealth
@@ -25,7 +26,7 @@ class WebHumanApprovalAdapter:
     the browser to POST a response via ``/api/v1/runs/{run_id}/respond``.
     """
 
-    def __init__(self, event_bus, pending_prompts) -> None:
+    def __init__(self, event_bus: Any, pending_prompts: Any) -> None:
         self._event_bus = event_bus
         self._pending = pending_prompts
 
@@ -121,7 +122,7 @@ class WebHumanInputAdapter:
     and waits for the browser to POST a text response.
     """
 
-    def __init__(self, event_bus, pending_prompts) -> None:
+    def __init__(self, event_bus: Any, pending_prompts: Any) -> None:
         self._event_bus = event_bus
         self._pending = pending_prompts
 
@@ -193,7 +194,7 @@ class WebHumanOutputAdapter:
     Does NOT wait for user response — just displays and passes through.
     """
 
-    def __init__(self, event_bus, pending_prompts) -> None:
+    def __init__(self, event_bus: Any, pending_prompts: Any) -> None:
         self._event_bus = event_bus
         self._pending = pending_prompts
 

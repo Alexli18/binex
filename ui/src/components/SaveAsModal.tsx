@@ -16,7 +16,7 @@ export function SaveAsModal({ onSave, onClose, isPending }: SaveAsModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-slate-800 rounded-lg shadow-xl border border-slate-700 w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-slate-900 rounded-modal shadow-xl border border-slate-700/60 w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold text-slate-100 mb-4">Save Workflow</h3>
         <label className="block text-sm font-medium text-slate-300 mb-1">Filename</label>
         <input

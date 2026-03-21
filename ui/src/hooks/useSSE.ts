@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { RunEvent, HumanPromptEvent } from '../lib/types';
+import type { CaoPromptEvent } from '../components/cao/CaoInputModal';
 
 export interface HumanOutputEvent {
   type: 'human:output';
@@ -24,6 +25,7 @@ export function useSSE(runId: string | undefined) {
   const [connectionState, setConnectionState] = useState<SSEConnectionState>('disconnected');
   const [lastError, setLastError] = useState<SSEError | null>(null);
   const [pendingPrompt, setPendingPrompt] = useState<HumanPromptEvent | null>(null);
+  const [pendingCaoPrompt, setPendingCaoPrompt] = useState<CaoPromptEvent | null>(null);
   const [outputResult, setOutputResult] = useState<HumanOutputEvent | null>(null);
   const esRef = useRef<EventSource | null>(null);
   const reconnectAttemptRef = useRef(0);
@@ -32,6 +34,7 @@ export function useSSE(runId: string | undefined) {
   const isTerminalRef = useRef(false);
 
   const clearPrompt = useCallback(() => setPendingPrompt(null), []);
+  const clearCaoPrompt = useCallback(() => setPendingCaoPrompt(null), []);
   const clearOutput = useCallback(() => setOutputResult(null), []);
 
   const addEvent = useCallback((event: RunEvent, eventId?: string) => {
@@ -83,7 +86,7 @@ export function useSSE(runId: string | undefined) {
 
       // Exponential backoff reconnect
       const attempt = reconnectAttemptRef.current;
-      const delay = Math.min(BASE_RECONNECT_DELAY * Math.pow(2, attempt), MAX_RECONNECT_DELAY);
+      const delay = Math.min(BASE_RECONNECT_DELAY * 2 ** attempt, MAX_RECONNECT_DELAY);
       reconnectAttemptRef.current = attempt + 1;
 
       setConnectionState('reconnecting');
@@ -133,6 +136,16 @@ export function useSSE(runId: string | undefined) {
         (e as MessageEvent & { lastEventId?: string }).lastEventId || undefined,
       );
     });
+
+    // CAO waiting-for-input events
+    es.addEventListener('cao:waiting_input', (e: MessageEvent) => {
+      const prompt = JSON.parse(e.data) as CaoPromptEvent;
+      setPendingCaoPrompt(prompt);
+      addEvent(
+        { type: 'cao:waiting_input', node_id: prompt.node_id, timestamp: new Date().toISOString() },
+        (e as MessageEvent & { lastEventId?: string }).lastEventId || undefined,
+      );
+    });
   }, [runId, addEvent]);
 
   useEffect(() => {
@@ -169,6 +182,8 @@ export function useSSE(runId: string | undefined) {
     lastError,
     pendingPrompt,
     clearPrompt,
+    pendingCaoPrompt,
+    clearCaoPrompt,
     outputResult,
     clearOutput,
   };

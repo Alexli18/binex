@@ -3,22 +3,21 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import logging
 import os
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from datetime import UTC, datetime
 from typing import Any
 
 import click
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
 from binex.models.artifact import Artifact
 from binex.models.execution import RunSummary
-from binex.models.task import TaskNode
+from binex.models.task import RetryPolicy, TaskNode
 from binex.models.workflow import NodeSpec, WorkflowSpec
 from binex.runtime._node_executor import collect_input_artifacts, now_ms, record_execution
 from binex.runtime.back_edge import evaluate_back_edge, evaluate_when
@@ -47,7 +46,8 @@ class Orchestrator:
         *,
         stream: bool = False,
         stream_callback: Callable[[str], None] | None = None,
-        event_callback: Callable[[dict], Any] | None = None,
+        event_callback: Callable[[dict[str, Any]], Any] | None = None,
+        interactive: bool = True,
     ) -> None:
         self.artifact_store = artifact_store
         self.execution_store = execution_store
@@ -56,8 +56,9 @@ class Orchestrator:
         self._stream = stream
         self._stream_callback = stream_callback
         self._event_callback = event_callback
+        self._interactive = interactive
 
-    async def _emit_event(self, event: dict) -> None:
+    async def _emit_event(self, event: dict[str, Any]) -> None:
         """Emit a lifecycle event if a callback is configured."""
         if self._event_callback is not None:
             result = self._event_callback(event)
@@ -97,12 +98,9 @@ class Orchestrator:
         workflow_yaml = yaml.dump(
             spec.model_dump(exclude={"source_path"}), sort_keys=True,
         )
-        if hasattr(self.execution_store, "store_workflow_snapshot"):
-            workflow_hash = await self.execution_store.store_workflow_snapshot(
-                workflow_yaml, version=spec.version,
-            )
-        else:
-            workflow_hash = hashlib.sha256(workflow_yaml.encode()).hexdigest()
+        workflow_hash = await self.execution_store.store_workflow_snapshot(
+            workflow_yaml, version=spec.version,
+        )
 
         # Check if run was pre-created (e.g. by Web UI for human workflows)
         existing = await self.execution_store.get_run(run_id) if run_id else None
@@ -141,7 +139,7 @@ class Orchestrator:
                 budget_exceeded = True
                 skip_all_remaining(scheduler, ready)
                 break
-            if budget_action == "warn":
+            if budget_action == "warn" and spec.budget:
                 msg = (
                     f"Budget exceeded: ${accumulated_cost:.2f} / "
                     f"${spec.budget.max_cost:.2f} (policy: warn, continuing)"
@@ -163,9 +161,9 @@ class Orchestrator:
             accumulated_cost = cost_summary.total_cost
 
         summary.completed_at = datetime.now(UTC)
-        summary.completed_nodes = len(scheduler._completed)
-        summary.failed_nodes = len(scheduler._failed)
-        summary.skipped_nodes = len(scheduler._skipped)
+        summary.completed_nodes = len(scheduler.completed)
+        summary.failed_nodes = len(scheduler.failed)
+        summary.skipped_nodes = len(scheduler.skipped)
         summary.total_cost = accumulated_cost
         summary.status = self._determine_final_status(
             budget_exceeded, scheduler,
@@ -192,6 +190,15 @@ class Orchestrator:
         if mcp_mgr is not None:
             await mcp_mgr.close_all()
 
+        # Close CAO adapter HTTP clients if any
+        for adapter in self.dispatcher._adapters.values():
+            close_fn = getattr(adapter, "close", None)
+            if close_fn is not None and callable(close_fn):
+                try:
+                    await close_fn()
+                except Exception:
+                    logger.debug("Failed to close adapter %s", adapter, exc_info=True)
+
         return summary
 
     def _schedule_ready_nodes(
@@ -205,7 +212,7 @@ class Orchestrator:
         node_artifacts: dict[str, list[Artifact]],
         accumulated_cost: float,
         node_artifacts_history: dict[str, list[list[Artifact]]] | None = None,
-    ) -> list:
+    ) -> list[Coroutine[Any, Any, None]]:
         """Evaluate when-conditions and schedule ready nodes for execution."""
         if node_artifacts_history is None:
             node_artifacts_history = {}
@@ -234,7 +241,7 @@ class Orchestrator:
         """Determine the final run status."""
         if budget_exceeded:
             return "over_budget"
-        if scheduler._failed:
+        if scheduler.failed:
             return "failed"
         if scheduler.is_complete():
             return "completed"
@@ -291,8 +298,7 @@ class Orchestrator:
 
         Returns an error message if the retry should be skipped, None otherwise.
         """
-        all_costs = await self.execution_store.list_costs(run_id)
-        node_cost = sum(r.cost for r in all_costs if r.task_id == node_id)
+        node_cost = await self.execution_store.get_node_cost(run_id, node_id)
         remaining = node_max - node_cost
 
         if remaining > 0:
@@ -308,13 +314,20 @@ class Orchestrator:
             click.echo(f"\u26a0 {msg}", err=True)
             return msg
 
-        # warn — interactive prompt
-        proceed = click.confirm(
-            f"\u26a0 Node '{node_id}' retry will likely exceed budget "
-            f"(${remaining:.2f} remaining of ${node_max:.2f}). "
-            f"Continue?",
-            default=False,
-        )
+        # warn — interactive prompt or safe default
+        if self._interactive:
+            proceed = click.confirm(
+                f"\u26a0 Node '{node_id}' retry will likely exceed budget "
+                f"(${remaining:.2f} remaining of ${node_max:.2f}). "
+                f"Continue?",
+                default=False,
+            )
+        else:
+            proceed = False
+            logger.info(
+                "Node '%s': non-interactive mode, declining over-budget retry",
+                node_id,
+            )
         if not proceed:
             return f"Node '{node_id}': retry cancelled by user (budget)"
         return None
@@ -327,8 +340,7 @@ class Orchestrator:
         node_max: float,
     ) -> bool:
         """Check node budget after execution. Returns True if budget exceeded with stop policy."""
-        all_costs = await self.execution_store.list_costs(run_id)
-        node_cost = sum(r.cost for r in all_costs if r.task_id == node_id)
+        node_cost = await self.execution_store.get_node_cost(run_id, node_id)
 
         if node_cost <= node_max:
             return False
@@ -403,22 +415,21 @@ class Orchestrator:
                 spec, scheduler, dag, node_id,
                 node_artifacts, node_artifacts_history,
                 self._pending_feedback,
+                interactive=self._interactive,
             )
         else:
             scheduler.mark_failed(node_id)
             status = task.status.__class__("failed")
 
-        latency = now_ms() - start_ms
+        latency_ms = now_ms() - start_ms
         await self._emit_event({
             "type": f"node:{'completed' if succeeded else 'failed'}",
             "run_id": run_id,
             "node_id": node_id,
             "timestamp": datetime.now(UTC).isoformat(),
-            "latency_ms": latency,
+            "latency_ms": latency_ms,
             **({"error": error_msg} if error_msg else {}),
         })
-
-        latency_ms = now_ms() - start_ms
         await record_execution(
             self.execution_store,
             run_id=run_id,
@@ -438,7 +449,7 @@ class Orchestrator:
         run_id: str,
         node_id: str,
         node_spec: NodeSpec,
-        retry_policy,
+        retry_policy: RetryPolicy | None,
         node_max: float | None,
     ) -> tuple[TaskNode, int]:
         """Build a TaskNode and determine max retries.
@@ -527,7 +538,7 @@ class Orchestrator:
         trace_id: str,
         node_max: float | None,
         max_retries: int,
-        retry_policy,
+        retry_policy: RetryPolicy | None,
         node_artifacts: dict[str, list[Artifact]],
     ) -> tuple[bool, str | None, list[Artifact]]:
         """Execute dispatch with retries and budget checks.

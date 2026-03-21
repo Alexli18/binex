@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Callable
+from typing import Any
 
 from binex.tools._core import ToolDefinition, build_tool_schema, tool
 
@@ -29,7 +31,7 @@ def list_builtins() -> list[str]:
     return sorted(_BUILTIN_REGISTRY)
 
 
-def _register_tool(func) -> None:
+def _register_tool(func: Callable[..., Any]) -> None:
     """Helper to register a @tool-decorated function."""
     schema = build_tool_schema(func)
     fn_schema = schema["function"]
@@ -132,7 +134,7 @@ async def http_request(url: str, method: str = "GET", body: str = "") -> str:
 
     try:
         async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            kwargs: dict = {"method": method, "url": url}
+            kwargs: dict[str, Any] = {"method": method, "url": url}
             if body and method in ("POST", "PUT", "PATCH"):
                 kwargs["content"] = body
                 kwargs["headers"] = {"Content-Type": "application/json"}

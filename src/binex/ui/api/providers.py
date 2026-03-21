@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
 import httpx
 from fastapi import APIRouter
@@ -16,7 +17,7 @@ router = APIRouter(prefix="/providers", tags=["providers"])
 # Curated model lists per provider
 # ---------------------------------------------------------------------------
 
-_CURATED_MODELS: dict[str, list[dict]] = {
+_CURATED_MODELS: dict[str, list[dict[str, Any]]] = {
     "openai": [
         {"id": "gpt-4o", "tier": "flagship", "context_k": 128},
         {"id": "gpt-4o-mini", "tier": "fast", "context_k": 128},
@@ -61,7 +62,7 @@ _CURATED_MODELS: dict[str, list[dict]] = {
 _OLLAMA_TIMEOUT = 2.0  # seconds
 
 
-async def _fetch_ollama_models() -> list[dict] | None:
+async def _fetch_ollama_models() -> list[dict[str, Any]] | None:
     """Try to fetch models from a local Ollama instance.
 
     Returns a list of model dicts or ``None`` on failure.

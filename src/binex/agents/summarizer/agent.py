@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from typing import Any
 
 from binex.agents.common.llm_client import LLMClient
 from binex.models.artifact import Artifact, Lineage
@@ -48,14 +49,14 @@ class SummarizerAgent:
             )
         ]
 
-    def _extract_findings(self, artifacts: list[Artifact]) -> dict:
+    def _extract_findings(self, artifacts: list[Artifact]) -> dict[str, Any]:
         for art in artifacts:
             if isinstance(art.content, dict) and "validated_findings" in art.content:
                 return art.content
         all_content = [art.content for art in artifacts if art.content]
         return {"validated_findings": all_content}
 
-    def _parse_report(self, raw: str) -> dict:
+    def _parse_report(self, raw: str) -> dict[str, Any]:
         try:
             parsed = json.loads(raw)
             if isinstance(parsed, dict):

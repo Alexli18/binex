@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "binex"
-version = "0.6.3"
+version = "0.6.4"
 description = "Debuggable runtime for AI agent pipelines"
 readme = "README.md"
 license = {text = "MIT"}
@@ -36,6 +36,7 @@ dependencies = [
     "aiosqlite",
     "python-dotenv",
     "jsonschema>=4.0",
+    "jsonpath-ng>=1.8",
     "croniter>=1.3",
     "mcp>=1.0",
 ]

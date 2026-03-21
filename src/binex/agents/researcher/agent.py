@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from typing import Any
 
 from binex.agents.common.llm_client import LLMClient
 from binex.models.artifact import Artifact, Lineage
@@ -53,13 +54,13 @@ class ResearcherAgent:
                 return art.content
             if isinstance(art.content, dict):
                 if "query" in art.content:
-                    return art.content["query"]
+                    return str(art.content["query"])
                 if "subtasks" in art.content:
                     subtasks = art.content["subtasks"]
-                    return subtasks[0] if subtasks else ""
+                    return str(subtasks[0]) if subtasks else ""
         return ""
 
-    def _parse_results(self, raw: str, query: str) -> dict:
+    def _parse_results(self, raw: str, query: str) -> dict[str, Any]:
         try:
             parsed = json.loads(raw)
             if isinstance(parsed, dict):

@@ -1,9 +1,10 @@
-import { CheckCircle2, XCircle, Clock, SkipForward, RotateCcw } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle2, XCircle, Clock, SkipForward, RotateCcw, ChevronDown, ChevronRight, Terminal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DebugArtifactViewer } from './DebugArtifactViewer';
 import { DebugErrorPanel } from './DebugErrorPanel';
-import type { DebugNode } from '@/hooks/useAnalysis';
+import type { DebugNode, DebugArtifact } from '@/hooks/useAnalysis';
 import { getStatusColors } from '@/lib/design-tokens';
 
 /** Returns border + bg classes for the node detail card header chip. */
@@ -113,6 +114,11 @@ function NodeDetailContent({ node }: { node: DebugNode }) {
         </div>
       )}
 
+      {/* CAO Debug Section */}
+      {node.agent?.startsWith('cao://') && (
+        <CaoDebugSection artifacts={node.artifacts} duration_s={node.duration_s} />
+      )}
+
       {/* Error */}
       {node.error && <DebugErrorPanel error={node.error} />}
 
@@ -150,6 +156,90 @@ function StatusIcon({ status }: { status: string }) {
     default:
       return <Clock size={16} className="text-slate-500" />;
   }
+}
+
+/** CAO adapter debug section — shows raw/parsed output, elapsed time, terminal ID. */
+function CaoDebugSection({
+  artifacts,
+  duration_s,
+}: {
+  artifacts: DebugArtifact[];
+  duration_s: number | null;
+}) {
+  const [rawExpanded, setRawExpanded] = useState(false);
+
+  const rawOutput = artifacts.find((a) => a.type === 'cao_raw_output');
+  const parsedOutput = artifacts.find((a) => a.type === 'cao_output');
+
+  // Extract terminal_id from parsed output JSON (best-effort)
+  let terminalId: string | null = null;
+  if (parsedOutput) {
+    try {
+      const parsed = JSON.parse(parsedOutput.content);
+      terminalId = parsed.terminal_id ?? parsed.session_id ?? null;
+    } catch {
+      // not JSON — ignore
+    }
+  }
+
+  if (!rawOutput && !parsedOutput) return null;
+
+  return (
+    <div className="border-t border-slate-700 pt-3 space-y-3">
+      <div className="flex items-center gap-2">
+        <Terminal size={14} className="text-purple-400" />
+        <span className="text-sm font-semibold text-purple-400">CAO Adapter</span>
+      </div>
+
+      {/* Elapsed time */}
+      {duration_s !== null && (
+        <div className="text-sm">
+          <span className="text-slate-500">Elapsed</span>
+          <p className="mt-0.5 font-mono text-slate-300">
+            {duration_s >= 60
+              ? `${Math.floor(duration_s / 60)}m ${(duration_s % 60).toFixed(1)}s`
+              : `${duration_s.toFixed(3)}s`}
+          </p>
+        </div>
+      )}
+
+      {/* Terminal ID */}
+      {terminalId && (
+        <div className="text-sm">
+          <span className="text-slate-500">Terminal ID</span>
+          <p className="mt-0.5 font-mono text-xs text-slate-300 break-all">{terminalId}</p>
+        </div>
+      )}
+
+      {/* Parsed output */}
+      {parsedOutput && (
+        <div className="text-sm">
+          <span className="text-slate-500">Parsed Output</span>
+          <pre className="mt-1 text-xs text-slate-300 bg-slate-900 border border-slate-700 rounded-lg p-3 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
+            {parsedOutput.content}
+          </pre>
+        </div>
+      )}
+
+      {/* Collapsible raw output */}
+      {rawOutput && (
+        <div className="text-sm">
+          <button
+            onClick={() => setRawExpanded((v) => !v)}
+            className="flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            {rawExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            Raw Output
+          </button>
+          {rawExpanded && (
+            <pre className="mt-1 text-xs text-slate-400 bg-slate-900 border border-slate-700 rounded-lg p-3 whitespace-pre-wrap max-h-64 overflow-y-auto leading-relaxed font-mono">
+              {rawOutput.content}
+            </pre>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function DebugNodeDetailSkeleton() {

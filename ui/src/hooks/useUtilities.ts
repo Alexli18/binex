@@ -109,8 +109,7 @@ export function useGateway() {
 export function useGatewayStart() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () =>
-      fetch('/api/v1/gateway/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) }).then(r => r.json()),
+    mutationFn: () => api.post('/gateway/start', {}),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['gateway'] }),
   });
 }

@@ -427,8 +427,6 @@ class TestA2AAdapterCostEdgeCases:
 
         mock_client = AsyncMock()
         mock_client.post.return_value = mock_response
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=False)
 
         task = _make_task(agent="a2a://http://localhost:8000")
 
@@ -453,8 +451,6 @@ class TestA2AAdapterCostEdgeCases:
 
         mock_client = AsyncMock()
         mock_client.post.return_value = mock_response
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=False)
 
         task = _make_task(agent="a2a://http://localhost:8000")
 

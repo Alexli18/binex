@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 from datetime import UTC, datetime
+from typing import Any
 
 import aiosqlite
 
@@ -44,6 +45,7 @@ class SqliteExecutionStore:
                 total_nodes INTEGER NOT NULL,
                 completed_nodes INTEGER DEFAULT 0,
                 failed_nodes INTEGER DEFAULT 0,
+                skipped_nodes INTEGER DEFAULT 0,
                 forked_from TEXT,
                 forked_at_step TEXT,
                 total_cost REAL DEFAULT 0.0,
@@ -78,12 +80,31 @@ class SqliteExecutionStore:
                 model TEXT,
                 timestamp TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS cao_sessions (
+                terminal_id  TEXT PRIMARY KEY,
+                run_id       TEXT NOT NULL,
+                node_name    TEXT NOT NULL,
+                session_name TEXT,
+                started_at   TEXT NOT NULL,
+                completed_at TEXT,
+                status       TEXT NOT NULL DEFAULT 'active'
+            );
             CREATE TABLE IF NOT EXISTS workflow_snapshots (
                 hash TEXT PRIMARY KEY,
                 content TEXT NOT NULL,
                 version INTEGER NOT NULL,
                 created_at TEXT NOT NULL
             );
+            CREATE INDEX IF NOT EXISTS idx_execution_records_run_id
+                ON execution_records (run_id);
+            CREATE INDEX IF NOT EXISTS idx_execution_records_run_task
+                ON execution_records (run_id, task_id);
+            CREATE INDEX IF NOT EXISTS idx_cost_records_run_id
+                ON cost_records (run_id);
+            CREATE INDEX IF NOT EXISTS idx_cost_records_run_task
+                ON cost_records (run_id, task_id);
+            CREATE INDEX IF NOT EXISTS idx_cao_sessions_status
+                ON cao_sessions (status);
         """)
         # Migration: add total_cost column to existing runs table
         try:
@@ -97,13 +118,44 @@ class SqliteExecutionStore:
             await self._db.commit()
         except Exception as exc:
             logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add skipped_nodes column to existing runs table
+        try:
+            await self._db.execute("ALTER TABLE runs ADD COLUMN skipped_nodes INTEGER DEFAULT 0")
+            await self._db.commit()
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
         # Migration: add workflow_hash column to existing runs table
         try:
             await self._db.execute("ALTER TABLE runs ADD COLUMN workflow_hash TEXT")
             await self._db.commit()
         except Exception as exc:
             logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add session_name column to existing cao_sessions table
+        try:
+            await self._db.execute(
+                "ALTER TABLE cao_sessions ADD COLUMN session_name TEXT"
+            )
+            await self._db.commit()
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
         await self._db.commit()
+
+        # Auto-orphan any active CAO sessions from previous crashed runs
+        try:
+            cursor = await self._db.execute(
+                "SELECT terminal_id FROM cao_sessions WHERE status = 'active'"
+            )
+            rows = await cursor.fetchall()
+            stale_ids = [r[0] for r in rows]
+            if stale_ids:
+                await self.mark_cao_sessions_orphaned(stale_ids)
+                logger.info(
+                    "Marked %d stale CAO sessions as orphaned on startup",
+                    len(stale_ids),
+                )
+        except Exception as exc:
+            logger.debug("CAO session orphan check failed: %s", exc)
+
         self._initialized = True
 
     async def close(self) -> None:
@@ -117,9 +169,9 @@ class SqliteExecutionStore:
         await db.execute(
             """INSERT INTO runs (run_id, workflow_name, status, started_at,
                completed_at, total_nodes, completed_nodes, failed_nodes,
-               forked_from, forked_at_step, total_cost, workflow_path,
-               workflow_hash)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               skipped_nodes, forked_from, forked_at_step, total_cost,
+               workflow_path, workflow_hash)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 run_summary.run_id,
                 run_summary.workflow_name,
@@ -129,6 +181,7 @@ class SqliteExecutionStore:
                 run_summary.total_nodes,
                 run_summary.completed_nodes,
                 run_summary.failed_nodes,
+                run_summary.skipped_nodes,
                 run_summary.forked_from,
                 run_summary.forked_at_step,
                 run_summary.total_cost,
@@ -140,7 +193,10 @@ class SqliteExecutionStore:
 
     async def get_run(self, run_id: str) -> RunSummary | None:
         db = await self._ensure_initialized()
-        cursor = await db.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,))
+        cursor = await db.execute(
+            self._RUNS_SELECT + " WHERE run_id = ?",
+            (run_id,),
+        )
         row = await cursor.fetchone()
         if row is None:
             return None
@@ -151,8 +207,8 @@ class SqliteExecutionStore:
         await db.execute(
             """UPDATE runs SET workflow_name=?, status=?, started_at=?,
                completed_at=?, total_nodes=?, completed_nodes=?, failed_nodes=?,
-               forked_from=?, forked_at_step=?, total_cost=?, workflow_path=?,
-               workflow_hash=?
+               skipped_nodes=?, forked_from=?, forked_at_step=?, total_cost=?,
+               workflow_path=?, workflow_hash=?
                WHERE run_id=?""",
             (
                 run_summary.workflow_name,
@@ -162,6 +218,7 @@ class SqliteExecutionStore:
                 run_summary.total_nodes,
                 run_summary.completed_nodes,
                 run_summary.failed_nodes,
+                run_summary.skipped_nodes,
                 run_summary.forked_from,
                 run_summary.forked_at_step,
                 run_summary.total_cost,
@@ -172,9 +229,29 @@ class SqliteExecutionStore:
         )
         await db.commit()
 
-    async def list_runs(self) -> list[RunSummary]:
+    _RUNS_SELECT = (
+        "SELECT run_id, workflow_name, status, started_at, completed_at,"
+        " total_nodes, completed_nodes, failed_nodes, skipped_nodes,"
+        " forked_from, forked_at_step, total_cost, workflow_path,"
+        " workflow_hash FROM runs"
+    )
+
+    async def list_runs(
+        self,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[RunSummary]:
         db = await self._ensure_initialized()
-        cursor = await db.execute("SELECT * FROM runs")
+        query = self._RUNS_SELECT
+        params: list[int] = []
+        if limit is not None:
+            query += " LIMIT ? OFFSET ?"
+            params.extend([limit, offset])
+        elif offset:
+            # SQLite requires LIMIT when OFFSET is used; use -1 for unlimited.
+            query += " LIMIT -1 OFFSET ?"
+            params.append(offset)
+        cursor = await db.execute(query, params)
         rows = await cursor.fetchall()
         return [self._row_to_run_summary(row) for row in rows]
 
@@ -225,7 +302,7 @@ class SqliteExecutionStore:
         return [self._row_to_execution_record(row) for row in rows]
 
     @staticmethod
-    def _row_to_run_summary(row: tuple) -> RunSummary:  # type: ignore[type-arg]
+    def _row_to_run_summary(row: aiosqlite.Row | tuple) -> RunSummary:  # type: ignore[type-arg]
         return RunSummary(
             run_id=row[0],
             workflow_name=row[1],
@@ -235,11 +312,12 @@ class SqliteExecutionStore:
             total_nodes=row[5],
             completed_nodes=row[6],
             failed_nodes=row[7],
-            forked_from=row[8],
-            forked_at_step=row[9],
-            total_cost=row[10] if len(row) > 10 else 0.0,
-            workflow_path=row[11] if len(row) > 11 else None,
-            workflow_hash=row[12] if len(row) > 12 else None,
+            skipped_nodes=row[8] if row[8] is not None else 0,
+            forked_from=row[9] if len(row) > 9 else None,
+            forked_at_step=row[10] if len(row) > 10 else None,
+            total_cost=float(row[11]) if row[11] is not None else 0.0,
+            workflow_path=row[12] if row[12] is not None else None,
+            workflow_hash=str(row[13]) if row[13] is not None else None,
         )
 
     async def record_cost(self, cost_record: CostRecord) -> None:
@@ -272,6 +350,15 @@ class SqliteExecutionStore:
         rows = await cursor.fetchall()
         return [self._row_to_cost_record(row) for row in rows]
 
+    async def get_node_cost(self, run_id: str, task_id: str) -> float:
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
+            "SELECT COALESCE(SUM(cost), 0) FROM cost_records WHERE run_id = ? AND task_id = ?",
+            (run_id, task_id),
+        )
+        row = await cursor.fetchone()
+        return float(row[0]) if row is not None else 0.0
+
     async def get_run_cost_summary(self, run_id: str) -> RunCostSummary:
         records = await self.list_costs(run_id)
         total_cost = sum(r.cost for r in records)
@@ -285,7 +372,7 @@ class SqliteExecutionStore:
         )
 
     @staticmethod
-    def _row_to_cost_record(row: tuple) -> CostRecord:  # type: ignore[type-arg]
+    def _row_to_cost_record(row: aiosqlite.Row | tuple) -> CostRecord:  # type: ignore[type-arg]
         return CostRecord(
             id=row[0],
             run_id=row[1],
@@ -300,7 +387,7 @@ class SqliteExecutionStore:
         )
 
     @staticmethod
-    def _row_to_execution_record(row: tuple) -> ExecutionRecord:  # type: ignore[type-arg]
+    def _row_to_execution_record(row: aiosqlite.Row | tuple) -> ExecutionRecord:  # type: ignore[type-arg]
         return ExecutionRecord(
             id=row[0],
             run_id=row[1],
@@ -319,6 +406,89 @@ class SqliteExecutionStore:
             error=row[14],
         )
 
+    # ------------------------------------------------------------------
+    # CAO session registry
+    # ------------------------------------------------------------------
+
+    async def create_cao_session(
+        self, terminal_id: str, run_id: str, node_name: str,
+        session_name: str | None = None,
+    ) -> None:
+        """Persist an active CAO session."""
+        db = await self._ensure_initialized()
+        await db.execute(
+            "INSERT INTO cao_sessions "
+            "(terminal_id, run_id, node_name, started_at, status, session_name) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (terminal_id, run_id, node_name,
+             datetime.now(UTC).isoformat(), "active", session_name),
+        )
+        await db.commit()
+
+    async def complete_cao_session(self, terminal_id: str) -> None:
+        """Mark session as completed (soft delete)."""
+        db = await self._ensure_initialized()
+        await db.execute(
+            "UPDATE cao_sessions SET status = 'completed', completed_at = datetime('now') "
+            "WHERE terminal_id = ?",
+            (terminal_id,),
+        )
+        await db.commit()
+
+    async def get_cao_sessions(
+        self, status: str | None = None,
+    ) -> list[dict[str, str]]:
+        """List CAO sessions, optionally filtered by status."""
+        db = await self._ensure_initialized()
+        if status:
+            cursor = await db.execute(
+                "SELECT terminal_id, run_id, node_name, started_at, status, session_name "
+                "FROM cao_sessions WHERE status = ?",
+                (status,),
+            )
+        else:
+            cursor = await db.execute(
+                "SELECT terminal_id, run_id, node_name, started_at, status, session_name "
+                "FROM cao_sessions",
+            )
+        rows = await cursor.fetchall()
+        return [
+            {
+                "terminal_id": r[0],
+                "run_id": r[1],
+                "node_name": r[2],
+                "started_at": r[3],
+                "status": r[4],
+                "session_name": r[5],
+            }
+            for r in rows
+        ]
+
+    async def get_orphaned_cao_sessions(self) -> list[dict[str, str]]:
+        """Return sessions with status 'orphaned'."""
+        return await self.get_cao_sessions(status="orphaned")
+
+    async def mark_cao_sessions_orphaned(self, terminal_ids: list[str]) -> None:
+        """Mark active sessions as orphaned (crash recovery)."""
+        if not terminal_ids:
+            return
+        db = await self._ensure_initialized()
+        for tid in terminal_ids:
+            await db.execute(
+                "UPDATE cao_sessions SET status = 'orphaned' WHERE terminal_id = ?",
+                (tid,),
+            )
+        await db.commit()
+
+    async def delete_cao_session(self, terminal_id: str) -> bool:
+        """Delete a session by terminal_id. Returns True if deleted."""
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
+            "DELETE FROM cao_sessions WHERE terminal_id = ?", (terminal_id,),
+        )
+        await db.commit()
+        return cursor.rowcount > 0
+
     async def store_workflow_snapshot(self, content: str, version: int) -> str:
         """Store workflow YAML content, deduplicated by SHA256 hash. Returns hash."""
         db = await self._ensure_initialized()
@@ -331,7 +501,7 @@ class SqliteExecutionStore:
         await db.commit()
         return content_hash
 
-    async def get_workflow_snapshot(self, content_hash: str) -> dict | None:
+    async def get_workflow_snapshot(self, content_hash: str) -> dict[str, Any] | None:
         """Retrieve a workflow snapshot by hash."""
         db = await self._ensure_initialized()
         cursor = await db.execute(

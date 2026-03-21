@@ -6,17 +6,25 @@ to match the Web UI API contract.
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from binex.cli import get_stores
+from binex.stores.backends.filesystem import FilesystemArtifactStore
+from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
+from binex.stores.backends.sqlite import SqliteExecutionStore
 from binex.trace.diff import diff_runs as core_diff_runs
 
 router = APIRouter(prefix="/diff", tags=["diff"])
 
 
-def _get_stores():
+def _get_stores() -> tuple[
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
+]:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -28,7 +36,7 @@ class DiffRequest(BaseModel):
     run_b: str
 
 
-def _reshape_for_frontend(result: dict, run_id_a: str, run_id_b: str) -> dict:
+def _reshape_for_frontend(result: dict[str, Any], run_id_a: str, run_id_b: str) -> dict[str, Any]:
     """Transform core diff_runs() result into the frontend API contract."""
     records_a_count = sum(1 for s in result["steps"] if s["status_a"] is not None)
     records_b_count = sum(1 for s in result["steps"] if s["status_b"] is not None)

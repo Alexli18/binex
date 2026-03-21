@@ -47,7 +47,7 @@ export interface CostSummary {
 }
 
 export interface RunEvent {
-  type: 'node:started' | 'node:completed' | 'node:failed' | 'run:completed' | 'run:cancelled' | 'human:prompt_needed';
+  type: 'node:started' | 'node:completed' | 'node:failed' | 'run:completed' | 'run:cancelled' | 'human:prompt_needed' | 'cao:waiting_input';
   node_id?: string;
   timestamp: string;
   cost?: number;

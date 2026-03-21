@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 
 import click
 
@@ -32,7 +33,7 @@ from binex.cli.explore_ui import (
 from binex.cli.explore_utils import _preview, _short_id, _time_ago  # noqa: F401
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -73,7 +74,7 @@ async def _explore(run_id: str | None) -> None:
         await exec_store.close()
 
 
-async def _dashboard(exec_store, art_store, run_id: str) -> bool:
+async def _dashboard(exec_store: Any, art_store: Any, run_id: str) -> bool:
     """Core dashboard: render summary + node table, then action menu loop.
 
     Returns True to quit explore entirely, False to go back to run list.
@@ -94,7 +95,7 @@ async def _dashboard(exec_store, art_store, run_id: str) -> bool:
         key = choice.strip()
 
         if key in ("q", "Q"):
-            return key == "Q"
+            return bool(key == "Q")
         if key == "?":
             _print_help_table()
             _wait_for_enter()
@@ -116,7 +117,7 @@ async def _dashboard(exec_store, art_store, run_id: str) -> bool:
 
 
 async def _dispatch_action(
-    key: str, exec_store, art_store, run_id: str, run, records,
+    key: str, exec_store: Any, art_store: Any, run_id: str, run: Any, records: Any,
 ) -> str | None:
     """Dispatch a single dashboard action. Returns control signal or None."""
     # Actions that need only exec_store
@@ -157,7 +158,7 @@ async def _dispatch_action(
     return None
 
 
-async def _dispatch_node(exec_store, art_store, run_id: str, records) -> str | None:
+async def _dispatch_node(exec_store: Any, art_store: Any, run_id: str, records: Any) -> str | None:
     """Handle node inspection action."""
     node_arts = await _action_node(exec_store, art_store, run_id, records)
     if node_arts:
@@ -167,7 +168,10 @@ async def _dispatch_node(exec_store, art_store, run_id: str, records) -> str | N
     return None
 
 
-async def _dispatch_replay(exec_store, art_store, run_id: str, run, records) -> str:
+async def _dispatch_replay(
+    exec_store: Any, art_store: Any,
+    run_id: str, run: Any, records: Any,
+) -> str:
     """Handle replay action with post-replay navigation."""
     new_run_id = await _action_replay(exec_store, art_store, run_id, run, records)
     if new_run_id:

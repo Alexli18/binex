@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import AsyncIterator
+from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -15,22 +17,22 @@ class EventBus:
     """Pub/sub event bus for real-time run events."""
 
     def __init__(self) -> None:
-        self._subscribers: dict[str, list[asyncio.Queue]] = {}
+        self._subscribers: dict[str, list[asyncio.Queue[dict[str, Any]]]] = {}
 
-    def subscribe(self, run_id: str) -> asyncio.Queue:
+    def subscribe(self, run_id: str) -> asyncio.Queue[dict[str, Any]]:
         """Create a new subscription queue for a run."""
-        queue: asyncio.Queue = asyncio.Queue()
+        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         self._subscribers.setdefault(run_id, []).append(queue)
         return queue
 
-    def unsubscribe(self, run_id: str, queue: asyncio.Queue) -> None:
+    def unsubscribe(self, run_id: str, queue: asyncio.Queue[dict[str, Any]]) -> None:
         """Remove a subscription queue."""
         if run_id in self._subscribers:
             self._subscribers[run_id] = [
                 q for q in self._subscribers[run_id] if q is not queue
             ]
 
-    async def publish(self, run_id: str, event: dict) -> None:
+    async def publish(self, run_id: str, event: dict[str, Any]) -> None:
         """Publish an event to all subscribers of a run."""
         for queue in self._subscribers.get(run_id, []):
             await queue.put(event)
@@ -44,7 +46,7 @@ async def stream_events(run_id: str) -> StreamingResponse:
     """Stream SSE events for a workflow run."""
     queue = event_bus.subscribe(run_id)
 
-    async def generate():
+    async def generate() -> AsyncIterator[str]:
         try:
             while True:
                 try:

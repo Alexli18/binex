@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
@@ -140,8 +141,8 @@ async def find_divergence(
 
 def _get_upstream(
     task_id: str,
-    good_by_task: dict,
-    bad_by_task: dict,
+    good_by_task: dict[str, Any],
+    bad_by_task: dict[str, Any],
 ) -> list[str]:
     """Get upstream node IDs from input artifact refs."""
     rec = good_by_task.get(task_id) or bad_by_task.get(task_id)
@@ -213,7 +214,7 @@ async def _load_and_validate_runs(
     exec_store: ExecutionStore,
     good_run_id: str,
     bad_run_id: str,
-) -> tuple:
+) -> tuple[Any, Any]:
     """Load two runs and validate they exist and share the same workflow."""
     good_run = await exec_store.get_run(good_run_id)
     if good_run is None:
@@ -232,8 +233,8 @@ async def _load_and_validate_runs(
 async def _build_node_map(
     art_store: ArtifactStore,
     all_tasks: list[str],
-    good_by_task: dict,
-    bad_by_task: dict,
+    good_by_task: dict[str, Any],
+    bad_by_task: dict[str, Any],
     threshold: float,
 ) -> tuple[list[NodeComparison], DivergencePoint | None, int | None]:
     """Single pass: build node_map and find first divergence point."""
@@ -263,7 +264,7 @@ async def _build_node_map(
 
 def _build_error_context(
     divergence: DivergencePoint | None,
-    bad_by_task: dict,
+    bad_by_task: dict[str, Any],
 ) -> ErrorContext | None:
     """Build error context from the divergence point's bad record."""
     if divergence is None:
@@ -279,7 +280,7 @@ def _build_error_context(
     )
 
 
-def _ordered_task_ids(good_records, bad_records) -> list[str]:
+def _ordered_task_ids(good_records: list[Any], bad_records: list[Any]) -> list[str]:
     """Build ordered list of all task IDs from both runs."""
     all_tasks: list[str] = []
     seen: set[str] = set()

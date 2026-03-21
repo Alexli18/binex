@@ -6,12 +6,13 @@ import json
 import shutil
 import subprocess
 import sys
+from typing import Any
 
 import click
 import httpx
 
 
-def _check_binary(name: str) -> dict:
+def _check_binary(name: str) -> dict[str, Any]:
     """Check if a binary is available on PATH."""
     path = shutil.which(name)
     if path:
@@ -19,7 +20,7 @@ def _check_binary(name: str) -> dict:
     return {"name": name, "status": "missing", "detail": f"{name} not found on PATH"}
 
 
-def _check_docker_running() -> dict:
+def _check_docker_running() -> dict[str, Any]:
     """Check if Docker daemon is running."""
     try:
         result = subprocess.run(
@@ -32,7 +33,7 @@ def _check_docker_running() -> dict:
         return {"name": "Docker Daemon", "status": "error", "detail": "cannot connect"}
 
 
-def _check_http_service(url: str, name: str) -> dict:
+def _check_http_service(url: str, name: str) -> dict[str, Any]:
     """Check if an HTTP service is reachable."""
     try:
         resp = httpx.get(url, timeout=5.0)
@@ -51,7 +52,7 @@ def _check_http_service(url: str, name: str) -> dict:
         return {"name": name, "status": "error", "detail": str(e)}
 
 
-def _check_store_backend() -> dict:
+def _check_store_backend() -> dict[str, Any]:
     """Check if store directory exists."""
     from pathlib import Path
 
@@ -68,14 +69,14 @@ def _check_store_backend() -> dict:
     }
 
 
-def run_checks() -> list[dict]:
+def run_checks() -> list[dict[str, Any]]:
     """Run all health checks and return results.
 
     Checks are split into 'required' (core Binex) and 'optional'
     (infrastructure that only matters when you use those features).
     Optional check failures don't cause exit code 1.
     """
-    checks: list[dict] = []
+    checks: list[dict[str, Any]] = []
 
     # Required: Store backend (always needed)
     checks.append({**_check_store_backend(), "required": True})
@@ -105,7 +106,7 @@ def _normalize_status(status: str) -> str:
     return status.replace(" ", "_")
 
 
-def _doctor_rich_output(checks: list[dict]) -> None:
+def _doctor_rich_output(checks: list[dict[str, Any]]) -> None:
     """Render doctor checks using Rich panels and tables."""
     from rich.console import Group
     from rich.text import Text
@@ -140,7 +141,7 @@ def _doctor_rich_output(checks: list[dict]) -> None:
     get_console().print(panel)
 
 
-def _doctor_plain_output(checks: list[dict], has_errors: bool) -> None:
+def _doctor_plain_output(checks: list[dict[str, Any]], has_errors: bool) -> None:
     """Render doctor checks as plain text."""
     from binex.cli.ui import plain_status_icon
 

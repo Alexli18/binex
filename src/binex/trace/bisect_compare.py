@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import difflib
+from typing import Any
 
 from binex.stores.artifact_store import ArtifactStore
 from binex.trace._compare import content_similarity, get_artifact_content
@@ -10,8 +11,8 @@ from binex.trace.bisect import DivergencePoint, NodeComparison
 
 def _check_status_divergence(
     task_id: str,
-    good_by_task: dict,
-    bad_by_task: dict,
+    good_by_task: dict[str, Any],
+    bad_by_task: dict[str, Any],
 ) -> DivergencePoint | None:
     """Return a status DivergencePoint if statuses differ, else None."""
     from binex.trace.bisect import _get_upstream
@@ -37,8 +38,8 @@ def _check_status_divergence(
 
 async def _check_content_divergence(
     task_id: str,
-    good_by_task: dict,
-    bad_by_task: dict,
+    good_by_task: dict[str, Any],
+    bad_by_task: dict[str, Any],
     art_store: ArtifactStore,
     threshold: float,
 ) -> DivergencePoint | None:
@@ -77,8 +78,8 @@ async def _check_content_divergence(
 async def _compare_node(
     art_store: ArtifactStore,
     task_id: str,
-    good_rec,
-    bad_rec,
+    good_rec: Any,
+    bad_rec: Any,
     threshold: float,
 ) -> NodeComparison:
     """Compare a single node between two runs."""
@@ -107,7 +108,10 @@ async def _compare_node(
     )
 
 
-def _determine_comp_status(good_rec, bad_rec, g_status, b_status) -> str:
+def _determine_comp_status(
+    good_rec: Any, bad_rec: Any,
+    g_status: str | None, b_status: str | None,
+) -> str:
     """Determine initial comparison status for a node pair."""
     if good_rec is None:
         return "missing_in_good"
@@ -122,8 +126,8 @@ async def _check_content_similarity(
     art_store: ArtifactStore,
     comp_status: str,
     g_status: str | None,
-    good_rec,
-    bad_rec,
+    good_rec: Any,
+    bad_rec: Any,
     threshold: float,
 ) -> tuple[float | None, str, str | None, str | None]:
     """Check content similarity for matched-completed nodes.
@@ -147,8 +151,8 @@ async def _check_content_similarity(
 async def _generate_content_diff(
     art_store: ArtifactStore,
     comp_status: str,
-    good_rec,
-    bad_rec,
+    good_rec: Any,
+    bad_rec: Any,
     ca: str | None,
     cb: str | None,
 ) -> list[str] | None:
@@ -177,8 +181,8 @@ async def _generate_content_diff(
 def _make_divergence(
     task_id: str,
     comparison: NodeComparison,
-    good_by_task: dict,
-    bad_by_task: dict,
+    good_by_task: dict[str, Any],
+    bad_by_task: dict[str, Any],
 ) -> DivergencePoint:
     """Create a DivergencePoint from the first non-matching comparison."""
     from binex.trace.bisect import _get_upstream

@@ -4,16 +4,23 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
 from binex.cli import get_stores
+from binex.stores.backends.filesystem import FilesystemArtifactStore
+from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
+from binex.stores.backends.sqlite import SqliteExecutionStore
 
 router = APIRouter(prefix="/costs", tags=["cost-dashboard"])
 
 
-def _get_stores():
+def _get_stores() -> tuple[
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
+]:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -53,7 +60,7 @@ async def cost_dashboard(
         avg_per_run = total_cost / run_count if run_count > 0 else 0.0
 
         # Group by model
-        model_agg: dict[str, dict] = defaultdict(lambda: {"cost": 0.0, "count": 0})
+        model_agg: dict[str, dict[str, Any]] = defaultdict(lambda: {"cost": 0.0, "count": 0})
         for r in all_cost_records:
             key = r.model or "unknown"
             model_agg[key]["cost"] += r.cost
@@ -64,7 +71,7 @@ async def cost_dashboard(
         ]
 
         # Group by node
-        node_agg: dict[str, dict] = defaultdict(lambda: {"cost": 0.0, "count": 0})
+        node_agg: dict[str, dict[str, Any]] = defaultdict(lambda: {"cost": 0.0, "count": 0})
         for r in all_cost_records:
             node_agg[r.task_id]["cost"] += r.cost
             node_agg[r.task_id]["count"] += 1
@@ -74,7 +81,7 @@ async def cost_dashboard(
         ]
 
         # Cost trend — group by date
-        date_agg: dict[str, dict] = defaultdict(lambda: {"cost": 0.0, "runs": set()})
+        date_agg: dict[str, dict[str, Any]] = defaultdict(lambda: {"cost": 0.0, "runs": set()})
         for r in all_cost_records:
             date_key = r.timestamp.strftime("%Y-%m-%d")
             date_agg[date_key]["cost"] += r.cost

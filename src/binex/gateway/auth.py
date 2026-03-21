@@ -21,13 +21,13 @@ class AuthResult(BaseModel):
 class GatewayAuth(Protocol):
     """Protocol for gateway authentication backends."""
 
-    async def authenticate(self, request_headers: dict) -> AuthResult: ...
+    async def authenticate(self, request_headers: dict[str, str]) -> AuthResult: ...
 
 
 class NoAuth:
     """No-op authenticator — allows all requests."""
 
-    async def authenticate(self, request_headers: dict) -> AuthResult:
+    async def authenticate(self, request_headers: dict[str, str]) -> AuthResult:
         return AuthResult(authenticated=True)
 
 
@@ -38,7 +38,7 @@ class ApiKeyAuth:
         # Build lookup: key_value -> client name
         self._keys: dict[str, str] = {entry.key: entry.name for entry in keys}
 
-    async def authenticate(self, request_headers: dict) -> AuthResult:
+    async def authenticate(self, request_headers: dict[str, str]) -> AuthResult:
         # Case-insensitive header lookup
         normalized = {k.lower(): v for k, v in request_headers.items()}
         api_key = normalized.get("x-api-key", "")

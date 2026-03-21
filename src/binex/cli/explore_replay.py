@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import click
 
 from binex.cli import has_rich
 
 
-async def _action_replay(exec_store, art_store, run_id: str, run, records) -> str | None:
+async def _action_replay(
+    exec_store: Any, art_store: Any,
+    run_id: str, run: Any, records: Any,
+) -> str | None:
     """Replay wizard: select start node, agent swaps, workflow path, confirm."""
     if run.status == "running":
         if has_rich():
@@ -38,7 +43,7 @@ async def _action_replay(exec_store, art_store, run_id: str, run, records) -> st
     )
 
 
-def _replay_select_start_node(records) -> str | None:
+def _replay_select_start_node(records: Any) -> str | None:
     """Step 1: let user pick start node for replay."""
     click.echo()
     if has_rich():
@@ -66,14 +71,14 @@ def _replay_select_start_node(records) -> str | None:
     try:
         idx = int(choice) - 1
         if 0 <= idx < len(records):
-            return records[idx].task_id
+            return str(records[idx].task_id)
     except ValueError:
         pass
     click.echo("  Invalid node selection. Replay cancelled.")
     return None
 
 
-def _replay_collect_agent_swaps(rec_map: dict) -> dict[str, str]:
+def _replay_collect_agent_swaps(rec_map: dict[str, Any]) -> dict[str, str]:
     """Step 2: collect agent swaps interactively."""
     agent_swaps: dict[str, str] = {}
     while True:
@@ -100,7 +105,7 @@ def _replay_collect_agent_swaps(rec_map: dict) -> dict[str, str]:
     return agent_swaps
 
 
-def _render_swap_hint(agent_swaps: dict, rec_map: dict) -> None:
+def _render_swap_hint(agent_swaps: dict[str, str], rec_map: dict[str, Any]) -> None:
     """Render current swaps table and format hint."""
     if not has_rich():
         return
@@ -138,15 +143,18 @@ def _replay_select_workflow(default_path: str | None) -> str:
             )
         change = click.prompt("  Change workflow path? (y/n)", default="n")
         if change.strip().lower() == "y":
-            return click.prompt("  Workflow file path", default=default_path).strip().strip("'\"")
+            path = click.prompt("  Workflow file path", default=default_path)
+            return str(path).strip().strip("'\"")
+
         return default_path
     if has_rich():
         from binex.cli.ui import get_console as wf_console
         wf_console().print("  [dim]Enter path to workflow YAML file[/dim]")
-    return click.prompt("  Workflow file path").strip().strip("'\"")
+    return str(click.prompt("  Workflow file path")).strip().strip("'\"")
 
 
-def _replay_confirm(from_step: str, workflow: str, agent_swaps: dict) -> bool:
+
+def _replay_confirm(from_step: str, workflow: str, agent_swaps: dict[str, str]) -> bool:
     """Step 4: show summary and ask for confirmation."""
     click.echo()
     if has_rich():
@@ -178,8 +186,8 @@ def _replay_confirm(from_step: str, workflow: str, agent_swaps: dict) -> bool:
 
 
 async def _replay_execute(
-    exec_store, art_store, run_id: str,
-    workflow_path: str, from_step: str, agent_swaps: dict,
+    exec_store: Any, art_store: Any, run_id: str,
+    workflow_path: str, from_step: str, agent_swaps: dict[str, str],
 ) -> str | None:
     """Step 5: execute the replay and display results."""
     try:

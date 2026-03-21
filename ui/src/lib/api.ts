@@ -29,4 +29,46 @@ export const api = {
     request<T>(path, { method: 'DELETE' }),
 };
 
+// CAO adapter helpers
+export interface CaoSession {
+  terminal_id: string;
+  run_id: string;
+  node_name: string;
+  started_at: string;
+  status: string;
+}
+
+export interface CaoHealthStatus {
+  status: 'online' | 'degraded' | 'offline';
+  server_url: string;
+}
+
+export function getCaoHealth(): Promise<CaoHealthStatus> {
+  return api.get('/cao/health');
+}
+
+export function startCaoServer(): Promise<{ status: string; pid?: number; error?: string }> {
+  return api.post('/cao/server/start');
+}
+
+export function stopCaoServer(): Promise<{ status: string }> {
+  return api.post('/cao/server/stop');
+}
+
+export function getCaoProfiles(): Promise<{ profiles: string[] }> {
+  return api.get('/cao/profiles');
+}
+
+export function getCaoSessions(): Promise<{ sessions: CaoSession[] }> {
+  return api.get('/cao/sessions');
+}
+
+export function deleteCaoSession(terminalId: string): Promise<{ ok: boolean }> {
+  return api.delete(`/cao/sessions/${encodeURIComponent(terminalId)}`);
+}
+
+export function sendCaoTerminalInput(terminalId: string, message: string): Promise<{ ok: boolean }> {
+  return api.post(`/cao/terminals/${encodeURIComponent(terminalId)}/input`, { message });
+}
+
 export { ApiError };

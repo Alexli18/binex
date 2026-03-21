@@ -70,7 +70,7 @@ def _get_status_style(status: str) -> str:
     return STATUS_CONFIG.get(status, ("unknown", "dim"))[1]
 
 
-def _render_summary(console, summary: dict) -> None:
+def _render_summary(console: Any, summary: dict[str, Any]) -> None:
     """Render diff summary statistics."""
     table = Table(title="Summary", show_header=False, box=None)
     table.add_column("Metric", style="bold")
@@ -93,7 +93,7 @@ def _render_summary(console, summary: dict) -> None:
     console.print()
 
 
-def _render_side_by_side(console, step: dict) -> None:
+def _render_side_by_side(console: Any, step: dict[str, Any]) -> None:
     """Render side-by-side content panels for a changed node."""
     content_a = step.get("content_a") or "(no content)"
     content_b = step.get("content_b") or "(no content)"

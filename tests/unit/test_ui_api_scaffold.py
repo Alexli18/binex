@@ -175,4 +175,4 @@ async def test_list_patterns(client):
         assert "node_count" in p
         assert "tags" in p
         assert isinstance(p["tags"], list)
-        assert p["category"] in ("core", "control", "human", "integration", "agentic")
+        assert p["category"] in ("core", "control", "human", "integration", "agentic", "cao")

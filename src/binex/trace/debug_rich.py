@@ -8,7 +8,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from binex.cli.ui import STATUS_CONFIG, get_console, make_panel
-from binex.trace.debug_report import DebugReport, _truncate
+from binex.trace.debug_report import DebugReport, NodeReport, _truncate
 
 
 def format_debug_report_rich(
@@ -39,7 +39,7 @@ def format_debug_report_rich(
         console.print(_render_node_rich(node))
 
 
-def _render_node_rich(node) -> Panel:
+def _render_node_rich(node: NodeReport) -> Panel:
     """Render a single node as a rich Panel."""
     _, style = STATUS_CONFIG.get(node.status, (node.status, "dim"))
     # Extract base color from style (e.g. "red bold" -> "red", "dim" -> "dim")
@@ -56,7 +56,7 @@ def _render_node_rich(node) -> Panel:
     return Panel(Group(*parts), title=title, border_style=color)
 
 
-def _render_skipped_node_parts(node) -> list[Text | Markdown]:
+def _render_skipped_node_parts(node: NodeReport) -> list[Text | Markdown]:
     """Build renderable parts for a skipped node."""
     meta = Text()
     if node.blocked_by:
@@ -64,7 +64,7 @@ def _render_skipped_node_parts(node) -> list[Text | Markdown]:
     return [meta]
 
 
-def _render_active_node_parts(node) -> list[Text | Markdown]:
+def _render_active_node_parts(node: NodeReport) -> list[Text | Markdown]:
     """Build renderable parts for an active (non-skipped) node."""
     parts: list[Text | Markdown] = []
     meta = Text()

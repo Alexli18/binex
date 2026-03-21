@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import uuid
 from collections.abc import Callable
+from typing import Any
 
 from binex.adapters.base import AgentAdapter
 from binex.models.artifact import Artifact, Lineage
@@ -58,7 +59,7 @@ class Dispatcher:
         trace_id: str,
         stream: bool,
         stream_callback: Callable[[str], None] | None,
-        output_schema: dict | None,
+        output_schema: dict[str, Any] | None,
         attempt: int,
         max_retries: int,
     ) -> tuple[ExecutionResult | None, list[Artifact]]:
@@ -142,7 +143,7 @@ class Dispatcher:
     def _handle_schema_feedback(
         self,
         result: ExecutionResult,
-        output_schema: dict,
+        output_schema: dict[str, Any],
         task: TaskNode,
         attempt: int,
         max_retries: int,
@@ -180,7 +181,7 @@ class Dispatcher:
 
 def _validate_schema(
     result: ExecutionResult,
-    output_schema: dict,
+    output_schema: dict[str, Any],
     task: TaskNode,
     attempt: int,
     max_retries: int,
@@ -192,6 +193,10 @@ def _validate_schema(
     """
     from binex.runtime.schema_validator import validate_output
 
+    if not result.artifacts:
+        raise SchemaValidationError(
+            f"Task {task.id} produced no artifacts; cannot validate against output schema"
+        )
     content = result.artifacts[0].content
     validation = validate_output(content, output_schema)
     if validation.valid:
@@ -217,5 +222,5 @@ def _validate_schema(
 
 def _backoff_delay(attempt: int, strategy: str) -> float:
     if strategy == "exponential":
-        return min(2 ** (attempt - 1) * 0.1, 10.0)
+        return float(min(2 ** (attempt - 1) * 0.1, 10.0))
     return 0.1  # fixed

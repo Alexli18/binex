@@ -11,10 +11,14 @@ import click
 from binex.settings import Settings
 from binex.stores import create_artifact_store, create_execution_store
 from binex.stores.backends.filesystem import FilesystemArtifactStore
+from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 from binex.stores.backends.sqlite import SqliteExecutionStore
 
 
-def get_stores() -> tuple[SqliteExecutionStore, FilesystemArtifactStore]:
+def get_stores() -> tuple[
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
+]:
     """Create persistent stores (sqlite + filesystem). Call from CLI commands."""
     settings = Settings()
     exec_store = create_execution_store(
@@ -26,9 +30,9 @@ def get_stores() -> tuple[SqliteExecutionStore, FilesystemArtifactStore]:
     return exec_store, art_store
 
 
-def run_async(coro_fn: Callable[..., Coroutine], *args: Any) -> Any:
+def run_async(coro_fn: Callable[..., Coroutine[Any, Any, Any]], *args: Any) -> Any:
     """Run an async function with persistent stores, closing sqlite on exit."""
-    async def _wrapper():
+    async def _wrapper() -> Any:
         result = await coro_fn(*args)
         return result
     return asyncio.run(_wrapper())
@@ -47,7 +51,7 @@ def has_rich() -> bool:
 
 
 def render_terminal_artifacts(
-    artifacts: list,
+    artifacts: list[Any],
     terminal_nodes: list[str],
     *,
     max_rich_len: int = 4000,
@@ -83,7 +87,7 @@ def render_terminal_artifacts(
             click.echo(f"  {content}")
 
 
-def _prepare_content(content, max_len: int) -> str:
+def _prepare_content(content: Any, max_len: int) -> str:
     """Convert content to string and truncate."""
     import json as _json
 
@@ -92,8 +96,8 @@ def _prepare_content(content, max_len: int) -> str:
     if not isinstance(content, str):
         content = _json.dumps(content, default=str, indent=2)
     if len(content) > max_len:
-        return content[:max_len] + "..."
-    return content
+        return str(content[:max_len]) + "..."
+    return str(content)
 
 
 # ---------------------------------------------------------------------------

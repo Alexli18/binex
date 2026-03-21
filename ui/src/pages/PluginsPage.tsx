@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Puzzle, RefreshCw, Terminal, Bot, Globe, UserCheck, ChevronDown } from 'lucide-react';
+import { Puzzle, RefreshCw, Terminal, Bot, Globe, UserCheck, ChevronDown, TerminalSquare } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePlugins } from '../hooks/useUtilities';
+import { getCaoHealth, startCaoServer, stopCaoServer, type CaoHealthStatus } from '@/lib/api';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -58,6 +60,101 @@ const FRAMEWORK_USAGE: Record<string, string> = {
   crewai: 'agent: crewai://researcher',
   langchain: 'agent: langchain://my_chain',
 };
+
+const CAO_STATUS_STYLES = {
+  online: { dot: 'bg-emerald-400', label: 'Online', text: 'text-emerald-400' },
+  degraded: { dot: 'bg-amber-400', label: 'Degraded', text: 'text-amber-400' },
+  offline: { dot: 'bg-red-400', label: 'Offline', text: 'text-red-400' },
+} as const;
+
+function CaoAdapterCard() {
+  const queryClient = useQueryClient();
+  const [loading, setLoading] = useState(false);
+
+  const { data } = useQuery<CaoHealthStatus>({
+    queryKey: ['cao-health'],
+    queryFn: getCaoHealth,
+    refetchInterval: 30_000,
+    retry: 0,
+    staleTime: 15_000,
+  });
+
+  const status = data?.status ?? 'offline';
+  const style = CAO_STATUS_STYLES[status];
+  const serverUrl = data?.server_url ?? 'http://localhost:9889';
+  const isOnline = status === 'online' || status === 'degraded';
+
+  const handleToggle = async () => {
+    setLoading(true);
+    try {
+      if (isOnline) {
+        await stopCaoServer();
+      } else {
+        await startCaoServer();
+      }
+      // Refresh health after action
+      await new Promise((r) => setTimeout(r, 1500));
+      await queryClient.invalidateQueries({ queryKey: ['cao-health'] });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <h3 className="text-sm font-medium text-slate-300 mb-3">
+        CLI Agent Orchestrator (1)
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+              <TerminalSquare size={16} className="text-purple-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-medium text-slate-200">CAO Agent</h4>
+                <code className="text-xs font-mono text-cyan-400">cao://</code>
+                <span className="flex items-center gap-1.5 ml-auto">
+                  <span className={`inline-block w-2 h-2 rounded-full ${style.dot}`} />
+                  <span className={`text-xs ${style.text}`}>{style.label}</span>
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                Orchestrate CLI AI agents (Claude Code, Kiro CLI, Amazon Q CLI)
+                via AWS CAO tmux terminals.
+              </p>
+            </div>
+          </div>
+          <div className="bg-slate-900 rounded p-2 overflow-x-auto flex items-center justify-between">
+            <code className="text-xs font-mono text-slate-300">agent: cao://developer</code>
+            <span className="text-[10px] font-mono text-slate-500 ml-2 shrink-0">{serverUrl}</span>
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <div className="flex flex-wrap gap-1.5">
+              {['claude_code', 'kiro_cli', 'q_cli'].map((p) => (
+                <span key={p} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">
+                  {p}
+                </span>
+              ))}
+            </div>
+            <button
+              onClick={handleToggle}
+              disabled={loading}
+              className={`text-xs px-3 py-1 rounded border transition-colors disabled:opacity-50 ${
+                isOnline
+                  ? 'border-red-700/50 text-red-400 hover:bg-red-900/30'
+                  : 'border-emerald-700/50 text-emerald-400 hover:bg-emerald-900/30'
+              }`}
+            >
+              {loading ? '...' : isOnline ? 'Stop' : 'Start'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function PluginsPage() {
   const { data, isLoading, error, refetch, isFetching } = usePlugins();
@@ -133,6 +230,9 @@ export default function PluginsPage() {
             ))}
           </div>
         </div>
+
+        {/* CAO Adapter — external service with health check */}
+        <CaoAdapterCard />
 
         {/* Framework Adapters — only if external plugins exist */}
         {externalPlugins.length > 0 && (

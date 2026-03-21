@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-const API = '/api/v1/scheduler';
+import { api } from '../lib/api';
 
 export interface ScheduledWorkflow {
   name: string;
@@ -36,7 +35,7 @@ export interface SchedulerStatus {
 export function useScheduler() {
   return useQuery<SchedulerStatus>({
     queryKey: ['scheduler'],
-    queryFn: () => fetch(API + '/status').then(r => r.json()),
+    queryFn: () => api.get('/scheduler/status'),
     refetchInterval: 10_000,
   });
 }
@@ -44,7 +43,7 @@ export function useScheduler() {
 export function useSchedulerStart() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => fetch(API + '/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ directory: '.' }) }).then(r => r.json()),
+    mutationFn: () => api.post('/scheduler/start', { directory: '.' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduler'] }),
   });
 }
@@ -52,7 +51,7 @@ export function useSchedulerStart() {
 export function useSchedulerStop() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => fetch(API + '/stop', { method: 'POST' }).then(r => r.json()),
+    mutationFn: () => api.post('/scheduler/stop'),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['scheduler'] }),
   });
 }

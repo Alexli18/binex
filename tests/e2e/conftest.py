@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -29,7 +30,7 @@ def run_binex(*args: str, env: dict, cwd: str | Path | None = None,
               input_text: str | None = None) -> subprocess.CompletedProcess:
     """Run a binex CLI command as a real subprocess."""
     return subprocess.run(
-        ["binex", *args],
+        [sys.executable, "-m", "binex", *args],
         capture_output=True,
         text=True,
         env=env,

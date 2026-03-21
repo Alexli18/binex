@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
 
@@ -35,10 +36,10 @@ class _NoOpSpan:
     def record_exception(self, exception: BaseException) -> None:
         pass
 
-    def __enter__(self):
+    def __enter__(self) -> _NoOpSpan:
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: object) -> None:
         pass
 
 
@@ -46,7 +47,7 @@ class _NoOpTracer:
     """Minimal no-op tracer for when OTEL is unavailable."""
 
     @contextmanager
-    def start_as_current_span(self, name: str, **kwargs):
+    def start_as_current_span(self, name: str, **kwargs: Any) -> Iterator[_NoOpSpan]:
         yield _NoOpSpan()
 
 

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
-from binex.models.cost import CostRecord, ExecutionResult
+from binex.models.cost import CostRecord, CostSource, ExecutionResult
 from binex.models.task import TaskNode
 
 if TYPE_CHECKING:
@@ -35,6 +35,7 @@ class A2AAgentAdapter:
         self._endpoint = endpoint.rstrip("/")
         self._gateway = gateway
         self._routing_hints = routing_hints
+        self._client = httpx.AsyncClient()
 
     async def execute(
         self,
@@ -75,14 +76,13 @@ class A2AAgentAdapter:
             ],
         }
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{self._endpoint}/execute",
-                json=payload,
-                timeout=30.0,
-            )
-            response.raise_for_status()
-            data = response.json()
+        response = await self._client.post(
+            f"{self._endpoint}/execute",
+            json=payload,
+            timeout=30.0,
+        )
+        response.raise_for_status()
+        data = response.json()
 
         return self._build_result(task, input_artifacts, data)
 
@@ -90,7 +90,7 @@ class A2AAgentAdapter:
         self,
         task: TaskNode,
         input_artifacts: list[Artifact],
-        data: dict,
+        data: dict[str, Any],
     ) -> ExecutionResult:
         """Build an ExecutionResult from raw response data."""
         artifacts = [
@@ -110,7 +110,7 @@ class A2AAgentAdapter:
         # Extract optional cost from response
         reported_cost = data.get("cost")
         if reported_cost is not None:
-            source = "agent_report"
+            source: CostSource = "agent_report"
             cost_amount = float(reported_cost)
         else:
             source = "unknown"
@@ -127,25 +127,26 @@ class A2AAgentAdapter:
         return ExecutionResult(artifacts=artifacts, cost=cost_record)
 
     async def cancel(self, task_id: str) -> None:
-        async with httpx.AsyncClient() as client:
-            await client.post(
-                f"{self._endpoint}/cancel",
-                json={"task_id": task_id},
-                timeout=10.0,
-            )
+        await self._client.post(
+            f"{self._endpoint}/cancel",
+            json={"task_id": task_id},
+            timeout=10.0,
+        )
 
     async def health(self) -> AgentHealth:
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{self._endpoint}/health",
-                    timeout=5.0,
-                )
-                if response.status_code == 200:
-                    return AgentHealth.ALIVE
-                return AgentHealth.DEGRADED
+            response = await self._client.get(
+                f"{self._endpoint}/health",
+                timeout=5.0,
+            )
+            if response.status_code == 200:
+                return AgentHealth.ALIVE
+            return AgentHealth.DEGRADED
         except Exception:
             return AgentHealth.DOWN
+
+    async def close(self) -> None:
+        await self._client.aclose()
 
 
 class A2AExternalGatewayAdapter:
@@ -165,6 +166,7 @@ class A2AExternalGatewayAdapter:
         self._endpoint = endpoint.rstrip("/")
         self._gateway_url = gateway_url.rstrip("/")
         self._routing_hints = routing_hints
+        self._client = httpx.AsyncClient()
 
     async def execute(
         self,
@@ -186,14 +188,13 @@ class A2AExternalGatewayAdapter:
             routing=self._routing_hints,
         )
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{self._gateway_url}/route",
-                json=req.model_dump(),
-                timeout=30.0,
-            )
-            response.raise_for_status()
-            data = response.json()
+        response = await self._client.post(
+            f"{self._gateway_url}/route",
+            json=req.model_dump(),
+            timeout=30.0,
+        )
+        response.raise_for_status()
+        data = response.json()
 
         return self._build_result(task, input_artifacts, data)
 
@@ -201,7 +202,7 @@ class A2AExternalGatewayAdapter:
         self,
         task: TaskNode,
         input_artifacts: list[Artifact],
-        data: dict,
+        data: dict[str, Any],
     ) -> ExecutionResult:
         """Build an ExecutionResult from gateway response data."""
         artifacts = [
@@ -220,10 +221,10 @@ class A2AExternalGatewayAdapter:
 
         reported_cost = data.get("cost")
         if reported_cost is not None:
-            source = "agent_report"
+            source2: CostSource = "agent_report"
             cost_amount = float(reported_cost)
         else:
-            source = "unknown"
+            source2 = "unknown"
             cost_amount = 0.0
 
         cost_record = CostRecord(
@@ -231,7 +232,7 @@ class A2AExternalGatewayAdapter:
             run_id=task.run_id,
             task_id=task.node_id,
             cost=cost_amount,
-            source=source,
+            source=source2,
         )
 
         return ExecutionResult(artifacts=artifacts, cost=cost_record)
@@ -242,13 +243,15 @@ class A2AExternalGatewayAdapter:
 
     async def health(self) -> AgentHealth:
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{self._gateway_url}/health",
-                    timeout=5.0,
-                )
-                if response.status_code == 200:
-                    return AgentHealth.ALIVE
-                return AgentHealth.DEGRADED
+            response = await self._client.get(
+                f"{self._gateway_url}/health",
+                timeout=5.0,
+            )
+            if response.status_code == 200:
+                return AgentHealth.ALIVE
+            return AgentHealth.DEGRADED
         except Exception:
             return AgentHealth.DOWN
+
+    async def close(self) -> None:
+        await self._client.aclose()

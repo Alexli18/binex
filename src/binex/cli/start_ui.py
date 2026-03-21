@@ -9,7 +9,7 @@ import click
 
 def has_rich() -> bool:
     """Proxy to binex.cli.start.has_rich for test-patchability."""
-    return sys.modules["binex.cli.start"].has_rich()
+    return bool(sys.modules["binex.cli.start"].has_rich())
 
 
 def _print_banner() -> None:

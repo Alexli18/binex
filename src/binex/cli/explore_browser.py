@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import click
 
 from binex.cli import has_rich
 from binex.cli.explore_utils import _short_id, _time_ago
 
 
-async def _browse_runs(exec_store, art_store, dashboard_fn) -> None:
+async def _browse_runs(exec_store: Any, art_store: Any, dashboard_fn: Any) -> None:
     """List recent runs and let user pick one for the dashboard."""
     while True:
         runs = await exec_store.list_runs()
@@ -33,7 +35,7 @@ async def _browse_runs(exec_store, art_store, dashboard_fn) -> None:
         # selected == "refresh" → back to outer loop
 
 
-def _render_runs_rich(runs) -> None:
+def _render_runs_rich(runs: Any) -> None:
     """Render runs table with Rich formatting."""
     from binex.cli.ui import get_console, make_table, status_text
 
@@ -57,7 +59,7 @@ def _render_runs_rich(runs) -> None:
     get_console().print(table)
 
 
-def _render_runs_plain(runs) -> None:
+def _render_runs_plain(runs: Any) -> None:
     """Render runs list in plain text."""
     click.echo("  Recent runs:")
     click.echo()
@@ -71,7 +73,7 @@ def _render_runs_plain(runs) -> None:
         )
 
 
-async def _select_run(exec_store, art_store, runs, dashboard_fn) -> str:
+async def _select_run(exec_store: Any, art_store: Any, runs: Any, dashboard_fn: Any) -> str:
     """Prompt user to select a run. Returns 'quit' or 'refresh'."""
     while True:
         choice = click.prompt("  Select run (or q to quit)", default="1")

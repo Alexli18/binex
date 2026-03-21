@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
+from collections import deque
+from typing import Any
+
 from binex.models.artifact import Artifact
 from binex.models.cost import CostRecord, RunCostSummary
 from binex.models.execution import ExecutionRecord, RunSummary
@@ -25,9 +29,9 @@ class InMemoryArtifactStore:
     async def get_lineage(self, artifact_id: str) -> list[Artifact]:
         result: list[Artifact] = []
         visited: set[str] = set()
-        queue = [artifact_id]
+        queue = deque([artifact_id])
         while queue:
-            current_id = queue.pop(0)
+            current_id = queue.popleft()
             if current_id in visited:
                 continue
             visited.add(current_id)
@@ -47,6 +51,8 @@ class InMemoryExecutionStore:
         self._runs: dict[str, RunSummary] = {}
         self._records: list[ExecutionRecord] = []
         self._cost_records: list[CostRecord] = []
+        self._cao_sessions: dict[str, dict[str, str]] = {}
+        self._workflow_snapshots: dict[str, dict[str, Any]] = {}
 
     async def close(self) -> None:
         pass
@@ -63,8 +69,15 @@ class InMemoryExecutionStore:
                 return rec
         return None
 
-    async def list_runs(self) -> list[RunSummary]:
-        return list(self._runs.values())
+    async def list_runs(
+        self,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[RunSummary]:
+        runs = list(self._runs.values())
+        if limit is not None:
+            return runs[offset : offset + limit]
+        return runs[offset:]
 
     async def create_run(self, run_summary: RunSummary) -> None:
         self._runs[run_summary.run_id] = run_summary
@@ -81,6 +94,12 @@ class InMemoryExecutionStore:
     async def list_costs(self, run_id: str) -> list[CostRecord]:
         return [r for r in self._cost_records if r.run_id == run_id]
 
+    async def get_node_cost(self, run_id: str, task_id: str) -> float:
+        return sum(
+            r.cost for r in self._cost_records
+            if r.run_id == run_id and r.task_id == task_id
+        )
+
     async def get_run_cost_summary(self, run_id: str) -> RunCostSummary:
         records = await self.list_costs(run_id)
         total_cost = sum(r.cost for r in records)
@@ -92,6 +111,64 @@ class InMemoryExecutionStore:
             total_cost=total_cost,
             node_costs=node_costs,
         )
+
+    # ------------------------------------------------------------------
+    # CAO session registry
+    # ------------------------------------------------------------------
+
+    async def create_cao_session(
+        self, terminal_id: str, run_id: str, node_name: str,
+        session_name: str | None = None,
+    ) -> None:
+        self._cao_sessions[terminal_id] = {
+            "terminal_id": terminal_id,
+            "run_id": run_id,
+            "node_name": node_name,
+            "started_at": "",
+            "status": "active",
+            "session_name": session_name or "",
+        }
+
+    async def complete_cao_session(self, terminal_id: str) -> None:
+        if terminal_id in self._cao_sessions:
+            self._cao_sessions[terminal_id]["status"] = "completed"
+
+    async def get_cao_sessions(
+        self, status: str | None = None,
+    ) -> list[dict[str, str]]:
+        sessions = list(self._cao_sessions.values())
+        if status:
+            sessions = [s for s in sessions if s["status"] == status]
+        return sessions
+
+    async def get_orphaned_cao_sessions(self) -> list[dict[str, str]]:
+        return await self.get_cao_sessions(status="orphaned")
+
+    async def mark_cao_sessions_orphaned(self, terminal_ids: list[str]) -> None:
+        for tid in terminal_ids:
+            if tid in self._cao_sessions:
+                self._cao_sessions[tid]["status"] = "orphaned"
+
+    async def delete_cao_session(self, terminal_id: str) -> bool:
+        return self._cao_sessions.pop(terminal_id, None) is not None
+
+    # ------------------------------------------------------------------
+    # Workflow snapshots
+    # ------------------------------------------------------------------
+
+    async def store_workflow_snapshot(self, content: str, version: int) -> str:
+        content_hash = hashlib.sha256(content.encode()).hexdigest()
+        if content_hash not in self._workflow_snapshots:
+            self._workflow_snapshots[content_hash] = {
+                "hash": content_hash,
+                "content": content,
+                "version": version,
+                "created_at": "",
+            }
+        return content_hash
+
+    async def get_workflow_snapshot(self, content_hash: str) -> dict[str, Any] | None:
+        return self._workflow_snapshots.get(content_hash)
 
 
 __all__ = [

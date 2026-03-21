@@ -7,13 +7,14 @@ import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import click
 
 from binex.cli import get_stores
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 

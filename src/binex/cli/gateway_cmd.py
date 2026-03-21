@@ -4,17 +4,18 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import Any
 
 import click
 
 
-def _import_httpx():
+def _import_httpx() -> Any:
     """Lazy import httpx. Extracted for test patching."""
     import httpx
     return httpx
 
 
-def _gateway_error_message(httpx_mod, exc: Exception, url: str) -> str:
+def _gateway_error_message(httpx_mod: Any, exc: Exception, url: str) -> str:
     """Produce a user-friendly error message from a gateway request failure."""
     try:
         if isinstance(exc, httpx_mod.ConnectError):
@@ -28,7 +29,7 @@ def _gateway_error_message(httpx_mod, exc: Exception, url: str) -> str:
     return f"Error: Cannot connect to gateway at {url}"
 
 
-def _import_uvicorn():
+def _import_uvicorn() -> Any:
     """Lazy import uvicorn. Extracted for test patching."""
     import uvicorn
     return uvicorn
@@ -103,7 +104,7 @@ def _start_server(config_path: str | None, host: str | None, port: int | None) -
     uvicorn.run(app, host=bind_host, port=bind_port)
 
 
-def create_app(config):
+def create_app(config: Any) -> Any:
     """Lazy wrapper for gateway app creation. Extracted for test patching."""
     from binex.gateway.app import create_app as _create_app
     return _create_app(config)

@@ -102,7 +102,7 @@ class TestPredefinedPatterns:
     """T021: Predefined patterns."""
 
     def test_patterns_count(self) -> None:
-        assert len(PATTERNS) == 20
+        assert len(PATTERNS) == 25
 
     def test_patterns_all_valid(self) -> None:
         for name, dsl in PATTERNS.items():

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 from fastapi import APIRouter
@@ -12,6 +13,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from binex.cli import get_stores
+from binex.stores.backends.filesystem import FilesystemArtifactStore
+from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
+from binex.stores.backends.sqlite import SqliteExecutionStore
 from binex.ui.api.events import event_bus
 
 logger = logging.getLogger(__name__)
@@ -28,7 +32,10 @@ class ReplayRequest(BaseModel):
     agent_swaps: dict[str, str] = {}
 
 
-def _get_stores():
+def _get_stores() -> tuple[
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
+]:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -45,7 +52,7 @@ async def _execute_replay(
     workflow_path: str,
     agent_swaps: dict[str, str],
     new_run_id: str,
-) -> dict:
+) -> dict[str, Any]:
     """Load and execute a replay through the ReplayEngine."""
     from binex.cli.adapter_registry import register_workflow_adapters
     from binex.plugins import PluginRegistry

@@ -36,7 +36,7 @@ export default function GatewayPage() {
         <Breadcrumb items={[{ label: 'System' }, { label: 'Gateway' }]} className="mb-4" />
         <ErrorState
           title="Failed to load gateway status"
-          message={(error as Error).message}
+          message={error instanceof Error ? error.message : String(error)}
           onRetry={() => refetch()}
         />
       </PageShell>

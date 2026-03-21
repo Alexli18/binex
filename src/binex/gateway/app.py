@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -23,7 +24,7 @@ def create_app(config: GatewayConfig) -> FastAPI:
     gateway = Gateway(config)
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await gateway.start()
         try:
             yield
@@ -46,7 +47,7 @@ def create_app(config: GatewayConfig) -> FastAPI:
     # ── Exception handler for auth errors from dependencies ────────
 
     @app.exception_handler(_AuthError)
-    async def auth_error_handler(request: Request, exc: _AuthError):
+    async def auth_error_handler(request: Request, exc: _AuthError) -> JSONResponse:
         return JSONResponse(
             status_code=401,
             content={"error": "Invalid or missing API key"},

@@ -27,6 +27,7 @@ class Gateway:
     def __init__(self, config: GatewayConfig | None) -> None:
         self._config = config
         self._client: httpx.AsyncClient | None = None
+        self._registry: AgentRegistry | None
         if config is not None:
             self._registry = AgentRegistry(config)
             self._router = Router(self._registry)

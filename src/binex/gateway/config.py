@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Literal
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
@@ -126,7 +126,7 @@ _ENV_PATTERN = re.compile(r"\$\{(\w+)\}")
 
 def _interpolate_env(value: str) -> str:
     """Replace ${VAR} references with environment variable values."""
-    def _replace(match: re.Match) -> str:
+    def _replace(match: re.Match[str]) -> str:
         var_name = match.group(1)
         val = os.environ.get(var_name)
         if val is None:
@@ -138,7 +138,7 @@ def _interpolate_env(value: str) -> str:
     return _ENV_PATTERN.sub(_replace, value)
 
 
-def _interpolate_recursive(obj: object) -> object:
+def _interpolate_recursive(obj: object) -> dict[str, object] | list[object] | str | object:
     """Recursively interpolate env vars in a parsed YAML structure."""
     if isinstance(obj, str):
         return _interpolate_env(obj)
@@ -180,6 +180,8 @@ def load_gateway_config(path: str | None) -> GatewayConfig | None:
             if raw is None:
                 raw = {}
             interpolated = _interpolate_recursive(raw)
+            if not isinstance(interpolated, dict):
+                raise ValueError(f"Expected dict from config, got {type(interpolated)}")
             return GatewayConfig(**interpolated)
 
     return None

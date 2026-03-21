@@ -13,6 +13,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from binex.cli import get_stores
+from binex.stores.backends.filesystem import FilesystemArtifactStore
+from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
+from binex.stores.backends.sqlite import SqliteExecutionStore
 from binex.ui.api.errors import APIError
 from binex.ui.api.events import event_bus
 
@@ -21,7 +24,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/runs", tags=["runs"])
 
 
-def _get_stores():
+def _get_stores() -> tuple[
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
+]:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -60,9 +66,9 @@ async def _execute_workflow(
     workflow_path: Path,
     variables: dict[str, str],
     run_id: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Load and execute a workflow through the real orchestrator."""
-    import yaml as _yaml
+    import yaml as _yaml  # type: ignore[import-untyped]
 
     from binex.cli.adapter_registry import register_workflow_adapters
     from binex.plugins import PluginRegistry
@@ -94,7 +100,7 @@ async def _execute_workflow(
 
     exec_store, artifact_store = _get_stores()
 
-    async def _on_event(evt: dict) -> None:
+    async def _on_event(evt: dict[str, Any]) -> None:
         rid = evt.get("run_id", run_id)
         if rid:
             await event_bus.publish(rid, evt)
@@ -104,6 +110,7 @@ async def _execute_workflow(
         execution_store=exec_store,
         stream=False,
         event_callback=_on_event,
+        interactive=False,
     )
 
     plugin_registry = PluginRegistry()
@@ -112,6 +119,7 @@ async def _execute_workflow(
     register_workflow_adapters(
         orch.dispatcher, spec, plugin_registry=plugin_registry,
         web_mode=True,
+        event_callback=orch._event_callback,
     )
 
     try:
@@ -329,40 +337,52 @@ async def replay_run(body: ReplayRequest) -> JSONResponse:
 async def list_runs() -> JSONResponse:
     """List all workflow runs."""
     exec_store, _ = _get_stores()
-    runs = await exec_store.list_runs()
-    return JSONResponse({"runs": [r.model_dump(mode="json") for r in runs]})
+    try:
+        runs = await exec_store.list_runs()
+        return JSONResponse({"runs": [r.model_dump(mode="json") for r in runs]})
+    finally:
+        await exec_store.close()
 
 
 @router.get("/{run_id}")
 async def get_run(run_id: str) -> JSONResponse:
     """Get a single workflow run by ID."""
     exec_store, _ = _get_stores()
-    run = await exec_store.get_run(run_id)
-    if run is None:
-        raise APIError(404, "run_not_found", f"Run '{run_id}' not found")
-    return JSONResponse(run.model_dump(mode="json"))
+    try:
+        run = await exec_store.get_run(run_id)
+        if run is None:
+            raise APIError(404, "run_not_found", f"Run '{run_id}' not found")
+        return JSONResponse(run.model_dump(mode="json"))
+    finally:
+        await exec_store.close()
 
 
 @router.get("/{run_id}/records")
 async def get_records(run_id: str) -> JSONResponse:
     """Get execution records for a workflow run."""
     exec_store, _ = _get_stores()
-    records = await exec_store.list_records(run_id)
-    return JSONResponse({"records": [r.model_dump(mode="json") for r in records]})
+    try:
+        records = await exec_store.list_records(run_id)
+        return JSONResponse({"records": [r.model_dump(mode="json") for r in records]})
+    finally:
+        await exec_store.close()
 
 
 @router.post("/{run_id}/cancel")
 async def cancel_run(run_id: str) -> JSONResponse:
     """Cancel a running workflow run."""
     exec_store, _ = _get_stores()
-    run = await exec_store.get_run(run_id)
-    if run is None:
-        raise APIError(404, "run_not_found", f"Run '{run_id}' not found")
-    if run.status != "running":
-        raise APIError(
-            409, "run_not_running",
-            f"Run '{run_id}' is not running (status: {run.status})",
-        )
-    run_updated = run.model_copy(update={"status": "cancelled"})
-    await exec_store.update_run(run_updated)
-    return JSONResponse({"run_id": run_id, "status": "cancelled"})
+    try:
+        run = await exec_store.get_run(run_id)
+        if run is None:
+            raise APIError(404, "run_not_found", f"Run '{run_id}' not found")
+        if run.status != "running":
+            raise APIError(
+                409, "run_not_running",
+                f"Run '{run_id}' is not running (status: {run.status})",
+            )
+        run_updated = run.model_copy(update={"status": "cancelled"})
+        await exec_store.update_run(run_updated)
+        return JSONResponse({"run_id": run_id, "status": "cancelled"})
+    finally:
+        await exec_store.close()

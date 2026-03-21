@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
+from typing import Any
 
 import click
 
@@ -20,7 +22,7 @@ def _parse_comma_list(input_str: str) -> list[str]:
 
 def _select_node_by_number(
     node_list: list[str],
-    prompt_fn,
+    prompt_fn: Callable[[str], str],
     prompt_text: str = "Choose which node?",
 ) -> str | None:
     """Display numbered node list and prompt user to select one by number.
@@ -44,16 +46,16 @@ def _select_node_by_number(
 
 def has_rich() -> bool:
     """Proxy to binex.cli.start.has_rich for test-patchability."""
-    return sys.modules["binex.cli.start"].has_rich()
+    return bool(sys.modules["binex.cli.start"].has_rich())
 
 
 def _constructor_loop(
-    nodes_config: dict[str, dict],
+    nodes_config: dict[str, dict[str, Any]],
     edges: list[tuple[str, str]],
     *,
-    input_fn=None,
+    input_fn: Callable[[str], str] | None = None,
     node_roles: dict[str, str] | None = None,
-) -> dict[str, dict]:
+) -> dict[str, dict[str, Any]]:
     """Main constructor loop: display DAG, menu for add/delete/edit/move/preview/done."""
     _prompt = input_fn or (lambda p: click.prompt(p))
 
@@ -129,11 +131,11 @@ def _constructor_loop(
 
 
 def _constructor_add_node(
-    nodes_config: dict[str, dict],
+    nodes_config: dict[str, dict[str, Any]],
     edges: list[tuple[str, str]],
     *,
-    input_fn=None,
-) -> tuple[dict[str, dict], list[tuple[str, str]]]:
+    input_fn: Callable[[str], str] | None = None,
+) -> tuple[dict[str, dict[str, Any]], list[tuple[str, str]]]:
     """Add a new node to the graph."""
     _prompt = input_fn or (lambda p: click.prompt(p))
 
@@ -156,7 +158,7 @@ def _constructor_add_node(
     deps = [d.strip() for d in dep_str.split(",") if d.strip()] \
         if dep_str else []
 
-    cfg: dict = {
+    cfg: dict[str, Any] = {
         "agent": agent_uri,
         "system_prompt": prompt_str,
         "outputs": ["result"],
@@ -173,11 +175,11 @@ def _constructor_add_node(
 
 
 def _constructor_delete_node(
-    nodes_config: dict[str, dict],
+    nodes_config: dict[str, dict[str, Any]],
     edges: list[tuple[str, str]],
     *,
-    input_fn=None,
-) -> tuple[dict[str, dict], list[tuple[str, str]]]:
+    input_fn: Callable[[str], str] | None = None,
+) -> tuple[dict[str, dict[str, Any]], list[tuple[str, str]]]:
     """Delete a node and its edges."""
     _prompt = input_fn or (lambda p: click.prompt(p))
 
@@ -209,12 +211,12 @@ def _constructor_delete_node(
 
 
 def _constructor_edit_node(
-    nodes_config: dict[str, dict],
+    nodes_config: dict[str, dict[str, Any]],
     edges: list[tuple[str, str]],
     *,
-    input_fn=None,
+    input_fn: Callable[[str], str] | None = None,
     node_roles: dict[str, str] | None = None,
-) -> dict[str, dict]:
+) -> dict[str, dict[str, Any]]:
     """Edit a node's prompt, agent, or config."""
     _prompt = input_fn or (lambda p: click.prompt(p))
 
@@ -260,11 +262,11 @@ def _constructor_edit_node(
 
 
 def _constructor_move_node(
-    nodes_config: dict[str, dict],
+    nodes_config: dict[str, dict[str, Any]],
     edges: list[tuple[str, str]],
     *,
-    input_fn=None,
-) -> tuple[dict[str, dict], list[tuple[str, str]]]:
+    input_fn: Callable[[str], str] | None = None,
+) -> tuple[dict[str, dict[str, Any]], list[tuple[str, str]]]:
     """Move a node by changing its edges."""
     _prompt = input_fn or (lambda p: click.prompt(p))
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections import deque
+
 from binex.graph.dag import DAG
 
 
@@ -15,6 +17,21 @@ class Scheduler:
         self._running: set[str] = set()
         self._skipped: set[str] = set()
         self._execution_count: dict[str, int] = {}
+
+    @property
+    def completed(self) -> set[str]:
+        """Return the set of completed node IDs."""
+        return self._completed
+
+    @property
+    def failed(self) -> set[str]:
+        """Return the set of failed node IDs."""
+        return self._failed
+
+    @property
+    def skipped(self) -> set[str]:
+        """Return the set of skipped node IDs."""
+        return self._skipped
 
     def ready_nodes(self) -> list[str]:
         """Return node IDs whose dependencies are all completed/skipped
@@ -61,9 +78,9 @@ class Scheduler:
         """Reset all nodes on any path from from_node to to_node (inclusive)."""
         # Forward reachable from from_node (bounded by to_node)
         forward_reachable: set[str] = set()
-        queue = [from_node]
+        queue = deque([from_node])
         while queue:
-            current = queue.pop(0)
+            current = queue.popleft()
             if current in forward_reachable:
                 continue
             forward_reachable.add(current)
@@ -74,9 +91,9 @@ class Scheduler:
 
         # Backward reachable from to_node (bounded by from_node)
         backward_reachable: set[str] = set()
-        queue = [to_node]
+        queue = deque([to_node])
         while queue:
-            current = queue.pop(0)
+            current = queue.popleft()
             if current in backward_reachable:
                 continue
             backward_reachable.add(current)

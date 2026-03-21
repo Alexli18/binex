@@ -24,8 +24,10 @@ export function WorkflowGraph({ nodes, edges, onNodeClick }: WorkflowGraphProps)
 
   useEffect(() => {
     if (nodes.length === 0) return;
-    layoutGraph(nodes, edges)
-      .then((layout) => {
+
+    const applyLayout = async () => {
+      try {
+        const layout = await layoutGraph(nodes, edges);
         setRfNodes(
           layout.nodes.map((n) => ({
             id: n.id,
@@ -43,10 +45,8 @@ export function WorkflowGraph({ nodes, edges, onNodeClick }: WorkflowGraphProps)
             style: { stroke: chartColors.edge, strokeWidth: 2 },
           })),
         );
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error('ELK layout failed, using fallback:', err);
-        // Fallback: stack nodes vertically without ELK
         setRfNodes(
           nodes.map((n, i) => ({
             id: n.id,
@@ -63,7 +63,10 @@ export function WorkflowGraph({ nodes, edges, onNodeClick }: WorkflowGraphProps)
             style: { stroke: chartColors.edge, strokeWidth: 2 },
           })),
         );
-      });
+      }
+    };
+
+    applyLayout();
   }, [nodes, edges]);
 
   const handleNodeClick = useCallback(

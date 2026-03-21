@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import difflib
+from typing import Any
 
 import click
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from binex.cli import get_stores
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 

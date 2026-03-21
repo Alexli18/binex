@@ -16,6 +16,7 @@ import { api } from '../lib/api';
 import { toast } from 'sonner';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { Input } from '@/components/ui/input';
+import { chartColors } from '@/lib/design-tokens';
 
 // ---------------------------------------------------------------------------
 // Helpers (kept local — only used by the orchestrator)
@@ -41,6 +42,7 @@ function agentToNodeType(agent: string): { nodeType: string; color: string } {
     return { nodeType: 'human-approve', color: '#f59e0b' };
   }
   if (agent.startsWith('a2a://')) return { nodeType: 'a2a', color: '#6366f1' };
+  if (agent.startsWith('cao://')) return { nodeType: 'cao', color: chartColors.cao };
   return { nodeType: 'local', color: '#06b6d4' };
 }
 
@@ -48,7 +50,7 @@ interface ParsedYamlWorkflow {
   name?: string;
   schedule?: string;
   mcp_servers?: Record<string, unknown>;
-  nodes?: Record<string, { agent: string; depends_on?: string[]; config?: Record<string, unknown>; system_prompt?: string; inputs?: Record<string, string>; outputs?: string[]; tools?: string[] }>;
+  nodes?: Record<string, { agent: string; depends_on?: string[]; config?: Record<string, unknown>; system_prompt?: string; inputs?: Record<string, string>; outputs?: string[]; tools?: string[]; cao?: Record<string, unknown> }>;
 }
 
 interface YamlParseResult {
@@ -65,7 +67,7 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
 
   const entries = Object.entries(parsed.nodes);
   const nodes: Node[] = entries.map(([id, spec], i) => {
-    const agent = spec.agent || 'local://echo';
+    const agent = spec.agent ?? 'local://echo';
     const { nodeType, color } = agentToNodeType(agent);
     return {
       id,
@@ -75,11 +77,11 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
         label: id,
         nodeType,
         agent,
-        config: { ...spec.config, ...(spec.system_prompt ? { system_prompt: spec.system_prompt } : {}) },
+        config: { ...spec.config, ...(spec.system_prompt ? { system_prompt: spec.system_prompt } : {}), ...(spec.cao ?? {}) },
         system_prompt: spec.system_prompt,
         inputs: spec.inputs,
         outputs: spec.outputs,
-        tools: spec.tools || [],
+        tools: spec.tools ?? [],
         color,
       },
     };
@@ -96,8 +98,8 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
   return {
     nodes,
     edges,
-    mcpServers: parsed.mcp_servers || {},
-    schedule: parsed.schedule || '',
+    mcpServers: parsed.mcp_servers ?? {},
+    schedule: parsed.schedule ?? '',
   };
 }
 
@@ -109,7 +111,7 @@ export default function WorkflowEditor() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const initialContent = (location.state as { initialContent?: string })?.initialContent;
+  const initialContent = (location.state as { initialContent?: string } | null)?.initialContent;
   const fileParam = searchParams.get('file');
   const { data: workflows, isLoading: loadingList } = useWorkflows();
   const [selectedPath, setSelectedPath] = useState<string | null>(fileParam);
@@ -152,8 +154,8 @@ export default function WorkflowEditor() {
       // Extract workflow-level settings from YAML
       try {
         const result = yamlToRfGraph(workflowData.content);
-        setMcpServers((result.mcpServers || {}) as Record<string, McpServerConfig>);
-        setSchedule(result.schedule || '');
+        setMcpServers((result.mcpServers ?? {}) as Record<string, McpServerConfig>);
+        setSchedule(result.schedule ?? '');
         // If in visual mode, also sync RF nodes/edges
         if (mode === 'visual') {
           setRfNodes(result.nodes);
@@ -163,7 +165,7 @@ export default function WorkflowEditor() {
         // parse error handled by debounced effect
       }
     }
-  }, [workflowData, selectedPath]);
+  }, [workflowData, selectedPath, mode, setRfNodes, setRfEdges]);
 
   // Sync selectedPath with URL query param whenever it changes
   // Also clear stale content so old file data is never shown
@@ -194,7 +196,7 @@ export default function WorkflowEditor() {
       setSelectedPath(null);
       window.history.replaceState({}, document.title);
     }
-  }, []);
+  }, [initialContent]);
 
   // Debounced YAML -> DAG preview
   useEffect(() => {
@@ -245,8 +247,8 @@ export default function WorkflowEditor() {
       const result = yamlToRfGraph(content);
       setRfNodes(result.nodes);
       setRfEdges(result.edges);
-      setMcpServers((result.mcpServers || {}) as Record<string, McpServerConfig>);
-      setSchedule(result.schedule || '');
+      setMcpServers((result.mcpServers ?? {}) as Record<string, McpServerConfig>);
+      setSchedule(result.schedule ?? '');
       setParseError(null);
       setMode('visual');
     } catch (err) {
@@ -314,7 +316,7 @@ export default function WorkflowEditor() {
 
   // Keyboard shortcuts: Cmd+S to save, Cmd+Enter to run, Cmd+O to open files
   useKeyboardShortcuts(useMemo(() => [
-    { key: 's', meta: true, handler: () => { selectedPath ? handleSave() : setShowSaveAs(true); } },
+    { key: 's', meta: true, handler: () => { if (selectedPath) { handleSave(); } else { setShowSaveAs(true); } } },
     { key: 'Enter', meta: true, handler: () => { handleRun(); } },
     { key: 'o', meta: true, handler: () => { setFilesOpen((v) => !v); } },
   ], [handleSave, handleRun, selectedPath]));
@@ -432,7 +434,7 @@ export default function WorkflowEditor() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+            className="fixed inset-0 bg-black/60 z-40 transition-opacity"
             onClick={() => setFilesOpen(false)}
           />
           {/* Panel */}

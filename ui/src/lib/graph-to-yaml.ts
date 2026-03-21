@@ -20,12 +20,12 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
   for (const node of nodes) {
     const d = node.data;
     const entry: Record<string, unknown> = {
-      agent: d.agent || 'local://echo',
+      agent: d.agent ?? 'local://echo',
       outputs: ['output'],
     };
 
     // system_prompt is top-level in YAML (used by LLM and Human adapters)
-    const promptText = d.system_prompt || d.config?.system_prompt || d.config?.prompt_message;
+    const promptText = d.system_prompt ?? d.config?.system_prompt ?? d.config?.prompt_message;
     if (promptText) entry.system_prompt = promptText;
 
     const config: Record<string, unknown> = {};
@@ -34,6 +34,17 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
     if (d.config?.budget_limit) config.budget_limit = d.config.budget_limit;
     if (d.config?.skill) config.skill = d.config.skill;
     if (Object.keys(config).length > 0) entry.config = config;
+
+    // CAO adapter config block
+    if (d.nodeType === 'cao') {
+      const cao: Record<string, unknown> = {};
+      if (d.config?.provider) cao.provider = d.config.provider;
+      if (d.config?.mode && d.config.mode !== 'handoff') cao.mode = d.config.mode;
+      if (d.config?.output_format && d.config.output_format !== 'auto') cao.output_format = d.config.output_format;
+      if (d.config?.output_field) cao.output_field = d.config.output_field;
+      if (d.config?.timeout_minutes && d.config.timeout_minutes !== 30) cao.timeout_minutes = d.config.timeout_minutes;
+      if (Object.keys(cao).length > 0) entry.cao = cao;
+    }
 
     // Tools
     if (d.tools?.length) entry.tools = d.tools;
@@ -56,7 +67,7 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
       entry.inputs = { query: '${user.query}' };
     }
 
-    const nodeLabel = d.label || node.id;
+    const nodeLabel = d.label ?? node.id;
     nodesObj[nodeLabel] = entry;
   }
 

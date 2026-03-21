@@ -19,7 +19,10 @@ def get_node_max_cost(
     """Return effective max_cost for a node, considering workflow budget."""
     if node.budget is None:
         return None
-    node_max = node.budget.max_cost
+    if isinstance(node.budget, (int, float)):
+        node_max = float(node.budget)
+    else:
+        node_max = node.budget.max_cost
     if spec.budget:
         remaining = spec.budget.max_cost - accumulated_workflow_cost
         return min(node_max, remaining)

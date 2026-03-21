@@ -5,7 +5,15 @@ from __future__ import annotations
 import importlib
 import warnings
 from dataclasses import dataclass
-from importlib.metadata import entry_points
+from importlib.metadata import EntryPoint, entry_points
+from typing import Any, Protocol, runtime_checkable
+
+
+@runtime_checkable
+class PluginFactory(Protocol):
+    """Protocol for plugin classes that can create adapters."""
+
+    def create_adapter(self, uri: str, config: dict[str, Any]) -> Any: ...
 
 
 @dataclass
@@ -27,8 +35,8 @@ class PluginRegistry:
 
     def __init__(self) -> None:
         self._plugins: dict[str, PluginMetadata] = {}
-        self._entry_points: dict[str, object] = {}
-        self._instances: dict[str, object] = {}
+        self._entry_points: dict[str, EntryPoint] = {}
+        self._instances: dict[str, PluginFactory] = {}
 
     def discover(self) -> list[PluginMetadata]:
         """Scan entry points for installed plugins without importing them.
@@ -38,7 +46,7 @@ class PluginRegistry:
         """
         self._instances.clear()
         eps = entry_points(group="binex.plugins")
-        discovered: dict[str, tuple[PluginMetadata, object]] = {}
+        discovered: dict[str, tuple[PluginMetadata, EntryPoint]] = {}
 
         for ep in eps:
             try:
@@ -82,7 +90,7 @@ class PluginRegistry:
         self._entry_points = {k: v[1] for k, v in discovered.items()}
         return list(self._plugins.values())
 
-    def resolve(self, agent_uri: str, node_config: dict) -> object | None:
+    def resolve(self, agent_uri: str, node_config: dict[str, Any]) -> Any | None:
         """Resolve an agent URI to an adapter via entry point plugins.
 
         Lazy-loads the plugin class on first call and caches the instance.
@@ -110,8 +118,8 @@ class PluginRegistry:
         return instance.create_adapter(uri_part, node_config)
 
     def resolve_inline(
-        self, adapter_class: str, uri: str, config: dict,
-    ) -> object:
+        self, adapter_class: str, uri: str, config: dict[str, Any],
+    ) -> Any:
         """Load an adapter class from a dotted import path.
 
         The class must have a callable create_adapter() method.
@@ -148,7 +156,7 @@ class PluginRegistry:
         uri_part = uri.split("://", 1)[1] if "://" in uri else uri
         return instance.create_adapter(uri_part, config)
 
-    def all_plugins(self) -> list[dict]:
+    def all_plugins(self) -> list[dict[str, str | None]]:
         """Return metadata for all discovered plugins without loading classes."""
         return [
             {

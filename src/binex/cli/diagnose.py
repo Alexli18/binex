@@ -5,13 +5,14 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+from typing import Any
 
 import click
 
 from binex.cli import get_stores, has_rich
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -47,7 +48,7 @@ def diagnose_cmd(run_id: str, json_out: bool, rich_out: bool | None) -> None:
         _print_plain(report)
 
 
-async def _run_diagnose(run_id: str):
+async def _run_diagnose(run_id: str) -> Any:
     from binex.trace.diagnose import diagnose_run
 
     exec_store, art_store = _get_stores()
@@ -57,7 +58,7 @@ async def _run_diagnose(run_id: str):
         await exec_store.close()
 
 
-def _print_plain(report) -> None:
+def _print_plain(report: Any) -> None:
     """Print plain text diagnose output."""
     click.echo(f"Run: {report.run_id}")
     click.echo(f"Status: {report.status}")
@@ -77,7 +78,7 @@ def _print_plain(report) -> None:
             click.echo(f"  - {r}")
 
 
-def _print_rich(report) -> None:
+def _print_rich(report: Any) -> None:
     """Print rich formatted diagnose output."""
     from rich.table import Table
 

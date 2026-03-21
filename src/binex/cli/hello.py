@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from typing import Any
 
 import click
 
@@ -16,7 +17,7 @@ from binex.models.workflow import NodeSpec, WorkflowSpec
 from binex.runtime.orchestrator import Orchestrator
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -61,7 +62,7 @@ def hello_cmd() -> None:
     _print_next_steps(summary)
 
 
-def _print_next_steps(summary) -> None:
+def _print_next_steps(summary: Any) -> None:
     """Print next-steps guidance, using a rich panel when available."""
     from binex.cli import has_rich
 
@@ -96,7 +97,7 @@ def _print_next_steps(summary) -> None:
         )
 
 
-def _register_hello_handler(orch):
+def _register_hello_handler(orch: Any) -> None:
     """Register the hello-specific echo handler on the orchestrator."""
 
     async def _hello_handler(task: TaskNode, inputs: list[Artifact]) -> list[Artifact]:
@@ -123,7 +124,7 @@ def _register_hello_handler(orch):
     )
 
 
-async def _run_hello():
+async def _run_hello() -> tuple[Any, dict[str, str]]:
     spec = _build_hello_workflow()
     execution_store, artifact_store = _get_stores()
 
@@ -153,7 +154,10 @@ async def _run_hello():
         await execution_store.close()
 
 
-def _collect_hello_artifacts(node_id, node_artifacts, node_outputs):
+def _collect_hello_artifacts(
+    node_id: str, node_artifacts: dict[str, Any],
+    node_outputs: dict[str, str],
+) -> None:
     """Collect hello artifacts into node_outputs dict with verbose printing."""
     if node_id not in node_artifacts:
         return
@@ -166,7 +170,10 @@ def _collect_hello_artifacts(node_id, node_artifacts, node_outputs):
         click.echo(f"{content}\n", err=True)
 
 
-async def _run_hello_live(orch, spec, execution_store, node_outputs):
+async def _run_hello_live(
+    orch: Any, spec: Any, execution_store: Any,
+    node_outputs: dict[str, str],
+) -> tuple[Any, dict[str, str]]:
     """Run hello workflow with live-updating rich table."""
     from rich.live import Live
 
@@ -178,7 +185,7 @@ async def _run_hello_live(orch, spec, execution_store, node_outputs):
     ]
     live_table = LiveRunTable(nodes_info)
 
-    def _collect(node_id, node_artifacts_):
+    def _collect(node_id: str, node_artifacts_: dict[str, Any]) -> None:
         if node_id in node_artifacts_:
             for art in node_artifacts_[node_id]:
                 content = art.content

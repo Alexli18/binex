@@ -52,7 +52,7 @@ class PlannerAgent:
             if isinstance(art.content, str):
                 return art.content
             if isinstance(art.content, dict) and "query" in art.content:
-                return art.content["query"]
+                return str(art.content["query"])
         return ""
 
     def _parse_subtasks(self, raw: str) -> list[str]:

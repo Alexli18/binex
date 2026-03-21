@@ -1,6 +1,8 @@
 """Formatting helpers for `binex bisect` output."""
 from __future__ import annotations
 
+from typing import Any
+
 import click
 
 # ---------------------------------------------------------------------------
@@ -99,7 +101,7 @@ def _extract_preview(
 # Plain text helpers
 # ---------------------------------------------------------------------------
 
-def _print_diff_preview_plain(nc, cont: str, show_diff: bool) -> None:
+def _print_diff_preview_plain(nc: Any, cont: str, show_diff: bool) -> None:
     """Print content diff or preview for changed nodes (plain)."""
     if not (nc.content_diff and nc.status == "content_diff"):
         return
@@ -123,7 +125,7 @@ def _print_diff_preview_plain(nc, cont: str, show_diff: bool) -> None:
 
 
 def _print_node_details_plain(
-    nc, report, cont: str, show_diff: bool,
+    nc: Any, report: Any, cont: str, show_diff: bool,
 ) -> None:
     """Print nested details under a pipeline node (plain)."""
     if (
@@ -137,7 +139,7 @@ def _print_node_details_plain(
     _print_diff_preview_plain(nc, cont, show_diff)
 
 
-def _print_footer_plain(report) -> None:
+def _print_footer_plain(report: Any) -> None:
     """Print summary footer line."""
     counts: dict[str, int] = {}
     for nc in report.node_map:
@@ -167,7 +169,7 @@ _FOOTER_COLORS = {
 }
 
 
-def _render_verdict_rich(console, report, dp) -> None:
+def _render_verdict_rich(console: Any, report: Any, dp: Any) -> None:
     """Render the verdict panel in Rich format."""
     from binex.cli.ui import make_panel
 
@@ -213,7 +215,7 @@ def _format_diff_line_rich(line: str) -> str:
     return line
 
 
-def _render_footer_rich(console, report) -> None:
+def _render_footer_rich(console: Any, report: Any) -> None:
     """Render footer statistics in Rich format."""
     counts: dict[str, int] = {}
     for nc in report.node_map:

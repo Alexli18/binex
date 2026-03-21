@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+from typing import Any
 
 import click
 
@@ -12,7 +13,7 @@ from binex.cli import get_stores
 from binex.trace.lineage import build_lineage_tree, format_lineage_tree
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 

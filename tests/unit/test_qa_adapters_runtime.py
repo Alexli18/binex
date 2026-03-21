@@ -98,17 +98,16 @@ class TestA2AAdapterUnreachableEndpoint:
     @pytest.mark.asyncio
     async def test_unreachable_endpoint_raises_connect_error(self) -> None:
         # Arrange
-        adapter = A2AAgentAdapter(endpoint="http://192.0.2.1:9999")
         task = _make_task(agent="a2a://unreachable")
 
         with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_client_cls:
             mock_client = AsyncMock()
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
             mock_client.post = AsyncMock(
                 side_effect=httpx.ConnectError("Connection refused")
             )
             mock_client_cls.return_value = mock_client
+
+            adapter = A2AAgentAdapter(endpoint="http://192.0.2.1:9999")
 
             # Act & Assert
             with pytest.raises(httpx.ConnectError, match="Connection refused"):
@@ -117,16 +116,14 @@ class TestA2AAdapterUnreachableEndpoint:
     @pytest.mark.asyncio
     async def test_unreachable_endpoint_health_returns_down(self) -> None:
         """health() should return DOWN, not raise, for unreachable endpoints."""
-        adapter = A2AAgentAdapter(endpoint="http://192.0.2.1:9999")
-
         with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_client_cls:
             mock_client = AsyncMock()
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
             mock_client.get = AsyncMock(
                 side_effect=httpx.ConnectError("Connection refused")
             )
             mock_client_cls.return_value = mock_client
+
+            adapter = A2AAgentAdapter(endpoint="http://192.0.2.1:9999")
 
             # Act
             from binex.models.agent import AgentHealth
@@ -138,7 +135,6 @@ class TestA2AAdapterUnreachableEndpoint:
     @pytest.mark.asyncio
     async def test_http_500_raises_status_error(self) -> None:
         """A 500 response triggers raise_for_status() -> HTTPStatusError."""
-        adapter = A2AAgentAdapter(endpoint="http://localhost:9001")
         task = _make_task(agent="a2a://broken")
 
         mock_response = MagicMock()
@@ -151,11 +147,10 @@ class TestA2AAdapterUnreachableEndpoint:
 
         with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_client_cls:
             mock_client = AsyncMock()
-            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock(return_value=False)
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_client_cls.return_value = mock_client
 
+            adapter = A2AAgentAdapter(endpoint="http://localhost:9001")
             with pytest.raises(httpx.HTTPStatusError):
                 await adapter.execute(task, [], "trace_1")
 

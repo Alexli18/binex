@@ -108,8 +108,8 @@ def _compute_delay(config: FallbackConfig, attempt: int) -> float:
 
     *attempt* is 1-based (first retry = 1).
     """
-    base_s = config.retry_base_delay_ms / 1000.0
+    base_s: float = config.retry_base_delay_ms / 1000.0
     if config.retry_backoff == "fixed":
         return base_s
     # exponential: base * 2^(attempt - 1)
-    return base_s * (2 ** (attempt - 1))
+    return float(base_s * (2 ** (attempt - 1)))
