@@ -47,6 +47,10 @@ class ReplayEngine:
             r.task_id: r for r in original_records
         }
 
+        # Batch-fetch all artifacts for the original run to avoid N+1 queries
+        all_artifacts = await self.artifact_store.list_by_run(original_run_id)
+        artifacts_by_id: dict[str, Artifact] = {a.id: a for a in all_artifacts}
+
         for step in topo_order:
             if step not in cached_steps:
                 continue
@@ -55,11 +59,11 @@ class ReplayEngine:
             if orig_rec is None:
                 continue
 
-            cached_artifacts: list[Artifact] = []
-            for art_id in orig_rec.output_artifact_refs:
-                art = await self.artifact_store.get(art_id)
-                if art is not None:
-                    cached_artifacts.append(art)
+            cached_artifacts: list[Artifact] = [
+                artifacts_by_id[art_id]
+                for art_id in orig_rec.output_artifact_refs
+                if art_id in artifacts_by_id
+            ]
 
             node_artifacts[step] = cached_artifacts
 
