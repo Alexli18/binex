@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 
 import httpx
 
 from binex.gateway.config import HealthConfig
 from binex.gateway.registry import AgentRegistry
+
+logger = logging.getLogger(__name__)
 
 
 class HealthChecker:
@@ -22,6 +25,7 @@ class HealthChecker:
         self._registry = registry
         self._config = config
         self._task: asyncio.Task | None = None
+        self._client = httpx.AsyncClient(timeout=config.timeout_ms / 1000.0)
 
     async def start(self) -> None:
         """Launch background asyncio task that polls agents."""
@@ -30,14 +34,14 @@ class HealthChecker:
         self._task = asyncio.create_task(self._check_loop())
 
     async def stop(self) -> None:
-        """Cancel background task and wait for it to finish."""
-        if self._task is None:
-            return
-        self._task.cancel()
-        try:
-            await self._task
-        except asyncio.CancelledError:
-            pass
+        """Cancel background task, close HTTP client, and wait for cleanup."""
+        if self._task is not None:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+        await self._client.aclose()
 
     async def check_all(self) -> dict[str, str]:
         """Immediate health check for all agents.
@@ -46,24 +50,22 @@ class HealthChecker:
         one of ``"alive"``, ``"degraded"``, or ``"down"``.
         """
         results: dict[str, str] = {}
-        timeout = self._config.timeout_ms / 1000.0
 
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            for agent in self._registry.all_agents():
-                try:
-                    start = time.monotonic()
-                    response = await client.get(f"{agent.endpoint}/health")
-                    elapsed_ms = int((time.monotonic() - start) * 1000)
-                    response.raise_for_status()
+        for agent in self._registry.all_agents():
+            try:
+                start = time.monotonic()
+                response = await self._client.get(f"{agent.endpoint}/health")
+                elapsed_ms = int((time.monotonic() - start) * 1000)
+                response.raise_for_status()
 
-                    status = "alive"
-                    self._registry.update_health(
-                        agent.name, status, latency_ms=elapsed_ms,
-                    )
-                    results[agent.name] = status
-                except Exception:
-                    self._registry.update_health(agent.name, "down")
-                    results[agent.name] = "down"
+                status = "alive"
+                self._registry.update_health(
+                    agent.name, status, latency_ms=elapsed_ms,
+                )
+                results[agent.name] = status
+            except Exception:
+                self._registry.update_health(agent.name, "down")
+                results[agent.name] = "down"
 
         return results
 
@@ -73,5 +75,5 @@ class HealthChecker:
             try:
                 await self.check_all()
             except Exception:
-                pass  # don't let unexpected errors kill the loop
+                logger.debug("Health check loop error", exc_info=True)
             await asyncio.sleep(self._config.interval_s)
