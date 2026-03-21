@@ -26,6 +26,7 @@ htmlcov/
 .worktrees/
 CLAUDE.md
 docs/plans/
+docs/team/
 .specify/
 .claude/
 specs/
