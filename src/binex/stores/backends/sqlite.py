@@ -193,7 +193,10 @@ class SqliteExecutionStore:
 
     async def get_run(self, run_id: str) -> RunSummary | None:
         db = await self._ensure_initialized()
-        cursor = await db.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,))
+        cursor = await db.execute(
+            f"SELECT {self._RUNS_COLUMNS} FROM runs WHERE run_id = ?",
+            (run_id,),
+        )
         row = await cursor.fetchone()
         if row is None:
             return None
@@ -226,13 +229,20 @@ class SqliteExecutionStore:
         )
         await db.commit()
 
+    _RUNS_COLUMNS = (
+        "run_id, workflow_name, status, started_at, completed_at,"
+        " total_nodes, completed_nodes, failed_nodes, skipped_nodes,"
+        " forked_from, forked_at_step, total_cost, workflow_path,"
+        " workflow_hash"
+    )
+
     async def list_runs(
         self,
         limit: int | None = None,
         offset: int = 0,
     ) -> list[RunSummary]:
         db = await self._ensure_initialized()
-        query = "SELECT * FROM runs"
+        query = f"SELECT {self._RUNS_COLUMNS} FROM runs"
         params: list[int] = []
         if limit is not None:
             query += " LIMIT ? OFFSET ?"
@@ -302,12 +312,12 @@ class SqliteExecutionStore:
             total_nodes=row[5],
             completed_nodes=row[6],
             failed_nodes=row[7],
-            skipped_nodes=row[8] if len(row) > 8 else 0,
+            skipped_nodes=row[8] if row[8] is not None else 0,
             forked_from=row[9] if len(row) > 9 else None,
             forked_at_step=row[10] if len(row) > 10 else None,
-            total_cost=row[11] if len(row) > 11 else 0.0,
-            workflow_path=row[12] if len(row) > 12 else None,
-            workflow_hash=row[13] if len(row) > 13 else None,
+            total_cost=float(row[11]) if row[11] is not None else 0.0,
+            workflow_path=row[12] if row[12] is not None else None,
+            workflow_hash=str(row[13]) if row[13] is not None else None,
         )
 
     async def record_cost(self, cost_record: CostRecord) -> None:

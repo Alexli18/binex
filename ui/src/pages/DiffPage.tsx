@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useRuns } from '../hooks/useRuns';
 import { useDiff } from '../hooks/useComparison';
@@ -248,8 +248,8 @@ export default function DiffPage() {
                         const hasDiff = nd.artifact_diff !== null;
 
                         return (
+                          <React.Fragment key={nd.node_id}>
                           <tr
-                            key={nd.node_id}
                             className={`${statusDiffers ? 'bg-red-900/20' : ''} hover:bg-slate-700/30`}
                           >
                             <td className="px-4 py-2 font-mono text-xs text-slate-200">{nd.node_id}</td>
@@ -294,6 +294,14 @@ export default function DiffPage() {
                               )}
                             </td>
                           </tr>
+                          {hasDiff && expandedDiffs.has(nd.node_id) && (
+                            <tr>
+                              <td colSpan={8} className="px-4 py-3 bg-slate-800/50">
+                                <ArtifactDiff diff={nd.artifact_diff!} />
+                              </td>
+                            </tr>
+                          )}
+                          </React.Fragment>
                         );
                       })}
                     </tbody>
@@ -301,18 +309,6 @@ export default function DiffPage() {
                 </div>
               )}
             </div>
-
-            {/* Expanded artifact diffs */}
-            {filteredNodeDiffs
-              .filter((nd: NodeDiff) => nd.artifact_diff && expandedDiffs.has(nd.node_id))
-              .map((nd: NodeDiff) => (
-                <div key={nd.node_id} className="bg-slate-800 border border-slate-700 rounded-card p-4">
-                  <h4 className="text-sm font-bold text-slate-300 mb-2">
-                    Artifact Diff: <span className="font-mono text-blue-400">{nd.node_id}</span>
-                  </h4>
-                  <ArtifactDiff diff={nd.artifact_diff!} />
-                </div>
-              ))}
           </>
         )}
       </div>
