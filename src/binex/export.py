@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import json
 from pathlib import Path
+from typing import Any
 
 from binex.models.artifact import Artifact
 from binex.models.cost import CostRecord
@@ -66,7 +67,7 @@ def write_json(
     artifacts: list[Artifact] | None = None,
 ) -> None:
     """Write all data to a single JSON file."""
-    data: dict = {
+    data: dict[str, Any] = {
         "runs": [r.model_dump() for r in runs],
         "records": [r.model_dump() for r in records],
         "costs": [c.model_dump() for c in costs],

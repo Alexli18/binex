@@ -24,7 +24,7 @@ class HealthChecker:
     def __init__(self, registry: AgentRegistry, config: HealthConfig) -> None:
         self._registry = registry
         self._config = config
-        self._task: asyncio.Task | None = None
+        self._task: asyncio.Task[None] | None = None
         self._client = httpx.AsyncClient(timeout=config.timeout_ms / 1000.0)
 
     async def start(self) -> None:

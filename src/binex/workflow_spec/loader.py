@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from pydantic import ValidationError
 
 from binex.models.workflow import WorkflowSpec
@@ -64,7 +64,7 @@ def load_workflow_from_string(
 def _resolve_env_vars(obj: Any) -> Any:
     """Recursively resolve ${env.VAR} placeholders from environment variables."""
     if isinstance(obj, str):
-        def _replace_env(match: re.Match) -> str:
+        def _replace_env(match: re.Match[str]) -> str:
             var_name = match.group(1)
             value = os.environ.get(var_name)
             if value is None:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 
@@ -27,7 +28,7 @@ class AgentDiscovery:
     # Public API
     # ------------------------------------------------------------------
 
-    async def fetch_agent_card(self, endpoint: str) -> dict:
+    async def fetch_agent_card(self, endpoint: str) -> dict[str, Any]:
         """Fetch the agent card JSON from *endpoint*/.well-known/agent.json.
 
         Returns the parsed JSON dict.  Raises :class:`DiscoveryError` on any
@@ -37,7 +38,8 @@ class AgentDiscovery:
         try:
             response = await self._client.get(url, timeout=_DEFAULT_TIMEOUT)
             response.raise_for_status()
-            return response.json()
+            result: dict[str, Any] = response.json()
+            return result
         except (httpx.HTTPStatusError, httpx.HTTPError) as exc:
             raise DiscoveryError(str(exc)) from exc
         except (ValueError, TypeError) as exc:

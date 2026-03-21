@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from croniter import croniter
+from croniter import croniter  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field, field_validator
 
 

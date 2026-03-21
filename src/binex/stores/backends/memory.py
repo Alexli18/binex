@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from collections import deque
+from typing import Any
 
 from binex.models.artifact import Artifact
 from binex.models.cost import CostRecord, RunCostSummary
@@ -51,7 +52,7 @@ class InMemoryExecutionStore:
         self._records: list[ExecutionRecord] = []
         self._cost_records: list[CostRecord] = []
         self._cao_sessions: dict[str, dict[str, str]] = {}
-        self._workflow_snapshots: dict[str, dict] = {}
+        self._workflow_snapshots: dict[str, dict[str, Any]] = {}
 
     async def close(self) -> None:
         pass
@@ -166,7 +167,7 @@ class InMemoryExecutionStore:
             }
         return content_hash
 
-    async def get_workflow_snapshot(self, content_hash: str) -> dict | None:
+    async def get_workflow_snapshot(self, content_hash: str) -> dict[str, Any] | None:
         return self._workflow_snapshots.get(content_hash)
 
 

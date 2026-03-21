@@ -10,8 +10,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
-from croniter import croniter
+import yaml  # type: ignore[import-untyped]
+from croniter import croniter  # type: ignore[import-untyped]
 
 from binex.scheduler.models import ScheduledWorkflow, SchedulerState
 from binex.scheduler.state import record_run, record_skip, save_state

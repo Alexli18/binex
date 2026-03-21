@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Any, Protocol
 
 from binex.models.cost import CostRecord, RunCostSummary
 from binex.models.execution import ExecutionRecord, RunSummary
@@ -105,7 +105,7 @@ class ExecutionStore(Protocol):
         """Store workflow YAML content, deduplicated by hash. Returns hash."""
         ...
 
-    async def get_workflow_snapshot(self, content_hash: str) -> dict | None:
+    async def get_workflow_snapshot(self, content_hash: str) -> dict[str, Any] | None:
         """Retrieve a workflow snapshot by hash."""
         ...
 

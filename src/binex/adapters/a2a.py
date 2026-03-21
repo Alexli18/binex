@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import httpx
 
@@ -90,7 +90,7 @@ class A2AAgentAdapter:
         self,
         task: TaskNode,
         input_artifacts: list[Artifact],
-        data: dict,
+        data: dict[str, Any],
     ) -> ExecutionResult:
         """Build an ExecutionResult from raw response data."""
         artifacts = [
@@ -202,7 +202,7 @@ class A2AExternalGatewayAdapter:
         self,
         task: TaskNode,
         input_artifacts: list[Artifact],
-        data: dict,
+        data: dict[str, Any],
     ) -> ExecutionResult:
         """Build an ExecutionResult from gateway response data."""
         artifacts = [

@@ -125,8 +125,8 @@ class CAOAdapter:
         agent_store_dir: str,
         session_store: SqliteExecutionStore | None = None,
         cao_config: CaoConfig | None = None,
-        event_callback: Callable | None = None,
-        human_input_fn: Callable | None = None,
+        event_callback: Callable[..., Any] | None = None,
+        human_input_fn: Callable[..., Any] | None = None,
     ) -> None:
         self.profile = profile
         self.server_url = server_url.rstrip("/")
@@ -537,7 +537,7 @@ class CAOAdapter:
             f"{timeout_s:.0f}s (limit: {self.cao_config.timeout_minutes}m)"
         )
 
-    async def _emit(self, event: dict) -> None:
+    async def _emit(self, event: dict[str, Any]) -> None:
         """Emit event via callback if configured."""
         if self._event_callback is not None:
             result = self._event_callback(event)

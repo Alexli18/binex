@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 from datetime import UTC, datetime
+from typing import Any
 
 import aiosqlite
 
@@ -346,7 +347,7 @@ class SqliteExecutionStore:
             (run_id, task_id),
         )
         row = await cursor.fetchone()
-        return float(row[0])
+        return float(row[0]) if row is not None else 0.0
 
     async def get_run_cost_summary(self, run_id: str) -> RunCostSummary:
         records = await self.list_costs(run_id)
@@ -490,7 +491,7 @@ class SqliteExecutionStore:
         await db.commit()
         return content_hash
 
-    async def get_workflow_snapshot(self, content_hash: str) -> dict | None:
+    async def get_workflow_snapshot(self, content_hash: str) -> dict[str, Any] | None:
         """Retrieve a workflow snapshot by hash."""
         db = await self._ensure_initialized()
         cursor = await db.execute(

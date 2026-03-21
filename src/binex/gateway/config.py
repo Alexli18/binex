@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Literal
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
@@ -126,7 +126,7 @@ _ENV_PATTERN = re.compile(r"\$\{(\w+)\}")
 
 def _interpolate_env(value: str) -> str:
     """Replace ${VAR} references with environment variable values."""
-    def _replace(match: re.Match) -> str:
+    def _replace(match: re.Match[str]) -> str:
         var_name = match.group(1)
         val = os.environ.get(var_name)
         if val is None:
@@ -138,7 +138,7 @@ def _interpolate_env(value: str) -> str:
     return _ENV_PATTERN.sub(_replace, value)
 
 
-def _interpolate_recursive(obj: object) -> dict | list | str | object:
+def _interpolate_recursive(obj: object) -> dict[str, object] | list[object] | str | object:
     """Recursively interpolate env vars in a parsed YAML structure."""
     if isinstance(obj, str):
         return _interpolate_env(obj)

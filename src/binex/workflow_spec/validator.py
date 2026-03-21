@@ -182,7 +182,7 @@ def _check_schedule_cron(
     if spec.schedule is None:
         return
     try:
-        from croniter import croniter
+        from croniter import croniter  # type: ignore[import-untyped]
         if not croniter.is_valid(spec.schedule):
             errors.append(
                 f"Invalid cron expression in schedule: {spec.schedule!r}"

@@ -6,18 +6,18 @@ import asyncio
 import logging
 import os
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from datetime import UTC, datetime
 from typing import Any
 
 import click
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
 from binex.models.artifact import Artifact
 from binex.models.execution import RunSummary
-from binex.models.task import TaskNode
+from binex.models.task import RetryPolicy, TaskNode
 from binex.models.workflow import NodeSpec, WorkflowSpec
 from binex.runtime._node_executor import collect_input_artifacts, now_ms, record_execution
 from binex.runtime.back_edge import evaluate_back_edge, evaluate_when
@@ -46,7 +46,7 @@ class Orchestrator:
         *,
         stream: bool = False,
         stream_callback: Callable[[str], None] | None = None,
-        event_callback: Callable[[dict], Any] | None = None,
+        event_callback: Callable[[dict[str, Any]], Any] | None = None,
         interactive: bool = True,
     ) -> None:
         self.artifact_store = artifact_store
@@ -58,7 +58,7 @@ class Orchestrator:
         self._event_callback = event_callback
         self._interactive = interactive
 
-    async def _emit_event(self, event: dict) -> None:
+    async def _emit_event(self, event: dict[str, Any]) -> None:
         """Emit a lifecycle event if a callback is configured."""
         if self._event_callback is not None:
             result = self._event_callback(event)
@@ -212,7 +212,7 @@ class Orchestrator:
         node_artifacts: dict[str, list[Artifact]],
         accumulated_cost: float,
         node_artifacts_history: dict[str, list[list[Artifact]]] | None = None,
-    ) -> list:
+    ) -> list[Coroutine[Any, Any, None]]:
         """Evaluate when-conditions and schedule ready nodes for execution."""
         if node_artifacts_history is None:
             node_artifacts_history = {}
@@ -449,7 +449,7 @@ class Orchestrator:
         run_id: str,
         node_id: str,
         node_spec: NodeSpec,
-        retry_policy,
+        retry_policy: RetryPolicy | None,
         node_max: float | None,
     ) -> tuple[TaskNode, int]:
         """Build a TaskNode and determine max retries.
@@ -538,7 +538,7 @@ class Orchestrator:
         trace_id: str,
         node_max: float | None,
         max_retries: int,
-        retry_policy,
+        retry_policy: RetryPolicy | None,
         node_artifacts: dict[str, list[Artifact]],
     ) -> tuple[bool, str | None, list[Artifact]]:
         """Execute dispatch with retries and budget checks.
