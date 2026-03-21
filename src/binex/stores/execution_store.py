@@ -55,5 +55,50 @@ class ExecutionStore(Protocol):
         """Get aggregated cost summary for a run."""
         ...
 
+    # ------------------------------------------------------------------
+    # CAO session registry
+    # ------------------------------------------------------------------
+
+    async def create_cao_session(
+        self, terminal_id: str, run_id: str, node_name: str,
+        session_name: str | None = None,
+    ) -> None:
+        """Persist an active CAO session."""
+        ...
+
+    async def complete_cao_session(self, terminal_id: str) -> None:
+        """Mark session as completed."""
+        ...
+
+    async def get_cao_sessions(
+        self, status: str | None = None,
+    ) -> list[dict[str, str]]:
+        """List CAO sessions, optionally filtered by status."""
+        ...
+
+    async def get_orphaned_cao_sessions(self) -> list[dict[str, str]]:
+        """Return sessions with status 'orphaned'."""
+        ...
+
+    async def mark_cao_sessions_orphaned(self, terminal_ids: list[str]) -> None:
+        """Mark active sessions as orphaned (crash recovery)."""
+        ...
+
+    async def delete_cao_session(self, terminal_id: str) -> bool:
+        """Delete a session by terminal_id."""
+        ...
+
+    # ------------------------------------------------------------------
+    # Workflow snapshots
+    # ------------------------------------------------------------------
+
+    async def store_workflow_snapshot(self, content: str, version: int) -> str:
+        """Store workflow YAML content, deduplicated by hash. Returns hash."""
+        ...
+
+    async def get_workflow_snapshot(self, content_hash: str) -> dict | None:
+        """Retrieve a workflow snapshot by hash."""
+        ...
+
 
 __all__ = ["ExecutionStore"]
