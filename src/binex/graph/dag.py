@@ -57,9 +57,9 @@ class DAG:
     def is_ancestor(self, ancestor: str, descendant: str) -> bool:
         """Check if ancestor is reachable from descendant via backward edges."""
         visited: set[str] = set()
-        queue = [descendant]
+        queue = deque([descendant])
         while queue:
-            current = queue.pop(0)
+            current = queue.popleft()
             if current == ancestor:
                 return True
             if current in visited:

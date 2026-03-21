@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from typing import Any
 
 from rich.panel import Panel
@@ -372,11 +373,11 @@ def _topo_sort(
         in_degree[dst] += 1
         children.setdefault(src, []).append(dst)
 
-    queue = [n for n in nodes if in_degree.get(n, 0) == 0]
+    queue = deque(sorted(n for n in nodes if in_degree.get(n, 0) == 0))
     result: list[str] = []
     while queue:
-        queue.sort()
-        node = queue.pop(0)
+        queue = deque(sorted(queue))
+        node = queue.popleft()
         result.append(node)
         for child in children.get(node, []):
             in_degree[child] -= 1

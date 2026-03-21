@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections import deque
+
 from binex.models.artifact import Artifact
 from binex.models.cost import CostRecord, RunCostSummary
 from binex.models.execution import ExecutionRecord, RunSummary
@@ -25,9 +27,9 @@ class InMemoryArtifactStore:
     async def get_lineage(self, artifact_id: str) -> list[Artifact]:
         result: list[Artifact] = []
         visited: set[str] = set()
-        queue = [artifact_id]
+        queue = deque([artifact_id])
         while queue:
-            current_id = queue.pop(0)
+            current_id = queue.popleft()
             if current_id in visited:
                 continue
             visited.add(current_id)

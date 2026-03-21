@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections import deque
 from pathlib import Path
 
 from binex.models.artifact import Artifact
@@ -68,9 +69,9 @@ class FilesystemArtifactStore:
     async def get_lineage(self, artifact_id: str) -> list[Artifact]:
         result: list[Artifact] = []
         visited: set[str] = set()
-        queue = [artifact_id]
+        queue = deque([artifact_id])
         while queue:
-            current_id = queue.pop(0)
+            current_id = queue.popleft()
             if current_id in visited:
                 continue
             visited.add(current_id)
