@@ -194,7 +194,7 @@ class SqliteExecutionStore:
     async def get_run(self, run_id: str) -> RunSummary | None:
         db = await self._ensure_initialized()
         cursor = await db.execute(
-            f"SELECT {self._RUNS_COLUMNS} FROM runs WHERE run_id = ?",
+            self._RUNS_SELECT + " WHERE run_id = ?",
             (run_id,),
         )
         row = await cursor.fetchone()
@@ -229,11 +229,11 @@ class SqliteExecutionStore:
         )
         await db.commit()
 
-    _RUNS_COLUMNS = (
-        "run_id, workflow_name, status, started_at, completed_at,"
+    _RUNS_SELECT = (
+        "SELECT run_id, workflow_name, status, started_at, completed_at,"
         " total_nodes, completed_nodes, failed_nodes, skipped_nodes,"
         " forked_from, forked_at_step, total_cost, workflow_path,"
-        " workflow_hash"
+        " workflow_hash FROM runs"
     )
 
     async def list_runs(
@@ -242,7 +242,7 @@ class SqliteExecutionStore:
         offset: int = 0,
     ) -> list[RunSummary]:
         db = await self._ensure_initialized()
-        query = f"SELECT {self._RUNS_COLUMNS} FROM runs"
+        query = self._RUNS_SELECT
         params: list[int] = []
         if limit is not None:
             query += " LIMIT ? OFFSET ?"

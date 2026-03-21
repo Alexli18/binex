@@ -1,5 +1,74 @@
 # Changelog
 
+## v0.6.4
+
+Type Safety & Performance release.
+
+### Features
+
+- **Mypy strict type annotations** — full typing added to all modules (cli, ui, runtime, trace, agents, tools, models, stores)
+- **Query pagination** — `limit` and `offset` parameters on `list_runs()` for large dataset handling
+- **Scheduler documentation** — new `docs/cli/scheduler.md` with CLI commands, YAML config, and examples
+- **Tools & MCP documentation** — new `docs/features/tools-mcp.md` covering built-in tools, MCP servers, and security
+
+### Fixes
+
+- **SQLite column order** — replaced `SELECT *` with explicit column list to fix migration-induced column order mismatch
+- **Diff page inline display** — artifact diffs now render inline under the table row instead of at the bottom of the page
+- **5 real type mismatches** caught and corrected by mypy strict checking
+- **71 ruff lint errors** fixed (I001 import sorting, E501 line length, F401 unused imports)
+- **Exception logging** — swallowed exceptions now logged in observability module
+- **Budget checks** — made non-blocking for Web UI responsiveness
+- **Artifact access safety** — guard against empty artifact lists in runtime dispatcher
+
+### Performance
+
+- **SQLite indexes** — added on `cao_sessions.status` and `run_id` for execution/cost records
+- **Cost calculation** — new `get_node_cost()` to avoid loading all cost records during budget checks
+- **Replay artifacts** — batch-fetch to eliminate N+1 queries
+- **BFS scheduler** — `deque.popleft()` instead of `list.pop(0)` for O(1)
+- **HTTP client** — reuse `httpx.AsyncClient` in A2A adapters and health checker
+
+## v0.6.3
+
+Logo & Landing redesign release.
+
+### Features
+
+- **Logo redesign** — "Binary Flow" mark from binary tree DAG paths, purple→cyan gradient, new favicon
+- **Landing page redesign** — "Electric Minimalism with Cinematic Motion" — asymmetrical hero, staggered features grid, Syne + Inter fonts, entrance animations
+- **Blog plugin** — mkdocs-blog integration with first post
+
+### Fixes
+
+- Human workflows — pre-create run record to prevent live page 404
+- Blog post improvements — content clarity, CTA, og:image
+
+## v0.6.2
+
+Web UI Tools & Scheduler release.
+
+### Features
+
+- **Built-in Tools** — 10 built-in tools: calculator, dice_roll, fetch_url, http_request, web_search, read_file, write_file, shell_command, json_parse, random_choice
+- **MCP Server Integration** — Model Context Protocol support via stdio and HTTP/SSE transports
+- **Tools in Web UI Editor** — tool picker, MCP config panel, collapsible sections for LLM nodes
+- **Scheduler Cron** — `schedule` field for cron expressions; `binex scheduler start/list/add/remove` CLI commands
+- **Cost Dashboard** — `/costs` page with KPI cards, trend chart, cost breakdown, budget status
+
+### Fixes
+
+- Cost dashboard route and diff page combobox selectors
+- Select component option handling in E2E tests
+
+## v0.6.1
+
+PyPI compatibility release.
+
+### Fixes
+
+- README images converted to absolute GitHub URLs for PyPI display
+
 ## v0.6.0
 
 Web UI Enhancement release.
