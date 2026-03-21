@@ -5,7 +5,7 @@ from __future__ import annotations
 import statistics
 from collections import deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from binex.models.execution import ExecutionRecord
@@ -268,7 +268,7 @@ async def diagnose_run(
 # Serialisation
 # ---------------------------------------------------------------------------
 
-def report_to_dict(report: DiagnosticReport) -> dict:
+def report_to_dict(report: DiagnosticReport) -> dict[str, Any]:
     """Convert a *DiagnosticReport* to a JSON-serialisable dict."""
     return {
         "run_id": report.run_id,

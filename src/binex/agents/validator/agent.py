@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from typing import Any
 
 from binex.agents.common.llm_client import LLMClient
 from binex.models.artifact import Artifact, Lineage
@@ -49,7 +50,7 @@ class ValidatorAgent:
             )
         ]
 
-    def _combine_findings(self, artifacts: list[Artifact]) -> list[dict]:
+    def _combine_findings(self, artifacts: list[Artifact]) -> list[dict[str, Any]]:
         results = []
         for art in artifacts:
             if isinstance(art.content, dict) and "findings" in art.content:
@@ -58,7 +59,7 @@ class ValidatorAgent:
                 results.append({"findings": [art.content], "sources": []})
         return results
 
-    def _parse_validation(self, raw: str) -> dict:
+    def _parse_validation(self, raw: str) -> dict[str, Any]:
         try:
             parsed = json.loads(raw)
             if isinstance(parsed, dict):

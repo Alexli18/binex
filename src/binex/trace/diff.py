@@ -10,7 +10,7 @@ from binex.stores.execution_store import ExecutionStore
 from binex.trace._compare import content_similarity, get_artifact_content
 
 
-def _compute_summary(steps: list[dict]) -> dict:
+def _compute_summary(steps: list[dict[str, Any]]) -> dict[str, Any]:
     """Compute aggregate diff summary from steps."""
     total = len(steps)
     changed = sum(
@@ -108,7 +108,7 @@ def _build_unified_diff(
     return "".join(diff_lines) if diff_lines else None
 
 
-def _build_cost_lookup(cost_records: list) -> dict[str, float]:
+def _build_cost_lookup(cost_records: list[Any]) -> dict[str, float]:
     """Build task_id → total cost mapping from cost records."""
     by_task: dict[str, float] = {}
     for c in cost_records:

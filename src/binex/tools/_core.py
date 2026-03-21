@@ -8,7 +8,9 @@ import logging
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, get_type_hints
+from typing import Any, TypeVar, get_type_hints, overload
+
+_F = TypeVar("_F", bound=Callable[..., Any])
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,18 @@ _TYPE_MAP: dict[type, str] = {
 # @tool decorator
 # ---------------------------------------------------------------------------
 
+@overload
+def tool(fn: _F) -> _F: ...
+
+@overload
+def tool(
+    fn: None = None,
+    *,
+    description: str | None = None,
+    name: str | None = None,
+    parameter_descriptions: dict[str, str] | None = None,
+) -> Callable[[_F], _F]: ...
+
 def tool(
     fn: Callable[..., Any] | None = None,
     *,
@@ -67,7 +81,7 @@ def tool(
     (``@tool(description="...")``).
     """
 
-    def _wrap(func: Callable[..., Any]) -> Callable[..., Any]:
+    def _wrap(func: _F) -> _F:
         func._binex_tool = {  # type: ignore[attr-defined]
             "name": name,
             "description": description,

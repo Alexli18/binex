@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from binex.models.artifact import Artifact
 from binex.models.task import TaskStatus
@@ -39,7 +40,7 @@ class DebugReport:
 
 
 def _build_node_reports(
-    records: list,
+    records: list[Any],
     art_index: dict[str, Artifact],
 ) -> tuple[list[NodeReport], list[str]]:
     """Build NodeReport list from execution records.
@@ -92,8 +93,8 @@ def _infer_skipped_nodes(
 
 
 async def build_debug_report(
-    exec_store,
-    art_store,
+    exec_store: Any,
+    art_store: Any,
     run_id: str,
 ) -> DebugReport | None:
     """Build a debug report from execution and artifact stores.
@@ -206,7 +207,7 @@ def _format_node_plain(node: NodeReport, lines: list[str]) -> None:
     lines.append("")
 
 
-def format_debug_report_json(report: DebugReport) -> dict:
+def format_debug_report_json(report: DebugReport) -> dict[str, Any]:
     """Format a debug report as a JSON-serializable dict."""
     return {
         "run_id": report.run_id,

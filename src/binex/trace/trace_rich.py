@@ -109,7 +109,7 @@ async def format_trace_node_rich(record: Any) -> None:
 
 
 async def format_trace_graph_rich(
-    records: list,
+    records: list[Any],
     nodes: dict[str, str],
     edges: list[tuple[str, str]],
 ) -> None:
@@ -240,7 +240,7 @@ def _build_lane_suffix(ctx: _GraphContext, right: int) -> str:
 
 
 def _render_hline(
-    console, ctx: _GraphContext,
+    console: Any, ctx: _GraphContext,
     left: int, right: int, specials: set[int],
     left_ch: str, right_ch: str, mid_ch: str,
 ) -> None:
@@ -251,7 +251,7 @@ def _render_hline(
     console.print("  " + prefix + seg + suffix)
 
 
-def _render_cont(console, ctx: _GraphContext) -> None:
+def _render_cont(console: Any, ctx: _GraphContext) -> None:
     """Render continuation lines between nodes."""
     parts: list[str] = []
     for col in range(len(ctx.active)):
@@ -262,7 +262,7 @@ def _render_cont(console, ctx: _GraphContext) -> None:
 
 
 def _render_merge_line(
-    console, ctx: _GraphContext,
+    console: Any, ctx: _GraphContext,
     node_id: str, node_parents: list[str], lane: int,
 ) -> None:
     """Render merge connector if node has multiple parents."""
@@ -284,7 +284,7 @@ def _render_merge_line(
 
 
 def _render_node_line(
-    console, ctx: _GraphContext,
+    console: Any, ctx: _GraphContext,
     node_id: str, lane: int,
     color: str, icon: str, status: str, latency: int | None,
 ) -> None:
@@ -312,7 +312,7 @@ def _render_node_line(
 
 
 def _render_fork_or_cont(
-    console, ctx: _GraphContext,
+    console: Any, ctx: _GraphContext,
     node_id: str, node_children: list[str], lane: int,
 ) -> None:
     """Render fork connector, single-child continuation, or leaf termination."""

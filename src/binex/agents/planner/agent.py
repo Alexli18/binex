@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from typing import Any
 
 from binex.agents.common.llm_client import LLMClient
 from binex.models.artifact import Artifact, Lineage
@@ -52,7 +53,7 @@ class PlannerAgent:
             if isinstance(art.content, str):
                 return art.content
             if isinstance(art.content, dict) and "query" in art.content:
-                return art.content["query"]
+                return str(art.content["query"])
         return ""
 
     def _parse_subtasks(self, raw: str) -> list[str]:
