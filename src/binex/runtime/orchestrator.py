@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import logging
 import os
 import uuid
@@ -99,12 +98,9 @@ class Orchestrator:
         workflow_yaml = yaml.dump(
             spec.model_dump(exclude={"source_path"}), sort_keys=True,
         )
-        if hasattr(self.execution_store, "store_workflow_snapshot"):
-            workflow_hash = await self.execution_store.store_workflow_snapshot(
-                workflow_yaml, version=spec.version,
-            )
-        else:
-            workflow_hash = hashlib.sha256(workflow_yaml.encode()).hexdigest()
+        workflow_hash = await self.execution_store.store_workflow_snapshot(
+            workflow_yaml, version=spec.version,
+        )
 
         # Check if run was pre-created (e.g. by Web UI for human workflows)
         existing = await self.execution_store.get_run(run_id) if run_id else None
@@ -165,9 +161,9 @@ class Orchestrator:
             accumulated_cost = cost_summary.total_cost
 
         summary.completed_at = datetime.now(UTC)
-        summary.completed_nodes = len(scheduler._completed)
-        summary.failed_nodes = len(scheduler._failed)
-        summary.skipped_nodes = len(scheduler._skipped)
+        summary.completed_nodes = len(scheduler.completed)
+        summary.failed_nodes = len(scheduler.failed)
+        summary.skipped_nodes = len(scheduler.skipped)
         summary.total_cost = accumulated_cost
         summary.status = self._determine_final_status(
             budget_exceeded, scheduler,
@@ -245,7 +241,7 @@ class Orchestrator:
         """Determine the final run status."""
         if budget_exceeded:
             return "over_budget"
-        if scheduler._failed:
+        if scheduler.failed:
             return "failed"
         if scheduler.is_complete():
             return "completed"
@@ -425,17 +421,15 @@ class Orchestrator:
             scheduler.mark_failed(node_id)
             status = task.status.__class__("failed")
 
-        latency = now_ms() - start_ms
+        latency_ms = now_ms() - start_ms
         await self._emit_event({
             "type": f"node:{'completed' if succeeded else 'failed'}",
             "run_id": run_id,
             "node_id": node_id,
             "timestamp": datetime.now(UTC).isoformat(),
-            "latency_ms": latency,
+            "latency_ms": latency_ms,
             **({"error": error_msg} if error_msg else {}),
         })
-
-        latency_ms = now_ms() - start_ms
         await record_execution(
             self.execution_store,
             run_id=run_id,
