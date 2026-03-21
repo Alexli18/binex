@@ -7,7 +7,7 @@ import os
 import re
 from collections import deque
 
-from binex.models.workflow import WorkflowSpec
+from binex.models.workflow import CaoConfig, WorkflowSpec
 
 logger = logging.getLogger(__name__)
 
@@ -261,7 +261,7 @@ def _check_tool_uris(
                 _validate_mcp_tool_uri(node_id, tool_spec, mcp_server_names, errors)
 
 
-def _validate_cao_config(node_id: str, cao: object, errors: list[str]) -> None:
+def _validate_cao_config(node_id: str, cao: CaoConfig, errors: list[str]) -> None:
     """Validate a single node's CaoConfig fields."""
     if cao.output_field and cao.output_format != "json":
         errors.append(

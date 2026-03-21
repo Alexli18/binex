@@ -10,7 +10,7 @@ import click
 import yaml
 
 from binex.cli.dsl_parser import PATTERNS, ParsedDSL, parse_dsl
-from binex.cli.providers import PROVIDERS
+from binex.cli.providers import PROVIDERS, ProviderConfig
 
 
 @click.group("scaffold")
@@ -397,8 +397,8 @@ def _configure_human_node(node_name: str) -> dict | None:
 
 
 def _configure_llm_node(
-    provider_list: list,
-    prev_provider: object | None,
+    provider_list: list[ProviderConfig],
+    prev_provider: ProviderConfig | None,
     prev_model: str | None,
 ) -> dict:
     """Prompt user for provider/model/system_prompt for an LLM node.

@@ -114,7 +114,7 @@ async def list_plugins() -> JSONResponse:
                 "type": "adapter",
                 "builtin": False,
                 "description": _KNOWN_PLUGIN_DESCRIPTIONS.get(
-                    p["prefix"], p.get("description", p.get("name", p["prefix"])),
+                    p["prefix"] or "", p.get("description") or p.get("name") or p["prefix"] or "",
                 ),
                 "version": p.get("version", None),
             })
