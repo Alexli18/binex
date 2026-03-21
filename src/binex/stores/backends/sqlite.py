@@ -44,6 +44,7 @@ class SqliteExecutionStore:
                 total_nodes INTEGER NOT NULL,
                 completed_nodes INTEGER DEFAULT 0,
                 failed_nodes INTEGER DEFAULT 0,
+                skipped_nodes INTEGER DEFAULT 0,
                 forked_from TEXT,
                 forked_at_step TEXT,
                 total_cost REAL DEFAULT 0.0,
@@ -114,6 +115,12 @@ class SqliteExecutionStore:
             await self._db.commit()
         except Exception as exc:
             logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add skipped_nodes column to existing runs table
+        try:
+            await self._db.execute("ALTER TABLE runs ADD COLUMN skipped_nodes INTEGER DEFAULT 0")
+            await self._db.commit()
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
         # Migration: add workflow_hash column to existing runs table
         try:
             await self._db.execute("ALTER TABLE runs ADD COLUMN workflow_hash TEXT")
@@ -159,9 +166,9 @@ class SqliteExecutionStore:
         await db.execute(
             """INSERT INTO runs (run_id, workflow_name, status, started_at,
                completed_at, total_nodes, completed_nodes, failed_nodes,
-               forked_from, forked_at_step, total_cost, workflow_path,
-               workflow_hash)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               skipped_nodes, forked_from, forked_at_step, total_cost,
+               workflow_path, workflow_hash)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 run_summary.run_id,
                 run_summary.workflow_name,
@@ -171,6 +178,7 @@ class SqliteExecutionStore:
                 run_summary.total_nodes,
                 run_summary.completed_nodes,
                 run_summary.failed_nodes,
+                run_summary.skipped_nodes,
                 run_summary.forked_from,
                 run_summary.forked_at_step,
                 run_summary.total_cost,
@@ -193,8 +201,8 @@ class SqliteExecutionStore:
         await db.execute(
             """UPDATE runs SET workflow_name=?, status=?, started_at=?,
                completed_at=?, total_nodes=?, completed_nodes=?, failed_nodes=?,
-               forked_from=?, forked_at_step=?, total_cost=?, workflow_path=?,
-               workflow_hash=?
+               skipped_nodes=?, forked_from=?, forked_at_step=?, total_cost=?,
+               workflow_path=?, workflow_hash=?
                WHERE run_id=?""",
             (
                 run_summary.workflow_name,
@@ -204,6 +212,7 @@ class SqliteExecutionStore:
                 run_summary.total_nodes,
                 run_summary.completed_nodes,
                 run_summary.failed_nodes,
+                run_summary.skipped_nodes,
                 run_summary.forked_from,
                 run_summary.forked_at_step,
                 run_summary.total_cost,
@@ -267,7 +276,7 @@ class SqliteExecutionStore:
         return [self._row_to_execution_record(row) for row in rows]
 
     @staticmethod
-    def _row_to_run_summary(row: tuple) -> RunSummary:  # type: ignore[type-arg]
+    def _row_to_run_summary(row: aiosqlite.Row | tuple) -> RunSummary:  # type: ignore[type-arg]
         return RunSummary(
             run_id=row[0],
             workflow_name=row[1],
@@ -277,11 +286,12 @@ class SqliteExecutionStore:
             total_nodes=row[5],
             completed_nodes=row[6],
             failed_nodes=row[7],
-            forked_from=row[8],
-            forked_at_step=row[9],
-            total_cost=row[10] if len(row) > 10 else 0.0,
-            workflow_path=row[11] if len(row) > 11 else None,
-            workflow_hash=row[12] if len(row) > 12 else None,
+            skipped_nodes=row[8] if len(row) > 8 else 0,
+            forked_from=row[9] if len(row) > 9 else None,
+            forked_at_step=row[10] if len(row) > 10 else None,
+            total_cost=row[11] if len(row) > 11 else 0.0,
+            workflow_path=row[12] if len(row) > 12 else None,
+            workflow_hash=row[13] if len(row) > 13 else None,
         )
 
     async def record_cost(self, cost_record: CostRecord) -> None:
@@ -327,7 +337,7 @@ class SqliteExecutionStore:
         )
 
     @staticmethod
-    def _row_to_cost_record(row: tuple) -> CostRecord:  # type: ignore[type-arg]
+    def _row_to_cost_record(row: aiosqlite.Row | tuple) -> CostRecord:  # type: ignore[type-arg]
         return CostRecord(
             id=row[0],
             run_id=row[1],
@@ -342,7 +352,7 @@ class SqliteExecutionStore:
         )
 
     @staticmethod
-    def _row_to_execution_record(row: tuple) -> ExecutionRecord:  # type: ignore[type-arg]
+    def _row_to_execution_record(row: aiosqlite.Row | tuple) -> ExecutionRecord:  # type: ignore[type-arg]
         return ExecutionRecord(
             id=row[0],
             run_id=row[1],
