@@ -364,7 +364,7 @@ def _render_node_rich(rec, node_arts, node_total_cost: float) -> None:
     if node_total_cost > 0:
         info.append(f"  ·  Cost: ${node_total_cost:.4f}", style="cyan")
 
-    parts = [info]
+    parts: list = [info]
 
     if rec.model:
         model_line = Text()

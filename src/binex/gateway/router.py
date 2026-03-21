@@ -97,10 +97,10 @@ class Router:
 
         # Sort: health (alive > degraded) → priority (lower first) → latency
         def _sort_key(agent):
-            health = self._registry.get_health(agent.name)
+            health = self._registry.get_health(agent.name) if self._registry else None
             status_order = 0 if (health is None or health.status == "alive") else 1
-            has_latency = health and health.last_latency_ms is not None
-            latency = health.last_latency_ms if has_latency else 999999
+            has_latency = health is not None and health.last_latency_ms is not None
+            latency = health.last_latency_ms if has_latency and health is not None else 999999
             return (status_order, agent.priority, latency)
 
         healthy.sort(key=_sort_key)

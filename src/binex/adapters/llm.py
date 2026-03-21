@@ -14,7 +14,7 @@ import litellm
 
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
-from binex.models.cost import CostRecord, ExecutionResult
+from binex.models.cost import CostRecord, CostSource, ExecutionResult
 from binex.models.task import TaskNode
 from binex.tools import execute_tool_call, resolve_tools
 
@@ -140,7 +140,7 @@ class LLMAdapter:
         total_cost = 0.0
         total_prompt_tokens = 0
         total_completion_tokens = 0
-        source = "llm_tokens"
+        source: CostSource = "llm_tokens"
         has_usage = False
 
         for resp in responses:

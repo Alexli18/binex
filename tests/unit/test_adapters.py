@@ -172,7 +172,6 @@ async def test_llm_adapter_health() -> None:
 
 @pytest.mark.asyncio
 async def test_a2a_adapter_execute() -> None:
-    adapter = A2AAgentAdapter(endpoint="http://localhost:9001")
     task = _make_task(system_prompt="research")
     inputs = [_make_artifact(content="query data")]
 
@@ -186,11 +185,10 @@ async def test_a2a_adapter_execute() -> None:
 
     with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_client_cls:
         mock_client = AsyncMock()
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=False)
         mock_client.post = AsyncMock(return_value=mock_response)
         mock_client_cls.return_value = mock_client
 
+        adapter = A2AAgentAdapter(endpoint="http://localhost:9001")
         result = await adapter.execute(task, inputs, "trace-1")
 
     arts = result.artifacts
@@ -200,18 +198,15 @@ async def test_a2a_adapter_execute() -> None:
 
 @pytest.mark.asyncio
 async def test_a2a_adapter_health_alive() -> None:
-    adapter = A2AAgentAdapter(endpoint="http://localhost:9001")
-
     mock_response = MagicMock()
     mock_response.status_code = 200
 
     with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_client_cls:
         mock_client = AsyncMock()
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=False)
         mock_client.get = AsyncMock(return_value=mock_response)
         mock_client_cls.return_value = mock_client
 
+        adapter = A2AAgentAdapter(endpoint="http://localhost:9001")
         health = await adapter.health()
 
     assert health == AgentHealth.ALIVE
@@ -219,15 +214,12 @@ async def test_a2a_adapter_health_alive() -> None:
 
 @pytest.mark.asyncio
 async def test_a2a_adapter_health_down() -> None:
-    adapter = A2AAgentAdapter(endpoint="http://localhost:9001")
-
     with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_client_cls:
         mock_client = AsyncMock()
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=False)
         mock_client.get = AsyncMock(side_effect=Exception("connection refused"))
         mock_client_cls.return_value = mock_client
 
+        adapter = A2AAgentAdapter(endpoint="http://localhost:9001")
         health = await adapter.health()
 
     assert health == AgentHealth.DOWN
@@ -235,13 +227,10 @@ async def test_a2a_adapter_health_down() -> None:
 
 @pytest.mark.asyncio
 async def test_a2a_adapter_cancel() -> None:
-    adapter = A2AAgentAdapter(endpoint="http://localhost:9001")
-
     with patch("binex.adapters.a2a.httpx.AsyncClient") as mock_client_cls:
         mock_client = AsyncMock()
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=False)
         mock_client.post = AsyncMock(return_value=MagicMock(status_code=200))
         mock_client_cls.return_value = mock_client
 
+        adapter = A2AAgentAdapter(endpoint="http://localhost:9001")
         await adapter.cancel("task-1")  # Should not raise

@@ -355,18 +355,15 @@ class TestA2AAdapterGaps:
         from binex.adapters.a2a import A2AAgentAdapter
         from binex.models.agent import AgentHealth
 
-        adapter = A2AAgentAdapter("http://test:8000")
-
         # ALIVE: 200
         mock_resp_200 = MagicMock()
         mock_resp_200.status_code = 200
 
         mock_client = AsyncMock()
         mock_client.get = AsyncMock(return_value=mock_resp_200)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
 
         with patch("binex.adapters.a2a.httpx.AsyncClient", return_value=mock_client):
+            adapter = A2AAgentAdapter("http://test:8000")
             assert await adapter.health() == AgentHealth.ALIVE
 
         # DEGRADED: non-200
@@ -375,20 +372,18 @@ class TestA2AAdapterGaps:
 
         mock_client2 = AsyncMock()
         mock_client2.get = AsyncMock(return_value=mock_resp_500)
-        mock_client2.__aenter__ = AsyncMock(return_value=mock_client2)
-        mock_client2.__aexit__ = AsyncMock(return_value=None)
 
         with patch("binex.adapters.a2a.httpx.AsyncClient", return_value=mock_client2):
-            assert await adapter.health() == AgentHealth.DEGRADED
+            adapter2 = A2AAgentAdapter("http://test:8000")
+            assert await adapter2.health() == AgentHealth.DEGRADED
 
         # DOWN: exception
         mock_client3 = AsyncMock()
         mock_client3.get = AsyncMock(side_effect=Exception("conn refused"))
-        mock_client3.__aenter__ = AsyncMock(return_value=mock_client3)
-        mock_client3.__aexit__ = AsyncMock(return_value=None)
 
         with patch("binex.adapters.a2a.httpx.AsyncClient", return_value=mock_client3):
-            assert await adapter.health() == AgentHealth.DOWN
+            adapter3 = A2AAgentAdapter("http://test:8000")
+            assert await adapter3.health() == AgentHealth.DOWN
 
     @pytest.mark.asyncio
     async def test_a2a_005_external_health_all_branches(self):
@@ -396,19 +391,16 @@ class TestA2AAdapterGaps:
         from binex.adapters.a2a import A2AExternalGatewayAdapter
         from binex.models.agent import AgentHealth
 
-        adapter = A2AExternalGatewayAdapter(
-            "http://test:8000", gateway_url="http://gw:8420",
-        )
-
         # ALIVE
         mock_resp_200 = MagicMock()
         mock_resp_200.status_code = 200
         mock_client = AsyncMock()
         mock_client.get = AsyncMock(return_value=mock_resp_200)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
 
         with patch("binex.adapters.a2a.httpx.AsyncClient", return_value=mock_client):
+            adapter = A2AExternalGatewayAdapter(
+                "http://test:8000", gateway_url="http://gw:8420",
+            )
             assert await adapter.health() == AgentHealth.ALIVE
 
         # DEGRADED
@@ -416,20 +408,22 @@ class TestA2AAdapterGaps:
         mock_resp_500.status_code = 500
         mock_client2 = AsyncMock()
         mock_client2.get = AsyncMock(return_value=mock_resp_500)
-        mock_client2.__aenter__ = AsyncMock(return_value=mock_client2)
-        mock_client2.__aexit__ = AsyncMock(return_value=None)
 
         with patch("binex.adapters.a2a.httpx.AsyncClient", return_value=mock_client2):
-            assert await adapter.health() == AgentHealth.DEGRADED
+            adapter2 = A2AExternalGatewayAdapter(
+                "http://test:8000", gateway_url="http://gw:8420",
+            )
+            assert await adapter2.health() == AgentHealth.DEGRADED
 
         # DOWN
         mock_client3 = AsyncMock()
         mock_client3.get = AsyncMock(side_effect=Exception("conn refused"))
-        mock_client3.__aenter__ = AsyncMock(return_value=mock_client3)
-        mock_client3.__aexit__ = AsyncMock(return_value=None)
 
         with patch("binex.adapters.a2a.httpx.AsyncClient", return_value=mock_client3):
-            assert await adapter.health() == AgentHealth.DOWN
+            adapter3 = A2AExternalGatewayAdapter(
+                "http://test:8000", gateway_url="http://gw:8420",
+            )
+            assert await adapter3.health() == AgentHealth.DOWN
 
     @pytest.mark.asyncio
     async def test_a2a_006_external_cancel_noop(self):

@@ -116,13 +116,18 @@ class SchedulerEngine:
         start = time.monotonic()
         run_id = f"sched-{wf.name}-{int(time.time())}"
         try:
+            from binex.cli import get_stores
             from binex.runtime.orchestrator import Orchestrator
             from binex.workflow_spec.loader import load_workflow
 
             spec = load_workflow(wf.path)
+            execution_store, artifact_store = get_stores()
             # Use the standard orchestrator to run the workflow
-            orchestrator = Orchestrator(spec)
-            result = await orchestrator.run()
+            orchestrator = Orchestrator(
+                artifact_store=artifact_store,
+                execution_store=execution_store,
+            )
+            result = await orchestrator.run_workflow(spec)
             duration = time.monotonic() - start
             cost = getattr(result, "total_cost", None)
             raw_status = getattr(result, "status", "completed")
