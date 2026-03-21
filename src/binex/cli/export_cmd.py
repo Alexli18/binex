@@ -10,10 +10,12 @@ from pathlib import Path
 
 import click
 
+from typing import Any
+
 from binex.cli import get_stores
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 

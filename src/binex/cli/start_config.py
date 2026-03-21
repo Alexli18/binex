@@ -6,6 +6,8 @@ import sys
 
 import click
 
+from typing import Any, Callable
+
 from binex.cli.providers import PROVIDERS, ProviderConfig
 from binex.cli.start_templates import _select_prompt
 from binex.cli.start_ui import _print_step
@@ -13,7 +15,7 @@ from binex.cli.start_ui import _print_step
 
 def has_rich() -> bool:
     """Proxy to binex.cli.start.has_rich for test-patchability."""
-    return sys.modules["binex.cli.start"].has_rich()
+    return bool(sys.modules["binex.cli.start"].has_rich())
 
 
 def _render_provider_list(provider_names: list[str]) -> None:
@@ -41,7 +43,7 @@ def _render_provider_list(provider_names: list[str]) -> None:
             click.echo(f"    {i}) {name} \u2014 {suffix}")
 
 
-def _select_provider(*, input_fn=None) -> tuple:
+def _select_provider(*, input_fn: Callable[[str], str] | None = None) -> tuple[ProviderConfig, str]:
     """Select provider and model. Returns (ProviderConfig, model_string)."""
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))
 
@@ -115,9 +117,9 @@ def _print_back_message(i: int, node_list: list[str]) -> int:
 def _configure_all_nodes(
     node_list: list[str],
     depends_on: dict[str, list[str]],
-) -> dict[str, dict]:
+) -> dict[str, dict[str, Any]]:
     """Configure all nodes with support for 'back' to return to previous node."""
-    nodes_config: dict[str, dict] = {}
+    nodes_config: dict[str, dict[str, Any]] = {}
     i = 0
     while i < len(node_list):
         node_id = node_list[i]
@@ -132,25 +134,25 @@ def _configure_all_nodes(
     return nodes_config
 
 
-def _handle_llm(config: dict, node_id: str, _prompt) -> None:
+def _handle_llm(config: dict[str, Any], node_id: str, _prompt: Callable[[str], str]) -> None:
     """Handle LLM agent type selection."""
     provider, model = _select_provider(input_fn=_prompt)
     config["agent"] = f"{provider.agent_prefix}{model}"
     config["system_prompt"] = _select_prompt(node_id=node_id, input_fn=_prompt)
 
 
-def _handle_human_review(config: dict, node_id: str, _prompt) -> None:
+def _handle_human_review(config: dict[str, Any], node_id: str, _prompt: Callable[[str], str]) -> None:
     """Handle human review agent type."""
     config["agent"] = "human://review"
 
 
-def _handle_human_input(config: dict, node_id: str, _prompt) -> None:
+def _handle_human_input(config: dict[str, Any], node_id: str, _prompt: Callable[[str], str]) -> None:
     """Handle human input agent type."""
     config["agent"] = "human://input"
     config["system_prompt"] = _prompt("Prompt text for user")
 
 
-def _handle_a2a(config: dict, node_id: str, _prompt) -> None:
+def _handle_a2a(config: dict[str, Any], node_id: str, _prompt: Callable[[str], str]) -> None:
     """Handle A2A agent type."""
     endpoint = _prompt("Endpoint URL")
     config["agent"] = f"a2a://{endpoint}"
@@ -164,7 +166,7 @@ _AGENT_TYPE_HANDLERS = {
 }
 
 
-def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> dict | None:
+def _configure_node(*, node_id: str, dependencies: list[str], input_fn: Callable[[str], str] | None = None) -> dict[str, Any] | None:
     """Interactively configure a single node.
 
     Returns dict for YAML generation, or _BACK sentinel.
@@ -201,7 +203,7 @@ def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> 
     if agent_type.lower() == "back":
         return None
 
-    config: dict = {"outputs": ["result"]}
+    config: dict[str, Any] = {"outputs": ["result"]}
     if dependencies:
         config["depends_on"] = dependencies
 
@@ -226,7 +228,7 @@ def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> 
     return config
 
 
-def _configure_back_edge(*, node_id: str, upstream_nodes: list[str], input_fn=None) -> dict:
+def _configure_back_edge(*, node_id: str, upstream_nodes: list[str], input_fn: Callable[[str], str] | None = None) -> dict[str, Any]:
     """Configure a back-edge for review loops. Returns back_edge dict."""
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))
 
@@ -275,26 +277,26 @@ class _ParamSpec:
 
     __slots__ = ("label", "prompt_text", "validator", "extractor")
 
-    def __init__(self, label: str, prompt_text: str, validator, extractor):
+    def __init__(self, label: str, prompt_text: str, validator: Callable[[str], bool], extractor: Callable[..., dict[str, Any]]) -> None:
         self.label = label
         self.prompt_text = prompt_text
         self.validator = validator
         self.extractor = extractor
 
 
-def _collect_retry(value: str, _prompt) -> dict:
+def _collect_retry(value: str, _prompt: Callable[[str], str]) -> dict[str, Any]:
     """Collect retry policy fields from user input."""
     backoff = _prompt("Backoff strategy [fixed/exponential]") or "exponential"
     return {"retry_policy": {"max_retries": int(value), "backoff": backoff}}
 
 
-def _configure_advanced_params(*, input_fn=None) -> dict:
+def _configure_advanced_params(*, input_fn: Callable[[str], str] | None = None) -> dict[str, Any]:
     """Collect optional advanced parameters. Returns dict of extra YAML keys.
 
     Empty input or non-numeric input skips each parameter.
     """
     _prompt = input_fn or (lambda prompt: click.prompt(prompt, default=""))
-    result: dict = {}
+    result: dict[str, Any] = {}
 
     param_specs = [
         _ParamSpec("Budget", "Budget max_cost in $ (Enter to skip)", _is_number,
@@ -321,7 +323,7 @@ def _configure_advanced_params(*, input_fn=None) -> dict:
     # LLM config sub-group (temperature + max_tokens)
     if use_rich and console:
         console.print("  [bold]LLM config[/bold] [dim](Enter to skip)[/dim]")
-    config: dict = {}
+    config: dict[str, Any] = {}
     temp_str = _prompt("Temperature (Enter to skip)")
     if _is_number(temp_str):
         config["temperature"] = float(temp_str)

@@ -7,7 +7,9 @@ import sys
 from pathlib import Path
 
 import click
-import yaml
+import yaml  # type: ignore[import-untyped]
+
+from typing import Any
 
 from binex.cli.dsl_parser import PATTERNS, ParsedDSL, parse_dsl
 from binex.cli.providers import PROVIDERS, ProviderConfig
@@ -247,7 +249,7 @@ def scaffold_workflow(
         sys.exit(1)
 
     # Build node configs (interactive or stub)
-    node_configs: dict[str, dict] = {}
+    node_configs: dict[str, dict[str, Any]] = {}
     if no_interactive:
         for node_name in parsed.nodes:
             if _is_cao_node(node_name):
@@ -368,7 +370,7 @@ def _detect_human_type(node_name: str) -> str:
     return "approve"
 
 
-def _configure_human_node(node_name: str) -> dict | None:
+def _configure_human_node(node_name: str) -> dict[str, Any] | None:
     """Try to configure a human node interactively. Return config or None."""
     if not _is_human_node(node_name):
         return None
@@ -400,7 +402,7 @@ def _configure_llm_node(
     provider_list: list[ProviderConfig],
     prev_provider: ProviderConfig | None,
     prev_model: str | None,
-) -> dict:
+) -> dict[str, Any]:
     """Prompt user for provider/model/system_prompt for an LLM node.
 
     Returns dict with keys: config, provider, model.
@@ -453,10 +455,10 @@ def _configure_llm_node(
     }
 
 
-def _interactive_node_config(parsed: ParsedDSL) -> dict[str, dict]:
+def _interactive_node_config(parsed: ParsedDSL) -> dict[str, dict[str, Any]]:
     """Prompt user for provider/model/system_prompt per node."""
     provider_list = list(PROVIDERS.values())
-    configs: dict[str, dict] = {}
+    configs: dict[str, dict[str, Any]] = {}
     prev_provider = None
     prev_model = None
 
@@ -479,12 +481,12 @@ def _interactive_node_config(parsed: ParsedDSL) -> dict[str, dict]:
 
 def _build_workflow_yaml(
     parsed: ParsedDSL,
-    node_configs: dict[str, dict],
+    node_configs: dict[str, dict[str, Any]],
     filename: str,
-) -> dict:
+) -> dict[str, Any]:
     """Build workflow dict suitable for YAML serialization."""
     stem = Path(filename).stem
-    nodes: dict[str, dict] = {}
+    nodes: dict[str, dict[str, Any]] = {}
 
     for node_name in parsed.nodes:
         cfg = node_configs[node_name]
@@ -498,7 +500,7 @@ def _build_workflow_yaml(
         else:
             inputs["query"] = "${user.query}"
 
-        node_spec: dict = {
+        node_spec: dict[str, Any] = {
             "agent": cfg["agent"],
             "system_prompt": cfg["system_prompt"],
             "inputs": inputs,

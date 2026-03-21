@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import click
 
+from typing import Any
+
 from binex.cli import has_rich
 from binex.cli.explore_ui import (
     _print_artifacts_table,
@@ -19,7 +21,7 @@ from binex.cli.explore_ui import (
 from binex.cli.explore_utils import _short_id, _time_ago
 
 
-async def _action_trace(exec_store, run_id: str) -> None:
+async def _action_trace(exec_store: Any, run_id: str) -> None:
     """Show execution timeline with node drill-down."""
     records = await exec_store.list_records(run_id)
     if not records:
@@ -44,7 +46,7 @@ async def _action_trace(exec_store, run_id: str) -> None:
     click.echo(output)
 
 
-async def _trace_node_drill_down(records, format_node_fn) -> None:
+async def _trace_node_drill_down(records: Any, format_node_fn: Any) -> None:
     """Interactive node selection loop for trace view."""
     while True:
         choice = click.prompt(
@@ -65,7 +67,7 @@ async def _trace_node_drill_down(records, format_node_fn) -> None:
             click.echo(f"  Invalid: enter 1-{len(records)}")
 
 
-async def _action_graph(exec_store, run_id: str) -> None:
+async def _action_graph(exec_store: Any, run_id: str) -> None:
     """Show DAG visualization."""
     from binex.cli.trace import _build_graph_from_records, _render_dag
 
@@ -90,7 +92,7 @@ async def _action_graph(exec_store, run_id: str) -> None:
 
 
 async def _enrich_graph_from_workflow(
-    exec_store, run_id: str, nodes: dict, edges: list,
+    exec_store: Any, run_id: str, nodes: dict[str, str], edges: list[tuple[str, str]],
 ) -> None:
     """Add unexecuted nodes from workflow spec to the graph."""
     run = await exec_store.get_run(run_id)
@@ -104,7 +106,7 @@ async def _enrich_graph_from_workflow(
         pass  # Workflow file may be missing or changed
 
 
-def _merge_spec_into_graph(spec, nodes: dict, edges: list) -> None:
+def _merge_spec_into_graph(spec: Any, nodes: dict[str, str], edges: list[tuple[str, str]]) -> None:
     """Merge workflow spec nodes/edges into existing graph data."""
     for node_id, node_spec in spec.nodes.items():
         if node_id not in nodes:
@@ -114,7 +116,7 @@ def _merge_spec_into_graph(spec, nodes: dict, edges: list) -> None:
                 edges.append((dep, node_id))
 
 
-async def _action_debug(exec_store, art_store, run_id: str) -> None:
+async def _action_debug(exec_store: Any, art_store: Any, run_id: str) -> None:
     """Show debug report."""
     from binex.trace.debug_report import build_debug_report, format_debug_report
 
@@ -134,7 +136,7 @@ async def _action_debug(exec_store, art_store, run_id: str) -> None:
     click.echo(format_debug_report(report))
 
 
-async def _action_cost(exec_store, run_id: str) -> None:
+async def _action_cost(exec_store: Any, run_id: str) -> None:
     """Show cost breakdown."""
     from binex.cli.cost import print_cost_text
 
@@ -143,7 +145,7 @@ async def _action_cost(exec_store, run_id: str) -> None:
     print_cost_text(run_id, cost_summary, cost_records)
 
 
-async def _action_artifacts(exec_store, art_store, run_id: str) -> None:
+async def _action_artifacts(exec_store: Any, art_store: Any, run_id: str) -> None:
     """Artifact sub-browser: list → select → detail + lineage."""
     artifacts = await art_store.list_by_run(run_id)
     if not artifacts:
@@ -176,7 +178,7 @@ async def _action_artifacts(exec_store, art_store, run_id: str) -> None:
         click.echo(f"  Invalid choice. Enter 1-{len(artifacts)} or b.")
 
 
-async def _action_node(exec_store, art_store, run_id: str, records) -> list:
+async def _action_node(exec_store: Any, art_store: Any, run_id: str, records: Any) -> list[Any]:
     """Show numbered list of nodes, select one for detail. Returns node artifacts."""
     if not records:
         click.echo("  No execution records.")
@@ -219,7 +221,7 @@ async def _action_node(exec_store, art_store, run_id: str, records) -> list:
     return node_arts
 
 
-async def _action_diagnose(exec_store, art_store, run_id: str) -> None:
+async def _action_diagnose(exec_store: Any, art_store: Any, run_id: str) -> None:
     """Run root-cause analysis on the current run."""
     from binex.trace.diagnose import diagnose_run
 
@@ -235,7 +237,7 @@ async def _action_diagnose(exec_store, art_store, run_id: str) -> None:
         _render_diagnose_plain(report)
 
 
-async def _action_diff(exec_store, art_store, run_id: str, run) -> None:
+async def _action_diff(exec_store: Any, art_store: Any, run_id: str, run: Any) -> None:
     """Compare current run with another run."""
     other_id = await _pick_other_run(exec_store, run_id, run.workflow_name)
     if not other_id:
@@ -258,7 +260,7 @@ async def _action_diff(exec_store, art_store, run_id: str, run) -> None:
         click.echo(format_diff(result))
 
 
-async def _action_bisect(exec_store, art_store, run_id: str, run) -> None:
+async def _action_bisect(exec_store: Any, art_store: Any, run_id: str, run: Any) -> None:
     """Find divergence point between current run (bad) and another run (good)."""
     click.echo("  Current run = bad run. Select the good run:")
     good_id = await _pick_other_run(exec_store, run_id, run.workflow_name)
@@ -284,7 +286,7 @@ async def _action_bisect(exec_store, art_store, run_id: str, run) -> None:
         _print_plain(report)
 
 
-async def _pick_other_run(exec_store, current_run_id: str, workflow_name: str) -> str | None:
+async def _pick_other_run(exec_store: Any, current_run_id: str, workflow_name: str) -> str | None:
     """Let user pick another run of the same workflow. Returns run_id or None."""
     all_runs = await exec_store.list_runs()
     same_wf = [
@@ -333,7 +335,7 @@ async def _pick_other_run(exec_store, current_run_id: str, workflow_name: str) -
     try:
         idx = int(choice) - 1
         if 0 <= idx < len(same_wf):
-            return same_wf[idx].run_id
+            return str(same_wf[idx].run_id)
     except ValueError:
         pass
     # Treat as manual run_id

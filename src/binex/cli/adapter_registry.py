@@ -215,11 +215,11 @@ def _register_cao_adapter(
         human_input_fn = None
     else:
         # CLI fallback for human input
-        def _cli_human_input(profile_name, terminal_id):
+        def _cli_human_input(profile_name: str, terminal_id: str) -> str:
             import click
-            return click.prompt(
+            return str(click.prompt(
                 f"CAO agent '{profile_name}' is waiting for input",
-            )
+            ))
         human_input_fn = _cli_human_input
 
     dispatcher.register_adapter(

@@ -6,12 +6,14 @@ import json
 
 import click
 
+from typing import Any
+
 from binex.cli import has_rich
 from binex.cli.explore_utils import _preview, _short_id, _time_ago
 from binex.trace.lineage import build_lineage_tree, format_lineage_tree
 
 
-def _render_dashboard(run, records, run_id: str, cost_records=None) -> None:
+def _render_dashboard(run: Any, records: Any, run_id: str, cost_records: Any = None) -> None:
     """Render dashboard panel with header, status, and node table."""
     node_costs: dict[str, float] = {}
     for cr in (cost_records or []):
@@ -23,7 +25,7 @@ def _render_dashboard(run, records, run_id: str, cost_records=None) -> None:
         _render_dashboard_plain(run, records, run_id, node_costs)
 
 
-def _render_dashboard_rich(run, records, run_id: str, node_costs: dict) -> None:
+def _render_dashboard_rich(run: Any, records: Any, run_id: str, node_costs: dict[str, float]) -> None:
     """Render dashboard with Rich formatting."""
     from rich.console import Group as RichGroup
     from rich.text import Text
@@ -73,7 +75,7 @@ def _render_dashboard_rich(run, records, run_id: str, node_costs: dict) -> None:
     get_console().print(panel)
 
 
-def _render_dashboard_plain(run, records, run_id: str, node_costs: dict) -> None:
+def _render_dashboard_plain(run: Any, records: Any, run_id: str, node_costs: dict[str, float]) -> None:
     """Render dashboard in plain text."""
     click.echo(f"  === Dashboard: {_short_id(run_id)} ===")
     click.echo(f"  Workflow: {run.workflow_name}")
@@ -168,10 +170,10 @@ def _wait_for_enter() -> bool:
     choice = click.prompt(
         "  [Enter] back to dashboard · [q] back to runs", default="",
     )
-    return choice.strip().lower() == "q"
+    return bool(choice.strip().lower() == "q")
 
 
-def _wait_for_enter_or_preview(node_arts: list) -> bool:
+def _wait_for_enter_or_preview(node_arts: list[Any]) -> bool:
     """Prompt with preview option for node detail. Returns True to leave dashboard."""
     while True:
         choice = click.prompt(
@@ -186,7 +188,7 @@ def _wait_for_enter_or_preview(node_arts: list) -> bool:
         return False
 
 
-def _show_full_preview(node_arts: list) -> None:
+def _show_full_preview(node_arts: list[Any]) -> None:
     """Render full artifact content as Rich Markdown panels."""
     if not node_arts:
         click.echo("  No artifacts to preview.")
@@ -216,7 +218,7 @@ def _show_full_preview(node_arts: list) -> None:
             click.echo(f"  id: {art.id}")
 
 
-def _print_artifacts_table(artifacts, run_id: str) -> None:
+def _print_artifacts_table(artifacts: Any, run_id: str) -> None:
     """Display artifacts as a table (rich or plain)."""
     if has_rich():
         from binex.cli.ui import get_console, make_table
@@ -243,7 +245,7 @@ def _print_artifacts_table(artifacts, run_id: str) -> None:
             )
 
 
-def _show_artifact_detail(artifact) -> None:
+def _show_artifact_detail(artifact: Any) -> None:
     """Render artifact detail."""
     content_str = artifact.content if artifact.content is not None else ""
     if not isinstance(content_str, str):
@@ -280,7 +282,7 @@ def _show_artifact_detail(artifact) -> None:
         click.echo()
 
 
-async def _show_lineage(art_store, artifact_id: str) -> None:
+async def _show_lineage(art_store: Any, artifact_id: str) -> None:
     """Display artifact lineage tree."""
     tree = await build_lineage_tree(art_store, artifact_id)
     if not tree:
@@ -293,7 +295,7 @@ async def _show_lineage(art_store, artifact_id: str) -> None:
 
         from binex.cli.ui import get_console, make_panel
 
-        def _build_rich_tree(node, parent=None):
+        def _build_rich_tree(node: Any, parent: Any = None) -> Any:
             label = (
                 f"[magenta bold]{node['produced_by']}[/] "
                 f"[dim]({node['artifact_id']})[/] "
@@ -313,7 +315,7 @@ async def _show_lineage(art_store, artifact_id: str) -> None:
         click.echo(format_lineage_tree(tree))
 
 
-def _render_node_list_rich(records) -> None:
+def _render_node_list_rich(records: Any) -> None:
     """Render node selection table with Rich."""
     from binex.cli.ui import get_console, make_table, status_text
 
@@ -333,7 +335,7 @@ def _render_node_list_rich(records) -> None:
     get_console().print(table)
 
 
-def _render_node_list_plain(records) -> None:
+def _render_node_list_plain(records: Any) -> None:
     """Render node selection list in plain text."""
     for i, rec in enumerate(records, 1):
         latency = f"{rec.latency_ms}ms" if rec.latency_ms else ""
@@ -342,7 +344,7 @@ def _render_node_list_plain(records) -> None:
         )
 
 
-def _render_node_rich(rec, node_arts, node_total_cost: float) -> None:
+def _render_node_rich(rec: Any, node_arts: Any, node_total_cost: float) -> None:
     """Render node detail as a Rich panel."""
     from rich.console import Group
     from rich.text import Text
@@ -364,7 +366,7 @@ def _render_node_rich(rec, node_arts, node_total_cost: float) -> None:
     if node_total_cost > 0:
         info.append(f"  ·  Cost: ${node_total_cost:.4f}", style="cyan")
 
-    parts: list = [info]
+    parts: list[Any] = [info]
 
     if rec.model:
         model_line = Text()
@@ -401,7 +403,7 @@ def _render_node_rich(rec, node_arts, node_total_cost: float) -> None:
     console.print(panel)
 
 
-def _render_node_plain(rec, node_arts, node_total_cost: float) -> None:
+def _render_node_plain(rec: Any, node_arts: Any, node_total_cost: float) -> None:
     """Render node detail in plain text."""
     click.echo(f"  Node: {rec.task_id}")
     click.echo(f"  Agent: {rec.agent_id}")
@@ -419,7 +421,7 @@ def _render_node_plain(rec, node_arts, node_total_cost: float) -> None:
         click.echo(f"  Cost: ${node_total_cost:.4f}")
 
 
-def _render_diagnose_rich(report) -> None:
+def _render_diagnose_rich(report: Any) -> None:
     """Render diagnostic report with Rich formatting."""
     from rich.table import Table
 
@@ -466,7 +468,7 @@ def _render_diagnose_rich(report) -> None:
         console.print(make_panel(rec_text, title="Recommendations"))
 
 
-def _render_diagnose_plain(report) -> None:
+def _render_diagnose_plain(report: Any) -> None:
     """Render diagnostic report in plain text."""
     click.echo(f"  Run: {report.run_id}")
     click.echo(f"  Status: {report.status}")

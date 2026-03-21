@@ -7,9 +7,10 @@ import sys
 from pathlib import Path
 
 import click
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from binex.cli import has_rich
+from typing import Any
 from binex.cli.dsl_parser import PATTERNS, parse_dsl
 from binex.cli.prompt_roles import (
     CATEGORY_ICONS,
@@ -60,7 +61,7 @@ def build_start_workflow(
         model = model[len(prefix_provider) + 1:]
     agent_uri = f"{agent_prefix}{model}"
 
-    nodes: dict[str, dict] = {}
+    nodes: dict[str, dict[str, Any]] = {}
 
     # Optional user_input node prepended
     if user_input:
@@ -78,7 +79,7 @@ def build_start_workflow(
 
     needed_prompts: set[str] = set()
     for node_name in parsed.nodes:
-        node_def: dict = {"agent": agent_uri, "outputs": ["result"]}
+        node_def: dict[str, Any] = {"agent": agent_uri, "outputs": ["result"]}
         # Use file:// prompt reference if a bundled prompt exists
         prompt_file = _NODE_PROMPT_FILES.get(node_name)
         if prompt_file:
@@ -104,9 +105,9 @@ _OPTIONAL_NODE_KEYS = (
 )
 
 
-def _build_node_dict(cfg: dict, needed_prompts: set[str]) -> dict:
+def _build_node_dict(cfg: dict[str, Any], needed_prompts: set[str]) -> dict[str, Any]:
     """Build a single node dict from config, collecting needed prompts."""
-    node: dict = {"agent": cfg["agent"]}
+    node: dict[str, Any] = {"agent": cfg["agent"]}
 
     if cfg.get("system_prompt"):
         node["system_prompt"] = cfg["system_prompt"]
@@ -123,13 +124,13 @@ def _build_node_dict(cfg: dict, needed_prompts: set[str]) -> dict:
     return node
 
 
-def build_custom_workflow(*, name: str, nodes_config: dict[str, dict]) -> tuple[str, set[str]]:
+def build_custom_workflow(*, name: str, nodes_config: dict[str, dict[str, Any]]) -> tuple[str, set[str]]:
     """Generate workflow YAML from per-node configuration dicts.
 
     Returns (yaml_string, set_of_needed_prompt_files).
     """
     needed_prompts: set[str] = set()
-    nodes: dict[str, dict] = {}
+    nodes: dict[str, dict[str, Any]] = {}
 
     for node_id, cfg in nodes_config.items():
         nodes[node_id] = _build_node_dict(cfg, needed_prompts)
@@ -143,13 +144,13 @@ def build_custom_workflow(*, name: str, nodes_config: dict[str, dict]) -> tuple[
 # Run workflow (optional post-generation execution)
 # ---------------------------------------------------------------------------
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     from binex.cli import get_stores
     return get_stores()
 
 
-async def _execute(workflow_path: str) -> tuple:
+async def _execute(workflow_path: str) -> tuple[Any, Any, Any, Any]:
     """Load and execute a workflow, returning (summary, errors, artifacts)."""
     from binex.cli.adapter_registry import register_workflow_adapters
     from binex.runtime.orchestrator import Orchestrator
@@ -169,9 +170,9 @@ async def _execute(workflow_path: str) -> tuple:
     original_execute = orch._execute_node
 
     async def _progress_execute(
-        spec_, dag_, scheduler_, run_id_, trace_id_, node_id_, node_artifacts_,
-        accumulated_cost_=0.0, node_artifacts_history_=None,
-    ):
+        spec_: Any, dag_: Any, scheduler_: Any, run_id_: str, trace_id_: str, node_id_: str, node_artifacts_: Any,
+        accumulated_cost_: float = 0.0, node_artifacts_history_: Any = None,
+    ) -> None:
         counter[0] += 1
         if has_rich():
             from binex.cli.ui import get_console
@@ -187,7 +188,7 @@ async def _execute(workflow_path: str) -> tuple:
             node_id_, node_artifacts_, accumulated_cost_, node_artifacts_history_,
         )
 
-    orch._execute_node = _progress_execute
+    orch._execute_node = _progress_execute  # type: ignore[assignment]
 
     register_workflow_adapters(orch.dispatcher, spec)
 
@@ -227,7 +228,7 @@ def _run_workflow(workflow_path: str) -> None:
 # Category navigation (Phase 3 — US1)
 # ---------------------------------------------------------------------------
 
-def _step_choose_category(*, input_fn=None) -> str | None:
+def _step_choose_category(*, input_fn: Any = None) -> str | None:
     """Display 8 categories. Returns category name, 'c' for constructor, or None for quit."""
     _prompt = input_fn or (lambda p: click.prompt(p))
 
@@ -280,7 +281,7 @@ def _step_choose_category(*, input_fn=None) -> str | None:
     return None
 
 
-def _template_dag_str(t) -> str:
+def _template_dag_str(t: Any) -> str:
     """Build an ASCII DAG string from a template's DSL."""
     from binex.cli.ui import render_dag_ascii
 
@@ -293,7 +294,7 @@ def _template_dag_str(t) -> str:
     return render_dag_ascii(nodes, edges)
 
 
-def _render_template_list_rich(label: str, templates: list) -> None:
+def _render_template_list_rich(label: str, templates: list[Any]) -> None:
     """Render template list in Rich format."""
     from rich.text import Text
 
@@ -311,7 +312,7 @@ def _render_template_list_rich(label: str, templates: list) -> None:
     console.print("\n  [dim][b] Back to categories[/dim]")
 
 
-def _render_template_list_plain(label: str, templates: list) -> None:
+def _render_template_list_plain(label: str, templates: list[Any]) -> None:
     """Render template list in plain text."""
     click.echo(f"\n  {label}:")
     for i, t in enumerate(templates, 1):
@@ -320,7 +321,7 @@ def _render_template_list_plain(label: str, templates: list) -> None:
     click.echo("\n  [b] Back to categories")
 
 
-def _step_pick_template(category: str, *, input_fn=None):
+def _step_pick_template(category: str, *, input_fn: Any = None) -> Any:
     """Display templates in a category. Returns TemplateConfig or None for back."""
     _prompt = input_fn or (lambda p: click.prompt(p))
     templates = TEMPLATE_CATEGORIES.get(category, [])
@@ -377,7 +378,7 @@ def _step_choose_template() -> tuple[str, str, str]:
         return tpl.dsl, tpl.default_name, f"Input for {tpl.label}:"
 
 
-def _collect_env_vars(nodes_config: dict[str, dict]) -> str:
+def _collect_env_vars(nodes_config: dict[str, dict[str, Any]]) -> str:
     """Collect env vars from node agents and return .env content."""
     env_lines: list[str] = []
     seen_vars: set[str] = set()
@@ -415,7 +416,7 @@ def _resolve_project_dir(project_name: str) -> Path:
 
 def _write_custom_project_files(
     project_dir: Path, yaml_content: str,
-    needed_prompts: set[str], nodes_config: dict[str, dict],
+    needed_prompts: set[str], nodes_config: dict[str, dict[str, Any]],
 ) -> None:
     """Write all project files for the custom wizard."""
     project_dir.mkdir(parents=True, exist_ok=True)
@@ -627,7 +628,7 @@ def _print_topology_preview_rich(levels: list[str]) -> None:
     console.print(preview)
 
 
-def _step_mode_topology(*, input_fn=None) -> str:
+def _step_mode_topology(*, input_fn: Any = None) -> str:
     """Build workflow topology step by step. Returns DSL string like 'A -> B, C -> D'."""
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))
 
@@ -663,7 +664,7 @@ def _step_user_input() -> bool:
         default="y",
         type=click.Choice(["y", "n"], case_sensitive=False),
     )
-    want_user_input = add_user_input.lower() == "y"
+    want_user_input: bool = add_user_input.lower() == "y"
     if want_user_input:
         _print_confirm("User prompt will be added as the first step")
     else:

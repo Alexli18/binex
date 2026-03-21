@@ -7,6 +7,8 @@ import sys
 
 import click
 
+from typing import Any
+
 from binex.cli import get_stores, has_rich
 from binex.cli.bisect_format import (
     _RICH_COLORS,
@@ -24,7 +26,7 @@ from binex.cli.bisect_format import (
 )
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -67,7 +69,7 @@ def bisect_cmd(
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
-    from binex.trace.bisect import bisect_report_to_dict
+    from binex.trace.bisect import bisect_report_to_dict  # type: ignore[attr-defined]
 
     result = bisect_report_to_dict(report)
 
@@ -81,7 +83,7 @@ def bisect_cmd(
 
 async def _run_bisect(
     good_run_id: str, bad_run_id: str, threshold: float,
-):
+) -> Any:
     from binex.trace.bisect import bisect_report
 
     exec_store, art_store = _get_stores()
@@ -98,7 +100,7 @@ async def _run_bisect(
 # Plain text output
 # ---------------------------------------------------------------------------
 
-def _verdict_plain(dp, report) -> None:
+def _verdict_plain(dp: Any, report: Any) -> None:
     """Print the verdict section in plain text."""
     if dp is None:
         click.echo(
@@ -124,7 +126,7 @@ def _verdict_plain(dp, report) -> None:
         click.echo(f"\u26a0 Node \"{dp.node_id}\" output {desc}")
 
 
-def _node_marker_plain(nc, dp, downstream_set) -> str:
+def _node_marker_plain(nc: Any, dp: Any, downstream_set: set[str]) -> str:
     """Return the marker suffix for a pipeline node."""
     if dp and nc.node_id == dp.node_id:
         return "  \u2190 root cause"
@@ -133,7 +135,7 @@ def _node_marker_plain(nc, dp, downstream_set) -> str:
     return ""
 
 
-def _print_plain(report, show_diff: bool = False) -> None:
+def _print_plain(report: Any, show_diff: bool = False) -> None:
     """Print intuitive plain text bisect output."""
     # Header
     click.echo(f"Bisect: {report.workflow_name}")
@@ -181,7 +183,7 @@ def _print_plain(report, show_diff: bool = False) -> None:
 # Rich output
 # ---------------------------------------------------------------------------
 
-def _node_marker_rich(nc, dp, downstream_set) -> str:
+def _node_marker_rich(nc: Any, dp: Any, downstream_set: set[str]) -> str:
     """Return the Rich marker suffix for a pipeline node."""
     if dp and nc.node_id == dp.node_id:
         return "  [red bold]\u2190 root cause[/red bold]"
@@ -190,7 +192,7 @@ def _node_marker_rich(nc, dp, downstream_set) -> str:
     return ""
 
 
-def _print_node_error_rich(console, nc, report, cont: str) -> None:
+def _print_node_error_rich(console: Any, nc: Any, report: Any, cont: str) -> None:
     """Print error context for a node in Rich format."""
     if (
         report.error_context
@@ -203,7 +205,7 @@ def _print_node_error_rich(console, nc, report, cont: str) -> None:
         )
 
 
-def _print_node_diff_rich(console, nc, cont: str, show_diff: bool) -> None:
+def _print_node_diff_rich(console: Any, nc: Any, cont: str, show_diff: bool) -> None:
     """Print content diff or preview for a node in Rich format."""
     if not (nc.content_diff and nc.status == "content_diff"):
         return
@@ -227,7 +229,7 @@ def _print_node_diff_rich(console, nc, cont: str, show_diff: bool) -> None:
             )
 
 
-def _print_rich(report, show_diff: bool = False) -> None:
+def _print_rich(report: Any, show_diff: bool = False) -> None:
     """Print rich formatted bisect output."""
     from binex.cli.ui import get_console
 

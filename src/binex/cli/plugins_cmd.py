@@ -6,7 +6,7 @@ import json
 import sys
 
 import click
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from binex.plugins import PluginRegistry
 

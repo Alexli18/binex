@@ -8,16 +8,18 @@ import sys
 
 import click
 
+from typing import Any
+
 from binex.cli import get_stores, has_rich
 from binex.trace.tracer import generate_timeline, generate_timeline_json
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
 
-async def build_timeline_data(exec_store, run_id: str):
+async def build_timeline_data(exec_store: Any, run_id: str) -> tuple[Any, Any]:
     """Fetch and sort timeline records for reuse by explore dashboard."""
     run = await exec_store.get_run(run_id)
     records = await exec_store.list_records(run_id)
@@ -26,7 +28,7 @@ async def build_timeline_data(exec_store, run_id: str):
     return run, records
 
 
-async def build_graph_data(exec_store, run_id: str):
+async def build_graph_data(exec_store: Any, run_id: str) -> tuple[Any, Any, Any]:
     """Fetch records and build graph structure for reuse by explore dashboard."""
     records = await exec_store.list_records(run_id)
     if not records:
@@ -38,7 +40,7 @@ async def build_graph_data(exec_store, run_id: str):
 class TraceGroup(click.Group):
     """Custom group that treats unknown subcommands as run_id for default timeline."""
 
-    def parse_args(self, ctx, args):
+    def parse_args(self, ctx: Any, args: Any) -> Any:
         # If first arg is not a known subcommand, treat as `binex trace <run_id>`
         if args and args[0] not in self.commands:
             args = ["timeline"] + args
@@ -114,7 +116,7 @@ async def _node(run_id: str, step: str, json_out: bool, rich_out: bool = False) 
         await exec_store.close()
 
 
-def _print_node_plain(record) -> None:
+def _print_node_plain(record: Any) -> None:
     """Print execution record details in plain text."""
     click.echo(f"Step: {record.task_id}")
     click.echo(f"Agent: {record.agent_id}")
@@ -173,7 +175,7 @@ async def _graph(run_id: str, json_out: bool, rich_out: bool = False) -> None:
         await exec_store.close()
 
 
-def _build_graph_from_records(records) -> tuple[dict[str, str], list[tuple[str, str]]]:
+def _build_graph_from_records(records: Any) -> tuple[dict[str, str], list[tuple[str, str]]]:
     """Build node labels and edge list from execution records."""
     nodes: dict[str, str] = {}
     for rec in records:
@@ -198,7 +200,7 @@ def _render_dag(
     nodes: dict[str, str],
     edges: list[tuple[str, str]],
     rendered: set[str],
-    echo,
+    echo: Any,
 ) -> None:
     """Simple topological ASCII render."""
     children: dict[str, list[str]] = {n: [] for n in nodes}

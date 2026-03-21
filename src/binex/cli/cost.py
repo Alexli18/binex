@@ -8,15 +8,17 @@ import sys
 
 import click
 
+from typing import Any
+
 from binex.cli import get_stores
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
 
-async def build_cost_data(exec_store, run_id: str):
+async def build_cost_data(exec_store: Any, run_id: str) -> tuple[Any, Any, Any]:
     """Fetch cost summary and records for reuse by explore dashboard."""
     run = await exec_store.get_run(run_id)
     if run is None:
@@ -64,7 +66,7 @@ async def _cost_show(run_id: str, json_out: bool) -> None:
         await execution_store.close()
 
 
-def _print_cost_json(run_id, cost_summary, cost_records) -> None:
+def _print_cost_json(run_id: str, cost_summary: Any, cost_records: Any) -> None:
     """Format cost data as JSON."""
     data = {
         "run_id": run_id,
@@ -91,7 +93,7 @@ def _print_cost_json(run_id, cost_summary, cost_records) -> None:
     click.echo(json.dumps(data, default=str, indent=2))
 
 
-def _print_cost_rich(run_id, cost_summary) -> None:
+def _print_cost_rich(run_id: str, cost_summary: Any) -> None:
     """Render cost data using Rich panels and tables."""
     from rich.console import Group
     from rich.text import Text
@@ -127,7 +129,7 @@ def _print_cost_rich(run_id, cost_summary) -> None:
     get_console().print(panel)
 
 
-def _build_cost_summary_text(cost_summary):
+def _build_cost_summary_text(cost_summary: Any) -> Any:
     """Build Rich Text summary line for cost display."""
     from rich.text import Text
 
@@ -141,7 +143,7 @@ def _build_cost_summary_text(cost_summary):
     return summary
 
 
-def _print_cost_plain(run_id, cost_summary, cost_records) -> None:
+def _print_cost_plain(run_id: str, cost_summary: Any, cost_records: Any) -> None:
     """Render cost data as plain text."""
     click.echo(f"Run: {run_id}")
     click.echo(f"\nTotal cost: ${cost_summary.total_cost:.2f}")
@@ -157,7 +159,7 @@ def _print_cost_plain(run_id, cost_summary, cost_records) -> None:
         _print_node_cost_line(cost_records, task_id, cost)
 
 
-def _print_node_cost_line(cost_records, task_id: str, cost: float) -> None:
+def _print_node_cost_line(cost_records: Any, task_id: str, cost: float) -> None:
     """Print a single node cost line with optional budget info."""
     node_budget = _find_node_budget(cost_records, task_id)
     if node_budget is not None:
@@ -170,7 +172,7 @@ def _print_node_cost_line(cost_records, task_id: str, cost: float) -> None:
         click.echo(f"  {task_id:<20} ${cost:.4f}")
 
 
-def print_cost_text(run_id, cost_summary, cost_records) -> None:
+def print_cost_text(run_id: str, cost_summary: Any, cost_records: Any) -> None:
     """Format cost data as human-readable text."""
     from binex.cli import has_rich
 
@@ -180,11 +182,11 @@ def print_cost_text(run_id, cost_summary, cost_records) -> None:
         _print_cost_plain(run_id, cost_summary, cost_records)
 
 
-def _find_node_budget(cost_records, task_id: str) -> float | None:
+def _find_node_budget(cost_records: Any, task_id: str) -> float | None:
     """Find node_budget from cost records for a given task."""
     for r in cost_records:
         if r.task_id == task_id and r.node_budget is not None:
-            return r.node_budget
+            return float(r.node_budget)
     return None
 
 
@@ -196,7 +198,7 @@ def cost_history_cmd(run_id: str, json_out: bool) -> None:
     asyncio.run(_cost_history(run_id, json_out))
 
 
-def _print_history_json(run_id: str, records) -> None:
+def _print_history_json(run_id: str, records: Any) -> None:
     """Format cost history as JSON."""
     data = {
         "run_id": run_id,
@@ -215,7 +217,7 @@ def _print_history_json(run_id: str, records) -> None:
     click.echo(json.dumps(data, default=str, indent=2))
 
 
-def _print_history_rich(run_id: str, records) -> None:
+def _print_history_rich(run_id: str, records: Any) -> None:
     """Render cost history using Rich table."""
     from binex.cli.ui import get_console, make_panel, make_table
 
@@ -235,7 +237,7 @@ def _print_history_rich(run_id: str, records) -> None:
     get_console().print(panel)
 
 
-def _print_history_plain(run_id: str, records) -> None:
+def _print_history_plain(run_id: str, records: Any) -> None:
     """Render cost history as plain text."""
     click.echo(f"Cost history for {run_id}:\n")
     for r in records:

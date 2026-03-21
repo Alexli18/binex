@@ -9,12 +9,14 @@ from pathlib import Path
 
 import click
 
+from typing import Any, Callable
+
 from binex.cli.prompt_roles import get_role
 
 
 def has_rich() -> bool:
     """Proxy to binex.cli.start.has_rich for test-patchability."""
-    return sys.modules["binex.cli.start"].has_rich()
+    return bool(sys.modules["binex.cli.start"].has_rich())
 
 # ---------------------------------------------------------------------------
 # Template registry
@@ -84,7 +86,7 @@ def _get_bundled_prompt_list() -> list[tuple[str, str]]:
     return result
 
 
-def _render_variant_menu_rich(role_name: str, variants: list) -> None:
+def _render_variant_menu_rich(role_name: str, variants: list[Any]) -> None:
     """Render variant menu in Rich format."""
     from rich.text import Text
 
@@ -109,7 +111,7 @@ def _render_variant_menu_rich(role_name: str, variants: list) -> None:
     )
 
 
-def _render_variant_menu_plain(role_name: str, variants: list) -> None:
+def _render_variant_menu_plain(role_name: str, variants: list[Any]) -> None:
     """Render variant menu in plain text."""
     click.echo(f"  Prompt variants for {role_name}:")
     for i, v in enumerate(variants, 1):
@@ -126,7 +128,7 @@ def _render_variant_menu_plain(role_name: str, variants: list) -> None:
     )
 
 
-def _render_variant_menu(role_name: str, variants: list) -> None:
+def _render_variant_menu(role_name: str, variants: list[Any]) -> None:
     """Render the variant selection menu (Rich or plain)."""
     if has_rich():
         _render_variant_menu_rich(role_name, variants)
@@ -134,7 +136,7 @@ def _render_variant_menu(role_name: str, variants: list) -> None:
         _render_variant_menu_plain(role_name, variants)
 
 
-def _handle_preview(choice: str, variants: list) -> bool:
+def _handle_preview(choice: str, variants: list[Any]) -> bool:
     """Handle 'v N' preview command. Returns True if handled."""
     if not choice.lower().startswith("v "):
         return False
@@ -147,22 +149,22 @@ def _handle_preview(choice: str, variants: list) -> bool:
     return True
 
 
-def _handle_text_commands(choice: str, _prompt) -> str | None:
+def _handle_text_commands(choice: str, _prompt: Callable[[str], str]) -> str | None:
     """Handle 'custom', 'edit', 'file' commands. Returns prompt string or None."""
     cmd = choice.lower()
 
     if cmd == "custom":
-        return _prompt("Enter system prompt text")
+        return str(_prompt("Enter system prompt text"))
 
     if cmd == "edit":
         content = click.edit()
         if content and content.strip():
             return content.strip()
         # Editor cancelled — fall back to text
-        return _prompt("Editor cancelled. Enter prompt text")
+        return str(_prompt("Editor cancelled. Enter prompt text"))
 
     if cmd == "file":
-        path = _prompt("Enter path to prompt file")
+        path = str(_prompt("Enter path to prompt file"))
         if not path.startswith("file://"):
             path = f"file://{path}"
         return path
@@ -171,7 +173,7 @@ def _handle_text_commands(choice: str, _prompt) -> str | None:
 
 
 def _select_prompt_variant(
-    *, role_name: str, input_fn=None,
+    *, role_name: str, input_fn: Callable[[str], str] | None = None,
 ) -> str:
     """Pick a prompt variant for a role. Returns system_prompt string.
 
@@ -270,7 +272,7 @@ def _render_prompt_menu(
         click.echo(f"    {file_path_n}) Provide file path")
 
 
-def _select_prompt(*, node_id: str, input_fn=None) -> str:
+def _select_prompt(*, node_id: str, input_fn: Callable[[str], str] | None = None) -> str:
     """Interactive prompt picker. Returns system_prompt string.
 
     Options: bundled prompts (file:// ref), custom text, file path.
@@ -300,9 +302,9 @@ def _select_prompt(*, node_id: str, input_fn=None) -> str:
         if choice_int <= len(bundled):
             return f"file://prompts/{bundled[choice_int - 1][0]}"
         if choice_int == len(bundled) + 1:
-            return _prompt("Enter system prompt text")
+            return str(_prompt("Enter system prompt text"))
         # file path option (or any higher number)
-        path = _prompt("Enter path to prompt file")
+        path = str(_prompt("Enter path to prompt file"))
         if not path.startswith("file://"):
             path = f"file://{path}"
         return path
@@ -316,4 +318,4 @@ def _select_prompt(*, node_id: str, input_fn=None) -> str:
         return f"file://prompts/{matched[0]}"
 
     # Guard 3: treat as custom text
-    return choice
+    return str(choice)

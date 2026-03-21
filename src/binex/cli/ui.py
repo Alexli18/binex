@@ -313,7 +313,7 @@ class LiveRunTable:
 
     _SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 
-    def __init__(self, nodes: list[dict]) -> None:
+    def __init__(self, nodes: list[dict[str, Any]]) -> None:
         """Initialise from a list of node descriptors.
 
         Parameters

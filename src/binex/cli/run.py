@@ -8,6 +8,8 @@ import sys
 
 import click
 
+from typing import Any
+
 from binex.cli import get_stores, render_terminal_artifacts
 from binex.cli.adapter_registry import register_workflow_adapters
 from binex.cli.run_progress import can_use_live, install_live_wrapper, install_verbose_wrapper
@@ -19,7 +21,7 @@ from binex.workflow_spec.validator import validate_workflow
 VERBOSE_CONTENT_MAX_LEN = 2000
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -78,7 +80,7 @@ def run_cmd(
     sys.exit(0 if summary.status == "completed" else 1)
 
 
-def _print_json_output(summary, spec, artifacts, terminal_nodes, verbose):
+def _print_json_output(summary: Any, spec: Any, artifacts: Any, terminal_nodes: list[str], verbose: bool) -> None:
     """Format and print JSON run output."""
     data = summary.model_dump()
     if verbose:
@@ -97,7 +99,7 @@ def _print_json_output(summary, spec, artifacts, terminal_nodes, verbose):
     click.echo(json.dumps(data, default=str, indent=2))
 
 
-def _print_text_output(summary, spec, artifacts, terminal_nodes):
+def _print_text_output(summary: Any, spec: Any, artifacts: Any, terminal_nodes: list[str]) -> None:
     """Format and print human-readable run output."""
     from binex.cli import has_rich
 
@@ -134,7 +136,7 @@ def _print_text_output(summary, spec, artifacts, terminal_nodes):
         )
 
 
-def _print_rich_output(summary, spec, artifacts, terminal_nodes):
+def _print_rich_output(summary: Any, spec: Any, artifacts: Any, terminal_nodes: list[str]) -> None:
     """Print styled run output using rich panels."""
     from rich.console import Group
     from rich.text import Text
@@ -185,9 +187,9 @@ def _print_rich_output(summary, spec, artifacts, terminal_nodes):
 
 
 async def _run(
-    spec, verbose: bool = False, *,
+    spec: Any, verbose: bool = False, *,
     stream_out: bool | None = None, gateway_url: str | None = None,
-):
+) -> tuple[Any, list[tuple[str, str]], list[Artifact]]:
     execution_store, artifact_store = _get_stores()
 
     # Determine streaming: explicit flag, or auto-detect from TTY
@@ -247,13 +249,13 @@ async def _run(
         await execution_store.close()
 
 
-async def _run_with_live(orch, spec, execution_store, artifact_store, all_artifacts):
+async def _run_with_live(orch: Any, spec: Any, execution_store: Any, artifact_store: Any, all_artifacts: list[Artifact]) -> tuple[Any, list[tuple[str, str]], list[Artifact]]:
     """Run workflow with a live-updating rich table."""
     from rich.live import Live
 
     from binex.cli.ui import LiveRunTable, get_console
 
-    nodes_info = [
+    nodes_info: list[dict[str, Any]] = [
         {"id": nid, "agent": node.agent, "depends_on": list(node.depends_on)}
         for nid, node in spec.nodes.items()
     ]
@@ -266,7 +268,7 @@ async def _run_with_live(orch, spec, execution_store, artifact_store, all_artifa
 
     register_workflow_adapters(orch.dispatcher, spec, plugin_registry=plugin_registry)
 
-    def _collect(node_id, node_artifacts_):
+    def _collect(node_id: str, node_artifacts_: dict[str, Any]) -> None:
         if node_id in node_artifacts_:
             for art in node_artifacts_[node_id]:
                 all_artifacts.append(art)
@@ -293,7 +295,7 @@ async def _run_with_live(orch, spec, execution_store, artifact_store, all_artifa
 
 
 def _verbose_collect_artifacts(
-    node_id: str, node_artifacts: dict, all_artifacts: list[Artifact],
+    node_id: str, node_artifacts: dict[str, Any], all_artifacts: list[Artifact],
 ) -> None:
     """Collect artifacts from a node and print truncated content."""
     if node_id not in node_artifacts:
@@ -307,12 +309,12 @@ def _verbose_collect_artifacts(
         click.echo(f"{content}\n", err=True)
 
 
-def _collect_errors(records) -> list[tuple[str, str]]:
+def _collect_errors(records: Any) -> list[tuple[str, str]]:
     """Extract (task_id, error) pairs from execution records."""
     return [(rec.task_id, rec.error) for rec in records if rec.error]
 
 
-def _show_skipped_nodes(spec, summary, records) -> None:
+def _show_skipped_nodes(spec: Any, summary: Any, records: Any) -> None:
     """Print skipped node names in verbose mode."""
     skipped = summary.total_nodes - summary.completed_nodes - summary.failed_nodes
     if skipped > 0:
@@ -332,7 +334,7 @@ def _parse_vars(var_tuples: tuple[str, ...]) -> dict[str, str]:
     return result
 
 
-def _warn_var_mismatches(spec, user_vars: dict[str, str]) -> None:
+def _warn_var_mismatches(spec: Any, user_vars: dict[str, str]) -> None:
     """Warn about --var keys that don't match workflow ${user.*} references."""
     import re
 

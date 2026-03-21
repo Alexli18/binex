@@ -7,6 +7,8 @@ import sys
 
 import click
 
+from typing import Any
+
 from binex.cli import get_stores, has_rich
 from binex.trace.debug_report import (
     build_debug_report,
@@ -15,7 +17,7 @@ from binex.trace.debug_report import (
 )
 
 
-def _get_stores():
+def _get_stores() -> Any:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -60,7 +62,7 @@ def debug_cmd(
     click.echo(result)
 
 
-async def _resolve_run_id(run_id: str, exec_store) -> str | None:
+async def _resolve_run_id(run_id: str, exec_store: Any) -> str | None:
     """Resolve 'latest' to the most recent run ID."""
     if run_id != "latest":
         return run_id
@@ -68,7 +70,7 @@ async def _resolve_run_id(run_id: str, exec_store) -> str | None:
     if not runs:
         return None
     runs.sort(key=lambda r: r.started_at, reverse=True)
-    return runs[0].run_id
+    return str(runs[0].run_id)
 
 
 async def _debug_async(
