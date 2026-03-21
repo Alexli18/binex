@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
+from typing import Any
 
 import click
-
-from typing import Any, Callable
 
 from binex.cli.start_config import _configure_advanced_params, _select_provider
 from binex.cli.start_templates import _select_prompt_variant

@@ -50,8 +50,11 @@ def install_verbose_wrapper(
     counter = [0]
 
     async def _verbose_execute(
-        spec_: Any, dag_: Any, scheduler_: Any, run_id_: str, trace_id_: str, node_id_: str, node_artifacts_: Any,
-        accumulated_cost_: float = 0.0, node_artifacts_history_: Any = None,
+        spec_: Any, dag_: Any, scheduler_: Any,
+        run_id_: str, trace_id_: str, node_id_: str,
+        node_artifacts_: Any,
+        accumulated_cost_: float = 0.0,
+        node_artifacts_history_: Any = None,
     ) -> None:
         counter[0] += 1
         total = len(spec_.nodes)
@@ -101,8 +104,11 @@ def install_live_wrapper(
     original_execute = orch._execute_node
 
     async def _live_execute(
-        spec_: Any, dag_: Any, scheduler_: Any, run_id_: str, trace_id_: str, node_id_: str, node_artifacts_: Any,
-        accumulated_cost_: float = 0.0, node_artifacts_history_: Any = None,
+        spec_: Any, dag_: Any, scheduler_: Any,
+        run_id_: str, trace_id_: str, node_id_: str,
+        node_artifacts_: Any,
+        accumulated_cost_: float = 0.0,
+        node_artifacts_history_: Any = None,
     ) -> None:
         live_table.update_node(node_id_, "running")
         live.update(live_table.build())

@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-import click
-
 from typing import Any
+
+import click
 
 from binex.cli import has_rich
 
 
-async def _action_replay(exec_store: Any, art_store: Any, run_id: str, run: Any, records: Any) -> str | None:
+async def _action_replay(
+    exec_store: Any, art_store: Any,
+    run_id: str, run: Any, records: Any,
+) -> str | None:
     """Replay wizard: select start node, agent swaps, workflow path, confirm."""
     if run.status == "running":
         if has_rich():
@@ -140,7 +143,9 @@ def _replay_select_workflow(default_path: str | None) -> str:
             )
         change = click.prompt("  Change workflow path? (y/n)", default="n")
         if change.strip().lower() == "y":
-            return str(click.prompt("  Workflow file path", default=default_path)).strip().strip("'\"")
+            path = click.prompt("  Workflow file path", default=default_path)
+            return str(path).strip().strip("'\"")
+
         return default_path
     if has_rich():
         from binex.cli.ui import get_console as wf_console

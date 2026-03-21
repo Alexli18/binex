@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 
 import click
 
 from binex.cli import get_stores
-from typing import Any
 from binex.cli.explore_actions import (
     _action_artifacts,
     _action_bisect,
@@ -168,7 +168,10 @@ async def _dispatch_node(exec_store: Any, art_store: Any, run_id: str, records: 
     return None
 
 
-async def _dispatch_replay(exec_store: Any, art_store: Any, run_id: str, run: Any, records: Any) -> str:
+async def _dispatch_replay(
+    exec_store: Any, art_store: Any,
+    run_id: str, run: Any, records: Any,
+) -> str:
     """Handle replay action with post-replay navigation."""
     new_run_id = await _action_replay(exec_store, art_store, run_id, run, records)
     if new_run_id:

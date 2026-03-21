@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 import click
-
-from typing import Any
 
 from binex.cli import has_rich
 from binex.cli.explore_utils import _preview, _short_id, _time_ago
@@ -25,7 +24,10 @@ def _render_dashboard(run: Any, records: Any, run_id: str, cost_records: Any = N
         _render_dashboard_plain(run, records, run_id, node_costs)
 
 
-def _render_dashboard_rich(run: Any, records: Any, run_id: str, node_costs: dict[str, float]) -> None:
+def _render_dashboard_rich(
+    run: Any, records: Any,
+    run_id: str, node_costs: dict[str, float],
+) -> None:
     """Render dashboard with Rich formatting."""
     from rich.console import Group as RichGroup
     from rich.text import Text
@@ -75,7 +77,10 @@ def _render_dashboard_rich(run: Any, records: Any, run_id: str, node_costs: dict
     get_console().print(panel)
 
 
-def _render_dashboard_plain(run: Any, records: Any, run_id: str, node_costs: dict[str, float]) -> None:
+def _render_dashboard_plain(
+    run: Any, records: Any,
+    run_id: str, node_costs: dict[str, float],
+) -> None:
     """Render dashboard in plain text."""
     click.echo(f"  === Dashboard: {_short_id(run_id)} ===")
     click.echo(f"  Workflow: {run.workflow_name}")

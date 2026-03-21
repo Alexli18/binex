@@ -59,8 +59,8 @@ class TerminalInputRequest(BaseModel):
 
 
 def _get_stores() -> tuple[
-    "InMemoryExecutionStore | SqliteExecutionStore",
-    "InMemoryArtifactStore | FilesystemArtifactStore",
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
 ]:
     """Lazy import to avoid circular deps — patchable in tests."""
     from binex.cli import get_stores

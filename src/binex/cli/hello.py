@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+from typing import Any
 
 import click
-
-from typing import Any
 
 from binex.adapters.local import LocalPythonAdapter
 from binex.cli import get_stores
@@ -155,7 +154,10 @@ async def _run_hello() -> tuple[Any, dict[str, str]]:
         await execution_store.close()
 
 
-def _collect_hello_artifacts(node_id: str, node_artifacts: dict[str, Any], node_outputs: dict[str, str]) -> None:
+def _collect_hello_artifacts(
+    node_id: str, node_artifacts: dict[str, Any],
+    node_outputs: dict[str, str],
+) -> None:
     """Collect hello artifacts into node_outputs dict with verbose printing."""
     if node_id not in node_artifacts:
         return
@@ -168,7 +170,10 @@ def _collect_hello_artifacts(node_id: str, node_artifacts: dict[str, Any], node_
         click.echo(f"{content}\n", err=True)
 
 
-async def _run_hello_live(orch: Any, spec: Any, execution_store: Any, node_outputs: dict[str, str]) -> tuple[Any, dict[str, str]]:
+async def _run_hello_live(
+    orch: Any, spec: Any, execution_store: Any,
+    node_outputs: dict[str, str],
+) -> tuple[Any, dict[str, str]]:
     """Run hello workflow with live-updating rich table."""
     from rich.live import Live
 

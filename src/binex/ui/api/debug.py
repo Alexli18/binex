@@ -9,9 +9,9 @@ from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
 from binex.cli import get_stores
+from binex.stores.backends.filesystem import FilesystemArtifactStore
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 from binex.stores.backends.sqlite import SqliteExecutionStore
-from binex.stores.backends.filesystem import FilesystemArtifactStore
 
 router = APIRouter(prefix="/runs", tags=["debug"])
 
@@ -68,7 +68,9 @@ def _load_workflow_node_specs(run: Any) -> dict[str, dict[str, Any]]:
     return {}
 
 
-def _index_artifacts(artifacts: Any) -> tuple[dict[str, list[dict[str, Any]]], dict[str, dict[str, Any]]]:
+def _index_artifacts(
+    artifacts: Any,
+) -> tuple[dict[str, list[dict[str, Any]]], dict[str, dict[str, Any]]]:
     """Index artifacts by producer node and by artifact ID."""
     arts_by_node: dict[str, list[dict[str, Any]]] = {}
     arts_by_id: dict[str, dict[str, Any]] = {}

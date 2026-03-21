@@ -6,11 +6,10 @@ import json
 import shutil
 import subprocess
 import sys
+from typing import Any
 
 import click
 import httpx
-
-from typing import Any
 
 
 def _check_binary(name: str) -> dict[str, Any]:

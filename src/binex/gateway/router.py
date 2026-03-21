@@ -101,7 +101,12 @@ class Router:
             health = self._registry.get_health(agent.name) if self._registry else None
             status_order = 0 if (health is None or health.status == "alive") else 1
             has_latency = health is not None and health.last_latency_ms is not None
-            latency: float = float(health.last_latency_ms) if has_latency and health is not None and health.last_latency_ms is not None else 999999.0
+            latency: float = (
+                float(health.last_latency_ms)
+                if has_latency and health is not None
+                and health.last_latency_ms is not None
+                else 999999.0
+            )
             return (status_order, agent.priority, latency)
 
         healthy.sort(key=_sort_key)

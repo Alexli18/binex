@@ -1,9 +1,9 @@
 """Formatting helpers for `binex bisect` output."""
 from __future__ import annotations
 
-import click
-
 from typing import Any
+
+import click
 
 # ---------------------------------------------------------------------------
 # Content & latency helpers

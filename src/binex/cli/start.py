@@ -5,12 +5,12 @@ from __future__ import annotations
 import asyncio
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 import yaml  # type: ignore[import-untyped]
 
 from binex.cli import has_rich
-from typing import Any
 from binex.cli.dsl_parser import PATTERNS, parse_dsl
 from binex.cli.prompt_roles import (
     CATEGORY_ICONS,
@@ -124,7 +124,9 @@ def _build_node_dict(cfg: dict[str, Any], needed_prompts: set[str]) -> dict[str,
     return node
 
 
-def build_custom_workflow(*, name: str, nodes_config: dict[str, dict[str, Any]]) -> tuple[str, set[str]]:
+def build_custom_workflow(
+    *, name: str, nodes_config: dict[str, dict[str, Any]],
+) -> tuple[str, set[str]]:
     """Generate workflow YAML from per-node configuration dicts.
 
     Returns (yaml_string, set_of_needed_prompt_files).
@@ -170,8 +172,11 @@ async def _execute(workflow_path: str) -> tuple[Any, Any, Any, Any]:
     original_execute = orch._execute_node
 
     async def _progress_execute(
-        spec_: Any, dag_: Any, scheduler_: Any, run_id_: str, trace_id_: str, node_id_: str, node_artifacts_: Any,
-        accumulated_cost_: float = 0.0, node_artifacts_history_: Any = None,
+        spec_: Any, dag_: Any, scheduler_: Any,
+        run_id_: str, trace_id_: str, node_id_: str,
+        node_artifacts_: Any,
+        accumulated_cost_: float = 0.0,
+        node_artifacts_history_: Any = None,
     ) -> None:
         counter[0] += 1
         if has_rich():

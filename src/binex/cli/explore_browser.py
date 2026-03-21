@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import click
+from typing import Any
 
-from typing import Any, Callable, Coroutine
+import click
 
 from binex.cli import has_rich
 from binex.cli.explore_utils import _short_id, _time_ago

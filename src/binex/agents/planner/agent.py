@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any
 
 from binex.agents.common.llm_client import LLMClient
 from binex.models.artifact import Artifact, Lineage

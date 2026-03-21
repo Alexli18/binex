@@ -8,14 +8,13 @@ they publish SSE events and await browser responses via PendingPrompts.
 from __future__ import annotations
 
 import logging
+from typing import Any
 from uuid import uuid4
 
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
 from binex.models.cost import ExecutionResult
 from binex.models.task import TaskNode
-
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

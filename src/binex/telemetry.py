@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 import os
-from contextlib import contextmanager
 from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 logger = logging.getLogger(__name__)

@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import difflib
+from typing import Any
 
 import click
 import yaml  # type: ignore[import-untyped]
-
-from typing import Any
 
 from binex.cli import get_stores
 

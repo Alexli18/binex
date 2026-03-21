@@ -108,7 +108,10 @@ async def _compare_node(
     )
 
 
-def _determine_comp_status(good_rec: Any, bad_rec: Any, g_status: str | None, b_status: str | None) -> str:
+def _determine_comp_status(
+    good_rec: Any, bad_rec: Any,
+    g_status: str | None, b_status: str | None,
+) -> str:
     """Determine initial comparison status for a node pair."""
     if good_rec is None:
         return "missing_in_good"

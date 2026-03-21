@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import click
 import yaml  # type: ignore[import-untyped]
-
-from typing import Any
 
 
 def _find_workflows(directory: Path) -> list[dict[str, Any]]:

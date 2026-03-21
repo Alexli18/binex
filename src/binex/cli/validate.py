@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import Any
 
 import click
-
-from typing import Any
 
 from binex.workflow_spec.loader import load_workflow
 from binex.workflow_spec.validator import validate_workflow

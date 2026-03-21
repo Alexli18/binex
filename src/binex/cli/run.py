@@ -5,10 +5,9 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+from typing import Any
 
 import click
-
-from typing import Any
 
 from binex.cli import get_stores, render_terminal_artifacts
 from binex.cli.adapter_registry import register_workflow_adapters
@@ -80,7 +79,10 @@ def run_cmd(
     sys.exit(0 if summary.status == "completed" else 1)
 
 
-def _print_json_output(summary: Any, spec: Any, artifacts: Any, terminal_nodes: list[str], verbose: bool) -> None:
+def _print_json_output(
+    summary: Any, spec: Any, artifacts: Any,
+    terminal_nodes: list[str], verbose: bool,
+) -> None:
     """Format and print JSON run output."""
     data = summary.model_dump()
     if verbose:
@@ -249,7 +251,10 @@ async def _run(
         await execution_store.close()
 
 
-async def _run_with_live(orch: Any, spec: Any, execution_store: Any, artifact_store: Any, all_artifacts: list[Artifact]) -> tuple[Any, list[tuple[str, str]], list[Artifact]]:
+async def _run_with_live(
+    orch: Any, spec: Any, execution_store: Any,
+    artifact_store: Any, all_artifacts: list[Artifact],
+) -> tuple[Any, list[tuple[str, str]], list[Artifact]]:
     """Run workflow with a live-updating rich table."""
     from rich.live import Live
 

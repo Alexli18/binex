@@ -5,11 +5,11 @@ from __future__ import annotations
 import importlib.resources
 import shutil
 import sys
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import click
-
-from typing import Any, Callable
 
 from binex.cli.prompt_roles import get_role
 

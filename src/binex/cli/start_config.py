@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
+from typing import Any
 
 import click
-
-from typing import Any, Callable
 
 from binex.cli.providers import PROVIDERS, ProviderConfig
 from binex.cli.start_templates import _select_prompt
@@ -43,7 +43,9 @@ def _render_provider_list(provider_names: list[str]) -> None:
             click.echo(f"    {i}) {name} \u2014 {suffix}")
 
 
-def _select_provider(*, input_fn: Callable[[str], str] | None = None) -> tuple[ProviderConfig, str]:
+def _select_provider(
+    *, input_fn: Callable[[str], str] | None = None,
+) -> tuple[ProviderConfig, str]:
     """Select provider and model. Returns (ProviderConfig, model_string)."""
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))
 
@@ -141,12 +143,18 @@ def _handle_llm(config: dict[str, Any], node_id: str, _prompt: Callable[[str], s
     config["system_prompt"] = _select_prompt(node_id=node_id, input_fn=_prompt)
 
 
-def _handle_human_review(config: dict[str, Any], node_id: str, _prompt: Callable[[str], str]) -> None:
+def _handle_human_review(
+    config: dict[str, Any], node_id: str,
+    _prompt: Callable[[str], str],
+) -> None:
     """Handle human review agent type."""
     config["agent"] = "human://review"
 
 
-def _handle_human_input(config: dict[str, Any], node_id: str, _prompt: Callable[[str], str]) -> None:
+def _handle_human_input(
+    config: dict[str, Any], node_id: str,
+    _prompt: Callable[[str], str],
+) -> None:
     """Handle human input agent type."""
     config["agent"] = "human://input"
     config["system_prompt"] = _prompt("Prompt text for user")
@@ -166,7 +174,10 @@ _AGENT_TYPE_HANDLERS = {
 }
 
 
-def _configure_node(*, node_id: str, dependencies: list[str], input_fn: Callable[[str], str] | None = None) -> dict[str, Any] | None:
+def _configure_node(
+    *, node_id: str, dependencies: list[str],
+    input_fn: Callable[[str], str] | None = None,
+) -> dict[str, Any] | None:
     """Interactively configure a single node.
 
     Returns dict for YAML generation, or _BACK sentinel.
@@ -228,7 +239,10 @@ def _configure_node(*, node_id: str, dependencies: list[str], input_fn: Callable
     return config
 
 
-def _configure_back_edge(*, node_id: str, upstream_nodes: list[str], input_fn: Callable[[str], str] | None = None) -> dict[str, Any]:
+def _configure_back_edge(
+    *, node_id: str, upstream_nodes: list[str],
+    input_fn: Callable[[str], str] | None = None,
+) -> dict[str, Any]:
     """Configure a back-edge for review loops. Returns back_edge dict."""
     _prompt = input_fn or (lambda prompt: click.prompt(prompt))
 
@@ -277,7 +291,11 @@ class _ParamSpec:
 
     __slots__ = ("label", "prompt_text", "validator", "extractor")
 
-    def __init__(self, label: str, prompt_text: str, validator: Callable[[str], bool], extractor: Callable[..., dict[str, Any]]) -> None:
+    def __init__(
+        self, label: str, prompt_text: str,
+        validator: Callable[[str], bool],
+        extractor: Callable[..., dict[str, Any]],
+    ) -> None:
         self.label = label
         self.prompt_text = prompt_text
         self.validator = validator

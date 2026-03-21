@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import click
-
 from typing import Any
+
+import click
 
 from binex.cli import has_rich
 from binex.cli.explore_ui import (

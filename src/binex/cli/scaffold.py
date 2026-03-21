@@ -5,11 +5,10 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 import yaml  # type: ignore[import-untyped]
-
-from typing import Any
 
 from binex.cli.dsl_parser import PATTERNS, ParsedDSL, parse_dsl
 from binex.cli.providers import PROVIDERS, ProviderConfig

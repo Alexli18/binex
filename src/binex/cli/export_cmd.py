@@ -7,10 +7,9 @@ import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import click
-
-from typing import Any
 
 from binex.cli import get_stores
 

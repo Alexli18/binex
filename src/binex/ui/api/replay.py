@@ -13,9 +13,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from binex.cli import get_stores
+from binex.stores.backends.filesystem import FilesystemArtifactStore
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 from binex.stores.backends.sqlite import SqliteExecutionStore
-from binex.stores.backends.filesystem import FilesystemArtifactStore
 from binex.ui.api.events import event_bus
 
 logger = logging.getLogger(__name__)

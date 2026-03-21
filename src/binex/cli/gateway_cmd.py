@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import Any
 
 import click
-
-from typing import Any
 
 
 def _import_httpx() -> Any:
