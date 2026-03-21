@@ -83,9 +83,10 @@ async def _debug_async(
 
     exec_store, art_store = _get_stores()
     try:
-        run_id = await _resolve_run_id(run_id, exec_store)
-        if run_id is None:
+        resolved = await _resolve_run_id(run_id, exec_store)
+        if resolved is None:
             return None
+        run_id = resolved
         report = await build_debug_report(exec_store, art_store, run_id)
         if report is None:
             return None

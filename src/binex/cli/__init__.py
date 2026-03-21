@@ -11,10 +11,14 @@ import click
 from binex.settings import Settings
 from binex.stores import create_artifact_store, create_execution_store
 from binex.stores.backends.filesystem import FilesystemArtifactStore
+from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 from binex.stores.backends.sqlite import SqliteExecutionStore
 
 
-def get_stores() -> tuple[SqliteExecutionStore, FilesystemArtifactStore]:
+def get_stores() -> tuple[
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
+]:
     """Create persistent stores (sqlite + filesystem). Call from CLI commands."""
     settings = Settings()
     exec_store = create_execution_store(

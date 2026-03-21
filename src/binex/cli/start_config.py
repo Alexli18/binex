@@ -124,7 +124,7 @@ def _configure_all_nodes(
         deps = depends_on.get(node_id, [])
         _print_node_header(i, len(node_list), node_id)
         cfg = _configure_node(node_id=node_id, dependencies=deps)
-        if cfg is _BACK:
+        if cfg is None:
             i = _print_back_message(i, node_list)
             continue
         nodes_config[node_id] = cfg
@@ -164,7 +164,7 @@ _AGENT_TYPE_HANDLERS = {
 }
 
 
-def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> dict | object:
+def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> dict | None:
     """Interactively configure a single node.
 
     Returns dict for YAML generation, or _BACK sentinel.
@@ -199,7 +199,7 @@ def _configure_node(*, node_id: str, dependencies: list[str], input_fn=None) -> 
     agent_type = _prompt("Choose")
 
     if agent_type.lower() == "back":
-        return _BACK
+        return None
 
     config: dict = {"outputs": ["result"]}
     if dependencies:

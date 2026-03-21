@@ -46,7 +46,7 @@ def build_start_workflow(
     model: str,
     user_input: bool = False,
     user_prompt: str = "Enter your input:",
-) -> str:
+) -> tuple[str, set[str]]:
     """Generate workflow YAML string from a DSL expression and provider info.
 
     Returns a valid YAML string suitable for ``binex run``.
@@ -93,7 +93,7 @@ def build_start_workflow(
         "name": "start-wizard-workflow",
         "nodes": nodes,
     }
-    yaml_str = yaml.dump(
+    yaml_str: str = yaml.dump(
         workflow, default_flow_style=False, sort_keys=False,
     )
     return yaml_str, needed_prompts
