@@ -127,10 +127,10 @@ class ReplayEngine:
             return "completed", total_nodes, 0
 
         completed_nodes = len(cached_steps) + len(
-            [n for n in re_execute_steps if n in scheduler._completed]
+            [n for n in re_execute_steps if n in scheduler.completed]
         )
         failed_nodes = len(
-            [n for n in re_execute_steps if n in scheduler._failed]
+            [n for n in re_execute_steps if n in scheduler.failed]
         )
         return "failed", completed_nodes, failed_nodes
 

@@ -18,6 +18,21 @@ class Scheduler:
         self._skipped: set[str] = set()
         self._execution_count: dict[str, int] = {}
 
+    @property
+    def completed(self) -> set[str]:
+        """Return the set of completed node IDs."""
+        return self._completed
+
+    @property
+    def failed(self) -> set[str]:
+        """Return the set of failed node IDs."""
+        return self._failed
+
+    @property
+    def skipped(self) -> set[str]:
+        """Return the set of skipped node IDs."""
+        return self._skipped
+
     def ready_nodes(self) -> list[str]:
         """Return node IDs whose dependencies are all completed/skipped
         and not already running/done."""
