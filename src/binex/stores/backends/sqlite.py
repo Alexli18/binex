@@ -324,6 +324,15 @@ class SqliteExecutionStore:
         rows = await cursor.fetchall()
         return [self._row_to_cost_record(row) for row in rows]
 
+    async def get_node_cost(self, run_id: str, task_id: str) -> float:
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
+            "SELECT COALESCE(SUM(cost), 0) FROM cost_records WHERE run_id = ? AND task_id = ?",
+            (run_id, task_id),
+        )
+        row = await cursor.fetchone()
+        return float(row[0])
+
     async def get_run_cost_summary(self, run_id: str) -> RunCostSummary:
         records = await self.list_costs(run_id)
         total_cost = sum(r.cost for r in records)

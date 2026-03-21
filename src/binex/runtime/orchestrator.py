@@ -141,7 +141,7 @@ class Orchestrator:
                 budget_exceeded = True
                 skip_all_remaining(scheduler, ready)
                 break
-            if budget_action == "warn":
+            if budget_action == "warn" and spec.budget:
                 msg = (
                     f"Budget exceeded: ${accumulated_cost:.2f} / "
                     f"${spec.budget.max_cost:.2f} (policy: warn, continuing)"
@@ -300,8 +300,7 @@ class Orchestrator:
 
         Returns an error message if the retry should be skipped, None otherwise.
         """
-        all_costs = await self.execution_store.list_costs(run_id)
-        node_cost = sum(r.cost for r in all_costs if r.task_id == node_id)
+        node_cost = await self.execution_store.get_node_cost(run_id, node_id)
         remaining = node_max - node_cost
 
         if remaining > 0:
@@ -336,8 +335,7 @@ class Orchestrator:
         node_max: float,
     ) -> bool:
         """Check node budget after execution. Returns True if budget exceeded with stop policy."""
-        all_costs = await self.execution_store.list_costs(run_id)
-        node_cost = sum(r.cost for r in all_costs if r.task_id == node_id)
+        node_cost = await self.execution_store.get_node_cost(run_id, node_id)
 
         if node_cost <= node_max:
             return False

@@ -81,6 +81,12 @@ class InMemoryExecutionStore:
     async def list_costs(self, run_id: str) -> list[CostRecord]:
         return [r for r in self._cost_records if r.run_id == run_id]
 
+    async def get_node_cost(self, run_id: str, task_id: str) -> float:
+        return sum(
+            r.cost for r in self._cost_records
+            if r.run_id == run_id and r.task_id == task_id
+        )
+
     async def get_run_cost_summary(self, run_id: str) -> RunCostSummary:
         records = await self.list_costs(run_id)
         total_cost = sum(r.cost for r in records)

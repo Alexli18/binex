@@ -47,6 +47,10 @@ class ExecutionStore(Protocol):
         """List all cost records for a given run."""
         ...
 
+    async def get_node_cost(self, run_id: str, task_id: str) -> float:
+        """Get the total cost for a specific node in a run."""
+        ...
+
     async def get_run_cost_summary(self, run_id: str) -> RunCostSummary:
         """Get aggregated cost summary for a run."""
         ...
