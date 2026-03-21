@@ -68,8 +68,15 @@ class InMemoryExecutionStore:
                 return rec
         return None
 
-    async def list_runs(self) -> list[RunSummary]:
-        return list(self._runs.values())
+    async def list_runs(
+        self,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[RunSummary]:
+        runs = list(self._runs.values())
+        if limit is not None:
+            return runs[offset : offset + limit]
+        return runs[offset:]
 
     async def create_run(self, run_summary: RunSummary) -> None:
         self._runs[run_summary.run_id] = run_summary

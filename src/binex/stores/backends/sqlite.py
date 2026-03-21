@@ -225,9 +225,22 @@ class SqliteExecutionStore:
         )
         await db.commit()
 
-    async def list_runs(self) -> list[RunSummary]:
+    async def list_runs(
+        self,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[RunSummary]:
         db = await self._ensure_initialized()
-        cursor = await db.execute("SELECT * FROM runs")
+        query = "SELECT * FROM runs"
+        params: list[int] = []
+        if limit is not None:
+            query += " LIMIT ? OFFSET ?"
+            params.extend([limit, offset])
+        elif offset:
+            # SQLite requires LIMIT when OFFSET is used; use -1 for unlimited.
+            query += " LIMIT -1 OFFSET ?"
+            params.append(offset)
+        cursor = await db.execute(query, params)
         rows = await cursor.fetchall()
         return [self._row_to_run_summary(row) for row in rows]
 

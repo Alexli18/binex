@@ -23,8 +23,17 @@ class ExecutionStore(Protocol):
         """Retrieve a specific execution record for a run/task pair."""
         ...
 
-    async def list_runs(self) -> list[RunSummary]:
-        """List all run summaries."""
+    async def list_runs(
+        self,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[RunSummary]:
+        """List run summaries with optional pagination.
+
+        Args:
+            limit: Maximum number of runs to return. ``None`` means no limit.
+            offset: Number of runs to skip (default ``0``).
+        """
         ...
 
     async def create_run(self, run_summary: RunSummary) -> None:
