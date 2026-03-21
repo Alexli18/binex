@@ -6,12 +6,18 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from binex.cli import get_stores
+from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
+from binex.stores.backends.sqlite import SqliteExecutionStore
+from binex.stores.backends.filesystem import FilesystemArtifactStore
 from binex.trace.diagnose import diagnose_run, report_to_dict
 
 router = APIRouter(prefix="/runs", tags=["diagnose"])
 
 
-def _get_stores():
+def _get_stores() -> tuple[
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
+]:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -27,7 +33,7 @@ async def get_diagnose(run_id: str) -> JSONResponse:
                 {"error": f"Run '{run_id}' not found"}, status_code=404,
             )
 
-        report = await diagnose_run(exec_store, art_store, run_id)
+        report = await diagnose_run(exec_store, art_store, run_id)  # type: ignore[arg-type]
         result = report_to_dict(report)
 
         # Add severity based on status and issues

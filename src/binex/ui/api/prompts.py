@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
@@ -22,9 +23,9 @@ class PendingPrompts:
     """Registry for prompts awaiting human response via the Web UI."""
 
     def __init__(self) -> None:
-        self._pending: dict[str, dict] = {}
+        self._pending: dict[str, dict[str, Any]] = {}
 
-    def register(self, prompt_id: str, metadata: dict | None = None) -> None:
+    def register(self, prompt_id: str, metadata: dict[str, Any] | None = None) -> None:
         """Register a new pending prompt with an asyncio.Event."""
         self._pending[prompt_id] = {
             "event": asyncio.Event(),
@@ -32,7 +33,7 @@ class PendingPrompts:
             "metadata": metadata or {},
         }
 
-    async def wait(self, prompt_id: str, timeout: float | None = None) -> dict:
+    async def wait(self, prompt_id: str, timeout: float | None = None) -> dict[str, Any]:
         """Block until the prompt receives a response.
 
         Returns the response dict. Raises TimeoutError if timeout exceeded.
@@ -47,12 +48,12 @@ class PendingPrompts:
         else:
             await entry["event"].wait()
 
-        response = entry["response"]
+        response: dict[str, Any] = entry["response"]
         # Clean up after retrieval
         del self._pending[prompt_id]
         return response
 
-    def respond(self, prompt_id: str, data: dict) -> bool:
+    def respond(self, prompt_id: str, data: dict[str, Any]) -> bool:
         """Submit a response for a pending prompt.
 
         Returns True if prompt existed and was resolved, False otherwise.
@@ -69,7 +70,7 @@ class PendingPrompts:
         entry = self._pending.get(prompt_id)
         return entry is not None and not entry["event"].is_set()
 
-    def list_pending(self, run_id: str | None = None) -> list[dict]:
+    def list_pending(self, run_id: str | None = None) -> list[dict[str, Any]]:
         """List all pending prompts, optionally filtered by run_id."""
         results = []
         for pid, entry in self._pending.items():

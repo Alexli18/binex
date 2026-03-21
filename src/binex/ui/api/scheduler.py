@@ -18,7 +18,7 @@ from binex.scheduler.state import DEFAULT_STATE_PATH, load_state, save_state
 router = APIRouter(prefix="/scheduler", tags=["scheduler"])
 
 # Module-level scheduler subprocess reference
-_scheduler_process: subprocess.Popen | None = None
+_scheduler_process: subprocess.Popen[bytes] | None = None
 
 
 def _get_state_path() -> Path:

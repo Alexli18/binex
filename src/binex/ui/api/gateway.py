@@ -14,7 +14,7 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/gateway", tags=["gateway"])
 
 # Module-level gateway subprocess reference
-_gateway_process: subprocess.Popen | None = None
+_gateway_process: subprocess.Popen[bytes] | None = None
 
 
 class GatewayStartRequest(BaseModel):

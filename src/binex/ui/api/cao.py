@@ -16,6 +16,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import httpx
 from fastapi import APIRouter
@@ -24,12 +25,17 @@ from pydantic import BaseModel
 
 from binex.settings import Settings
 
+if TYPE_CHECKING:
+    from binex.stores.backends.filesystem import FilesystemArtifactStore
+    from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
+    from binex.stores.backends.sqlite import SqliteExecutionStore
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/cao", tags=["cao"])
 
 # Module-level CAO server subprocess reference
-_cao_process: subprocess.Popen | None = None
+_cao_process: subprocess.Popen[bytes] | None = None
 
 
 def _cleanup_cao_process() -> None:
@@ -52,7 +58,10 @@ class TerminalInputRequest(BaseModel):
     message: str
 
 
-def _get_stores():
+def _get_stores() -> tuple[
+    "InMemoryExecutionStore | SqliteExecutionStore",
+    "InMemoryArtifactStore | FilesystemArtifactStore",
+]:
     """Lazy import to avoid circular deps — patchable in tests."""
     from binex.cli import get_stores
 

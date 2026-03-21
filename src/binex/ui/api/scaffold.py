@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -111,9 +112,9 @@ def _smart_prompt(node_name: str) -> str:
     return f"You are the {label} agent. Process the input and produce your output."
 
 
-def _build_simple_workflow(nodes: list[str], depends_on: dict[str, list[str]]) -> dict:
+def _build_simple_workflow(nodes: list[str], depends_on: dict[str, list[str]]) -> dict[str, Any]:
     """Build a minimal workflow dict from parsed DSL."""
-    node_specs: dict[str, dict] = {}
+    node_specs: dict[str, dict[str, Any]] = {}
     for node_name in nodes:
         deps = depends_on.get(node_name, [])
         inputs: dict[str, str] = {}
@@ -140,7 +141,7 @@ def _build_simple_workflow(nodes: list[str], depends_on: dict[str, list[str]]) -
             agent = "llm://openai/gpt-4o-mini"
             prompt = _smart_prompt(node_name)
 
-        spec: dict = {
+        spec: dict[str, Any] = {
             "agent": agent,
             "system_prompt": prompt,
             "inputs": inputs,

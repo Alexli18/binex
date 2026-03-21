@@ -13,6 +13,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from binex.cli import get_stores
+from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
+from binex.stores.backends.sqlite import SqliteExecutionStore
+from binex.stores.backends.filesystem import FilesystemArtifactStore
 from binex.ui.api.errors import APIError
 from binex.ui.api.events import event_bus
 
@@ -21,7 +24,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/runs", tags=["runs"])
 
 
-def _get_stores():
+def _get_stores() -> tuple[
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
+]:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -60,9 +66,9 @@ async def _execute_workflow(
     workflow_path: Path,
     variables: dict[str, str],
     run_id: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Load and execute a workflow through the real orchestrator."""
-    import yaml as _yaml
+    import yaml as _yaml  # type: ignore[import-untyped]
 
     from binex.cli.adapter_registry import register_workflow_adapters
     from binex.plugins import PluginRegistry
@@ -94,7 +100,7 @@ async def _execute_workflow(
 
     exec_store, artifact_store = _get_stores()
 
-    async def _on_event(evt: dict) -> None:
+    async def _on_event(evt: dict[str, Any]) -> None:
         rid = evt.get("run_id", run_id)
         if rid:
             await event_bus.publish(rid, evt)

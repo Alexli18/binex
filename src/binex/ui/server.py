@@ -87,7 +87,7 @@ def create_app(*, dev: bool = False) -> FastAPI:
     app = FastAPI(title="Binex Web UI", version=_get_version(), lifespan=_lifespan)
 
     # Store mode flag on app state so endpoints can read it
-    app.state.dev_mode = dev  # type: ignore[attr-defined]
+    app.state.dev_mode = dev
 
     # --- CORS (dev mode only) ---
     if dev:

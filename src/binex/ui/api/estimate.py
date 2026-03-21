@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-import yaml
+from typing import Any
+
+import yaml  # type: ignore[import-untyped]
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -40,7 +42,7 @@ def _extract_model_from_agent(agent: str) -> str | None:
     return None
 
 
-def _find_pricing(model: str) -> dict | None:
+def _find_pricing(model: str) -> dict[str, float] | None:
     """Find pricing for a model, trying exact match then fuzzy."""
     # Exact match
     if model in MODEL_PRICING:
@@ -56,7 +58,7 @@ def _find_pricing(model: str) -> dict | None:
     return None
 
 
-def _estimate_node(node_id: str, node_data: dict) -> dict:
+def _estimate_node(node_id: str, node_data: dict[str, Any]) -> dict[str, Any]:
     """Estimate cost for a single workflow node."""
     agent = node_data.get("agent", "")
     prefix = agent.split("://")[0] if "://" in agent else agent
@@ -64,7 +66,7 @@ def _estimate_node(node_id: str, node_data: dict) -> dict:
     config = node_data.get("config", {}) or {}
     max_tokens = config.get("max_tokens", _DEFAULT_MAX_TOKENS)
 
-    result: dict = {
+    result: dict[str, Any] = {
         "node_id": node_id,
         "agent": agent,
         "model": model,

@@ -6,17 +6,24 @@ import csv
 import io
 import json
 import zipfile
+from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from binex.cli import get_stores
+from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
+from binex.stores.backends.sqlite import SqliteExecutionStore
+from binex.stores.backends.filesystem import FilesystemArtifactStore
 
 router = APIRouter(prefix="/export", tags=["export"])
 
 
-def _get_stores():
+def _get_stores() -> tuple[
+    InMemoryExecutionStore | SqliteExecutionStore,
+    InMemoryArtifactStore | FilesystemArtifactStore,
+]:
     """Create default stores. Extracted for test patching."""
     return get_stores()
 
@@ -29,22 +36,22 @@ class ExportRequest(BaseModel):
     include_artifacts: bool = False
 
 
-def _runs_to_dicts(runs) -> list[dict]:
+def _runs_to_dicts(runs: Any) -> list[dict[str, Any]]:
     """Convert RunSummary list to serializable dicts."""
     return [r.model_dump(mode="json") for r in runs]
 
 
-def _records_to_dicts(records) -> list[dict]:
+def _records_to_dicts(records: Any) -> list[dict[str, Any]]:
     """Convert ExecutionRecord list to serializable dicts."""
     return [r.model_dump(mode="json") for r in records]
 
 
-def _costs_to_dicts(costs) -> list[dict]:
+def _costs_to_dicts(costs: Any) -> list[dict[str, Any]]:
     """Convert CostRecord list to serializable dicts."""
     return [r.model_dump(mode="json") for r in costs]
 
 
-def _write_csv(rows: list[dict]) -> str:
+def _write_csv(rows: list[dict[str, Any]]) -> str:
     """Write a list of dicts to CSV string."""
     if not rows:
         return ""
@@ -101,7 +108,7 @@ async def export_data(body: ExportRequest) -> StreamingResponse | JSONResponse:
                 artifacts.extend(arts)
 
         if body.format == "json":
-            data: dict = {
+            data: dict[str, Any] = {
                 "runs": _runs_to_dicts(runs),
                 "records": _records_to_dicts(all_records),
                 "costs": _costs_to_dicts(all_costs),
