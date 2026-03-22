@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.7.0 (unreleased)
+
+Security, Performance & Observability release.
+
+### Security (CRITICAL)
+
+- **shell_command** — patched command injection: replaced `shell=True` with `shell=False` + `shlex.split()`. Shell metacharacters no longer interpreted.
+- **calculator** — patched arbitrary code execution: replaced raw `eval()` with AST whitelist validation. Only math expressions and whitelisted functions permitted.
+
+### Features
+
+- **binex-trace SDK** — lightweight A2A agent tracing via structured JSON on stderr. API: `trace.task()`, `trace.log()`, `trace.checkpoint()`. Zero runtime dependencies.
+- **Trace events storage** — trace events persisted in SQLite alongside execution records
+- **`binex trace subtasks`** — new CLI command to render subtask tree from captured stderr
+- **`binex trace node --node`** — show trace events in node detail view
+
+### Performance
+
+- **Cost dashboard** — batch SELECT + SQL aggregation replacing N+1 queries
+- **CAO sessions** — batch UPDATE for session status changes
+
+### Documentation
+
+- **Trace SDK guide** — `docs/features/trace-sdk.md`
+- **Security model** — `docs/features/security.md`
+
 ## v0.6.4
 
 Type Safety & Performance release.

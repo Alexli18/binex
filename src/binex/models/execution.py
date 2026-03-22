@@ -28,6 +28,7 @@ class ExecutionRecord(BaseModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     trace_id: str
     error: str | None = None
+    trace_events: list[dict[str, Any]] | None = None
 
 
 class RunSummary(BaseModel):

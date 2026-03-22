@@ -56,6 +56,16 @@ class ExecutionStore(Protocol):
         """List all cost records for a given run."""
         ...
 
+    async def list_costs_batch(self, run_ids: list[str]) -> list[CostRecord]:
+        """Fetch cost records for multiple run_ids in a single query."""
+        ...
+
+    async def get_cost_aggregations(
+        self, run_ids: list[str],
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Return SQL-aggregated cost breakdowns by model, node, and date."""
+        ...
+
     async def get_node_cost(self, run_id: str, task_id: str) -> float:
         """Get the total cost for a specific node in a run."""
         ...
