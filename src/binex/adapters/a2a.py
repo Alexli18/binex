@@ -11,6 +11,7 @@ from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
 from binex.models.cost import CostRecord, CostSource, ExecutionResult
 from binex.models.task import TaskNode
+from binex.trace.parser import parse_trace_events
 
 if TYPE_CHECKING:
     from binex.gateway import Gateway
@@ -124,7 +125,17 @@ class A2AAgentAdapter:
             source=source,
         )
 
-        return ExecutionResult(artifacts=artifacts, cost=cost_record)
+        # Parse binex-trace events from stderr field (if present)
+        trace_events: list[dict[str, Any]] = []
+        stderr_lines = data.get("stderr")
+        if stderr_lines:
+            if isinstance(stderr_lines, str):
+                stderr_lines = stderr_lines.splitlines()
+            trace_events = parse_trace_events(stderr_lines)
+
+        result = ExecutionResult(artifacts=artifacts, cost=cost_record)
+        result._trace_events = trace_events  # type: ignore[attr-defined]
+        return result
 
     async def cancel(self, task_id: str) -> None:
         await self._client.post(
@@ -235,7 +246,17 @@ class A2AExternalGatewayAdapter:
             source=source2,
         )
 
-        return ExecutionResult(artifacts=artifacts, cost=cost_record)
+        # Parse binex-trace events from stderr field (if present)
+        trace_events: list[dict[str, Any]] = []
+        stderr_lines = data.get("stderr")
+        if stderr_lines:
+            if isinstance(stderr_lines, str):
+                stderr_lines = stderr_lines.splitlines()
+            trace_events = parse_trace_events(stderr_lines)
+
+        result = ExecutionResult(artifacts=artifacts, cost=cost_record)
+        result._trace_events = trace_events  # type: ignore[attr-defined]
+        return result
 
     async def cancel(self, task_id: str) -> None:
         """Cancel is not supported through external gateway."""

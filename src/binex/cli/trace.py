@@ -10,6 +10,7 @@ from typing import Any
 import click
 
 from binex.cli import get_stores, has_rich
+from binex.trace.parser import parse_trace_events
 from binex.trace.tracer import generate_timeline, generate_timeline_json
 
 
@@ -223,3 +224,87 @@ def _render_dag(
 
     for root in roots:
         _print(root)
+
+
+# ── Subtask tree rendering from binex-trace events ─────────────────────
+
+
+def render_subtask_tree(trace_events: list[dict[str, Any]]) -> str:
+    """Render a tree of subtask trace events.
+
+    Returns a string like::
+
+        ├─ task_name     ✅ 3.1s
+        │  └─ log: "message"
+        ├─ task_name     ❌ ERROR (30.0s)
+        │  ├─ log: "message"
+        │  └─ checkpoint: "last saved state"
+        └─ task_name     ⏸ not reached
+    """
+    if not trace_events:
+        return "(no trace events)"
+
+    # Group events into tasks in order of appearance.
+    # Each task collects its child log/checkpoint events until the next task_start
+    # or end of events.
+    tasks: list[dict[str, Any]] = []
+    current_task: dict[str, Any] | None = None
+
+    for ev in trace_events:
+        etype = ev.get("type", "")
+        if etype == "task_start":
+            current_task = {"name": ev.get("name", "?"), "children": [], "end": None}
+            tasks.append(current_task)
+        elif etype == "task_end":
+            # Match to current task by name
+            if current_task and current_task["name"] == ev.get("name"):
+                current_task["end"] = ev
+        elif etype == "log":
+            if current_task is not None:
+                current_task["children"].append(("log", ev.get("message", "")))
+        elif etype == "checkpoint":
+            if current_task is not None:
+                current_task["children"].append(
+                    ("checkpoint", ev.get("label", "checkpoint"))
+                )
+
+    lines: list[str] = []
+    total = len(tasks)
+    for i, task in enumerate(tasks):
+        is_last = i == total - 1
+        connector = "\u2514\u2500" if is_last else "\u251c\u2500"
+        child_prefix = "   " if is_last else "\u2502  "
+
+        end = task["end"]
+        if end is None:
+            status_str = "\u23f8 not reached"
+        elif end.get("status") == "ok":
+            dur = end.get("duration_s", "?")
+            status_str = f"\u2705 {dur}s"
+        else:
+            dur = end.get("duration_s", "?")
+            err = end.get("error", "ERROR")
+            status_str = f"\u274c {err} ({dur}s)"
+
+        lines.append(f"{connector} {task['name']}     {status_str}")
+
+        children = task["children"]
+        for j, (ctype, ctext) in enumerate(children):
+            is_last_child = j == len(children) - 1
+            child_conn = "\u2514\u2500" if is_last_child else "\u251c\u2500"
+            lines.append(f"{child_prefix}{child_conn} {ctype}: \"{ctext}\"")
+
+    return "\n".join(lines)
+
+
+@trace_cmd.command("subtasks")
+@click.argument("stderr_file", type=click.Path(exists=True))
+def trace_subtasks_cmd(stderr_file: str) -> None:
+    """Render subtask tree from a captured stderr file containing trace events."""
+    with open(stderr_file) as f:
+        lines = f.readlines()
+    events = parse_trace_events(lines)
+    if not events:
+        click.echo("No binex-trace events found.", err=True)
+        sys.exit(1)
+    click.echo(render_subtask_tree(events))
