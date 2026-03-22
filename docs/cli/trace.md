@@ -78,8 +78,29 @@ DAG:
   [+] consumer (local://echo)
 ```
 
+### trace subtasks
+
+| Option | Type | Description |
+|---|---|---|
+| `STDERR_FILE` | `path` | Path to captured stderr file containing trace events |
+
+```bash
+# Render subtask tree from captured agent stderr
+binex trace subtasks agent_stderr.log
+```
+
+Output:
+```
+├─ process_data     ✅ 0.23s
+│  └─ log: "loaded 1000 records"
+├─ validate         ✅ 0.05s
+│  └─ checkpoint: "validation"
+└─ export           ❌ timeout (30.0s)
+```
+
 ## See Also
 
 - [binex run](run.md) -- execute a workflow
 - [binex diff](diff.md) -- compare two runs
 - [binex artifacts](artifacts.md) -- inspect artifact contents
+- [Trace SDK](../features/trace-sdk.md) -- instrument A2A agents with trace events
