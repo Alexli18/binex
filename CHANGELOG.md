@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.7.0 (unreleased)
+## v0.6.5
 
 Security, Performance & Observability release.
 
