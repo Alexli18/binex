@@ -1,26 +1,30 @@
 """Re-export from standalone binex-trace package."""
 
+from __future__ import annotations
+
+import functools
+import json
+import sys
+import time
+from collections.abc import Callable
+from typing import Any
+
 try:
-    from binex_trace import trace, _TraceContext
+    from binex_trace import _TraceContext, trace
 except ImportError:
     # Fallback: inline implementation for when binex-trace is not installed
-    import functools
-    import json
-    import sys
-    import time
-    from typing import Any
 
-    class _TraceContext:
+    class _TraceContext:  # type: ignore[no-redef]
         """Thread-local trace state."""
 
         def __init__(self) -> None:
             self._stack: list[str] = []
             self._checkpoints: dict[str, Any] = {}
 
-        def task(self, name: str):  # type: ignore[type-arg]
+        def task(self, name: str) -> Callable[..., Any]:
             """Decorator to trace a function as a named task."""
 
-            def decorator(func):  # type: ignore[type-arg]
+            def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
                 @functools.wraps(func)
                 def wrapper(*args: Any, **kwargs: Any) -> Any:
                     self._emit("task_start", name=name, args_repr=repr(args[:3]))

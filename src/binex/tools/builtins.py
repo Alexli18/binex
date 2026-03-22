@@ -65,7 +65,7 @@ def calculator(expression: str) -> str:
         import ast
         tree = ast.parse(expression, mode="eval")
         # Allow only safe AST nodes (literals, operators, calls to allowed names)
-        _SAFE_NODES = (
+        safe_nodes = (
             ast.Expression, ast.BinOp, ast.UnaryOp, ast.Call, ast.Constant,
             ast.Name, ast.Load, ast.Add, ast.Sub, ast.Mult, ast.Div,
             ast.FloorDiv, ast.Mod, ast.Pow, ast.USub, ast.UAdd,
@@ -74,7 +74,7 @@ def calculator(expression: str) -> str:
             ast.Attribute,
         )
         for node in ast.walk(tree):
-            if not isinstance(node, _SAFE_NODES):
+            if not isinstance(node, safe_nodes):
                 return f"Error: disallowed expression node: {type(node).__name__}"
             if isinstance(node, ast.Name) and node.id not in allowed:
                 return f"Error: name '{node.id}' is not allowed"

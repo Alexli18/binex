@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any, Protocol
 
 from binex.models.cost import CostRecord, RunCostSummary
-
 from binex.models.execution import ExecutionRecord, RunSummary
 
 

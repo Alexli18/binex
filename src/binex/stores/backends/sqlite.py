@@ -288,7 +288,9 @@ class SqliteExecutionStore:
                 execution_record.timestamp.isoformat(),
                 execution_record.trace_id,
                 execution_record.error,
-                json.dumps(execution_record.trace_events) if execution_record.trace_events else None,
+                json.dumps(execution_record.trace_events)
+                if execution_record.trace_events
+                else None,
             ),
         )
         await db.commit()
