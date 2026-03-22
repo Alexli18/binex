@@ -66,7 +66,8 @@ class SqliteExecutionStore:
                 latency_ms INTEGER NOT NULL,
                 timestamp TEXT NOT NULL,
                 trace_id TEXT NOT NULL,
-                error TEXT
+                error TEXT,
+                trace_events TEXT
             );
             CREATE TABLE IF NOT EXISTS cost_records (
                 id TEXT PRIMARY KEY,
@@ -127,6 +128,14 @@ class SqliteExecutionStore:
         # Migration: add workflow_hash column to existing runs table
         try:
             await self._db.execute("ALTER TABLE runs ADD COLUMN workflow_hash TEXT")
+            await self._db.commit()
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add trace_events column to existing execution_records table
+        try:
+            await self._db.execute(
+                "ALTER TABLE execution_records ADD COLUMN trace_events TEXT"
+            )
             await self._db.commit()
         except Exception as exc:
             logger.debug("Migration already applied or failed: %s", exc)
@@ -260,8 +269,9 @@ class SqliteExecutionStore:
         await db.execute(
             """INSERT INTO execution_records (id, run_id, task_id, parent_task_id,
                agent_id, status, input_artifact_refs, output_artifact_refs,
-               prompt, model, tool_calls, latency_ms, timestamp, trace_id, error)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               prompt, model, tool_calls, latency_ms, timestamp, trace_id, error,
+               trace_events)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 execution_record.id,
                 execution_record.run_id,
@@ -278,6 +288,7 @@ class SqliteExecutionStore:
                 execution_record.timestamp.isoformat(),
                 execution_record.trace_id,
                 execution_record.error,
+                json.dumps(execution_record.trace_events) if execution_record.trace_events else None,
             ),
         )
         await db.commit()
@@ -465,6 +476,7 @@ class SqliteExecutionStore:
             timestamp=datetime.fromisoformat(row[12]),
             trace_id=row[13],
             error=row[14],
+            trace_events=json.loads(row[15]) if len(row) > 15 and row[15] else None,
         )
 
     # ------------------------------------------------------------------

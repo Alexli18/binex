@@ -133,6 +133,10 @@ def _print_node_plain(record: Any) -> None:
         click.echo(f"Prompt: {record.prompt}")
     if record.model:
         click.echo(f"Model: {record.model}")
+    if record.trace_events:
+        click.echo("")
+        click.echo("Trace events:")
+        click.echo(render_subtask_tree(record.trace_events))
 
 
 @trace_cmd.command("graph")
