@@ -62,7 +62,24 @@ def calculator(expression: str) -> str:
     allowed["min"] = min
     allowed["max"] = max
     try:
-        result = eval(expression, {"__builtins__": {}}, allowed)  # noqa: S307
+        import ast
+        tree = ast.parse(expression, mode="eval")
+        # Allow only safe AST nodes (literals, operators, calls to allowed names)
+        _SAFE_NODES = (
+            ast.Expression, ast.BinOp, ast.UnaryOp, ast.Call, ast.Constant,
+            ast.Name, ast.Load, ast.Add, ast.Sub, ast.Mult, ast.Div,
+            ast.FloorDiv, ast.Mod, ast.Pow, ast.USub, ast.UAdd,
+            ast.Compare, ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE,
+            ast.BoolOp, ast.And, ast.Or, ast.IfExp, ast.Tuple, ast.List,
+            ast.Attribute,
+        )
+        for node in ast.walk(tree):
+            if not isinstance(node, _SAFE_NODES):
+                return f"Error: disallowed expression node: {type(node).__name__}"
+            if isinstance(node, ast.Name) and node.id not in allowed:
+                return f"Error: name '{node.id}' is not allowed"
+        code = compile(tree, "<calculator>", "eval")
+        result = eval(code, {"__builtins__": {}}, allowed)  # noqa: S307
         return str(result)
     except Exception as exc:
         return f"Error: {exc}"
@@ -239,12 +256,18 @@ def write_file(path: str, content: str) -> str:
 @tool(description="Execute a shell command (timeout 30s, max output 10KB)")
 def shell_command(command: str) -> str:
     """Execute a shell command with safety constraints."""
+    import shlex
     import subprocess
 
     try:
+        args = shlex.split(command)
+    except ValueError as exc:
+        return f"Error: failed to parse command: {exc}"
+
+    try:
         result = subprocess.run(
-            command,
-            shell=True,  # noqa: S602
+            args,
+            shell=False,
             capture_output=True,
             text=True,
             timeout=30,
