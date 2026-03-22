@@ -41,13 +41,13 @@ with sync_playwright() as p:
         # Should see NodePalette with node types
         has_llm = page.get_by_text("LLM Agent").count() > 0
         has_local = page.get_by_text("Local Script").count() > 0
-        has_approve = page.get_by_text("Human Approve").count() > 0
+        has_approve = page.get_by_text("Approve").count() > 0
         has_input = page.get_by_text("Human Input").count() > 0
         has_a2a = page.get_by_text("A2A Agent").count() > 0
 
         check("LLM Agent in palette", has_llm)
         check("Local Script in palette", has_local)
-        check("Human Approve in palette", has_approve)
+        check("Approve in palette", has_approve)
         check("Human Input in palette", has_input)
         check("A2A Agent in palette", has_a2a)
 
