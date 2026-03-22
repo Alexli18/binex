@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Protocol
 
 from binex.models.cost import CostRecord, RunCostSummary
+
 from binex.models.execution import ExecutionRecord, RunSummary
 
 
@@ -54,6 +55,16 @@ class ExecutionStore(Protocol):
 
     async def list_costs(self, run_id: str) -> list[CostRecord]:
         """List all cost records for a given run."""
+        ...
+
+    async def list_costs_batch(self, run_ids: list[str]) -> list[CostRecord]:
+        """Fetch cost records for multiple run_ids in a single query."""
+        ...
+
+    async def get_cost_aggregations(
+        self, run_ids: list[str],
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Return SQL-aggregated cost breakdowns by model, node, and date."""
         ...
 
     async def get_node_cost(self, run_id: str, task_id: str) -> float:

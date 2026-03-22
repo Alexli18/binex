@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 from datetime import UTC, datetime, timedelta
-from typing import Any
 
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
@@ -48,57 +46,22 @@ async def cost_dashboard(
             cutoff = now - delta
             runs = [r for r in runs if r.started_at >= cutoff]
 
-        # Collect cost records for filtered runs
-        all_cost_records = []
-        for run in runs:
-            records = await exec_store.list_costs(run.run_id)
-            all_cost_records.extend(records)
-
-        # Aggregate totals
-        total_cost = sum(r.cost for r in all_cost_records)
+        run_ids = [r.run_id for r in runs]
         run_count = len(runs)
+
+        # Batch-fetch costs and aggregate at SQL level (avoids N+1 and in-memory aggregation)
+        aggs = await exec_store.get_cost_aggregations(run_ids)
+        total_cost = sum(m["cost"] for m in aggs["by_model"])
         avg_per_run = total_cost / run_count if run_count > 0 else 0.0
-
-        # Group by model
-        model_agg: dict[str, dict[str, Any]] = defaultdict(lambda: {"cost": 0.0, "count": 0})
-        for r in all_cost_records:
-            key = r.model or "unknown"
-            model_agg[key]["cost"] += r.cost
-            model_agg[key]["count"] += 1
-        cost_by_model = [
-            {"model": model, "cost": round(data["cost"], 6), "count": data["count"]}
-            for model, data in sorted(model_agg.items(), key=lambda x: x[1]["cost"], reverse=True)
-        ]
-
-        # Group by node
-        node_agg: dict[str, dict[str, Any]] = defaultdict(lambda: {"cost": 0.0, "count": 0})
-        for r in all_cost_records:
-            node_agg[r.task_id]["cost"] += r.cost
-            node_agg[r.task_id]["count"] += 1
-        cost_by_node = [
-            {"node_id": node_id, "cost": round(data["cost"], 6), "count": data["count"]}
-            for node_id, data in sorted(node_agg.items(), key=lambda x: x[1]["cost"], reverse=True)
-        ]
-
-        # Cost trend — group by date
-        date_agg: dict[str, dict[str, Any]] = defaultdict(lambda: {"cost": 0.0, "runs": set()})
-        for r in all_cost_records:
-            date_key = r.timestamp.strftime("%Y-%m-%d")
-            date_agg[date_key]["cost"] += r.cost
-            date_agg[date_key]["runs"].add(r.run_id)
-        cost_trend = [
-            {"date": date, "cost": round(data["cost"], 6), "runs": len(data["runs"])}
-            for date, data in sorted(date_agg.items())
-        ]
 
         return JSONResponse({
             "period": period,
             "total_cost": round(total_cost, 6),
             "avg_per_run": round(avg_per_run, 6),
             "run_count": run_count,
-            "cost_by_model": cost_by_model,
-            "cost_by_node": cost_by_node,
-            "cost_trend": cost_trend,
+            "cost_by_model": aggs["by_model"],
+            "cost_by_node": aggs["by_node"],
+            "cost_trend": aggs["by_date"],
         })
     finally:
         await exec_store.close()

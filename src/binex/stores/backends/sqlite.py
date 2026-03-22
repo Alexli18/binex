@@ -350,6 +350,67 @@ class SqliteExecutionStore:
         rows = await cursor.fetchall()
         return [self._row_to_cost_record(row) for row in rows]
 
+    async def list_costs_batch(self, run_ids: list[str]) -> list[CostRecord]:
+        """Fetch cost records for multiple run_ids in a single query."""
+        if not run_ids:
+            return []
+        db = await self._ensure_initialized()
+        ph = ",".join("?" for _ in run_ids)
+        cursor = await db.execute(
+            "SELECT * FROM cost_records WHERE run_id IN (" + ph + ") ORDER BY timestamp",
+            run_ids,
+        )
+        rows = await cursor.fetchall()
+        return [self._row_to_cost_record(row) for row in rows]
+
+    async def get_cost_aggregations(
+        self, run_ids: list[str],
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Return SQL-aggregated cost breakdowns by model, node, and date."""
+        if not run_ids:
+            return {"by_model": [], "by_node": [], "by_date": []}
+        db = await self._ensure_initialized()
+        ph = ",".join("?" for _ in run_ids)
+        in_clause = "(" + ph + ")"
+
+        # By model
+        cursor = await db.execute(
+            "SELECT COALESCE(model, 'unknown') as m, SUM(cost) as total, COUNT(*) as cnt "
+            "FROM cost_records WHERE run_id IN " + in_clause + " "
+            "GROUP BY m ORDER BY total DESC",
+            run_ids,
+        )
+        by_model = [
+            {"model": row[0], "cost": round(row[1], 6), "count": row[2]}
+            for row in await cursor.fetchall()
+        ]
+
+        # By node (task_id)
+        cursor = await db.execute(
+            "SELECT task_id, SUM(cost) as total, COUNT(*) as cnt "
+            "FROM cost_records WHERE run_id IN " + in_clause + " "
+            "GROUP BY task_id ORDER BY total DESC",
+            run_ids,
+        )
+        by_node = [
+            {"node_id": row[0], "cost": round(row[1], 6), "count": row[2]}
+            for row in await cursor.fetchall()
+        ]
+
+        # By date
+        cursor = await db.execute(
+            "SELECT DATE(timestamp) as d, SUM(cost) as total, COUNT(DISTINCT run_id) as runs "
+            "FROM cost_records WHERE run_id IN " + in_clause + " "
+            "GROUP BY d ORDER BY d",
+            run_ids,
+        )
+        by_date = [
+            {"date": row[0], "cost": round(row[1], 6), "runs": row[2]}
+            for row in await cursor.fetchall()
+        ]
+
+        return {"by_model": by_model, "by_node": by_node, "by_date": by_date}
+
     async def get_node_cost(self, run_id: str, task_id: str) -> float:
         db = await self._ensure_initialized()
         cursor = await db.execute(
@@ -473,11 +534,11 @@ class SqliteExecutionStore:
         if not terminal_ids:
             return
         db = await self._ensure_initialized()
-        for tid in terminal_ids:
-            await db.execute(
-                "UPDATE cao_sessions SET status = 'orphaned' WHERE terminal_id = ?",
-                (tid,),
-            )
+        ph = ",".join("?" for _ in terminal_ids)
+        await db.execute(
+            "UPDATE cao_sessions SET status = 'orphaned' WHERE terminal_id IN (" + ph + ")",
+            terminal_ids,
+        )
         await db.commit()
 
     async def delete_cao_session(self, terminal_id: str) -> bool:

@@ -94,6 +94,48 @@ class InMemoryExecutionStore:
     async def list_costs(self, run_id: str) -> list[CostRecord]:
         return [r for r in self._cost_records if r.run_id == run_id]
 
+    async def list_costs_batch(self, run_ids: list[str]) -> list[CostRecord]:
+        """Fetch cost records for multiple run_ids."""
+        id_set = set(run_ids)
+        return [r for r in self._cost_records if r.run_id in id_set]
+
+    async def get_cost_aggregations(
+        self, run_ids: list[str],
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Return aggregated cost breakdowns by model, node, and date."""
+        records = await self.list_costs_batch(run_ids)
+        if not records:
+            return {"by_model": [], "by_node": [], "by_date": []}
+
+        from collections import defaultdict
+
+        model_agg: dict[str, dict[str, Any]] = defaultdict(lambda: {"cost": 0.0, "count": 0})
+        node_agg: dict[str, dict[str, Any]] = defaultdict(lambda: {"cost": 0.0, "count": 0})
+        date_agg: dict[str, dict[str, Any]] = defaultdict(lambda: {"cost": 0.0, "runs": set()})
+        for r in records:
+            key = r.model or "unknown"
+            model_agg[key]["cost"] += r.cost
+            model_agg[key]["count"] += 1
+            node_agg[r.task_id]["cost"] += r.cost
+            node_agg[r.task_id]["count"] += 1
+            date_key = r.timestamp.strftime("%Y-%m-%d")
+            date_agg[date_key]["cost"] += r.cost
+            date_agg[date_key]["runs"].add(r.run_id)
+
+        by_model = [
+            {"model": m, "cost": round(d["cost"], 6), "count": d["count"]}
+            for m, d in sorted(model_agg.items(), key=lambda x: x[1]["cost"], reverse=True)
+        ]
+        by_node = [
+            {"node_id": n, "cost": round(d["cost"], 6), "count": d["count"]}
+            for n, d in sorted(node_agg.items(), key=lambda x: x[1]["cost"], reverse=True)
+        ]
+        by_date = [
+            {"date": dt, "cost": round(d["cost"], 6), "runs": len(d["runs"])}
+            for dt, d in sorted(date_agg.items())
+        ]
+        return {"by_model": by_model, "by_node": by_node, "by_date": by_date}
+
     async def get_node_cost(self, run_id: str, task_id: str) -> float:
         return sum(
             r.cost for r in self._cost_records
