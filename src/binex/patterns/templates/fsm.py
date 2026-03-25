@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from binex.models.workflow import NodeSpec
 from binex.patterns.models import PatternSpec
 
@@ -10,7 +12,7 @@ DEFAULT_PROMPT_TEMPLATE = "{state_name}: Process this state"
 
 def expand_fsm(
     spec: PatternSpec,
-) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict]]:
+) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict[str, Any]]]:
     """Expand FSM pattern into state nodes with linear edges and back-edges."""
     states: list[str] = spec.config.get("states", ["start", "end"])
     max_iter = spec.config.get("max_iterations", 3)
@@ -57,7 +59,7 @@ def expand_fsm(
         edges.append((f"{spec.id}.{states[i]}", f"{spec.id}.{states[i + 1]}"))
 
     # Back-edges: each state (except first) can go back to first state
-    back_edges: list[dict] = []
+    back_edges: list[dict[str, Any]] = []
     for state in states[1:]:
         back_edges.append({
             "node_id": f"{spec.id}.{state}",

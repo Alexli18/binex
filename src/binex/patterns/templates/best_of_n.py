@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from binex.models.workflow import NodeSpec
 from binex.patterns.models import PatternSpec
 
@@ -13,7 +15,7 @@ DEFAULT_PROMPTS = {
 
 def expand_best_of_n(
     spec: PatternSpec,
-) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict]]:
+) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict[str, Any]]]:
     """Expand best-of-N pattern into variant_1..N → judge."""
     n_variants = spec.config.get("variants", 3)
     group_meta = {"_pattern_group": spec.id, "_pattern_type": "best_of_n"}
@@ -24,8 +26,9 @@ def expand_best_of_n(
         parts: list[str] = []
         if spec.system_prompt:
             parts.append(spec.system_prompt)
+        default = DEFAULT_PROMPTS.get(step_name, DEFAULT_PROMPTS["variant"])
         step_prompt = (
-            step_cfg.prompt if step_cfg and step_cfg.prompt else DEFAULT_PROMPTS.get(step_name, DEFAULT_PROMPTS["variant"])
+            step_cfg.prompt if step_cfg and step_cfg.prompt else default
         )
         parts.append(step_prompt)
         return "\n\n".join(parts)

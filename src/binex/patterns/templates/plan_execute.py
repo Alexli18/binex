@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from binex.models.workflow import NodeSpec
 from binex.patterns.models import PatternSpec
 
@@ -16,7 +18,7 @@ STEP_ORDER = ("planner", "executor", "verifier")
 
 def expand_plan_execute(
     spec: PatternSpec,
-) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict]]:
+) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict[str, Any]]]:
     """Expand plan-execute into planner → executor → verifier with back-edge."""
     max_iter = spec.config.get("max_iterations", 3)
     group_meta = {"_pattern_group": spec.id, "_pattern_type": "plan_execute"}
@@ -54,7 +56,7 @@ def expand_plan_execute(
     for i in range(len(STEP_ORDER) - 1):
         edges.append((f"{spec.id}.{STEP_ORDER[i]}", f"{spec.id}.{STEP_ORDER[i + 1]}"))
 
-    back_edges: list[dict] = [{
+    back_edges: list[dict[str, Any]] = [{
         "node_id": f"{spec.id}.verifier",
         "target": f"{spec.id}.planner",
         "max_iterations": max_iter,

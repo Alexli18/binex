@@ -2,18 +2,23 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from binex.models.workflow import NodeSpec
 from binex.patterns.models import PatternSpec
 
 DEFAULT_PROMPTS = {
     "actor": "Attempt the task",
-    "reflector": "Reflect on the attempt. Output DONE if satisfactory, or provide improvement guidance.",
+    "reflector": (
+        "Reflect on the attempt. Output DONE if satisfactory, "
+        "or provide improvement guidance."
+    ),
 }
 
 
 def expand_reflexion(
     spec: PatternSpec,
-) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict]]:
+) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict[str, Any]]]:
     """Expand reflexion pattern into actor → reflector with back-edge."""
     max_iter = spec.config.get("max_iterations", 3)
     group_meta = {"_pattern_group": spec.id, "_pattern_type": "reflexion"}
@@ -62,7 +67,7 @@ def expand_reflexion(
         (f"{spec.id}.actor", f"{spec.id}.reflector"),
     ]
 
-    back_edges: list[dict] = [{
+    back_edges: list[dict[str, Any]] = [{
         "node_id": f"{spec.id}.reflector",
         "target": f"{spec.id}.actor",
         "max_iterations": max_iter,

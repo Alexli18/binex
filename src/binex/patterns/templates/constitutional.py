@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from binex.models.workflow import NodeSpec
 from binex.patterns.models import PatternSpec
 
@@ -14,7 +16,7 @@ DEFAULT_PROMPTS = {
 
 def expand_constitutional(
     spec: PatternSpec,
-) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict]]:
+) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict[str, Any]]]:
     """Expand constitutional pattern into generate → critique_principles → revise."""
     group_meta = {"_pattern_group": spec.id, "_pattern_type": "constitutional"}
     nodes: list[NodeSpec] = []

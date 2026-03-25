@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from binex.models.workflow import NodeSpec
 from binex.patterns.models import PatternSpec
 
@@ -14,7 +16,7 @@ DEFAULT_PROMPTS = {
 
 def expand_scatter(
     spec: PatternSpec,
-) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict]]:
+) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict[str, Any]]]:
     """Expand scatter pattern into mapper → workers → reducer."""
     n_workers = spec.config.get("max_workers", 10)
     group_meta = {"_pattern_group": spec.id, "_pattern_type": "scatter"}
@@ -25,8 +27,9 @@ def expand_scatter(
         parts: list[str] = []
         if spec.system_prompt:
             parts.append(spec.system_prompt)
+        default = DEFAULT_PROMPTS.get(step_name, DEFAULT_PROMPTS["worker"])
         step_prompt = (
-            step_cfg.prompt if step_cfg and step_cfg.prompt else DEFAULT_PROMPTS.get(step_name, DEFAULT_PROMPTS["worker"])
+            step_cfg.prompt if step_cfg and step_cfg.prompt else default
         )
         parts.append(step_prompt)
         return "\n\n".join(parts)

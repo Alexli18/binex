@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from binex.models.workflow import NodeSpec
 from binex.patterns.models import PatternSpec
 
@@ -17,7 +19,7 @@ STEP_ORDER = ("generate", "extract_claims", "verify_each", "revise")
 
 def expand_chain_of_verification(
     spec: PatternSpec,
-) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict]]:
+) -> tuple[list[NodeSpec], list[tuple[str, str]], list[dict[str, Any]]]:
     """Expand chain-of-verification into generate → extract → verify → revise."""
     group_meta = {"_pattern_group": spec.id, "_pattern_type": "chain_of_verification"}
     nodes: list[NodeSpec] = []
