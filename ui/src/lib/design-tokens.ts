@@ -98,6 +98,12 @@ export const nodeTypeColors = {
     border: 'border-purple-500/40',
     icon: 'text-purple-400',
   },
+  pattern: {
+    bg: 'bg-pink-500/15',
+    text: 'text-pink-400',
+    border: 'border-pink-500/40',
+    icon: 'text-pink-400',
+  },
 } as const;
 
 export type NodeType = keyof typeof nodeTypeColors;

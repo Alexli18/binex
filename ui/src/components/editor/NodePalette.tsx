@@ -1,4 +1,4 @@
-import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, Terminal } from 'lucide-react';
+import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, Terminal, Repeat, Users, Trophy, RefreshCw, GitBranch, Workflow, Scale, CheckCheck, ListChecks } from 'lucide-react';
 import { chartColors } from '@/lib/design-tokens';
 
 export interface NodeTypeConfig {
@@ -20,6 +20,7 @@ const NODE_COLOR = {
   human: '#f59e0b',   // amber-500
   a2a: '#6366f1',     // indigo-500
   cao: chartColors.cao, // purple-500
+  pattern: '#ec4899',   // pink-500
 } as const;
 
 export const NODE_TYPES: NodeTypeConfig[] = [
@@ -30,6 +31,16 @@ export const NODE_TYPES: NodeTypeConfig[] = [
   { type: 'human-output', subtype: 'output', label: 'Output', description: 'Display results', icon: Eye, color: NODE_COLOR.human, agentPrefix: 'human://', defaultAgent: 'human://output' },
   { type: 'a2a', label: 'A2A Agent', description: 'Remote agent', icon: Globe, color: NODE_COLOR.a2a, agentPrefix: 'a2a://', defaultAgent: 'a2a://localhost:8001' },
   { type: 'cao', label: 'CAO Agent', description: 'CLI orchestrator', icon: Terminal, color: NODE_COLOR.cao, agentPrefix: 'cao://', defaultAgent: 'cao://default', category: 'CLI AGENTS' },
+  // Patterns
+  { type: 'pattern-critic', label: 'Critic', description: 'Draft→critique→refine', icon: Repeat, color: NODE_COLOR.pattern, agentPrefix: 'pattern://', defaultAgent: 'pattern://critic', category: 'PATTERNS' },
+  { type: 'pattern-debate', label: 'Debate', description: 'Multi-agent debate', icon: Users, color: NODE_COLOR.pattern, agentPrefix: 'pattern://', defaultAgent: 'pattern://debate', category: 'PATTERNS' },
+  { type: 'pattern-best_of_n', label: 'Best of N', description: 'Generate N, pick best', icon: Trophy, color: NODE_COLOR.pattern, agentPrefix: 'pattern://', defaultAgent: 'pattern://best_of_n', category: 'PATTERNS' },
+  { type: 'pattern-reflexion', label: 'Reflexion', description: 'Act→reflect loop', icon: RefreshCw, color: NODE_COLOR.pattern, agentPrefix: 'pattern://', defaultAgent: 'pattern://reflexion', category: 'PATTERNS' },
+  { type: 'pattern-scatter', label: 'Scatter', description: 'Map→workers→reduce', icon: GitBranch, color: NODE_COLOR.pattern, agentPrefix: 'pattern://', defaultAgent: 'pattern://scatter', category: 'PATTERNS' },
+  { type: 'pattern-fsm', label: 'State Machine', description: 'Finite state machine', icon: Workflow, color: NODE_COLOR.pattern, agentPrefix: 'pattern://', defaultAgent: 'pattern://fsm', category: 'PATTERNS' },
+  { type: 'pattern-constitutional', label: 'Constitutional', description: 'Principle-guided AI', icon: Scale, color: NODE_COLOR.pattern, agentPrefix: 'pattern://', defaultAgent: 'pattern://constitutional', category: 'PATTERNS' },
+  { type: 'pattern-chain_of_verification', label: 'Verify Chain', description: 'Generate→verify→revise', icon: CheckCheck, color: NODE_COLOR.pattern, agentPrefix: 'pattern://', defaultAgent: 'pattern://chain_of_verification', category: 'PATTERNS' },
+  { type: 'pattern-plan_execute', label: 'Plan & Execute', description: 'Plan→execute→verify', icon: ListChecks, color: NODE_COLOR.pattern, agentPrefix: 'pattern://', defaultAgent: 'pattern://plan_execute', category: 'PATTERNS' },
 ];
 
 export function NodePalette() {
@@ -40,6 +51,7 @@ export function NodePalette() {
 
   const defaultNodes = NODE_TYPES.filter((nt) => !nt.category);
   const cliAgents = NODE_TYPES.filter((nt) => nt.category === 'CLI AGENTS');
+  const patternNodes = NODE_TYPES.filter((nt) => nt.category === 'PATTERNS');
 
   const renderItem = (nt: NodeTypeConfig) => {
     const Icon = nt.icon;
@@ -73,6 +85,14 @@ export function NodePalette() {
             CLI
           </div>
           {cliAgents.map(renderItem)}
+        </>
+      )}
+      {patternNodes.length > 0 && (
+        <>
+          <div className="px-2 pt-2 py-1 text-[10px] font-medium text-slate-500 uppercase tracking-wider border-t border-slate-700/30 mt-1">
+            Patterns
+          </div>
+          {patternNodes.map(renderItem)}
         </>
       )}
       <div className="mt-auto px-2 py-1.5 text-[9px] text-slate-600">
