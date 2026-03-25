@@ -8,6 +8,7 @@ import { ToolChip } from './ToolChip';
 import { ToolPickerPopover } from './ToolPickerPopover';
 import { PromptLibraryPanel } from '../../pages/PromptLibrary';
 import { CaoNodePanel } from './CaoNodePanel';
+import { PatternConfig } from './PatternConfig';
 
 const ICONS: Record<string, React.ElementType> = {
   llm: Bot, local: Monitor, 'human-approve': ShieldCheck,
@@ -300,6 +301,16 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
             config={config}
             onAgentChange={updateAgent}
             onConfigChange={updateConfig}
+          />
+        )}
+
+        {agent.startsWith('pattern://') && (
+          <PatternConfig
+            patternType={agent.replace('pattern://', '')}
+            config={config}
+            onChange={(newConfig) => {
+              Object.entries(newConfig).forEach(([k, v]) => updateConfig(k, v));
+            }}
           />
         )}
       </div>
