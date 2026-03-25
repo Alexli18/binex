@@ -1,0 +1,12 @@
+# Debate pattern: multiple agents argue, judge synthesizes
+name: policy-debate
+description: Three AI agents debate a policy question, judge synthesizes
+nodes:
+  debaters:
+    pattern: debate
+    agent: llm://claude-sonnet-4-6
+    system_prompt: "Debate the given policy question"
+    config:
+      agents: 3
+      rounds: 2
+    outputs: [verdict]
