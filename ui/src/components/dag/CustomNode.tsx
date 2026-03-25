@@ -29,6 +29,11 @@ export function CustomNode({ data }: NodeProps<WorkflowNode>) {
       {data.status && (
         <div className={`text-xs mt-1 capitalize ${statusTokens.text}`}>{data.status}</div>
       )}
+      {data.patternGroup && (
+        <div className="text-[9px] text-pink-400 mt-0.5 truncate">
+          ⬡ {data.patternType ?? 'pattern'}
+        </div>
+      )}
       <Handle type="source" position={Position.Bottom} className="!bg-slate-500 !border-slate-400" />
     </div>
   );

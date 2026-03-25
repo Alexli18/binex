@@ -6,6 +6,8 @@ export interface WorkflowNode {
   label: string;
   type: string;
   status?: string;
+  patternGroup?: string;
+  patternType?: string;
 }
 
 export interface WorkflowEdge {
@@ -21,7 +23,7 @@ export interface GraphLayout {
 
 interface ParsedWorkflow {
   name?: string;
-  nodes?: Record<string, { agent: string; depends_on?: string[] }>;
+  nodes?: Record<string, { agent: string; depends_on?: string[]; config?: Record<string, unknown> }>;
 }
 
 const elk = new ELK();
@@ -34,7 +36,14 @@ export function parseWorkflowYaml(yamlContent: string): { nodes: WorkflowNode[];
     const agent = spec.agent ?? '';
     const prefix = agent.split('://')[0] ?? 'local';
     const type = prefix === 'cao' ? 'cao' : prefix;
-    return { id, label: id, type };
+    const config = spec.config;
+    return {
+      id,
+      label: id,
+      type,
+      patternGroup: config?._pattern_group as string | undefined,
+      patternType: config?._pattern_type as string | undefined,
+    };
   });
 
   const edges: WorkflowEdge[] = [];
