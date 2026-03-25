@@ -77,6 +77,7 @@ class NodeSpec(BaseModel):
 
     id: str = ""
     agent: str
+    pattern: str | None = None
     system_prompt: str | None = None
     inputs: dict[str, Any] = Field(default_factory=dict)
     outputs: list[str]

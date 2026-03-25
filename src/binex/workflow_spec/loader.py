@@ -57,6 +57,8 @@ def load_workflow_from_string(
         spec = WorkflowSpec(**data)
     except ValidationError as exc:
         raise ValueError(f"Invalid workflow spec: {exc}") from exc
+    from binex.patterns import expand_patterns
+    spec = expand_patterns(spec)
     _validate_back_edges(spec)
     return spec
 
@@ -130,6 +132,7 @@ def _resolve_file_prompts(data: dict[str, Any], base_dir: Path | None = None) ->
 
 
 _WHEN_RE = re.compile(r"^\$\{([\w-]+)\.([\w-]+)\}\s*(==|!=)\s*(.+)$")
+_WHEN_LITERALS = frozenset({"true", "false"})
 
 
 def _validate_back_edges(spec: WorkflowSpec) -> None:
@@ -157,7 +160,8 @@ def _validate_back_edges(spec: WorkflowSpec) -> None:
                 f"Node '{node_id}': back_edge target '{be.target}' is not upstream of '{node_id}'"
             )
 
-        if not _WHEN_RE.match(be.when.strip()):
+        when_stripped = be.when.strip()
+        if when_stripped not in _WHEN_LITERALS and not _WHEN_RE.match(when_stripped):
             raise ValueError(
                 f"Node '{node_id}': back_edge has invalid when condition syntax: {be.when!r}"
             )
