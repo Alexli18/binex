@@ -51,6 +51,7 @@ Issues = "https://github.com/Alexli18/binex/issues"
 dev = [
     "pytest",
     "pytest-asyncio",
+    "pytest-timeout",
     "ruff",
     "mypy",
     "mkdocs-material",
@@ -98,3 +99,4 @@ mypy_path = "src"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = "--ignore=tests/e2e_playwright"
+timeout = 30
