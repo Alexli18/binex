@@ -116,7 +116,7 @@ class Scheduler:
             forward_reachable.add(current)
             if current == to_node:
                 continue  # don't go past to_node
-            for dep in sorted(dag.dependents(current)):
+            for dep in dag.dependents(current):
                 queue.append(dep)
 
         # Backward reachable from to_node (bounded by from_node)
@@ -129,7 +129,7 @@ class Scheduler:
             backward_reachable.add(current)
             if current == from_node:
                 continue
-            for dep in sorted(dag.dependencies(current)):
+            for dep in dag.dependencies(current):
                 queue.append(dep)
 
         # Intersection = nodes on path from from_node to to_node
