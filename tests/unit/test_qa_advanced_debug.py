@@ -697,7 +697,11 @@ class TestCLIBisect:
             result = runner.invoke(cli, ["bisect", "good_01", "bad_01", "--json"])
 
         assert result.exit_code != 0
-        assert "not found" in result.output or "not found" in str(getattr(result, "stderr", ""))
+        try:
+            stderr_text = result.stderr
+        except ValueError:
+            stderr_text = ""
+        assert "not found" in result.output + stderr_text
 
     def test_bsct_013_bisect_custom_threshold(self, runner):
         """TC-BSCT-013: binex bisect --threshold 0.5 custom threshold."""

@@ -1,0 +1,25 @@
+# Critic pattern: iterative draft → critique → refine
+name: research-with-critic
+description: Research a topic using the Critic pattern for iterative refinement
+nodes:
+  researcher:
+    pattern: critic
+    agent: llm://claude-sonnet-4-6
+    system_prompt: "You are an AI safety researcher."
+    config:
+      rounds: 2
+      steps:
+        draft:
+          model: llm://claude-haiku-4-5
+          prompt: "Write a research summary on the given topic"
+        critique:
+          prompt: "Identify factual errors, logical gaps, and missing perspectives"
+        refine:
+          prompt: "Produce a final version addressing all critique points"
+    outputs: [report]
+
+  publisher:
+    agent: llm://claude-sonnet-4-6
+    depends_on: [researcher]
+    system_prompt: "Format the research report for publication"
+    outputs: [article]

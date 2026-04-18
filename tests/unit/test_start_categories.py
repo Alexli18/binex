@@ -11,7 +11,6 @@ def test_start_shows_categories():
     """Invoking start should display category names like General and Development."""
     runner = CliRunner()
     result = runner.invoke(start_cmd, input="q\n")
-    # Should show at least some category names before any input
     assert "General" in result.output or "general" in result.output.lower()
     assert "Development" in result.output or "development" in result.output.lower()
 
@@ -28,10 +27,8 @@ def test_start_category_then_template():
 def test_start_back_from_templates():
     """Pressing 'b' from template list returns to categories."""
     runner = CliRunner()
-    # Select category 2, then 'b' to go back, then 'q' to quit
     result = runner.invoke(start_cmd, input="2\nb\nq\n")
     output = result.output
-    # Categories should appear twice (initial + after back)
     first = output.find("General")
     if first == -1:
         first = output.lower().find("general")
