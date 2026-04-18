@@ -17,8 +17,8 @@ def test_start_shows_categories():
 def test_start_category_then_template():
     """Selecting a category should show its templates."""
     runner = CliRunner()
-    # Select category 2 (Development), then quit
-    result = runner.invoke(start_cmd, input="2\nq\n")
+    # Select category 2 (Development), then quit from templates, then quit from categories
+    result = runner.invoke(start_cmd, input="2\nq\nq\n")
     output = result.output
     assert "Code Review" in output or "code-review" in output.lower()
 
