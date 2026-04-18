@@ -14,7 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Rocket, FileCode, Bug, Plus, Download, DollarSign,
+  FileCode, Bug, Plus, Download, DollarSign, Search, Workflow,
 } from 'lucide-react';
 import { OrphanedSessionsBanner } from '@/components/cao/OrphanedSessionsBanner';
 import { CaoServerStatus } from '@/components/cao/CaoServerStatus';
@@ -38,6 +38,16 @@ export default function Dashboard() {
     });
   }, [runs, statusFilter, search]);
 
+  // Derived stats
+  const stats = useMemo(() => {
+    if (!runs) return { total: 0, running: 0, failed: 0 };
+    return {
+      total:   runs.length,
+      running: runs.filter(r => r.status === 'running').length,
+      failed:  runs.filter(r => r.status === 'failed').length,
+    };
+  }, [runs]);
+
   if (isLoading) {
     return (
       <PageShell>
@@ -59,6 +69,8 @@ export default function Dashboard() {
     );
   }
 
+  const hasRuns = runs && runs.length > 0;
+
   return (
     <PageShell>
       <Breadcrumb items={[{ label: 'Dashboard' }]} className="mb-4" />
@@ -66,17 +78,18 @@ export default function Dashboard() {
       <PageHeader
         title="Dashboard"
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate('/costs')}
+              className="text-slate-400 border-slate-700 hover:border-slate-600 hover:text-slate-300"
             >
               <DollarSign className="w-3.5 h-3.5 mr-1.5" />
-              View Costs
+              Costs
             </Button>
-            <Button onClick={() => setShowNewRun(true)} size="sm">
-              <Plus className="w-4 h-4 mr-1.5" />
+            <Button onClick={() => setShowNewRun(true)} size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white border-0">
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
               New Run
             </Button>
           </div>
@@ -85,110 +98,156 @@ export default function Dashboard() {
 
       <NewRunModal open={showNewRun} onClose={() => setShowNewRun(false)} />
 
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-4">
         <OrphanedSessionsBanner />
         <CaoServerStatus />
       </div>
 
+      {/* Stats strip */}
+      {hasRuns && (
+        <div className="grid grid-cols-3 gap-px bg-slate-800/50 rounded-lg overflow-hidden mb-5 border border-slate-800">
+          <div className="bg-slate-900 px-4 py-3">
+            <div className="text-xs text-slate-500 mb-0.5">Total runs</div>
+            <div className="text-lg font-semibold text-slate-200 font-mono">{stats.total}</div>
+          </div>
+          <div className="bg-slate-900 px-4 py-3">
+            <div className="text-xs text-slate-500 mb-0.5">Running</div>
+            <div className={`text-lg font-semibold font-mono ${stats.running > 0 ? 'text-blue-400' : 'text-slate-500'}`}>{stats.running}</div>
+          </div>
+          <div className="bg-slate-900 px-4 py-3">
+            <div className="text-xs text-slate-500 mb-0.5">Failed</div>
+            <div className={`text-lg font-semibold font-mono ${stats.failed > 0 ? 'text-red-400' : 'text-slate-500'}`}>{stats.failed}</div>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
-      <div className="flex items-center gap-4 mt-4 mb-4">
+      <div className="flex items-center gap-3 mb-5">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]" aria-label="Filter by status">
+          <SelectTrigger className="w-[148px] h-8 text-xs border-slate-700 bg-slate-900" aria-label="Filter by status">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s} value={s}>
+              <SelectItem key={s} value={s} className="text-xs">
                 {s === 'all' ? 'All statuses' : s.charAt(0).toUpperCase() + s.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by run ID or workflow..."
-          className="w-64"
-          aria-label="Search by run ID or workflow name"
-        />
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
+          <Input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search runs or workflows..."
+            className="pl-8 h-8 text-xs border-slate-700 bg-slate-900 placeholder:text-slate-600"
+            aria-label="Search by run ID or workflow name"
+          />
+        </div>
 
         <Button
           variant="outline"
           size="sm"
           onClick={() => navigate('/export')}
+          className="h-8 text-xs text-slate-400 border-slate-700 hover:border-slate-600 hover:text-slate-300 ml-auto"
         >
           <Download className="w-3.5 h-3.5 mr-1.5" />
           Export
         </Button>
       </div>
 
-      {/* Runs Table */}
-      {filteredRuns.length === 0 && (!runs || runs.length === 0) ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="rounded-full bg-slate-800 p-5 mb-5">
-            <Rocket className="h-10 w-10 text-blue-400" />
+      {/* Empty state */}
+      {!hasRuns ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center mb-5">
+            <Workflow className="w-6 h-6 text-slate-500" />
           </div>
-          <h3 className="text-xl font-semibold text-slate-100 mb-2">Welcome to Binex</h3>
-          <p className="text-sm text-slate-400 max-w-sm mb-6">
-            Create your first workflow or run an example to get started.
+          <h3 className="text-base font-semibold text-slate-200 mb-2">No runs yet</h3>
+          <p className="text-sm text-slate-500 max-w-[30ch] mb-7 leading-relaxed">
+            Create a workflow in the editor or run an example to get started.
           </p>
-          <div className="flex gap-3">
-            <Button onClick={() => navigate('/editor')} variant="default">
-              <FileCode className="w-4 h-4 mr-2" />
-              Create Workflow
+          <div className="flex gap-2.5">
+            <Button
+              onClick={() => navigate('/editor')}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white border-0 h-8 text-xs"
+            >
+              <FileCode className="w-3.5 h-3.5 mr-1.5" />
+              Open Editor
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowNewRun(true)}
+              className="h-8 text-xs text-slate-400 border-slate-700 hover:border-slate-600"
+            >
+              Run a File
             </Button>
           </div>
         </div>
       ) : filteredRuns.length === 0 ? (
-        <p className="text-slate-500">No runs match your filters</p>
+        <div className="py-12 text-center">
+          <p className="text-sm text-slate-500">No runs match your filters.</p>
+          <button
+            onClick={() => { setSearch(''); setStatusFilter('all'); }}
+            className="text-xs text-emerald-500 hover:text-emerald-400 mt-2 transition-colors"
+          >
+            Clear filters
+          </button>
+        </div>
       ) : (
-        <div className="overflow-x-auto rounded-card border border-slate-700">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-800">
-              <tr>
-                <th className="text-left px-4 py-2.5 font-medium text-slate-400">Run ID</th>
-                <th className="text-left px-4 py-2.5 font-medium text-slate-400">Workflow</th>
-                <th className="text-left px-4 py-2.5 font-medium text-slate-400">Status</th>
-                <th className="text-center px-4 py-2.5 font-medium text-slate-400">Nodes</th>
-                <th className="text-right px-4 py-2.5 font-medium text-slate-400">Cost</th>
-                <th className="text-left px-4 py-2.5 font-medium text-slate-400">Created</th>
-                <th className="text-right px-4 py-2.5 font-medium text-slate-400">Actions</th>
+        <div className="rounded-lg border border-slate-800 overflow-hidden">
+          <table className="min-w-full text-xs">
+            <thead>
+              <tr className="border-b border-slate-800">
+                <th className="text-left px-4 py-2.5 font-medium text-slate-500">Run ID</th>
+                <th className="text-left px-4 py-2.5 font-medium text-slate-500">Workflow</th>
+                <th className="text-left px-4 py-2.5 font-medium text-slate-500">Status</th>
+                <th className="text-center px-4 py-2.5 font-medium text-slate-500">Nodes</th>
+                <th className="text-right px-4 py-2.5 font-medium text-slate-500">Cost</th>
+                <th className="text-left px-4 py-2.5 font-medium text-slate-500">Started</th>
+                <th className="text-right px-4 py-2.5 font-medium text-slate-500 sr-only">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-slate-800/70">
               {filteredRuns.map((run) => (
-                <tr key={run.run_id} className="hover:bg-slate-800/60 transition-colors">
-                  <td className="px-4 py-2.5">
+                <tr
+                  key={run.run_id}
+                  className="hover:bg-slate-800/30 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/runs/${run.run_id}`)}
+                >
+                  <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
                     <Link
                       to={`/runs/${run.run_id}`}
-                      className="text-blue-400 hover:text-blue-300 hover:underline font-mono text-xs"
+                      className="text-emerald-400 hover:text-emerald-300 font-mono transition-colors"
                     >
-                      {run.run_id}
+                      {run.run_id.slice(0, 8)}
                     </Link>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-200">{run.workflow_name}</td>
+                  <td className="px-4 py-2.5 text-slate-300 max-w-[200px] truncate">{run.workflow_name}</td>
                   <td className="px-4 py-2.5">
                     <StatusBadge status={run.status} />
                   </td>
-                  <td className="px-4 py-2.5 text-center text-slate-300">
+                  <td className="px-4 py-2.5 text-center font-mono text-slate-400">
                     {run.completed_nodes}/{run.total_nodes}
                   </td>
-                  <td className="px-4 py-2.5 text-right font-mono text-slate-300">
+                  <td className="px-4 py-2.5 text-right font-mono text-slate-400">
                     ${(run.total_cost ?? 0).toFixed(4)}
                   </td>
-                  <td className="px-4 py-2.5 text-slate-500 text-xs">
-                    {new Date(run.started_at).toLocaleString()}
+                  <td className="px-4 py-2.5 text-slate-600">
+                    {new Date(run.started_at).toLocaleString(undefined, {
+                      month: 'short', day: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })}
                   </td>
-                  <td className="px-4 py-2.5 text-right">
+                  <td className="px-4 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
                     {run.status === 'failed' && (
                       <Link
                         to={`/runs/${run.run_id}/debug`}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-red-800 text-red-400 hover:bg-red-900/30 transition-colors"
-                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-red-800/60 text-red-400 hover:bg-red-900/20 transition-colors"
                       >
-                        <Bug size={12} />
+                        <Bug size={11} />
                         Debug
                       </Link>
                     )}

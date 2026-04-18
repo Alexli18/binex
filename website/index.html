@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Binex — Git for AI Agents</title>
   <meta name="description" content="Open-source runtime for AI agent workflows. Build, run, debug, and replay multi-agent pipelines — 100% locally.">
-  <meta name="theme-color" content="#0a0a0b">
+  <meta name="theme-color" content="#09090b">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'><defs><linearGradient id='bx' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%237c3aed'/><stop offset='100%25' stop-color='%2306b6d4'/></linearGradient></defs><path d='M6 4 C12 4,18 4,18 8 C18 12,12 12,6 12 C12 12,18 12,18 16 C18 20,12 20,6 20' stroke='url(%23bx)' stroke-width='2.5' stroke-linecap='round' fill='none'/></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'><path d='M6 4 C12 4,18 4,18 8 C18 12,12 12,6 12 C12 12,18 12,18 16 C18 20,12 20,6 20' stroke='%2310b981' stroke-width='2.5' stroke-linecap='round' fill='none'/></svg>">
 
   <!-- Open Graph -->
   <meta property="og:title" content="Binex — Git for AI Agents">
@@ -24,10 +24,10 @@
   <meta name="twitter:description" content="Build, run, debug, and replay multi-agent workflows. 100% local. 100% open source.">
   <meta name="twitter:image" content="https://raw.githubusercontent.com/Alexli18/binex/master/assets/og-image.png">
 
-  <!-- Fonts -->
+  <!-- Fonts: Outfit (body/display) + JetBrains Mono (code) + Syne (headlines) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -36,28 +36,24 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
+            sans: ['Outfit', 'system-ui', 'sans-serif'],
             mono: ['JetBrains Mono', 'monospace'],
             syne: ['Syne', 'system-ui', 'sans-serif'],
           },
           colors: {
-            bg: '#0a0a0b',
-            surface: '#111113',
-            'surface-hover': '#18181b',
-            border: '#1e1e22',
-            'border-light': '#27272a',
-            primary: '#7c3aed',
-            'primary-light': '#a78bfa',
-            accent: '#7c3aed',
-            'accent-light': '#a78bfa',
-            secondary: '#06b6d4',
-            tertiary: '#ec4899',
-            'text-primary': '#fafafa',
-            'text-muted': '#a1a1aa',
-            'text-dim': '#71717a',
-            success: '#22c55e',
-            danger: '#ef4444',
-            warning: '#eab308',
+            bg:            '#09090b',
+            surface:       '#111113',
+            'surface-2':   '#18181b',
+            border:        '#1e1e22',
+            'border-light':'#27272a',
+            primary:       '#10b981',
+            'primary-dim': '#059669',
+            'text-primary':'#f4f4f5',
+            'text-muted':  '#a1a1aa',
+            'text-dim':    '#71717a',
+            success:       '#22c55e',
+            danger:        '#ef4444',
+            warning:       '#f59e0b',
           },
         },
       },
@@ -65,228 +61,167 @@
   </script>
 
   <style>
-    /* Base */
     body {
-      background: #0a0a0b;
-      color: #fafafa;
+      background: #09090b;
+      color: #f4f4f5;
       line-height: 1.6;
     }
-    p { line-height: 1.7; }
+    p { line-height: 1.75; }
 
-    /* CSS Variables */
-    :root {
-      --color-purple: #7c3aed;
-      --color-cyan: #06b6d4;
-      --color-magenta: #ec4899;
-      --glow-purple: 0 0 24px rgba(124, 58, 237, 0.15);
-      --glow-cyan: 0 0 24px rgba(6, 182, 212, 0.15);
-      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
-      --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+    /* Entrance animations */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
 
-    /* Hero entrance animation */
-    @keyframes hero-fade-up {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Card reveal animation */
-    @keyframes card-reveal {
-      from {
-        opacity: 0;
-        transform: translateY(30px) scale(0.95);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    /* Accent line reveal */
-    @keyframes accent-line-reveal {
-      from {
-        opacity: 0;
-        transform: rotate(-15deg) scaleX(0);
-      }
-      to {
-        opacity: 1;
-        transform: rotate(-15deg) scaleX(1);
-      }
-    }
-
-    /* Button ripple */
-    @keyframes button-ripple {
-      from {
-        opacity: 1;
-        transform: scale(0);
-      }
-      to {
-        opacity: 0;
-        transform: scale(2);
-      }
-    }
-
-    /* Scroll animations */
+    /* Scroll-triggered fade-up */
     .fade-up {
       opacity: 0;
       transform: translateY(24px);
-      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+      transition: opacity 0.55s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.55s cubic-bezier(0.16,1,0.3,1);
     }
-    .fade-up.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
 
-    /* Reduce motion */
+    /* Staggered children */
+    .fade-up.visible:nth-child(2) { transition-delay: 0.07s; }
+    .fade-up.visible:nth-child(3) { transition-delay: 0.14s; }
+    .fade-up.visible:nth-child(4) { transition-delay: 0.21s; }
+
     @media (prefers-reduced-motion: reduce) {
       .fade-up { opacity: 1; transform: none; transition: none; }
-      .terminal-cursor { animation: none !important; }
-      .hero-glow { animation: none !important; }
     }
 
-    /* Terminal cursor blink */
+    /* Sticky nav */
+    .nav-scrolled {
+      background: rgba(9,9,11,0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid #1e1e22;
+    }
+
+    /* Terminal cursor */
     .terminal-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 1em;
+      background: #10b981;
+      vertical-align: text-bottom;
       animation: blink 1s step-end infinite;
     }
-    @keyframes blink {
-      50% { opacity: 0; }
-    }
+    @keyframes blink { 50% { opacity: 0; } }
 
-    /* Typewriter animation */
+    /* Terminal typewriter */
     .terminal-line {
       opacity: 0;
       transform: translateY(4px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      transition: opacity 0.25s ease, transform 0.25s ease;
     }
-    .terminal-line.typed {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    .terminal-line.typed { opacity: 1; transform: translateY(0); }
 
-    /* Hero glow */
-    .hero-glow {
-      position: absolute;
-      width: 600px;
-      height: 600px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%);
-      top: -200px;
-      left: 50%;
-      transform: translateX(-50%);
-      pointer-events: none;
-      animation: glow-pulse 4s ease-in-out infinite alternate;
-    }
-    @keyframes glow-pulse {
-      from { opacity: 0.6; }
-      to { opacity: 1; }
-    }
-
-    /* Code highlight */
-    .code-keyword { color: #c4b5fd; }
-    .code-string { color: #86efac; }
-    .code-comment { color: #71717a; }
-    .code-flag { color: #60a5fa; }
-    .code-cmd { color: #fbbf24; }
-
-    /* Comparison table */
-    .compare-table th,
-    .compare-table td {
-      padding: 12px 16px;
-      text-align: center;
-      border-bottom: 1px solid #1e1e22;
-    }
-    .compare-table th:first-child,
-    .compare-table td:first-child {
-      text-align: left;
-    }
-    .compare-table thead th {
-      font-weight: 600;
-      font-size: 0.875rem;
-      color: #a1a1aa;
-      border-bottom: 2px solid #27272a;
-    }
-    .compare-table thead th:nth-child(2) {
-      color: #60a5fa;
-    }
-
-    /* Copy button tooltip */
-    .copy-tooltip {
-      opacity: 0;
-      transition: opacity 0.2s;
-      pointer-events: none;
-    }
-    .copy-tooltip.show {
-      opacity: 1;
-    }
-
-    /* Feature card hover with unique glow */
+    /* Feature card */
     .feature-card {
-      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
-      background: linear-gradient(135deg, rgb(17, 17, 19) 0%, rgb(26, 26, 30) 100%);
-      border: 1px solid rgba(124, 58, 237, 0.15);
       position: relative;
-      overflow: hidden;
-    }
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: radial-gradient(circle at top-right,
-        rgba(124, 58, 237, 0.08) 0%,
-        transparent 60%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-    }
-    .feature-card:hover::before {
-      opacity: 1;
+      transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s cubic-bezier(0.16,1,0.3,1);
     }
     .feature-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(124, 58, 237, 0.3);
-      box-shadow: 0 0 24px rgba(124, 58, 237, 0.15), var(--shadow-lg);
+      transform: translateY(-3px);
+      border-color: rgba(16,185,129,0.35);
+      box-shadow:
+        inset 0 1px 0 rgba(16,185,129,0.08),
+        0 12px 28px -8px rgba(0,0,0,0.4);
     }
-    .feature-card:nth-child(1):hover {
-      border-color: rgba(124, 58, 237, 0.4);
-      box-shadow: 0 0 24px rgba(124, 58, 237, 0.2), var(--shadow-lg);
-    }
-    .feature-card:nth-child(2):hover {
-      border-color: rgba(124, 58, 237, 0.4);
-      box-shadow: 0 0 24px rgba(124, 58, 237, 0.2), var(--shadow-lg);
-    }
-    .feature-card:nth-child(3):hover {
-      border-color: rgba(124, 58, 237, 0.4);
-      box-shadow: 0 0 24px rgba(124, 58, 237, 0.2), var(--shadow-lg);
-    }
-
     @media (prefers-reduced-motion: reduce) {
       .feature-card { transition: none; }
       .feature-card:hover { transform: none; }
     }
 
-    /* Button styles with ripple */
-    button {
-      position: relative;
-      transition: all 0.2s ease;
+    /* Syntax highlight */
+    .code-cmd     { color: #10b981; }
+    .code-keyword { color: #6ee7b7; }
+    .code-string  { color: #86efac; }
+    .code-comment { color: #52525b; }
+    .code-flag    { color: #7dd3fc; }
+    .text-ok      { color: #22c55e; }
+
+    /* Comparison table */
+    .compare-table th,
+    .compare-table td {
+      padding: 11px 16px;
+      text-align: center;
+      border-bottom: 1px solid #1e1e22;
     }
-    button:active {
-      transform: scale(0.98);
+    .compare-table th:first-child,
+    .compare-table td:first-child { text-align: left; }
+    .compare-table thead th {
+      font-weight: 600;
+      font-size: 0.8125rem;
+      color: #a1a1aa;
+      border-bottom: 1px solid #27272a;
+    }
+    .compare-table thead th:nth-child(2) { color: #10b981; }
+    .compare-table tbody tr:last-child td { border-bottom: none; }
+
+    /* Copy tooltip */
+    .copy-tooltip {
+      opacity: 0;
+      transition: opacity 0.15s;
+      pointer-events: none;
+    }
+    .copy-tooltip.show { opacity: 1; }
+
+    /* Button active press */
+    button:active { transform: scale(0.98); }
+
+    /* Zig-zag feature row */
+    .zigzag-row:nth-child(even) { flex-direction: row-reverse; }
+    @media (max-width: 767px) {
+      .zigzag-row { flex-direction: column !important; }
     }
 
-    /* Sticky nav */
-    .nav-scrolled {
-      background: rgba(10,10,11,0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid #1e1e22;
+    /* Step connector */
+    .step-connector {
+      position: absolute;
+      left: 20px;
+      top: 40px;
+      bottom: -48px;
+      width: 1px;
+      background: linear-gradient(to bottom, #27272a, transparent);
+    }
+
+    /* Mesh gradient background (subtle, no purple) */
+    .mesh-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .mesh-bg::before {
+      content: '';
+      position: absolute;
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 65%);
+      top: -200px;
+      right: -100px;
+    }
+    .mesh-bg::after {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,185,129,0.04) 0%, transparent 65%);
+      bottom: -100px;
+      left: -150px;
     }
   </style>
 </head>
@@ -298,22 +233,15 @@
   <!-- ============================================ -->
   <nav id="nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-200">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-      <a href="#" class="flex items-center gap-2 text-text-primary font-bold text-lg">
-        <!-- Binex logo mark -->
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <defs>
-            <linearGradient id="nav-bx" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#7c3aed"/>
-              <stop offset="100%" stop-color="#06b6d4"/>
-            </linearGradient>
-          </defs>
+      <a href="#" class="flex items-center gap-2.5 text-text-primary font-semibold text-base">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M6 4 C12 4, 18 4, 18 8 C18 12, 12 12, 6 12 C12 12, 18 12, 18 16 C18 20, 12 20, 6 20"
-                stroke="url(#nav-bx)" stroke-width="2" stroke-linecap="round" fill="none"/>
-          <circle cx="6" cy="4" r="2" fill="url(#nav-bx)"/>
-          <circle cx="18" cy="8" r="2" fill="url(#nav-bx)"/>
-          <circle cx="6" cy="12" r="2" fill="url(#nav-bx)"/>
-          <circle cx="18" cy="16" r="2" fill="url(#nav-bx)"/>
-          <circle cx="6" cy="20" r="2" fill="url(#nav-bx)"/>
+                stroke="#10b981" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <circle cx="6" cy="4" r="1.75" fill="#10b981"/>
+          <circle cx="18" cy="8" r="1.75" fill="#10b981"/>
+          <circle cx="6" cy="12" r="1.75" fill="#10b981"/>
+          <circle cx="18" cy="16" r="1.75" fill="#10b981"/>
+          <circle cx="6" cy="20" r="1.75" fill="#10b981"/>
         </svg>
         Binex
       </a>
@@ -323,182 +251,207 @@
         <a href="#comparison" class="hover:text-text-primary transition-colors">Compare</a>
         <a href="https://alexli18.github.io/binex/docs/" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">Docs</a>
         <a href="https://alexli18.github.io/binex/docs/blog/" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">Blog</a>
-        <a href="https://github.com/Alexli18/binex" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-surface border border-border text-text-primary text-sm font-medium hover:bg-surface-hover transition-colors" target="_blank" rel="noopener">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <a href="https://github.com/Alexli18/binex"
+           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-surface border border-border text-text-primary text-sm font-medium hover:bg-surface-2 hover:border-border-light transition-all duration-150"
+           target="_blank" rel="noopener">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
           GitHub
         </a>
       </div>
-      <!-- Mobile menu button -->
       <button id="mobile-menu-btn" class="sm:hidden p-2 text-text-muted hover:text-text-primary" aria-label="Toggle menu">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M3 6h14M3 10h14M3 14h14"/>
+        </svg>
       </button>
     </div>
-    <!-- Mobile menu -->
-    <div id="mobile-menu" class="hidden sm:hidden px-4 pb-4">
-      <div class="flex flex-col gap-3 text-sm text-text-muted">
-        <a href="#features" class="py-3 hover:text-text-primary">Features</a>
-        <a href="#how-it-works" class="py-3 hover:text-text-primary">Quickstart</a>
-        <a href="#comparison" class="py-3 hover:text-text-primary">Compare</a>
-        <a href="https://alexli18.github.io/binex/docs/" class="py-3 hover:text-text-primary" target="_blank" rel="noopener">Docs</a>
-        <a href="https://alexli18.github.io/binex/docs/blog/" class="py-3 hover:text-text-primary" target="_blank" rel="noopener">Blog</a>
-        <a href="https://github.com/Alexli18/binex" class="py-3 hover:text-text-primary" target="_blank" rel="noopener">GitHub</a>
+    <div id="mobile-menu" class="hidden sm:hidden px-4 pb-4 border-b border-border bg-bg">
+      <div class="flex flex-col gap-1 text-sm text-text-muted">
+        <a href="#features"    class="py-2.5 hover:text-text-primary">Features</a>
+        <a href="#how-it-works" class="py-2.5 hover:text-text-primary">Quickstart</a>
+        <a href="#comparison"  class="py-2.5 hover:text-text-primary">Compare</a>
+        <a href="https://alexli18.github.io/binex/docs/" class="py-2.5 hover:text-text-primary" target="_blank" rel="noopener">Docs</a>
+        <a href="https://github.com/Alexli18/binex"  class="py-2.5 hover:text-text-primary" target="_blank" rel="noopener">GitHub</a>
       </div>
     </div>
   </nav>
 
 
   <!-- ============================================ -->
-  <!-- SECTION 1: HERO (ASYMMETRIC) -->
+  <!-- HERO — ASYMMETRIC SPLIT -->
   <!-- ============================================ -->
-  <section class="relative pt-32 pb-32 sm:pt-40 sm:pb-32 overflow-hidden">
-    <div class="hero-glow" aria-hidden="true"></div>
+  <section class="relative pt-36 pb-28 sm:pt-44 sm:pb-32 overflow-hidden" style="min-height: 100dvh; display: flex; align-items: center;">
+    <div class="mesh-bg" aria-hidden="true"></div>
 
-    <!-- Diagonal accent line -->
-    <div class="absolute top-12 left-0 w-96 h-1 bg-gradient-to-r from-transparent via-purple-500/30 to-transparent transform -rotate-12" style="animation: accent-line-reveal 1.2s ease-out 0.3s both;" aria-hidden="true"></div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-16 items-center">
 
         <!-- Left: Content -->
-        <div class="lg:pt-8">
-          <!-- Badge -->
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-text-muted mb-6" style="animation: hero-fade-up 0.8s ease-out;">
-            <span class="w-2 h-2 rounded-full bg-success inline-block"></span>
-            <span id="hero-version">v0.7.0</span> &mdash; MIT Licensed
+        <div style="animation: fade-up 0.7s cubic-bezier(0.16,1,0.3,1) both;">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-text-muted mb-7">
+            <span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+            <span id="hero-version">v0.7.0</span>
+            <span class="text-text-dim">&mdash;</span>
+            <span>MIT Licensed</span>
           </div>
 
-          <!-- Headline -->
-          <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black text-white mb-4 font-syne" style="animation: hero-fade-up 0.8s ease-out 0.1s both; letter-spacing: -0.02em;">
-            Git for <span class="text-primary">AI Agents</span>
+          <h1 class="font-syne text-[3.25rem] sm:text-[4rem] lg:text-[4.5rem] font-bold text-text-primary mb-5 leading-[1.05] tracking-tight">
+            Git for<br>
+            <span class="text-primary">AI Agents</span>
           </h1>
 
-          <!-- Subline -->
-          <p class="text-xl text-gray-400 mb-8 leading-relaxed max-w-md" style="animation: hero-fade-up 0.8s ease-out 0.2s both;">
-            Build, run, debug, and replay multi-agent workflows. <span class="text-secondary">100% local.</span> 100% open source.
+          <p class="text-lg text-text-muted mb-9 leading-relaxed max-w-[42ch]">
+            Build, run, debug, and replay multi-agent workflows.
+            Every prompt, cost, and artifact recorded.
+            <span class="text-text-primary">100% local.</span>
           </p>
 
-          <!-- CTAs -->
-          <div class="flex gap-4 mb-8" style="animation: hero-fade-up 0.8s ease-out 0.3s both;">
-            <button id="copy-install" class="bg-primary text-white px-8 py-3 rounded-lg font-medium hover:bg-primary-light transition-colors relative" aria-label="Copy install command">
-              <span>Get Started</span>
-              <span id="copy-tooltip" class="copy-tooltip absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-xs bg-surface-hover text-text-primary border border-border">Copied!</span>
+          <div class="flex flex-wrap gap-3 mb-10" style="animation: fade-up 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s both;">
+            <button id="copy-install"
+              class="relative inline-flex items-center gap-2 bg-primary text-zinc-950 px-7 py-3 rounded-lg font-semibold text-sm hover:bg-primary-dim transition-colors active:scale-[0.98]"
+              aria-label="Copy install command">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+              </svg>
+              pip install binex
+              <span id="copy-tooltip" class="copy-tooltip absolute -top-9 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded text-xs bg-surface-2 text-text-primary border border-border whitespace-nowrap">Copied!</span>
             </button>
-            <a href="https://alexli18.github.io/binex/docs/" class="border border-primary/30 text-primary px-8 py-3 rounded-lg font-medium hover:bg-primary/10 transition-colors" target="_blank" rel="noopener">
+            <a href="https://alexli18.github.io/binex/docs/"
+               class="inline-flex items-center gap-2 px-7 py-3 rounded-lg border border-border text-text-primary font-medium text-sm hover:bg-surface-2 hover:border-border-light transition-all duration-150"
+               target="_blank" rel="noopener">
               View Docs
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M7 7h10v10"/></svg>
             </a>
           </div>
 
-          <!-- Trust badges -->
-          <div class="flex flex-wrap gap-x-6 gap-y-3 text-xs text-text-muted" style="animation: hero-fade-up 0.8s ease-out 0.4s both;">
+          <div class="flex flex-wrap gap-x-6 gap-y-2.5 text-xs text-text-dim" style="animation: fade-up 0.7s cubic-bezier(0.16,1,0.3,1) 0.18s both;">
             <span class="flex items-center gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               MIT License
             </span>
             <span class="flex items-center gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M9 12l2 2 4-4"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M9 12l2 2 4-4"/></svg>
               Python 3.11+
             </span>
             <span class="flex items-center gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+              </svg>
               <span id="star-count">—</span> stars
+            </span>
+            <span class="flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              Zero telemetry
             </span>
           </div>
         </div>
 
-        <!-- Right: Terminal (Offset) -->
-        <div class="relative mt-8 lg:mt-0" style="animation: hero-fade-up 0.8s ease-out 0.2s both;">
-          <div class="absolute -top-12 -right-12 w-96 h-96 bg-primary/5 rounded-full blur-3xl" aria-hidden="true"></div>
-
-          <div class="relative bg-gray-900/50 border border-gray-800/50 rounded-lg overflow-hidden backdrop-blur">
-            <!-- Terminal header -->
-            <div class="bg-gray-800 border-b border-gray-700 px-4 py-3 flex gap-2">
-              <div class="w-3 h-3 rounded-full bg-red-500/50"></div>
-              <div class="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-              <div class="w-3 h-3 rounded-full bg-green-500/50"></div>
+        <!-- Right: Terminal -->
+        <div class="relative" style="animation: fade-up 0.7s cubic-bezier(0.16,1,0.3,1) 0.08s both;">
+          <div class="relative bg-[#0d0d0f] border border-border rounded-xl overflow-hidden shadow-[0_24px_48px_-12px_rgba(0,0,0,0.6)]">
+            <!-- Traffic lights -->
+            <div class="bg-[#111113] border-b border-border px-4 py-2.5 flex items-center gap-2">
+              <div class="w-2.5 h-2.5 rounded-full bg-[#ff5f57]/70"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]/70"></div>
+              <div class="w-2.5 h-2.5 rounded-full bg-[#28c840]/70"></div>
+              <span class="ml-3 text-xs text-text-dim font-mono">binex run workflow.yaml</span>
             </div>
-            <!-- Terminal body -->
-            <pre class="px-4 py-4 text-sm font-mono text-green-400/80" id="terminal-anim">
-<span class="code-cmd">$</span> binex run workflow.yaml
-<span class="text-success">✓ Workflow loaded</span>
-<span class="text-success">✓ 3 agents initialized</span>
-<span class="text-success">✓ 8 tasks completed</span>
-Cost: $0.17 • Time: 2.3s</pre>
+            <pre id="terminal-anim" class="px-5 py-5 text-sm font-mono leading-7 overflow-x-auto text-text-muted">
+<span class="terminal-line typed" data-delay="0"><span class="code-cmd">$</span> binex run research.yaml <span class="code-flag">--var</span> <span class="code-string">topic="AI safety"</span></span>
+<span class="terminal-line" data-delay="400"><span class="text-text-dim">Loading workflow...</span></span>
+<span class="terminal-line" data-delay="700"><span class="text-ok">&#10003;</span> researcher  <span class="text-text-dim font-mono text-xs">3.2s  $0.031</span></span>
+<span class="terminal-line" data-delay="1000"><span class="text-ok">&#10003;</span> analyst     <span class="text-text-dim font-mono text-xs">4.7s  $0.058</span></span>
+<span class="terminal-line" data-delay="1300"><span class="text-ok">&#10003;</span> reviewer    <span class="text-text-dim font-mono text-xs">0.1s  human</span></span>
+<span class="terminal-line" data-delay="1600">
+<span class="text-primary font-medium">Run 8f4a21c complete</span>  <span class="text-text-dim">8.0s  $0.089</span></span>
+<span class="terminal-line" data-delay="1900">
+<span class="code-cmd">$</span> binex debug 8f4a21c<span class="terminal-cursor"></span></span>
+</pre>
+          </div>
+
+          <!-- Floating stat pill -->
+          <div class="absolute -bottom-4 -left-4 bg-surface border border-border rounded-lg px-4 py-2.5 shadow-[0_8px_24px_-4px_rgba(0,0,0,0.5)]">
+            <div class="text-xs text-text-dim mb-0.5">Total cost saved vs cloud</div>
+            <div class="text-lg font-bold text-primary font-mono">$0.00 overhead</div>
           </div>
         </div>
+
       </div>
     </div>
   </section>
 
 
   <!-- ============================================ -->
-  <!-- SECTION 2: PROBLEM → SOLUTION -->
+  <!-- PROBLEM → SOLUTION (Zig-Zag) -->
   <!-- ============================================ -->
   <section class="py-32 border-t border-border">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6">
-      <div class="text-center mb-16 fade-up">
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 font-syne">AI agent frameworks are a <span class="text-primary">black box</span></h2>
-        <p class="text-text-muted text-lg max-w-2xl mx-auto">When your agent pipeline fails at 3 AM, you need answers — not abstractions.</p>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6">
+      <div class="mb-16 fade-up">
+        <p class="text-xs font-medium uppercase tracking-widest text-text-dim mb-4">The Problem</p>
+        <h2 class="font-syne text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text-primary max-w-2xl">
+          AI agent frameworks are a <span class="text-danger">black box</span>
+        </h2>
+        <p class="text-text-muted text-lg mt-4 max-w-xl">When your agent pipeline fails at 3 AM, you need answers — not abstractions.</p>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-6 fade-up">
-        <!-- Pain 1 -->
-        <div class="rounded-xl border border-border bg-surface p-6">
-          <div class="w-10 h-10 rounded-lg bg-danger/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      <div class="space-y-5 mb-16">
+        <div class="flex gap-5 p-5 rounded-xl border border-border bg-surface fade-up">
+          <div class="shrink-0 w-9 h-9 rounded-lg bg-danger/10 flex items-center justify-center">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" aria-hidden="true"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
           </div>
-          <h3 class="font-semibold text-text-primary mb-2">Cloud Lock-in</h3>
-          <p class="text-sm text-text-muted leading-relaxed">Your prompts, data, and agent logic live on someone else's servers. You can't audit, export, or self-host.</p>
-        </div>
-        <!-- Pain 2 -->
-        <div class="rounded-xl border border-border bg-surface p-6">
-          <div class="w-10 h-10 rounded-lg bg-danger/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          <div>
+            <h3 class="font-medium text-text-primary mb-1">Cloud lock-in</h3>
+            <p class="text-sm text-text-muted">Your prompts, data, and agent logic live on someone else's servers. No audit trail, no export, no self-hosting.</p>
           </div>
-          <h3 class="font-semibold text-text-primary mb-2">Black-box Agents</h3>
-          <p class="text-sm text-text-muted leading-relaxed">When a chain of 5 agents produces garbage, you have no idea which agent went wrong, or why.</p>
         </div>
-        <!-- Pain 3 -->
-        <div class="rounded-xl border border-border bg-surface p-6">
-          <div class="w-10 h-10 rounded-lg bg-danger/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2M9 9h.01M15 9h.01"/></svg>
+        <div class="flex gap-5 p-5 rounded-xl border border-border bg-surface fade-up">
+          <div class="shrink-0 w-9 h-9 rounded-lg bg-danger/10 flex items-center justify-center">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
           </div>
-          <h3 class="font-semibold text-text-primary mb-2">No Debugging</h3>
-          <p class="text-sm text-text-muted leading-relaxed">No trace, no diff, no replay. Print statements are your only debugging tool. That's not engineering.</p>
+          <div>
+            <h3 class="font-medium text-text-primary mb-1">Black-box agents</h3>
+            <p class="text-sm text-text-muted">When a 5-agent chain produces garbage, you have no idea which agent went wrong or why. No trace, no diff, no replay.</p>
+          </div>
         </div>
-      </div>
-
-      <!-- Arrow + solution -->
-      <div class="text-center my-12 fade-up">
-        <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-          Binex gives you full control
+        <div class="flex gap-5 p-5 rounded-xl border border-border bg-surface fade-up">
+          <div class="shrink-0 w-9 h-9 rounded-lg bg-danger/10 flex items-center justify-center">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          </div>
+          <div>
+            <h3 class="font-medium text-text-primary mb-1">No engineering primitives</h3>
+            <p class="text-sm text-text-muted">Print statements are your only debugging tool. No version control for workflows, no cost tracking, no replay. That's not engineering.</p>
+          </div>
         </div>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-6 fade-up">
-        <!-- Solution 1 -->
-        <div class="rounded-xl border border-primary/20 bg-primary/5 p-6">
-          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <div class="flex items-center gap-3 mb-10 fade-up">
+        <div class="h-px flex-1 bg-border"></div>
+        <span class="text-xs font-medium uppercase tracking-widest text-primary px-4 py-2 rounded-full border border-primary/20 bg-primary/5">Binex gives you full control</span>
+        <div class="h-px flex-1 bg-border"></div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-5">
+        <div class="p-6 rounded-xl border border-primary/15 bg-primary/5 fade-up">
+          <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
-          <h3 class="font-semibold text-text-primary mb-2">100% Local</h3>
+          <h3 class="font-semibold text-text-primary mb-1.5">100% Local</h3>
           <p class="text-sm text-text-muted leading-relaxed">Everything runs on your machine. Your data stays yours. No API keys sent to intermediaries.</p>
         </div>
-        <!-- Solution 2 -->
-        <div class="rounded-xl border border-primary/20 bg-primary/5 p-6">
-          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <div class="p-6 rounded-xl border border-primary/15 bg-primary/5 fade-up">
+          <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
           </div>
-          <h3 class="font-semibold text-text-primary mb-2">Full Observability</h3>
-          <p class="text-sm text-text-muted leading-relaxed">Every prompt, response, cost, and timing — recorded. Debug any node. Trace the full execution graph.</p>
+          <h3 class="font-semibold text-text-primary mb-1.5">Full observability</h3>
+          <p class="text-sm text-text-muted leading-relaxed">Every prompt, response, cost, and timing recorded. Trace the full execution graph. Debug any node.</p>
         </div>
-        <!-- Solution 3 -->
-        <div class="rounded-xl border border-primary/20 bg-primary/5 p-6">
-          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        <div class="p-6 rounded-xl border border-primary/15 bg-primary/5 fade-up">
+          <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
-          <h3 class="font-semibold text-text-primary mb-2">Node-level Replay</h3>
-          <p class="text-sm text-text-muted leading-relaxed">Found the broken node? Swap the model or prompt and re-run just that node. No re-running the whole pipeline.</p>
+          <h3 class="font-semibold text-text-primary mb-1.5">Node-level replay</h3>
+          <p class="text-sm text-text-muted leading-relaxed">Found the broken node? Swap the model and re-run just that node. No re-running the whole pipeline.</p>
         </div>
       </div>
     </div>
@@ -506,115 +459,100 @@ Cost: $0.17 • Time: 2.3s</pre>
 
 
   <!-- ============================================ -->
-  <!-- SECTION 3: KEY FEATURES -->
+  <!-- KEY FEATURES (Asymmetric Bento) -->
   <!-- ============================================ -->
   <section id="features" class="py-32 border-t border-border">
     <div class="max-w-6xl mx-auto px-4 sm:px-6">
-      <div class="text-center mb-16 fade-up">
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 font-syne">Engineered for <span class="text-primary">AI Teams</span></h2>
-        <p class="text-text-muted text-lg max-w-2xl mx-auto">Everything you need to orchestrate, debug, and optimize multi-agent workflows.</p>
+      <div class="mb-16 fade-up">
+        <p class="text-xs font-medium uppercase tracking-widest text-text-dim mb-4">Capabilities</p>
+        <h2 class="font-syne text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text-primary">
+          Engineered for <span class="text-primary">AI teams</span>
+        </h2>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Feature 1: DAG Orchestration (spans 2 rows) -->
-        <div class="feature-card rounded-xl border border-border bg-surface p-8 fade-up md:row-span-2 min-h-96">
-          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" aria-hidden="true"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><path d="M12 8v4M8.5 16.5L11 13M15.5 16.5L13 13"/></svg>
+      <!-- Bento grid: 2fr+1fr top, then 1fr+2fr bottom -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+        <!-- Large card: DAG Orchestration -->
+        <div class="feature-card md:col-span-2 rounded-xl border border-border bg-surface p-8 fade-up">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-5">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/>
+              <path d="M12 8v4M8.5 16.5L11 13M15.5 16.5L13 13"/>
+            </svg>
           </div>
           <h3 class="font-semibold text-text-primary mb-2 text-lg">DAG Orchestration</h3>
-          <p class="text-sm text-text-muted leading-relaxed mb-4">YAML-first workflow definition with visual drag & drop editor. 6 node types, conditional execution, fan-out/fan-in patterns.</p>
-          <ul class="space-y-2 text-sm text-text-muted">
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              LLM, Local, Human, A2A agents
-            </li>
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              Visual + YAML sync both ways
-            </li>
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              20 preset patterns (diamond, map-reduce...)
-            </li>
+          <p class="text-sm text-text-muted leading-relaxed mb-5">YAML-first workflow definition with a visual drag-and-drop editor. 6 node types, conditional execution, fan-out/fan-in, and 9 built-in agentic patterns that expand into full sub-DAG pipelines.</p>
+          <ul class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-text-muted">
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>LLM, Local, Human, A2A agents</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Visual + YAML sync bidirectional</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>9 pattern nodes (critic, scatter, FSM...)</li>
+            <li class="flex items-start gap-2"><svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>20+ scaffold templates</li>
           </ul>
         </div>
 
-        <!-- Feature 2: Full Debuggability -->
-        <div class="feature-card rounded-xl border border-border bg-surface p-8 fade-up min-h-72">
-          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" aria-hidden="true"><path d="M12 20h.01"/><path d="M8 16V8a4 4 0 118 0v8"/><path d="M5 12h14"/><path d="M6 8h2M16 8h2M6 16h2M16 16h2"/></svg>
+        <!-- Small card: Debuggability -->
+        <div class="feature-card rounded-xl border border-border bg-surface p-8 fade-up">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-5">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true">
+              <path d="M12 20h.01"/><path d="M8 16V8a4 4 0 118 0v8"/><path d="M5 12h14"/>
+            </svg>
           </div>
-          <h3 class="font-semibold text-text-primary mb-2 text-lg">Full Debuggability</h3>
-          <p class="text-sm text-text-muted leading-relaxed mb-4">Inspect every node's input, output, prompt, and timing. Trace execution with Gantt timelines. Diff between runs.</p>
-          <ul class="space-y-2 text-sm text-text-muted">
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              Debug, Trace, Diagnose, Lineage
-            </li>
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              Bisect to find divergence point
-            </li>
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              Replay individual nodes
-            </li>
-          </ul>
+          <h3 class="font-semibold text-text-primary mb-2 text-lg">Full debuggability</h3>
+          <p class="text-sm text-text-muted leading-relaxed">Inspect every node's prompt, output, and timing. Gantt timeline traces. Diff two runs. Bisect to find the exact divergence point.</p>
         </div>
 
-        <!-- Feature 3: Cost Tracking -->
-        <div class="feature-card rounded-xl border border-border bg-surface p-8 fade-up md:row-span-2 min-h-96">
-          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" aria-hidden="true"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        <!-- Small card: Cost Tracking -->
+        <div class="feature-card rounded-xl border border-border bg-surface p-8 fade-up">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-5">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true">
+              <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+            </svg>
           </div>
-          <h3 class="font-semibold text-text-primary mb-2 text-lg">Cost Tracking</h3>
-          <p class="text-sm text-text-muted leading-relaxed mb-4">Real-time cost estimation as you build. Per-node cost breakdown. Budget limits with stop/warn policies.</p>
-          <ul class="space-y-2 text-sm text-text-muted">
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              Per-node cost breakdown
-            </li>
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              Budget limits (stop or warn)
-            </li>
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              9 providers, 100+ models via LiteLLM
-            </li>
-          </ul>
+          <h3 class="font-semibold text-text-primary mb-2 text-lg">Cost tracking</h3>
+          <p class="text-sm text-text-muted leading-relaxed">Real-time cost estimation per node. Budget limits with stop-or-warn policy. 100+ LLM models via LiteLLM across 9 providers.</p>
+        </div>
+
+        <!-- Large card: Multi-agent -->
+        <div class="feature-card md:col-span-2 rounded-xl border border-border bg-surface p-8 fade-up">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-5">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+          </div>
+          <h3 class="font-semibold text-text-primary mb-2 text-lg">Multi-agent ecosystem</h3>
+          <p class="text-sm text-text-muted leading-relaxed mb-5">Connect any agent type in a single workflow. LangChain, CrewAI, and AutoGen as nodes. MCP servers auto-discovered. A2A gateway for remote orchestration.</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="text-xs px-2.5 py-1 rounded-md border border-border bg-bg text-text-muted font-mono">llm://</span>
+            <span class="text-xs px-2.5 py-1 rounded-md border border-border bg-bg text-text-muted font-mono">local://</span>
+            <span class="text-xs px-2.5 py-1 rounded-md border border-border bg-bg text-text-muted font-mono">a2a://</span>
+            <span class="text-xs px-2.5 py-1 rounded-md border border-border bg-bg text-text-muted font-mono">human://</span>
+            <span class="text-xs px-2.5 py-1 rounded-md border border-border bg-bg text-text-muted font-mono">mcp://</span>
+            <span class="text-xs px-2.5 py-1 rounded-md border border-border bg-bg text-text-muted font-mono">builtin://</span>
+            <span class="text-xs px-2.5 py-1 rounded-md border border-border bg-bg text-text-muted font-mono">langchain://</span>
+            <span class="text-xs px-2.5 py-1 rounded-md border border-border bg-bg text-text-muted font-mono">crewai://</span>
+          </div>
         </div>
       </div>
 
-      <!-- Extra feature row -->
-      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-        <div class="rounded-lg border border-border bg-surface p-4 fade-up">
-          <h4 class="font-medium text-text-primary text-sm mb-1">Visual Web UI</h4>
-          <p class="text-xs text-text-muted">20-page dashboard with editor, debug, trace, and comparison tools</p>
+      <!-- Secondary features strip -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-px mt-5 bg-border rounded-xl overflow-hidden">
+        <div class="bg-surface px-5 py-4 fade-up">
+          <div class="text-xs font-medium text-text-primary mb-1">Visual Web UI</div>
+          <div class="text-xs text-text-dim">20-page dashboard with editor, debug, trace, cost analytics</div>
         </div>
-        <div class="rounded-lg border border-border bg-surface p-4 fade-up">
-          <h4 class="font-medium text-text-primary text-sm mb-1">Human-in-the-Loop</h4>
-          <p class="text-xs text-text-muted">Input, approval, and output nodes for human oversight in agent pipelines</p>
+        <div class="bg-surface px-5 py-4 fade-up">
+          <div class="text-xs font-medium text-text-primary mb-1">Human-in-the-Loop</div>
+          <div class="text-xs text-text-dim">Input, approval, and output nodes for human oversight</div>
         </div>
-        <div class="rounded-lg border border-border bg-surface p-4 fade-up">
-          <h4 class="font-medium text-text-primary text-sm mb-1">10 Built-in Tools</h4>
-          <p class="text-xs text-text-muted">Calculator, HTTP, file I/O, shell, web search — ready to use with builtin:// URIs</p>
+        <div class="bg-surface px-5 py-4 fade-up">
+          <div class="text-xs font-medium text-text-primary mb-1">Cron Scheduler</div>
+          <div class="text-xs text-text-dim">Schedule workflows with cron expressions, skip overlaps</div>
         </div>
-        <div class="rounded-lg border border-border bg-surface p-4 fade-up">
-          <h4 class="font-medium text-text-primary text-sm mb-1">MCP Integration</h4>
-          <p class="text-xs text-text-muted">Connect any MCP server — stdio or HTTP transport, auto-discovered tools</p>
-        </div>
-        <div class="rounded-lg border border-border bg-surface p-4 fade-up">
-          <h4 class="font-medium text-text-primary text-sm mb-1">Cron Scheduler</h4>
-          <p class="text-xs text-text-muted">Schedule workflows with cron expressions. Auto-scan directories, skip overlaps</p>
-        </div>
-        <div class="rounded-lg border border-border bg-surface p-4 fade-up">
-          <h4 class="font-medium text-text-primary text-sm mb-1">Framework Adapters</h4>
-          <p class="text-xs text-text-muted">LangChain, CrewAI, AutoGen — use your existing agents as Binex nodes</p>
-        </div>
-        <div class="rounded-lg border border-border bg-surface p-4 fade-up">
-          <h4 class="font-medium text-text-primary text-sm mb-1">A2A Protocol</h4>
-          <p class="text-xs text-text-muted">Agent-to-Agent gateway for multi-service orchestration across networks</p>
+        <div class="bg-surface px-5 py-4 fade-up">
+          <div class="text-xs font-medium text-text-primary mb-1">OpenTelemetry</div>
+          <div class="text-xs text-text-dim">Optional run-level tracing spans, zero overhead when off</div>
         </div>
       </div>
     </div>
@@ -622,42 +560,49 @@ Cost: $0.17 • Time: 2.3s</pre>
 
 
   <!-- ============================================ -->
-  <!-- SECTION 4: HOW IT WORKS -->
+  <!-- HOW IT WORKS -->
   <!-- ============================================ -->
   <section id="how-it-works" class="py-32 border-t border-border">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6">
-      <div class="text-center mb-16 fade-up">
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 font-syne">Up and running in <span class="text-primary">60 seconds</span></h2>
-        <p class="text-text-muted text-lg">No accounts. No API keys for Binex. Just install and go.</p>
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      <div class="mb-16 fade-up">
+        <p class="text-xs font-medium uppercase tracking-widest text-text-dim mb-4">Quickstart</p>
+        <h2 class="font-syne text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">Up and running in <span class="text-primary">60 seconds</span></h2>
+        <p class="text-text-muted text-lg mt-4">No accounts. No API keys for Binex. Just install and go.</p>
       </div>
 
-      <div class="space-y-12">
+      <div class="space-y-10">
         <!-- Step 1 -->
-        <div class="flex gap-6 items-start fade-up">
-          <div class="shrink-0 w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm">1</div>
-          <div class="flex-1 min-w-0">
-            <h3 class="font-semibold text-text-primary mb-3 text-lg">Install & launch</h3>
-            <div class="rounded-lg border border-border bg-surface overflow-hidden">
+        <div class="relative flex gap-6 items-start fade-up">
+          <div class="relative shrink-0">
+            <div class="w-10 h-10 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center text-primary font-bold text-sm">1</div>
+            <div class="step-connector" aria-hidden="true"></div>
+          </div>
+          <div class="flex-1 min-w-0 pb-2">
+            <h3 class="font-semibold text-text-primary mb-3 text-lg">Install and launch</h3>
+            <div class="rounded-xl border border-border bg-surface overflow-hidden">
               <div class="px-4 py-2 border-b border-border flex items-center gap-2">
-                <span class="text-xs text-text-dim font-mono">bash</span>
+                <span class="text-xs text-text-dim font-mono">terminal</span>
               </div>
-              <pre class="px-4 py-3 font-mono text-sm overflow-x-auto"><code><span class="code-cmd">$</span> pip install binex
+              <pre class="px-5 py-4 font-mono text-sm overflow-x-auto leading-7"><code><span class="code-cmd">$</span> pip install binex
 <span class="code-cmd">$</span> binex hello        <span class="code-comment"># zero-config demo</span>
-<span class="code-cmd">$</span> binex ui           <span class="code-comment"># opens visual editor at localhost:8340</span></code></pre>
+<span class="code-cmd">$</span> binex ui           <span class="code-comment"># visual editor at localhost:8340</span></code></pre>
             </div>
           </div>
         </div>
 
         <!-- Step 2 -->
-        <div class="flex gap-6 items-start fade-up">
-          <div class="shrink-0 w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm">2</div>
-          <div class="flex-1 min-w-0">
+        <div class="relative flex gap-6 items-start fade-up">
+          <div class="relative shrink-0">
+            <div class="w-10 h-10 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center text-primary font-bold text-sm">2</div>
+            <div class="step-connector" aria-hidden="true"></div>
+          </div>
+          <div class="flex-1 min-w-0 pb-2">
             <h3 class="font-semibold text-text-primary mb-3 text-lg">Define your workflow</h3>
-            <div class="rounded-lg border border-border bg-surface overflow-hidden">
+            <div class="rounded-xl border border-border bg-surface overflow-hidden">
               <div class="px-4 py-2 border-b border-border flex items-center gap-2">
-                <span class="text-xs text-text-dim font-mono">workflow.yaml</span>
+                <span class="text-xs text-text-dim font-mono">research.yaml</span>
               </div>
-              <pre class="px-4 py-3 font-mono text-sm overflow-x-auto"><code><span class="code-keyword">name</span>: <span class="code-string">research-pipeline</span>
+              <pre class="px-5 py-4 font-mono text-sm overflow-x-auto leading-7"><code><span class="code-keyword">name</span>: <span class="code-string">research-pipeline</span>
 <span class="code-keyword">nodes</span>:
   <span class="code-keyword">researcher</span>:
     <span class="code-keyword">agent</span>: <span class="code-string">llm://openai/gpt-4o</span>
@@ -675,19 +620,19 @@ Cost: $0.17 • Time: 2.3s</pre>
 
         <!-- Step 3 -->
         <div class="flex gap-6 items-start fade-up">
-          <div class="shrink-0 w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm">3</div>
+          <div class="shrink-0 w-10 h-10 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center text-primary font-bold text-sm">3</div>
           <div class="flex-1 min-w-0">
             <h3 class="font-semibold text-text-primary mb-3 text-lg">Run, debug, iterate</h3>
-            <div class="rounded-lg border border-border bg-surface overflow-hidden">
+            <div class="rounded-xl border border-border bg-surface overflow-hidden">
               <div class="px-4 py-2 border-b border-border flex items-center gap-2">
-                <span class="text-xs text-text-dim font-mono">bash</span>
+                <span class="text-xs text-text-dim font-mono">terminal</span>
               </div>
-              <pre class="px-4 py-3 font-mono text-sm overflow-x-auto"><code><span class="code-cmd">$</span> binex run workflow.yaml <span class="code-flag">--var</span> <span class="code-string">topic="AI safety"</span>
-<span class="text-success">Run abc123 completed (3 nodes, $0.042, 12.3s)</span>
+              <pre class="px-5 py-4 font-mono text-sm overflow-x-auto leading-7"><code><span class="code-cmd">$</span> binex run research.yaml <span class="code-flag">--var</span> <span class="code-string">topic="AI safety"</span>
+<span class="text-ok">Run 8f4a21c completed (3 nodes, $0.089, 8.0s)</span>
 
-<span class="code-cmd">$</span> binex debug abc123    <span class="code-comment"># inspect every node</span>
-<span class="code-cmd">$</span> binex explore abc123  <span class="code-comment"># interactive dashboard</span>
-<span class="code-cmd">$</span> binex diff abc123 def456  <span class="code-comment"># compare two runs</span></code></pre>
+<span class="code-cmd">$</span> binex debug 8f4a21c    <span class="code-comment"># inspect every node</span>
+<span class="code-cmd">$</span> binex explore 8f4a21c  <span class="code-comment"># interactive dashboard</span>
+<span class="code-cmd">$</span> binex diff 8f4a21c 3b2c19d  <span class="code-comment"># compare two runs</span></code></pre>
             </div>
           </div>
         </div>
@@ -697,46 +642,58 @@ Cost: $0.17 • Time: 2.3s</pre>
 
 
   <!-- ============================================ -->
-  <!-- USE CASES -->
+  <!-- USE CASES — 2-col zig-zag -->
   <!-- ============================================ -->
   <section class="py-32 border-t border-border">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6">
-      <div class="text-center mb-16 fade-up">
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Built for real workflows</h2>
-        <p class="text-text-muted text-lg max-w-2xl mx-auto">From research to production — see how teams use Binex.</p>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6">
+      <div class="mb-16 fade-up">
+        <p class="text-xs font-medium uppercase tracking-widest text-text-dim mb-4">Use Cases</p>
+        <h2 class="font-syne text-3xl sm:text-4xl font-bold tracking-tight">Built for real workflows</h2>
       </div>
 
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="rounded-xl border border-border bg-surface p-6 fade-up">
-          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <div class="space-y-5">
+        <!-- Row 1 -->
+        <div class="grid md:grid-cols-[3fr_2fr] gap-5">
+          <div class="flex gap-5 p-6 rounded-xl border border-border bg-surface feature-card fade-up">
+            <div class="shrink-0 w-10 h-10 rounded-lg bg-[#0ea5e9]/10 flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-text-primary mb-1.5">Research Pipelines</h3>
+              <p class="text-sm text-text-muted leading-relaxed">Multi-agent research with LLM analysts, web search tools, source citation, and human review gates. Track per-run costs against a budget.</p>
+            </div>
           </div>
-          <h3 class="font-semibold text-text-primary mb-2">Research Pipelines</h3>
-          <p class="text-sm text-text-muted leading-relaxed">Multi-agent research with LLM analysts, web search, and human review gates.</p>
+          <div class="flex gap-5 p-6 rounded-xl border border-border bg-surface feature-card fade-up">
+            <div class="shrink-0 w-10 h-10 rounded-lg bg-[#f59e0b]/10 flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-text-primary mb-1.5">Data Processing</h3>
+              <p class="text-sm text-text-muted leading-relaxed">ETL with LLM extraction, validation nodes, and cron scheduling.</p>
+            </div>
+          </div>
         </div>
 
-        <div class="rounded-xl border border-border bg-surface p-6 fade-up">
-          <div class="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <!-- Row 2 -->
+        <div class="grid md:grid-cols-[2fr_3fr] gap-5">
+          <div class="flex gap-5 p-6 rounded-xl border border-border bg-surface feature-card fade-up">
+            <div class="shrink-0 w-10 h-10 rounded-lg bg-[#22c55e]/10 flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-text-primary mb-1.5">Code Review</h3>
+              <p class="text-sm text-text-muted leading-relaxed">Automated PR analysis with security scanner, style checker, and summary agents.</p>
+            </div>
           </div>
-          <h3 class="font-semibold text-text-primary mb-2">Content Generation</h3>
-          <p class="text-sm text-text-muted leading-relaxed">Draft → edit → review → publish pipelines with cost control and approval steps.</p>
-        </div>
-
-        <div class="rounded-xl border border-border bg-surface p-6 fade-up">
-          <div class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <div class="flex gap-5 p-6 rounded-xl border border-border bg-surface feature-card fade-up">
+            <div class="shrink-0 w-10 h-10 rounded-lg bg-[#a78bfa]/10 flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-text-primary mb-1.5">Content Generation</h3>
+              <p class="text-sm text-text-muted leading-relaxed">Draft-edit-review-publish pipelines with cost control and approval steps. Use critic or reflexion patterns for iterative quality improvement.</p>
+            </div>
           </div>
-          <h3 class="font-semibold text-text-primary mb-2">Code Review</h3>
-          <p class="text-sm text-text-muted leading-relaxed">Automated PR analysis with security scanner, style checker, and summary agents.</p>
-        </div>
-
-        <div class="rounded-xl border border-border bg-surface p-6 fade-up">
-          <div class="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-          </div>
-          <h3 class="font-semibold text-text-primary mb-2">Data Processing</h3>
-          <p class="text-sm text-text-muted leading-relaxed">ETL pipelines with LLM extraction, validation nodes, and scheduled cron execution.</p>
         </div>
       </div>
     </div>
@@ -744,44 +701,55 @@ Cost: $0.17 • Time: 2.3s</pre>
 
 
   <!-- ============================================ -->
-  <!-- WHAT'S NEW -->
+  <!-- WHAT'S NEW in v0.7 -->
   <!-- ============================================ -->
   <section class="py-32 border-t border-border">
     <div class="max-w-4xl mx-auto px-4 sm:px-6">
-      <div class="text-center mb-12 fade-up">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-success/10 border border-success/20 text-success text-xs font-medium mb-4">
-          New in v0.7
+      <div class="flex items-start justify-between gap-8 mb-12 fade-up">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-4">
+            New in v0.7.0
+          </div>
+          <h2 class="font-syne text-3xl sm:text-4xl font-bold tracking-tight">Latest updates</h2>
         </div>
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Latest updates</h2>
+        <a href="https://github.com/Alexli18/binex/blob/master/CHANGELOG.md" class="shrink-0 text-xs text-text-dim hover:text-text-muted transition-colors mt-2" target="_blank" rel="noopener">Full changelog</a>
       </div>
 
       <div class="grid sm:grid-cols-2 gap-4 fade-up">
-        <div class="flex gap-3 p-4 rounded-lg border border-border bg-surface">
-          <div class="shrink-0 w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm">🧩</div>
+        <div class="flex gap-4 p-5 rounded-xl border border-border bg-surface">
+          <div class="shrink-0 w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
           <div>
             <h4 class="font-medium text-text-primary text-sm">Pattern Nodes</h4>
-            <p class="text-xs text-text-muted mt-1">9 built-in agentic patterns — critic, debate, reflexion, best_of_n, scatter, FSM, constitutional, chain_of_verification, plan_execute</p>
+            <p class="text-xs text-text-muted mt-1 leading-relaxed">9 built-in agentic patterns — critic, debate, reflexion, best_of_n, scatter, FSM, constitutional, chain_of_verification, plan_execute</p>
           </div>
         </div>
-        <div class="flex gap-3 p-4 rounded-lg border border-border bg-surface">
-          <div class="shrink-0 w-8 h-8 rounded-md bg-accent/10 flex items-center justify-center text-accent text-sm">⚡</div>
+        <div class="flex gap-4 p-5 rounded-xl border border-border bg-surface">
+          <div class="shrink-0 w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
           <div>
             <h4 class="font-medium text-text-primary text-sm">PatternExpander</h4>
-            <p class="text-xs text-text-muted mt-1">Macro-nodes expand into full sub-DAG pipelines at runtime. Nested chains, loops, and external dependency wiring handled automatically</p>
+            <p class="text-xs text-text-muted mt-1 leading-relaxed">Macro-nodes expand into full sub-DAG pipelines at runtime. Nested chains, loops, and external dependency wiring handled automatically</p>
           </div>
         </div>
-        <div class="flex gap-3 p-4 rounded-lg border border-border bg-surface">
-          <div class="shrink-0 w-8 h-8 rounded-md bg-success/10 flex items-center justify-center text-success text-sm">🎨</div>
+        <div class="flex gap-4 p-5 rounded-xl border border-border bg-surface">
+          <div class="shrink-0 w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 17.5h7M17.5 14v7"/></svg>
+          </div>
           <div>
-            <h4 class="font-medium text-text-primary text-sm">Node Palette &amp; Pattern Groups</h4>
-            <p class="text-xs text-text-muted mt-1">DAG editor palette with 9 pattern types, collapsed sub-DAG view, and per-step model/prompt config in the sidebar</p>
+            <h4 class="font-medium text-text-primary text-sm">Node Palette + Pattern Groups</h4>
+            <p class="text-xs text-text-muted mt-1 leading-relaxed">DAG editor palette with 9 pattern types, collapsed sub-DAG view, and per-step model and prompt config in the sidebar</p>
           </div>
         </div>
-        <div class="flex gap-3 p-4 rounded-lg border border-border bg-surface">
-          <div class="shrink-0 w-8 h-8 rounded-md bg-warning/10 flex items-center justify-center text-warning text-sm">🔒</div>
+        <div class="flex gap-4 p-5 rounded-xl border border-border bg-surface">
+          <div class="shrink-0 w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
           <div>
             <h4 class="font-medium text-text-primary text-sm">Security Hardening</h4>
-            <p class="text-xs text-text-muted mt-1">Shell command injection patched (shell=False + shlex), calculator arbitrary eval replaced with AST whitelist</p>
+            <p class="text-xs text-text-muted mt-1 leading-relaxed">Shell command injection patched (shell=False + shlex). Calculator arbitrary eval replaced with AST whitelist validation.</p>
           </div>
         </div>
       </div>
@@ -790,13 +758,14 @@ Cost: $0.17 • Time: 2.3s</pre>
 
 
   <!-- ============================================ -->
-  <!-- SECTION 5: COMPARISON TABLE -->
+  <!-- COMPARISON TABLE -->
   <!-- ============================================ -->
   <section id="comparison" class="py-32 border-t border-border">
     <div class="max-w-4xl mx-auto px-4 sm:px-6">
-      <div class="text-center mb-16 fade-up">
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 font-syne">Why <span class="text-primary">Binex</span></h2>
-        <p class="text-text-muted text-lg">Feature comparison with popular agent frameworks.</p>
+      <div class="mb-16 fade-up">
+        <p class="text-xs font-medium uppercase tracking-widest text-text-dim mb-4">Comparison</p>
+        <h2 class="font-syne text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">Why <span class="text-primary">Binex</span></h2>
+        <p class="text-text-muted text-lg mt-4">Feature comparison with popular agent frameworks.</p>
       </div>
 
       <div class="rounded-xl border border-border bg-surface overflow-x-auto fade-up">
@@ -811,130 +780,61 @@ Cost: $0.17 • Time: 2.3s</pre>
             </tr>
           </thead>
           <tbody class="text-text-muted">
-            <tr>
-              <td class="text-text-primary font-medium">100% Local Runtime</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-            </tr>
-            <tr>
-              <td class="text-text-primary font-medium">Visual Workflow Editor</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-            </tr>
-            <tr>
-              <td class="text-text-primary font-medium">Debug & Trace</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-            </tr>
-            <tr>
-              <td class="text-text-primary font-medium">Per-node Cost Tracking</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-            </tr>
-            <tr>
-              <td class="text-text-primary font-medium">YAML Workflow Definition</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-            </tr>
-            <tr>
-              <td class="text-text-primary font-medium">Node-level Replay</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-            </tr>
-            <tr>
-              <td class="text-text-primary font-medium">Run Diff & Bisect</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-            </tr>
-            <tr>
-              <td class="text-text-primary font-medium">100+ LLM Models</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-            </tr>
-            <tr>
-              <td class="text-text-primary font-medium">Human-in-the-Loop</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-            </tr>
-            <tr>
-              <td class="text-text-primary font-medium">MCP Tool Integration</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-warning" aria-label="Partial">~</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-            </tr>
-            <tr>
-              <td class="text-text-primary font-medium">Cron Scheduling</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-            </tr>
-            <tr>
-              <td class="text-text-primary font-medium">Zero Telemetry</td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-text-dim" aria-label="No">&#10007;</span></td>
-              <td><span class="text-success" aria-label="Yes">&#10003;</span></td>
-            </tr>
+            <tr><td class="text-text-primary font-medium">100% Local Runtime</td><td><span class="text-success">&#10003;</span></td><td><span class="text-warning">~</span></td><td><span class="text-warning">~</span></td><td><span class="text-warning">~</span></td></tr>
+            <tr><td class="text-text-primary font-medium">Visual Workflow Editor</td><td><span class="text-success">&#10003;</span></td><td><span class="text-warning">~</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td></tr>
+            <tr><td class="text-text-primary font-medium">Debug & Trace</td><td><span class="text-success">&#10003;</span></td><td><span class="text-warning">~</span></td><td><span class="text-warning">~</span></td><td><span class="text-text-dim">&#10007;</span></td></tr>
+            <tr><td class="text-text-primary font-medium">Per-node Cost Tracking</td><td><span class="text-success">&#10003;</span></td><td><span class="text-warning">~</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td></tr>
+            <tr><td class="text-text-primary font-medium">YAML Workflow Definition</td><td><span class="text-success">&#10003;</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td></tr>
+            <tr><td class="text-text-primary font-medium">Node-level Replay</td><td><span class="text-success">&#10003;</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td></tr>
+            <tr><td class="text-text-primary font-medium">Run Diff & Bisect</td><td><span class="text-success">&#10003;</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td></tr>
+            <tr><td class="text-text-primary font-medium">100+ LLM Models</td><td><span class="text-success">&#10003;</span></td><td><span class="text-warning">~</span></td><td><span class="text-warning">~</span></td><td><span class="text-warning">~</span></td></tr>
+            <tr><td class="text-text-primary font-medium">Human-in-the-Loop</td><td><span class="text-success">&#10003;</span></td><td><span class="text-warning">~</span></td><td><span class="text-warning">~</span></td><td><span class="text-warning">~</span></td></tr>
+            <tr><td class="text-text-primary font-medium">MCP Tool Integration</td><td><span class="text-success">&#10003;</span></td><td><span class="text-warning">~</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td></tr>
+            <tr><td class="text-text-primary font-medium">Cron Scheduling</td><td><span class="text-success">&#10003;</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td></tr>
+            <tr><td class="text-text-primary font-medium">Zero Telemetry</td><td><span class="text-success">&#10003;</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-text-dim">&#10007;</span></td><td><span class="text-success">&#10003;</span></td></tr>
           </tbody>
         </table>
       </div>
-
-      <p class="text-center text-xs text-text-dim mt-4 fade-up">
-        <span class="text-success">&#10003;</span> = full support &nbsp;
-        <span class="text-warning">~</span> = partial / requires plugins &nbsp;
-        <span class="text-text-dim">&#10007;</span> = not available &nbsp; | &nbsp;
-        Comparison as of March 2026
+      <p class="text-xs text-text-dim mt-4 fade-up">
+        <span class="text-success">&#10003;</span> full &nbsp;
+        <span class="text-warning">~</span> partial / plugins &nbsp;
+        <span class="text-text-dim">&#10007;</span> none &nbsp;|&nbsp; Comparison as of April 2026
       </p>
     </div>
   </section>
 
 
   <!-- ============================================ -->
-  <!-- SECTION 6: QUICKSTART CTA -->
+  <!-- CTA -->
   <!-- ============================================ -->
   <section class="py-32 border-t border-border">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6">
       <div class="fade-up">
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Start building in one command</h2>
-        <p class="text-text-muted text-lg mb-10">No cloud accounts. No API keys for Binex. Just Python and your LLM keys.</p>
+        <p class="text-xs font-medium uppercase tracking-widest text-text-dim mb-4">Get Started</p>
+        <h2 class="font-syne text-3xl sm:text-4xl font-bold tracking-tight mb-4">One command to start building</h2>
+        <p class="text-text-muted text-lg mb-10 max-w-[50ch]">No cloud accounts. No API keys for Binex itself. Just Python and your LLM provider keys.</p>
 
-        <div class="rounded-xl border border-border bg-surface overflow-hidden max-w-lg mx-auto mb-8">
+        <div class="rounded-xl border border-border bg-surface overflow-hidden max-w-lg mb-8">
           <div class="px-4 py-2 border-b border-border flex items-center justify-between">
             <span class="text-xs text-text-dim font-mono">terminal</span>
             <button id="copy-quickstart" class="text-xs text-text-dim hover:text-text-muted transition-colors" aria-label="Copy quickstart commands">Copy</button>
           </div>
           <pre class="px-5 py-4 font-mono text-sm text-left leading-7"><code><span class="code-cmd">$</span> pip install binex
 <span class="code-cmd">$</span> binex hello        <span class="code-comment"># see it work in 5 seconds</span>
-<span class="code-cmd">$</span> binex start         <span class="code-comment"># create your first project</span>
-<span class="code-cmd">$</span> binex ui            <span class="code-comment"># open the visual editor</span></code></pre>
+<span class="code-cmd">$</span> binex start        <span class="code-comment"># create your first project</span>
+<span class="code-cmd">$</span> binex ui           <span class="code-comment"># open the visual editor</span></code></pre>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <a href="https://alexli18.github.io/binex/docs/quickstart/" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary hover:bg-primary-light text-white font-medium text-sm transition-colors" target="_blank" rel="noopener">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <a href="https://alexli18.github.io/binex/docs/quickstart/"
+             class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary hover:bg-primary-dim text-zinc-950 font-semibold text-sm transition-colors active:scale-[0.98]"
+             target="_blank" rel="noopener">
             Read the Quickstart Guide
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
-          <a href="https://github.com/Alexli18/binex/tree/master/examples" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-surface border border-border text-text-primary font-medium text-sm hover:bg-surface-hover transition-colors" target="_blank" rel="noopener">
+          <a href="https://github.com/Alexli18/binex/tree/master/examples"
+             class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-surface border border-border text-text-primary font-medium text-sm hover:bg-surface-2 hover:border-border-light transition-all duration-150"
+             target="_blank" rel="noopener">
             Browse 32+ Examples
           </a>
         </div>
@@ -944,75 +844,60 @@ Cost: $0.17 • Time: 2.3s</pre>
 
 
   <!-- ============================================ -->
-  <!-- SECTION 7: FOOTER -->
+  <!-- FOOTER -->
   <!-- ============================================ -->
   <footer class="border-t border-border py-12">
     <div class="max-w-6xl mx-auto px-4 sm:px-6">
-      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-        <!-- Product -->
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-8 mb-12">
         <div>
-          <h4 class="text-sm font-semibold text-text-primary mb-4">Product</h4>
-          <ul class="space-y-2 text-sm text-text-muted">
+          <h4 class="text-xs font-semibold uppercase tracking-widest text-text-dim mb-4">Product</h4>
+          <ul class="space-y-2.5 text-sm text-text-muted">
             <li><a href="#features" class="hover:text-text-primary transition-colors">Features</a></li>
             <li><a href="#how-it-works" class="hover:text-text-primary transition-colors">Quickstart</a></li>
             <li><a href="#comparison" class="hover:text-text-primary transition-colors">Comparison</a></li>
             <li><a href="https://github.com/Alexli18/binex/tree/master/examples" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">Examples</a></li>
           </ul>
         </div>
-        <!-- Docs -->
         <div>
-          <h4 class="text-sm font-semibold text-text-primary mb-4">Documentation</h4>
-          <ul class="space-y-2 text-sm text-text-muted">
+          <h4 class="text-xs font-semibold uppercase tracking-widest text-text-dim mb-4">Documentation</h4>
+          <ul class="space-y-2.5 text-sm text-text-muted">
             <li><a href="https://alexli18.github.io/binex/docs/" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">Docs Home</a></li>
             <li><a href="https://alexli18.github.io/binex/docs/quickstart/" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">Getting Started</a></li>
             <li><a href="https://alexli18.github.io/binex/docs/concepts/" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">Concepts</a></li>
-            <li><a href="https://alexli18.github.io/binex/docs/architecture/" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">Architecture</a></li>
+            <li><a href="https://alexli18.github.io/binex/docs/features/patterns/" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">Pattern Nodes</a></li>
           </ul>
         </div>
-        <!-- Community -->
         <div>
-          <h4 class="text-sm font-semibold text-text-primary mb-4">Community</h4>
-          <ul class="space-y-2 text-sm text-text-muted">
+          <h4 class="text-xs font-semibold uppercase tracking-widest text-text-dim mb-4">Community</h4>
+          <ul class="space-y-2.5 text-sm text-text-muted">
             <li><a href="https://github.com/Alexli18/binex" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">GitHub</a></li>
             <li><a href="https://github.com/Alexli18/binex/issues" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">Issues</a></li>
             <li><a href="https://github.com/Alexli18/binex/blob/master/CONTRIBUTING.md" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">Contributing</a></li>
             <li><a href="https://pypi.org/project/binex/" class="hover:text-text-primary transition-colors" target="_blank" rel="noopener">PyPI</a></li>
           </ul>
         </div>
-        <!-- Install -->
         <div>
-          <h4 class="text-sm font-semibold text-text-primary mb-4">Install</h4>
-          <div class="rounded-lg border border-border bg-bg p-3 font-mono text-sm text-text-muted">
+          <h4 class="text-xs font-semibold uppercase tracking-widest text-text-dim mb-4">Install</h4>
+          <div class="rounded-lg border border-border bg-bg p-3 font-mono text-sm text-text-muted mb-4">
             pip install binex
           </div>
-          <div class="mt-4 flex items-center gap-2">
-            <span id="footer-version" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-success/10 text-success border border-success/20">
-              v0.7.0
-            </span>
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary-light border border-primary/20">
-              MIT
-            </span>
+          <div class="flex items-center gap-2">
+            <span id="footer-version" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">v0.7.0</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-2 text-text-muted border border-border">MIT</span>
           </div>
         </div>
       </div>
 
-      <!-- Bottom -->
       <div class="pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-2 text-sm text-text-dim">
+        <div class="flex items-center gap-2.5 text-sm text-text-dim">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="foot-bx" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#7c3aed"/>
-                <stop offset="100%" stop-color="#06b6d4"/>
-              </linearGradient>
-            </defs>
             <path d="M6 4 C12 4, 18 4, 18 8 C18 12, 12 12, 6 12 C12 12, 18 12, 18 16 C18 20, 12 20, 6 20"
-                  stroke="url(#foot-bx)" stroke-width="2" stroke-linecap="round" fill="none"/>
-            <circle cx="6" cy="4" r="2" fill="url(#foot-bx)"/>
-            <circle cx="18" cy="8" r="2" fill="url(#foot-bx)"/>
-            <circle cx="6" cy="12" r="2" fill="url(#foot-bx)"/>
-            <circle cx="18" cy="16" r="2" fill="url(#foot-bx)"/>
-            <circle cx="6" cy="20" r="2" fill="url(#foot-bx)"/>
+                  stroke="#10b981" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <circle cx="6" cy="4"  r="1.75" fill="#10b981"/>
+            <circle cx="18" cy="8"  r="1.75" fill="#10b981"/>
+            <circle cx="6" cy="12" r="1.75" fill="#10b981"/>
+            <circle cx="18" cy="16" r="1.75" fill="#10b981"/>
+            <circle cx="6" cy="20" r="1.75" fill="#10b981"/>
           </svg>
           Binex &mdash; No cloud. No telemetry. No surprises.
         </div>
@@ -1026,7 +911,7 @@ Cost: $0.17 • Time: 2.3s</pre>
   <!-- SCRIPTS -->
   <!-- ============================================ -->
   <script>
-    // Scroll animations (IntersectionObserver)
+    // Scroll fade-up
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -1036,12 +921,12 @@ Cost: $0.17 • Time: 2.3s</pre>
           }
         });
       },
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+      { threshold: 0.08, rootMargin: '0px 0px -32px 0px' }
     );
     document.querySelectorAll('.fade-up').forEach((el) => observer.observe(el));
 
     // Terminal typewriter
-    const termLines = document.querySelectorAll('.terminal-line');
+    const termLines = document.querySelectorAll('.terminal-line:not(.typed)');
     const termObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -1053,32 +938,30 @@ Cost: $0.17 • Time: 2.3s</pre>
         }
       });
     }, { threshold: 0.5 });
-    termObserver.observe(document.getElementById('terminal-anim'));
+    const termEl = document.getElementById('terminal-anim');
+    if (termEl) termObserver.observe(termEl);
 
-    // Nav scroll effect
+    // Nav scroll
     const nav = document.getElementById('nav');
     window.addEventListener('scroll', () => {
       nav.classList.toggle('nav-scrolled', window.scrollY > 20);
     }, { passive: true });
 
-    // Mobile menu toggle
-    const menuBtn = document.getElementById('mobile-menu-btn');
-    const mobileMenu = document.getElementById('mobile-menu');
-    menuBtn.addEventListener('click', () => {
-      mobileMenu.classList.toggle('hidden');
+    // Mobile menu
+    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
     });
-    // Close mobile menu on link click
-    mobileMenu.querySelectorAll('a').forEach((link) => {
-      link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+    document.querySelectorAll('#mobile-menu a').forEach((link) => {
+      link.addEventListener('click', () => document.getElementById('mobile-menu').classList.add('hidden'));
     });
 
-    // Copy install command
+    // Copy install
     document.getElementById('copy-install').addEventListener('click', () => {
       navigator.clipboard.writeText('pip install binex').then(() => {
         const tooltip = document.getElementById('copy-tooltip');
         tooltip.classList.add('show');
         setTimeout(() => tooltip.classList.remove('show'), 1500);
-      });
+      }).catch(() => {});
     });
 
     // Copy quickstart
@@ -1086,40 +969,25 @@ Cost: $0.17 • Time: 2.3s</pre>
       const text = 'pip install binex\nbinex hello\nbinex start\nbinex ui';
       navigator.clipboard.writeText(text).then(() => {
         const btn = document.getElementById('copy-quickstart');
-        const original = btn.textContent;
+        const orig = btn.textContent;
         btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = original; }, 1500);
-      });
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+      }).catch(() => {});
     });
 
-    // Fetch GitHub stars
+    // GitHub stars
     fetch('https://api.github.com/repos/Alexli18/binex')
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => {
-        const el = document.getElementById('star-count');
-        if (el && data.stargazers_count != null) {
-          el.textContent = data.stargazers_count >= 1000
-            ? (data.stargazers_count / 1000).toFixed(1) + 'k'
-            : data.stargazers_count;
+      .then(r => r.json())
+      .then(d => {
+        if (d.stargazers_count !== undefined) {
+          const n = d.stargazers_count >= 1000
+            ? (d.stargazers_count / 1000).toFixed(1) + 'k'
+            : String(d.stargazers_count);
+          const el = document.getElementById('star-count');
+          if (el) el.textContent = n;
         }
       })
       .catch(() => {});
-
-    // Fetch latest version from GitHub
-    fetch('https://api.github.com/repos/Alexli18/binex/releases/latest')
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => {
-        const tag = data.tag_name || '';
-        const version = tag.startsWith('v') ? tag : 'v' + tag;
-        if (version) {
-          const hero = document.getElementById('hero-version');
-          const footer = document.getElementById('footer-version');
-          if (hero) hero.textContent = version;
-          if (footer) footer.textContent = version;
-        }
-      })
-      .catch(() => {}); // keep fallback version on error
   </script>
-
 </body>
 </html>
