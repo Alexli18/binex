@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from typing import Any
 
 import click
@@ -23,7 +24,7 @@ async def _browse_runs(exec_store: Any, art_store: Any, dashboard_fn: Any) -> No
         runs = runs[:20]
 
         click.echo()
-        if has_rich():
+        if has_rich() and sys.stdout.isatty():
             _render_runs_rich(runs)
         else:
             _render_runs_plain(runs)
