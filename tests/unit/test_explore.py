@@ -138,7 +138,7 @@ class TestExploreRunSelection:
         )
         runner = CliRunner()
         with patch(PATCH_TARGET, return_value=stores):
-            result = runner.invoke(cli, ["explore"], input="1\nq\n")
+            result = runner.invoke(cli, ["explore"], input="1\nQ\n")
         assert "Dashboard" in result.output or "dashboard" in result.output.lower()
 
     def test_invalid_choice_reprompts(self):

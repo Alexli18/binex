@@ -430,6 +430,79 @@ class TestPlanExecuteExpansion:
         assert "up" in planner.depends_on
 
 
+class TestExpandPatterns:
+    """Integration tests for expand_patterns() at WorkflowSpec level."""
+
+    def _make_spec(self, nodes_raw: dict) -> "WorkflowSpec":
+        from binex.models.workflow import WorkflowSpec
+        import yaml, textwrap
+        # Build minimal WorkflowSpec from node dicts
+        nodes = {}
+        for node_id, cfg in nodes_raw.items():
+            from binex.models.workflow import NodeSpec
+            nodes[node_id] = NodeSpec(**cfg)
+        return WorkflowSpec(version="1.0", name="test", nodes=nodes)
+
+    def _pattern_node(self, pattern: str, depends_on: list[str] | None = None):
+        from binex.models.workflow import NodeSpec
+        return NodeSpec(agent="llm://m", pattern=pattern, outputs=[], depends_on=depends_on or [])
+
+    def _regular_node(self, depends_on: list[str] | None = None):
+        from binex.models.workflow import NodeSpec
+        return NodeSpec(agent="llm://m", outputs=[], depends_on=depends_on or [])
+
+    def test_single_pattern_expands(self):
+        from binex.patterns.expander import expand_patterns
+        from binex.models.workflow import WorkflowSpec
+        spec = WorkflowSpec(
+            version="1.0", name="t",
+            nodes={"a": self._pattern_node("critic")},
+        )
+        result = expand_patterns(spec)
+        assert "a" not in result.nodes
+        assert "a.draft" in result.nodes
+        assert "a.refine" in result.nodes
+
+    def test_chained_patterns_rewired(self):
+        """Pattern B depends on pattern A — B's entry must depend on A's exit, not 'a'."""
+        from binex.patterns.expander import expand_patterns
+        from binex.models.workflow import WorkflowSpec
+        spec = WorkflowSpec(
+            version="1.0", name="t",
+            nodes={
+                "a": self._pattern_node("critic"),
+                "b": self._pattern_node("debate", depends_on=["a"]),
+            },
+        )
+        result = expand_patterns(spec)
+        assert "a" not in result.nodes
+        assert "b" not in result.nodes
+        # Critic exit = a.refine; debate entry = b.agent_1
+        b_entry = result.nodes["b.agent_1"]
+        assert "a.refine" in b_entry.depends_on, (
+            f"b.agent_1.depends_on should contain 'a.refine', got {b_entry.depends_on}"
+        )
+        assert "a" not in b_entry.depends_on, (
+            f"Stale pattern ID 'a' still in b.agent_1.depends_on: {b_entry.depends_on}"
+        )
+
+    def test_regular_node_after_pattern_rewired(self):
+        """A regular node depending on a pattern should depend on the exit node."""
+        from binex.patterns.expander import expand_patterns
+        from binex.models.workflow import WorkflowSpec
+        spec = WorkflowSpec(
+            version="1.0", name="t",
+            nodes={
+                "a": self._pattern_node("critic"),
+                "sink": self._regular_node(depends_on=["a"]),
+            },
+        )
+        result = expand_patterns(spec)
+        sink = result.nodes["sink"]
+        assert "a.refine" in sink.depends_on
+        assert "a" not in sink.depends_on
+
+
 class TestTemplateRegistry:
     def test_all_patterns_registered(self):
         from binex.patterns.templates import TEMPLATE_REGISTRY

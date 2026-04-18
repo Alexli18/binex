@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+
+- **Pattern expander** — fixed critical bug where cross-pattern `depends_on` references were not rewired for expanded nodes. When pattern B depended on pattern A, B's entry node still held the stale pattern ID instead of A's exit node after expansion.
+- **CLI test stability** — added `pytest-timeout` (30s) to prevent hanging tests in CI caused by interactive prompts with exhausted input streams.
+- **`has_rich()`** — added `sys.stdout.isatty()` check to prevent Rich from hanging in non-TTY environments (e.g. pytest CliRunner).
+
+### Tests
+
+- Added `TestExpandPatterns` integration tests for `expand_patterns()` covering single pattern expansion, chained patterns, and regular nodes after patterns.
+- Fixed input sequences in `test_explore.py`, `test_start_categories.py` for multi-level interactive menus (`q` vs `Q` semantics).
+- Fixed `result.stderr` property access raising `ValueError` in `test_qa_advanced_debug.py`.
+
 ## v0.6.5
 
 Security, Performance & Observability release.

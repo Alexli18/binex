@@ -40,6 +40,9 @@ def run_async(coro_fn: Callable[..., Coroutine[Any, Any, Any]], *args: Any) -> A
 
 def has_rich() -> bool:
     """Check if the rich library is available and color is not disabled."""
+    import sys
+    if not sys.stdout.isatty():
+        return False
     ctx = click.get_current_context(silent=True)
     if ctx and ctx.color is False:
         return False

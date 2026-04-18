@@ -636,8 +636,11 @@ class TestCLIDiagnose:
             result = runner.invoke(cli, ["diagnose", "run_nonexistent", "--json"])
 
         assert result.exit_code != 0
-        full = result.output + str(getattr(result, "stderr", ""))
-        assert "not found" in full
+        try:
+            stderr_text = result.stderr
+        except ValueError:
+            stderr_text = ""
+        assert "not found" in result.output + stderr_text
 
     def test_diag_026_diagnose_no_rich_forces_plain(self, runner):
         """TC-DIAG-026: binex diagnose --no-rich forces plain text output."""
@@ -694,7 +697,11 @@ class TestCLIBisect:
             result = runner.invoke(cli, ["bisect", "good_01", "bad_01", "--json"])
 
         assert result.exit_code != 0
-        assert "not found" in result.output or "not found" in str(getattr(result, "stderr", ""))
+        try:
+            stderr_text = result.stderr
+        except ValueError:
+            stderr_text = ""
+        assert "not found" in result.output + stderr_text
 
     def test_bsct_013_bisect_custom_threshold(self, runner):
         """TC-BSCT-013: binex bisect --threshold 0.5 custom threshold."""

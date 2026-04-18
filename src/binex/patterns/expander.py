@@ -65,7 +65,11 @@ def expand_patterns(spec: WorkflowSpec) -> WorkflowSpec:
         return spec  # No patterns, return unchanged
 
     # Rewire depends_on: any node depending on a pattern ID -> depend on exit node
-    for node_id, node in regular_nodes.items():
+    for node in regular_nodes.values():
+        node.depends_on = [
+            pattern_exits.get(dep, dep) for dep in (node.depends_on or [])
+        ]
+    for node in expanded_nodes.values():
         node.depends_on = [
             pattern_exits.get(dep, dep) for dep in (node.depends_on or [])
         ]
