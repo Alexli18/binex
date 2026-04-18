@@ -88,6 +88,7 @@ nav:
   - Workflows:
     - Format: workflows/format.md
     - Examples: workflows/examples.md
+    - Cookbook: workflows/cookbook.md
     - Multi-Provider: multi-provider.md
   - Contributing:
     - Development: contributing/development.md
