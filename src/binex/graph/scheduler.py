@@ -38,11 +38,10 @@ class Scheduler:
         """Return node IDs whose dependencies are all completed/skipped
         and not already running/done."""
         satisfied = self._completed | self._skipped
-        ready = [
+        return [
             node_id for node_id in self._pending
             if self._dag.dependencies(node_id) <= satisfied
         ]
-        return sorted(ready)
 
     def mark_running(self, node_id: str) -> None:
         self._pending.discard(node_id)
