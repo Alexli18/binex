@@ -434,11 +434,14 @@ class SqliteExecutionStore:
         return float(row[0]) if row is not None else 0.0
 
     async def get_run_cost_summary(self, run_id: str) -> RunCostSummary:
-        records = await self.list_costs(run_id)
-        total_cost = sum(r.cost for r in records)
-        node_costs: dict[str, float] = {}
-        for r in records:
-            node_costs[r.task_id] = node_costs.get(r.task_id, 0.0) + r.cost
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
+            "SELECT task_id, SUM(cost) FROM cost_records WHERE run_id = ? GROUP BY task_id",
+            (run_id,),
+        )
+        rows = await cursor.fetchall()
+        node_costs = {row[0]: float(row[1]) for row in rows}
+        total_cost = sum(node_costs.values())
         return RunCostSummary(
             run_id=run_id,
             total_cost=total_cost,
