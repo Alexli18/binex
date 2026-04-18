@@ -18,7 +18,7 @@ def test_start_shows_categories():
 def test_start_category_then_template():
     """Selecting a category should show its templates."""
     runner = CliRunner()
-    # Select category 2 (Development), then q to go back, then q to quit
+    # Select category 2 (Development), then quit from templates, then quit from categories
     result = runner.invoke(start_cmd, input="2\nq\nq\n")
     output = result.output
     assert "Code Review" in output or "code-review" in output.lower()
@@ -43,5 +43,5 @@ def test_start_constructor_shortcut():
     runner = CliRunner()
     with patch("binex.cli.start._step_custom_template", side_effect=SystemExit(0)):
         result = runner.invoke(start_cmd, input="c\n")
-    output = result.output.lower()
-    assert "constructor" in output or "dsl" in output or "topology" in output
+    # Category menu shows 'constructor' option before routing to _step_custom_template
+    assert "constructor" in result.output.lower()
