@@ -1,18 +1,24 @@
 # Changelog
 
-## Unreleased
+## v0.7.0
+
+Pattern Nodes release — macro-node patterns that expand into full sub-DAG pipelines.
+
+### Features
+
+- **Pattern Nodes** — 9 built-in patterns: `critic`, `debate`, `best_of_n`, `reflexion`, `scatter`, `fsm`, `constitutional`, `chain_of_verification`, `plan_execute`. Each expands into a wired sub-DAG at runtime.
+- **PatternExpander** — `expand_patterns()` resolves pattern nodes in a `WorkflowSpec` before execution. Handles nested pattern chains, back-edges (loops), and external `depends_on` wiring.
+- **YAML integration** — patterns declared inline via `pattern:` field on any node; `config.steps` for per-step model/prompt overrides.
+- **UI: Node Palette** — 9 pattern types in the DAG editor palette with icons and descriptions.
+- **UI: Pattern Group** — collapsed sub-DAG view in the graph editor with expandable detail.
+- **UI: Pattern Config** — per-step model, prompt, and config overrides in the sidebar.
+- **Workflow cookbook** — example YAML workflows for all 9 patterns in `docs/`.
 
 ### Bug Fixes
 
-- **Pattern expander** — fixed critical bug where cross-pattern `depends_on` references were not rewired for expanded nodes. When pattern B depended on pattern A, B's entry node still held the stale pattern ID instead of A's exit node after expansion.
-- **CLI test stability** — added `pytest-timeout` (30s) to prevent hanging tests in CI caused by interactive prompts with exhausted input streams.
-- **`has_rich()`** — added `sys.stdout.isatty()` check to prevent Rich from hanging in non-TTY environments (e.g. pytest CliRunner).
-
-### Tests
-
-- Added `TestExpandPatterns` integration tests for `expand_patterns()` covering single pattern expansion, chained patterns, and regular nodes after patterns.
-- Fixed input sequences in `test_explore.py`, `test_start_categories.py` for multi-level interactive menus (`q` vs `Q` semantics).
-- Fixed `result.stderr` property access raising `ValueError` in `test_qa_advanced_debug.py`.
+- **Pattern expander** — fixed critical bug where cross-pattern `depends_on` was not rewired for expanded nodes (chained patterns produced stale pattern IDs).
+- **`has_rich()`** — added `sys.stdout.isatty()` check to prevent Rich hanging in non-TTY environments (CI, CliRunner).
+- **CI stability** — added `pytest-timeout` (30s per test) to prevent hanging tests from blocking CI indefinitely.
 
 ## v0.6.5
 
