@@ -15,6 +15,7 @@ Binex orchestrates multi-agent workflows defined in YAML. It executes DAG-based 
 - **Output schema validation** — Define JSON Schema for node outputs with automatic retry on validation failure.
 - **Streaming LLM output** — Watch LLM tokens arrive in real-time with auto-detection for TTY terminals.
 - **Agent-to-Agent (A2A) protocol** — Connect to remote A2A-compatible agent servers with built-in Gateway proxy for capability-based routing, automatic failover, and health monitoring.
+- **Pattern Nodes** — 9 built-in agentic patterns (critic, debate, reflexion, best_of_n, scatter, FSM, constitutional, chain_of_verification, plan_execute) that expand into full sub-DAG pipelines at runtime.
 - **Framework adapters** — Integrate LangChain chains, CrewAI crews, and AutoGen teams as workflow nodes via thin-wrapper adapters. Install only what you need with optional extras.
 - **Plugin system** — Extend Binex with custom adapters using Python entry points or inline `adapter_class` configuration.
 - **OpenTelemetry tracing** — Optional run-level and node-level spans for external collectors (Jaeger, Tempo), with zero overhead when disabled.
@@ -47,6 +48,7 @@ See the [Quickstart](quickstart.md) for a full walkthrough.
 | [Concepts](concepts/agents.md) | Core concepts: agents, workflows, artifacts, execution model, lineage tracking |
 | [Architecture](architecture/overview.md) | Runtime internals: orchestrator, stores, adapters, scheduler, DAG engine |
 | [Workflow Format](workflows/format.md) | YAML schema reference with node specs, variables, conditionals, and defaults |
+| [Pattern Nodes](features/patterns.md) | 9 built-in agentic patterns that expand into sub-DAG pipelines |
 | [Multi-Provider LLM](multi-provider.md) | Using multiple LLM providers in a single workflow |
 | [Contributing](contributing/development.md) | Development setup, testing guide, and code style |
 

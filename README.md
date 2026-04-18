@@ -302,6 +302,34 @@ nodes:
 | `binex scheduler list` | List scheduled workflows |
 | `binex scheduler add/remove` | Register/unregister workflow files |
 
+### Pattern Nodes
+
+9 built-in agentic patterns that expand into sub-DAG pipelines at runtime:
+
+| Pattern | Description |
+|---------|-------------|
+| `critic` | draft → critique → refine (self-improvement loop) |
+| `debate` | pro → con → judge (adversarial reasoning) |
+| `best_of_n` | N parallel candidates → selector |
+| `reflexion` | act → evaluate → reflect (iterative self-reflection) |
+| `scatter` | mapper → N parallel workers → reducer (fan-out/fan-in) |
+| `fsm` | finite state machine with configurable states and terminal |
+| `constitutional` | draft → critique-per-principle → revise |
+| `chain_of_verification` | draft → verify claims → synthesize |
+| `plan_execute` | planner → N executors → aggregator |
+
+```yaml
+nodes:
+  review:
+    pattern: critic
+    model: gpt-4o
+    config:
+      rounds: 2
+    steps:
+      critique:
+        model: gpt-4o          # override per step
+```
+
 ### LLM Providers
 
 **OpenAI** &middot; **Anthropic** &middot; **Google Gemini** &middot; **Ollama** &middot; **OpenRouter** &middot; **Groq** &middot; **Mistral** &middot; **DeepSeek** &middot; **Together AI**
@@ -358,6 +386,7 @@ src/binex/
 ├── prompts/         # 112 built-in prompt templates
 ├── registry/        # Provider and adapter registry
 ├── runtime/         # Orchestrator, dispatcher, replay engine
+├── patterns/        # PatternExpander + 9 pattern templates
 ├── scheduler/       # Cron-based workflow scheduling
 ├── stores/          # SQLite execution + filesystem artifacts
 ├── tools/           # @tool decorator, 10 built-in tools, MCP client
