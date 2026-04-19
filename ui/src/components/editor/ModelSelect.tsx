@@ -124,6 +124,7 @@ interface FlatModel {
 interface ModelSelectProps {
   value: string;
   onChange: (model: string) => void;
+  inheritOption?: boolean;
 }
 
 // Provider prefixes for custom model input
@@ -139,7 +140,7 @@ const PROVIDER_PREFIXES: { name: string; prefix: string }[] = [
   { name: 'Together', prefix: 'together_ai/' },
 ];
 
-export function ModelSelect({ value, onChange }: ModelSelectProps) {
+export function ModelSelect({ value, onChange, inheritOption }: ModelSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [highlightIdx, setHighlightIdx] = useState(0);
@@ -257,7 +258,7 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
     return null;
   }, [providers, value]);
 
-  const displayName = shortName(value) || 'Select model...';
+  const displayName = (inheritOption && !value) ? '[default model]' : (shortName(value) || 'Select model...');
 
   return (
     <div ref={containerRef} className="relative" onClick={(e) => e.stopPropagation()}>
@@ -296,6 +297,18 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
           </div>
 
           <div ref={listRef} className="max-h-[280px] overflow-y-auto">
+            {/* Inherit option */}
+            {inheritOption && (
+              <div
+                className={`flex items-center gap-2 px-2 py-1.5 text-xs cursor-pointer transition-colors border-b border-[#252528] ${
+                  value === '' ? 'text-amber-400 bg-amber-500/10' : 'text-[#4a4a52] italic hover:bg-[#252528] hover:text-[#80808a]'
+                }`}
+                onClick={() => { onChange(''); setOpen(false); }}
+              >
+                [default model]
+              </div>
+            )}
+
             {/* Recently Used */}
             {!q && recent.length > 0 && (
               <div>
