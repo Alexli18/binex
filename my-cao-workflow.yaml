@@ -1,0 +1,50 @@
+name: scaffold
+description: Auto-generated workflow
+nodes:
+  cao_deps:
+    agent: llm://openai/gpt-4o-mini
+    system_prompt: You are the Cao Deps agent. Process the input and produce your
+      output.
+    inputs:
+      query: ${user.query}
+    outputs:
+    - output
+  cao_security:
+    agent: llm://openai/gpt-4o-mini
+    system_prompt: You are the Cao Security agent. Process the input and produce your
+      output.
+    inputs:
+      query: ${user.query}
+    outputs:
+    - output
+  cao_tests:
+    agent: llm://openai/gpt-4o-mini
+    system_prompt: You are the Cao Tests agent. Process the input and produce your
+      output.
+    inputs:
+      query: ${user.query}
+    outputs:
+    - output
+  cao_lint:
+    agent: llm://openai/gpt-4o-mini
+    system_prompt: You are the Cao Lint agent. Process the input and produce your
+      output.
+    inputs:
+      query: ${user.query}
+    outputs:
+    - output
+  report:
+    agent: llm://openai/gpt-4o-mini
+    system_prompt: You are the Report agent. Process the input and produce your output.
+    inputs:
+      cao_deps: ${cao_deps.output}
+      cao_security: ${cao_security.output}
+      cao_tests: ${cao_tests.output}
+      cao_lint: ${cao_lint.output}
+    outputs:
+    - output
+    depends_on:
+    - cao_deps
+    - cao_security
+    - cao_tests
+    - cao_lint
