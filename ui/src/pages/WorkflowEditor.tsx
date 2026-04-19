@@ -52,7 +52,7 @@ interface ParsedYamlWorkflow {
     agent?: string;
     pattern?: string;
     model?: string;
-    steps?: Record<string, { model?: string; prompt?: string }>;
+    steps?: Record<string, { model?: string; prompt?: string; max_retries?: number }>;
     depends_on?: string[];
     config?: Record<string, unknown>;
     system_prompt?: string;
@@ -94,6 +94,7 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
             {
               model: v.model?.startsWith('llm://') ? v.model.slice(6) : (v.model ?? ''),
               prompt: v.prompt ?? '',
+              ...(v.max_retries !== undefined ? { max_retries: v.max_retries } : {}),
             },
           ]),
         )

@@ -9,10 +9,11 @@ export interface PatternStepEditorProps {
   label: string;
   model: string;
   prompt: string;
-  onChange: (model: string, prompt: string) => void;
+  maxRetries: number | undefined;
+  onChange: (model: string, prompt: string, maxRetries: number | undefined) => void;
 }
 
-export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, onChange }: PatternStepEditorProps) {
+export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, maxRetries, onChange }: PatternStepEditorProps) {
   const [open, setOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
 
@@ -51,7 +52,7 @@ export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, onC
                 <button
                   type="button"
                   title="Inherit from default"
-                  onClick={() => onChange('', prompt)}
+                  onClick={() => onChange('', prompt, maxRetries)}
                   className="text-[#4a4a52] hover:text-[#80808a] transition-colors"
                 >
                   <X size={10} />
@@ -60,7 +61,7 @@ export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, onC
             </div>
             <ModelSelect
               value={model}
-              onChange={(v) => onChange(v, prompt)}
+              onChange={(v) => onChange(v, prompt, maxRetries)}
               inheritOption
             />
           </div>
@@ -80,12 +81,30 @@ export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, onC
             </div>
             <textarea
               value={prompt}
-              onChange={(e) => onChange(model, e.target.value)}
+              onChange={(e) => onChange(model, e.target.value, maxRetries)}
               placeholder="Leave empty to use node-level prompt..."
               rows={3}
               className="w-full bg-[#0b0b0c] border border-[#252528] rounded px-1.5 py-1 text-[#80808a] resize-none text-[10px] focus:outline-none focus:border-[#e8a020]/50 placeholder:text-[#333338]"
               onClick={(e) => e.stopPropagation()}
             />
+          </div>
+          <div>
+            <label className="flex items-center justify-between gap-2">
+              <span className="text-[10px] text-[#4a4a52]">Max retries</span>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                value={maxRetries ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+                  onChange(model, prompt, v);
+                }}
+                placeholder="inherit"
+                className="w-16 px-1.5 py-0.5 text-[11px] bg-[#1a1a1d] border border-[#252528] rounded text-[#f0f0f0] text-right placeholder:text-[#4a4a52]"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </label>
           </div>
         </div>
       )}
@@ -95,7 +114,7 @@ export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, onC
           open={libraryOpen}
           onClose={() => setLibraryOpen(false)}
           onUse={(content) => {
-            onChange(model, content);
+            onChange(model, content, maxRetries);
             setLibraryOpen(false);
           }}
         />

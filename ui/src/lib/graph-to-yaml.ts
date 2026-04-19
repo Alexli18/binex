@@ -26,13 +26,14 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
       entry.pattern = (d.agent as string).replace('pattern://', '');
       const globalModel = d.config?.model as string | undefined;
       if (globalModel) entry.model = `llm://${globalModel}`;
-      const stepsConfig = d.config?.steps as Record<string, { model?: string; prompt?: string }> | undefined;
+      const stepsConfig = d.config?.steps as Record<string, { model?: string; prompt?: string; max_retries?: number }> | undefined;
       if (stepsConfig) {
-        const stepsOut: Record<string, Record<string, string>> = {};
+        const stepsOut: Record<string, Record<string, unknown>> = {};
         for (const [key, sc] of Object.entries(stepsConfig)) {
-          const stepEntry: Record<string, string> = {};
+          const stepEntry: Record<string, unknown> = {};
           if (sc.model) stepEntry.model = `llm://${sc.model}`;
           if (sc.prompt) stepEntry.prompt = sc.prompt;
+          if (sc.max_retries !== undefined) stepEntry.max_retries = sc.max_retries;
           if (Object.keys(stepEntry).length > 0) stepsOut[key] = stepEntry;
         }
         if (Object.keys(stepsOut).length > 0) entry.steps = stepsOut;

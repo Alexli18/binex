@@ -138,6 +138,7 @@ function buildSteps(def: PatternDef, config: Record<string, unknown>): StepDef[]
 interface StepConfig {
   model?: string;
   prompt?: string;
+  max_retries?: number;
 }
 
 interface PatternConfigProps {
@@ -161,10 +162,11 @@ export function PatternConfig({ patternType, config, onChange }: PatternConfigPr
     onChange({ ...config, [key]: parsed });
   };
 
-  const handleStepChange = (stepKey: string, model: string, prompt: string) => {
+  const handleStepChange = (stepKey: string, model: string, prompt: string, maxRetries: number | undefined) => {
     const updated: StepConfig = {};
     if (model) updated.model = model;
     if (prompt) updated.prompt = prompt;
+    if (maxRetries !== undefined) updated.max_retries = maxRetries;
 
     const newSteps = { ...stepsConfig };
     if (Object.keys(updated).length === 0) {
@@ -244,7 +246,8 @@ export function PatternConfig({ patternType, config, onChange }: PatternConfigPr
                   label={step.label}
                   model={stepCfg.model ?? ''}
                   prompt={stepCfg.prompt ?? ''}
-                  onChange={(m, p) => handleStepChange(step.key, m, p)}
+                  maxRetries={stepCfg.max_retries}
+                  onChange={(m, p, r) => handleStepChange(step.key, m, p, r)}
                 />
               );
             })}
