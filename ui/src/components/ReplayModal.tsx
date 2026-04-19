@@ -61,39 +61,39 @@ export function ReplayModal({
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={submitting ? undefined : onClose}>
       <div
-        className="bg-slate-900 rounded-modal shadow-xl border border-slate-700/60 w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 relative"
+        className="bg-[#131315] rounded-modal shadow-xl border border-[#252528]/60 w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Loading overlay */}
         {submitting && (
-          <div className="absolute inset-0 bg-slate-900/80 rounded-lg flex flex-col items-center justify-center z-10 gap-3">
-            <Loader2 size={32} className="text-blue-400 animate-spin" />
-            <p className="text-sm text-slate-300">Replaying node...</p>
-            <p className="text-xs text-slate-500">This may take a few seconds</p>
+          <div className="absolute inset-0 bg-[#131315]/80 rounded-lg flex flex-col items-center justify-center z-10 gap-3">
+            <Loader2 size={32} className="text-amber-400 animate-spin" />
+            <p className="text-sm text-[#80808a]">Replaying node...</p>
+            <p className="text-xs text-[#4a4a52]">This may take a few seconds</p>
           </div>
         )}
 
         <div className="flex items-center gap-2 mb-4">
-          <RotateCcw size={18} className="text-blue-400" />
-          <h3 className="text-lg font-semibold text-slate-100">Replay Node</h3>
+          <RotateCcw size={18} className="text-amber-400" />
+          <h3 className="text-lg font-semibold text-[#f0f0f0]">Replay Node</h3>
         </div>
 
         <div className="space-y-4">
           {/* Node name */}
           <div>
-            <label className="block text-sm text-slate-400 mb-1">Node</label>
-            <p className="text-sm font-mono text-slate-200 bg-slate-900 rounded px-3 py-1.5">{nodeId}</p>
+            <label className="block text-sm text-[#80808a] mb-1">Node</label>
+            <p className="text-sm font-mono text-[#f0f0f0] bg-[#131315] rounded px-3 py-1.5">{nodeId}</p>
           </div>
 
           {/* Input artifacts */}
           {artifacts && artifacts.length > 0 && (
             <div>
-              <label className="block text-sm text-slate-400 mb-1">Input Artifacts ({artifacts.length})</label>
+              <label className="block text-sm text-[#80808a] mb-1">Input Artifacts ({artifacts.length})</label>
               <div className="space-y-1.5 max-h-32 overflow-y-auto">
                 {artifacts.map((art) => (
-                  <div key={art.id} className="bg-slate-900 rounded px-3 py-2 text-xs">
-                    <span className="text-slate-500">{art.type}</span>
-                    <p className="text-slate-300 mt-0.5 truncate">{art.content.slice(0, 150)}{art.content.length > 150 ? '...' : ''}</p>
+                  <div key={art.id} className="bg-[#131315] rounded px-3 py-2 text-xs">
+                    <span className="text-[#4a4a52]">{art.type}</span>
+                    <p className="text-[#80808a] mt-0.5 truncate">{art.content.slice(0, 150)}{art.content.length > 150 ? '...' : ''}</p>
                   </div>
                 ))}
               </div>
@@ -102,9 +102,9 @@ export function ReplayModal({
 
           {/* Model selection */}
           <div>
-            <label className="block text-sm text-slate-400 mb-1">Model</label>
+            <label className="block text-sm text-[#80808a] mb-1">Model</label>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 shrink-0">current: {currentModel}</span>
+              <span className="text-xs text-[#4a4a52] shrink-0">current: {currentModel}</span>
             </div>
             <div className="mt-1">
               <ModelSelect value={newModel} onChange={setNewModel} />
@@ -114,18 +114,18 @@ export function ReplayModal({
           {/* System prompt (for LLM nodes) */}
           {isLLM && (
             <div>
-              <label className="block text-sm text-slate-400 mb-1">System Prompt</label>
+              <label className="block text-sm text-[#80808a] mb-1">System Prompt</label>
               <textarea
                 value={newPrompt}
                 onChange={(e) => setNewPrompt(e.target.value)}
                 placeholder="Enter new system prompt..."
                 rows={4}
-                className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 resize-none focus:outline-none focus:border-blue-500"
+                className="w-full bg-[#252528] border border-[#333338] rounded px-3 py-2 text-sm text-[#f0f0f0] resize-none focus:outline-none focus:border-amber-500"
               />
               {currentPrompt && (
                 <button
                   onClick={() => setNewPrompt(currentPrompt)}
-                  className="text-xs text-blue-400 hover:text-blue-300 mt-1"
+                  className="text-xs text-amber-400 hover:text-amber-300 mt-1"
                 >
                   Reset to original
                 </button>
@@ -139,13 +139,13 @@ export function ReplayModal({
         </div>
 
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} className="px-4 py-1.5 text-sm border border-slate-600 rounded text-slate-300 hover:bg-slate-700">
+          <button onClick={onClose} className="px-4 py-1.5 text-sm border border-[#333338] rounded text-[#80808a] hover:bg-[#252528]">
             Cancel
           </button>
           <button
             onClick={handleReplay}
             disabled={submitting}
-            className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-50 flex items-center gap-1.5"
+            className="px-4 py-1.5 text-sm bg-amber-500 text-white rounded hover:bg-amber-400 disabled:opacity-50 flex items-center gap-1.5"
           >
             <RotateCcw size={14} />
             {submitting ? 'Replaying...' : 'Replay from this node'}

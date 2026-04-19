@@ -77,7 +77,7 @@ export function WorkflowGraph({ nodes, edges, onNodeClick }: WorkflowGraphProps)
   );
 
   return (
-    <div className="w-full h-full min-h-[400px] bg-slate-900 rounded-lg">
+    <div className="w-full h-full min-h-[400px] bg-[#131315] rounded-lg">
       <ReactFlow
         nodes={rfNodes}
         edges={rfEdges}
@@ -87,7 +87,7 @@ export function WorkflowGraph({ nodes, edges, onNodeClick }: WorkflowGraphProps)
         proOptions={{ hideAttribution: true }}
       >
         <Background color={chartColors.grid} gap={16} />
-        <Controls className="!bg-slate-800 !border-slate-700 !shadow-lg [&>button]:!bg-slate-700 [&>button]:!border-slate-600 [&>button]:!text-slate-300 [&>button:hover]:!bg-slate-600" />
+        <Controls className="!bg-[#1a1a1d] !border-[#252528] !shadow-lg [&>button]:!bg-[#252528] [&>button]:!border-[#333338] [&>button]:!text-[#80808a] [&>button:hover]:!bg-[#333338]" />
       </ReactFlow>
     </div>
   );

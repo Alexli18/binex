@@ -86,12 +86,12 @@ export function PatternConfig({ patternType, config, onChange }: PatternConfigPr
           <div className="space-y-2">
             {patternDef.fields.map((field) => (
               <label key={field.key} className="flex items-center justify-between gap-2">
-                <span className="text-[11px] text-slate-400">{field.label}</span>
+                <span className="text-[11px] text-[#80808a]">{field.label}</span>
                 <input
                   type={field.type}
                   value={(config[field.key] as string | number) ?? field.default}
                   onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                  className="w-16 px-1.5 py-0.5 text-[11px] bg-slate-800 border border-slate-700 rounded text-slate-200 text-right"
+                  className="w-16 px-1.5 py-0.5 text-[11px] bg-[#1a1a1d] border border-[#252528] rounded text-[#f0f0f0] text-right"
                   min={field.type === 'number' ? 1 : undefined}
                 />
               </label>
@@ -102,7 +102,7 @@ export function PatternConfig({ patternType, config, onChange }: PatternConfigPr
 
       {/* Steps section (per-step model/prompt overrides) */}
       <CollapsibleSection title="Step Overrides">
-        <p className="text-[10px] text-slate-500">
+        <p className="text-[10px] text-[#4a4a52]">
           Configure per-step model and prompt overrides in the YAML editor.
         </p>
       </CollapsibleSection>

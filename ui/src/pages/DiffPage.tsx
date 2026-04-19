@@ -100,10 +100,10 @@ export default function DiffPage() {
 
       <div className="mt-6 flex flex-col gap-6">
         {/* Selectors */}
-        <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
+        <div className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
           <div className="flex flex-col md:flex-row items-end gap-4">
             <div className="flex-1 w-full">
-              <label className="block text-sm font-medium text-slate-400 mb-1">Run A</label>
+              <label className="block text-sm font-medium text-[#80808a] mb-1">Run A</label>
               <Select value={runA} onValueChange={setRunA}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a run..." />
@@ -121,10 +121,10 @@ export default function DiffPage() {
               </Select>
             </div>
 
-            <ArrowRight className="w-5 h-5 text-slate-500 hidden md:block mb-2" />
+            <ArrowRight className="w-5 h-5 text-[#4a4a52] hidden md:block mb-2" />
 
             <div className="flex-1 w-full">
-              <label className="block text-sm font-medium text-slate-400 mb-1">Run B</label>
+              <label className="block text-sm font-medium text-[#80808a] mb-1">Run B</label>
               <Select value={runB} onValueChange={setRunB}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a run..." />
@@ -169,23 +169,23 @@ export default function DiffPage() {
                 { label: 'Run A', data: diff.data.run_a },
                 { label: 'Run B', data: diff.data.run_b },
               ].map(({ label, data }) => (
-                <div key={label} className="bg-slate-800 border border-slate-700 rounded-card p-4">
+                <div key={label} className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-bold text-slate-300">{label}</h3>
+                    <h3 className="text-sm font-bold text-[#80808a]">{label}</h3>
                     <StatusBadge status={data.status} />
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-slate-500">Run ID</span>
-                      <p className="font-mono text-xs text-slate-300 mt-0.5 break-all">{data.run_id}</p>
+                      <span className="text-[#4a4a52]">Run ID</span>
+                      <p className="font-mono text-xs text-[#80808a] mt-0.5 break-all">{data.run_id}</p>
                     </div>
                     <div>
-                      <span className="text-slate-500">Nodes</span>
-                      <p className="text-slate-300 mt-0.5">{data.node_count}</p>
+                      <span className="text-[#4a4a52]">Nodes</span>
+                      <p className="text-[#80808a] mt-0.5">{data.node_count}</p>
                     </div>
                     <div>
-                      <span className="text-slate-500">Total Cost</span>
-                      <p className="font-mono text-slate-300 mt-0.5">${(data.total_cost ?? 0).toFixed(4)}</p>
+                      <span className="text-[#4a4a52]">Total Cost</span>
+                      <p className="font-mono text-[#80808a] mt-0.5">${(data.total_cost ?? 0).toFixed(4)}</p>
                     </div>
                   </div>
                 </div>
@@ -193,12 +193,12 @@ export default function DiffPage() {
             </div>
 
             {/* Node-by-Node Table */}
-            <div className="bg-slate-800 border border-slate-700 rounded-card overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-700">
-                <h3 className="text-sm font-bold text-slate-300 mb-3">
+            <div className="bg-[#1a1a1d] border border-[#252528] rounded-card overflow-hidden">
+              <div className="px-4 py-3 border-b border-[#252528]">
+                <h3 className="text-sm font-bold text-[#80808a] mb-3">
                   Node-by-Node Comparison ({diff.data.node_diffs.length} nodes)
                 </h3>
-                <div className="flex rounded-lg overflow-hidden border border-slate-600/50 bg-slate-800/50 w-fit">
+                <div className="flex rounded-lg overflow-hidden border border-[#333338]/50 bg-[#1a1a1d]/50 w-fit">
                   {([
                     { key: 'all' as DiffFilter, label: 'All' },
                     { key: 'changed' as DiffFilter, label: 'Changed' },
@@ -211,8 +211,8 @@ export default function DiffPage() {
                       className={cn(
                         'px-3.5 py-1.5 text-xs font-medium transition-colors',
                         filter === key
-                          ? 'bg-blue-600 text-white'
-                          : 'text-slate-400 hover:text-slate-200',
+                          ? 'bg-amber-500 text-black'
+                          : 'text-[#80808a] hover:text-[#f0f0f0]',
                       )}
                     >
                       {label} ({filterCounts[key]})
@@ -222,14 +222,14 @@ export default function DiffPage() {
               </div>
 
               {filteredNodeDiffs.length === 0 ? (
-                <div className="p-4 text-sm text-slate-500">
+                <div className="p-4 text-sm text-[#4a4a52]">
                   {filter === 'all' ? 'No node differences found.' : 'No nodes match this filter.'}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="text-left text-slate-500 border-b border-slate-700">
+                      <tr className="text-left text-[#4a4a52] border-b border-[#252528]">
                         <th className="px-4 py-2 font-medium">Node</th>
                         <th className="px-4 py-2 font-medium">Status A</th>
                         <th className="px-4 py-2 font-medium">Status B</th>
@@ -240,7 +240,7 @@ export default function DiffPage() {
                         <th className="px-4 py-2 font-medium">Diff</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-700/50">
+                    <tbody className="divide-y divide-[#252528]/50">
                       {filteredNodeDiffs.map((nd: NodeDiff) => {
                         const statusDiffers = nd.status_a !== nd.status_b;
                         const durationDelta = formatDelta(nd.duration_a, nd.duration_b, false);
@@ -250,16 +250,16 @@ export default function DiffPage() {
                         return (
                           <React.Fragment key={nd.node_id}>
                           <tr
-                            className={`${statusDiffers ? 'bg-red-900/20' : ''} hover:bg-slate-700/30`}
+                            className={`${statusDiffers ? 'bg-red-900/20' : ''} hover:bg-[#1a1a1d]/30`}
                           >
-                            <td className="px-4 py-2 font-mono text-xs text-slate-200">{nd.node_id}</td>
+                            <td className="px-4 py-2 font-mono text-xs text-[#f0f0f0]">{nd.node_id}</td>
                             <td className="px-4 py-2">
                               <StatusBadge status={nd.status_a} />
                             </td>
                             <td className="px-4 py-2">
                               <StatusBadge status={nd.status_b} />
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-xs text-slate-300">
+                            <td className="px-4 py-2 text-right font-mono text-xs text-[#80808a]">
                               {nd.duration_a !== null ? `${nd.duration_a}ms` : '-'}
                               {durationDelta && (
                                 <span className={`ml-1 text-xs ${durationDelta.startsWith('+') ? statusColors.failed.text : statusColors.completed.text}`}>
@@ -267,10 +267,10 @@ export default function DiffPage() {
                                 </span>
                               )}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-xs text-slate-300">
+                            <td className="px-4 py-2 text-right font-mono text-xs text-[#80808a]">
                               {nd.duration_b !== null ? `${nd.duration_b}ms` : '-'}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-xs text-slate-300">
+                            <td className="px-4 py-2 text-right font-mono text-xs text-[#80808a]">
                               {nd.cost_a !== null ? `$${nd.cost_a.toFixed(6)}` : '-'}
                               {costDelta && (
                                 <span className={`ml-1 text-xs ${costDelta.startsWith('+') ? statusColors.failed.text : statusColors.completed.text}`}>
@@ -278,7 +278,7 @@ export default function DiffPage() {
                                 </span>
                               )}
                             </td>
-                            <td className="px-4 py-2 text-right font-mono text-xs text-slate-300">
+                            <td className="px-4 py-2 text-right font-mono text-xs text-[#80808a]">
                               {nd.cost_b !== null ? `$${nd.cost_b.toFixed(6)}` : '-'}
                             </td>
                             <td className="px-4 py-2">
@@ -287,7 +287,7 @@ export default function DiffPage() {
                                   onClick={() => toggleDiff(nd.node_id)}
                                   variant="link"
                                   size="sm"
-                                  className="text-blue-400 hover:text-blue-300 text-xs p-0 h-auto"
+                                  className="text-amber-400 hover:text-amber-300 text-xs p-0 h-auto"
                                 >
                                   {expandedDiffs.has(nd.node_id) ? 'hide' : 'show'}
                                 </Button>
@@ -296,7 +296,7 @@ export default function DiffPage() {
                           </tr>
                           {hasDiff && expandedDiffs.has(nd.node_id) && (
                             <tr>
-                              <td colSpan={8} className="px-4 py-3 bg-slate-800/50">
+                              <td colSpan={8} className="px-4 py-3 bg-[#1a1a1d]/50">
                                 <ArtifactDiff diff={nd.artifact_diff!} />
                               </td>
                             </tr>

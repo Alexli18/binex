@@ -37,12 +37,12 @@ function agentToNodeType(agent: string): { nodeType: string; color: string } {
   if (agent.startsWith('llm://')) return { nodeType: 'llm', color: '#e8a020' };
   if (agent.startsWith('local://')) return { nodeType: 'local', color: '#22d3ee' };
   if (agent.startsWith('human://')) {
-    if (agent.includes('input')) return { nodeType: 'human-input', color: '#60a5fa' };
+    if (agent.includes('input')) return { nodeType: 'human-input', color: '#22c55e' };
     return { nodeType: 'human-approve', color: '#22c55e' };
   }
   if (agent.startsWith('a2a://')) return { nodeType: 'a2a', color: '#f472b6' };
-  if (agent.startsWith('cao://')) return { nodeType: 'cao', color: chartColors.cao };
-  return { nodeType: 'local', color: '#06b6d4' };
+  if (agent.startsWith('cao://')) return { nodeType: 'cao', color: '#f97316' };
+  return { nodeType: 'local', color: '#22d3ee' };
 }
 
 interface ParsedYamlWorkflow {
@@ -414,11 +414,11 @@ export default function WorkflowEditor() {
       />
 
       {/* Status bar */}
-      <div className="flex items-center gap-4 px-4 py-1.5 bg-slate-900/80 border-t border-slate-700/50 text-xs text-slate-500">
+      <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "4px 16px", background: "#131315", borderTop: "1px solid #252528", fontSize: 10, color: "#4a4a52" }}>
         {parseError ? (
-          <span className="text-red-400">Parse error: {parseError}</span>
+          <span style={{ color: "#ef4444" }}>Parse error: {parseError}</span>
         ) : content.trim() ? (
-          <span className="text-emerald-400">YAML valid</span>
+          <span style={{ color: "#e8a020" }}>YAML valid</span>
         ) : null}
         {graphNodes.length > 0 && (
           <span>Nodes: {graphNodes.length}</span>

@@ -21,8 +21,8 @@ export interface DebugNodeDetailProps {
 export function DebugNodeDetail({ node, onReplay }: DebugNodeDetailProps) {
   if (!node) {
     return (
-      <div className="flex-1 border border-slate-700 rounded-lg bg-slate-800/50 overflow-y-auto">
-        <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+      <div className="flex-1 border border-[#252528] rounded-lg bg-[#1a1a1d]/50 overflow-y-auto">
+        <div className="flex items-center justify-center h-full text-[#4a4a52] text-sm">
           Select a node to view details
         </div>
       </div>
@@ -30,14 +30,14 @@ export function DebugNodeDetail({ node, onReplay }: DebugNodeDetailProps) {
   }
 
   return (
-    <div className="flex-1 border border-slate-700 rounded-lg bg-slate-800/50 overflow-y-auto">
+    <div className="flex-1 border border-[#252528] rounded-lg bg-[#1a1a1d]/50 overflow-y-auto">
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold font-mono text-sm">{node.node_id}</h3>
           <div className="flex items-center gap-2">
             <button
               onClick={() => onReplay(node.node_id)}
-              className="flex items-center gap-1 px-2 py-0.5 rounded text-xs border border-blue-500/40 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-xs border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-400/20 transition-colors"
               title="Replay from this node"
             >
               <RotateCcw size={12} />
@@ -62,27 +62,27 @@ function NodeDetailContent({ node }: { node: DebugNode }) {
       {/* Status & timing */}
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div>
-          <span className="text-slate-500">Status</span>
+          <span className="text-[#4a4a52]">Status</span>
           <div className="flex items-center gap-2 mt-1">
             <StatusIcon status={node.status} />
             <span className="capitalize">{node.status}</span>
           </div>
         </div>
         <div>
-          <span className="text-slate-500">Duration</span>
+          <span className="text-[#4a4a52]">Duration</span>
           <p className="mt-1 font-mono">
             {node.duration_s !== null ? `${node.duration_s.toFixed(3)}s` : '-'}
           </p>
         </div>
         <div>
-          <span className="text-slate-500">Started</span>
-          <p className="mt-1 text-xs font-mono text-slate-400">
+          <span className="text-[#4a4a52]">Started</span>
+          <p className="mt-1 text-xs font-mono text-[#80808a]">
             {node.started_at ?? '-'}
           </p>
         </div>
         <div>
-          <span className="text-slate-500">Completed</span>
-          <p className="mt-1 text-xs font-mono text-slate-400">
+          <span className="text-[#4a4a52]">Completed</span>
+          <p className="mt-1 text-xs font-mono text-[#80808a]">
             {node.completed_at ?? '-'}
           </p>
         </div>
@@ -90,23 +90,23 @@ function NodeDetailContent({ node }: { node: DebugNode }) {
 
       {/* Agent / Model / Prompt */}
       {(node.agent || node.model || node.system_prompt) && (
-        <div className="space-y-2 border-t border-slate-700 pt-3">
+        <div className="space-y-2 border-t border-[#252528] pt-3">
           {node.agent && (
             <div>
-              <span className="text-sm text-slate-500">Agent</span>
-              <p className="mt-0.5 text-xs font-mono text-slate-300">{node.agent}</p>
+              <span className="text-sm text-[#4a4a52]">Agent</span>
+              <p className="mt-0.5 text-xs font-mono text-[#80808a]">{node.agent}</p>
             </div>
           )}
           {node.model && (
             <div>
-              <span className="text-sm text-slate-500">Model</span>
-              <p className="mt-0.5 text-xs font-mono text-blue-400">{node.model}</p>
+              <span className="text-sm text-[#4a4a52]">Model</span>
+              <p className="mt-0.5 text-xs font-mono text-amber-400">{node.model}</p>
             </div>
           )}
           {node.system_prompt && (
             <div>
-              <span className="text-sm text-slate-500">System Prompt</span>
-              <pre className="mt-1 text-xs text-slate-300 bg-slate-900 border border-slate-700 rounded-lg p-3 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
+              <span className="text-sm text-[#4a4a52]">System Prompt</span>
+              <pre className="mt-1 text-xs text-[#80808a] bg-[#131315] border border-[#252528] rounded-lg p-3 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
                 {node.system_prompt}
               </pre>
             </div>
@@ -150,11 +150,11 @@ function StatusIcon({ status }: { status: string }) {
     case 'failed':
       return <XCircle size={16} className="text-red-400" />;
     case 'running':
-      return <Clock size={16} className="text-blue-400 animate-pulse" />;
+      return <Clock size={16} className="text-amber-400 animate-pulse" />;
     case 'skipped':
-      return <SkipForward size={16} className="text-slate-500" />;
+      return <SkipForward size={16} className="text-[#4a4a52]" />;
     default:
-      return <Clock size={16} className="text-slate-500" />;
+      return <Clock size={16} className="text-[#4a4a52]" />;
   }
 }
 
@@ -185,17 +185,17 @@ function CaoDebugSection({
   if (!rawOutput && !parsedOutput) return null;
 
   return (
-    <div className="border-t border-slate-700 pt-3 space-y-3">
+    <div className="border-t border-[#252528] pt-3 space-y-3">
       <div className="flex items-center gap-2">
-        <Terminal size={14} className="text-purple-400" />
-        <span className="text-sm font-semibold text-purple-400">CAO Adapter</span>
+        <Terminal size={14} className="text-orange-400" />
+        <span className="text-sm font-semibold text-orange-400">CAO Adapter</span>
       </div>
 
       {/* Elapsed time */}
       {duration_s !== null && (
         <div className="text-sm">
-          <span className="text-slate-500">Elapsed</span>
-          <p className="mt-0.5 font-mono text-slate-300">
+          <span className="text-[#4a4a52]">Elapsed</span>
+          <p className="mt-0.5 font-mono text-[#80808a]">
             {duration_s >= 60
               ? `${Math.floor(duration_s / 60)}m ${(duration_s % 60).toFixed(1)}s`
               : `${duration_s.toFixed(3)}s`}
@@ -206,16 +206,16 @@ function CaoDebugSection({
       {/* Terminal ID */}
       {terminalId && (
         <div className="text-sm">
-          <span className="text-slate-500">Terminal ID</span>
-          <p className="mt-0.5 font-mono text-xs text-slate-300 break-all">{terminalId}</p>
+          <span className="text-[#4a4a52]">Terminal ID</span>
+          <p className="mt-0.5 font-mono text-xs text-[#80808a] break-all">{terminalId}</p>
         </div>
       )}
 
       {/* Parsed output */}
       {parsedOutput && (
         <div className="text-sm">
-          <span className="text-slate-500">Parsed Output</span>
-          <pre className="mt-1 text-xs text-slate-300 bg-slate-900 border border-slate-700 rounded-lg p-3 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
+          <span className="text-[#4a4a52]">Parsed Output</span>
+          <pre className="mt-1 text-xs text-[#80808a] bg-[#131315] border border-[#252528] rounded-lg p-3 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
             {parsedOutput.content}
           </pre>
         </div>
@@ -226,13 +226,13 @@ function CaoDebugSection({
         <div className="text-sm">
           <button
             onClick={() => setRawExpanded((v) => !v)}
-            className="flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors"
+            className="flex items-center gap-1 text-[#4a4a52] hover:text-[#80808a] transition-colors"
           >
             {rawExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             Raw Output
           </button>
           {rawExpanded && (
-            <pre className="mt-1 text-xs text-slate-400 bg-slate-900 border border-slate-700 rounded-lg p-3 whitespace-pre-wrap max-h-64 overflow-y-auto leading-relaxed font-mono">
+            <pre className="mt-1 text-xs text-[#80808a] bg-[#131315] border border-[#252528] rounded-lg p-3 whitespace-pre-wrap max-h-64 overflow-y-auto leading-relaxed font-mono">
               {rawOutput.content}
             </pre>
           )}
@@ -244,20 +244,20 @@ function CaoDebugSection({
 
 export function DebugNodeDetailSkeleton() {
   return (
-    <div className="flex-1 border border-slate-700 rounded-lg bg-slate-800/50 p-4 space-y-4">
+    <div className="flex-1 border border-[#252528] rounded-lg bg-[#1a1a1d]/50 p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <Skeleton className="h-5 w-32 bg-slate-700" />
-        <Skeleton className="h-6 w-20 bg-slate-700" />
+        <Skeleton className="h-5 w-32 bg-[#252528]" />
+        <Skeleton className="h-6 w-20 bg-[#252528]" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="space-y-1">
-            <Skeleton className="h-3 w-16 bg-slate-700" />
-            <Skeleton className="h-5 w-24 bg-slate-700" />
+            <Skeleton className="h-3 w-16 bg-[#252528]" />
+            <Skeleton className="h-5 w-24 bg-[#252528]" />
           </div>
         ))}
       </div>
-      <Skeleton className="h-24 w-full bg-slate-700" />
+      <Skeleton className="h-24 w-full bg-[#252528]" />
     </div>
   );
 }

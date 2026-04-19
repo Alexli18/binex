@@ -19,22 +19,22 @@ export function CustomNode({ data }: NodeProps<WorkflowNode>) {
 
   return (
     <div
-      className={`bg-slate-800 rounded-lg border-2 ${border} px-4 py-2.5 shadow-lg shadow-black/20 min-w-[180px] max-w-[220px]`}
+      className={`bg-[#1a1a1d] border-2 ${border} px-4 py-2.5 shadow-lg shadow-black/20 min-w-[180px] max-w-[220px]`}
     >
-      <Handle type="target" position={Position.Top} className="!bg-slate-500 !border-slate-400" />
+      <Handle type="target" position={Position.Top} className="!bg-[#4a4a52] !border-[#333338] !rounded-none" />
       <div className="flex items-center gap-2">
         <Icon size={16} className={`shrink-0 ${typeTokens.icon}`} />
-        <span className="text-sm font-medium text-slate-100 truncate">{data.label}</span>
+        <span className="text-sm font-medium text-[#f0f0f0] truncate">{data.label}</span>
       </div>
       {data.status && (
         <div className={`text-xs mt-1 capitalize ${statusTokens.text}`}>{data.status}</div>
       )}
       {data.patternGroup && (
-        <div className="text-[9px] text-pink-400 mt-0.5 truncate">
-          ⬡ {data.patternType ?? 'pattern'}
+        <div className={`text-[9px] mt-0.5 truncate ${typeTokens.text}`}>
+          {data.patternType ?? 'pattern'}
         </div>
       )}
-      <Handle type="source" position={Position.Bottom} className="!bg-slate-500 !border-slate-400" />
+      <Handle type="source" position={Position.Bottom} className="!bg-[#4a4a52] !border-[#333338] !rounded-none" />
     </div>
   );
 }

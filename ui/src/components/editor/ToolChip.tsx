@@ -7,7 +7,7 @@ interface ToolChipProps {
 }
 
 function chipStyle(uri: string) {
-  if (uri.startsWith('builtin://')) return { icon: Wrench, bg: 'bg-blue-500/15 text-blue-300 border-blue-500/30' };
+  if (uri.startsWith('builtin://')) return { icon: Wrench, bg: 'bg-amber-500/15 text-amber-300 border-amber-500/30' };
   if (uri.startsWith('mcp://')) return { icon: Server, bg: 'bg-purple-500/15 text-purple-300 border-purple-500/30' };
   return { icon: Code, bg: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' };
 }

@@ -75,8 +75,8 @@ function NodeMap({
   if (nodes.length === 0) return null;
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
-      <h4 className="text-sm font-bold text-slate-300 mb-4">Node Map</h4>
+    <div className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
+      <h4 className="text-sm font-bold text-[#80808a] mb-4">Node Map</h4>
       <div className="space-y-0">
         {nodes.map((node, i) => {
           const config = nodeStatusConfig[node.status] || nodeStatusConfig.missing_in_bad;
@@ -90,7 +90,7 @@ function NodeMap({
             <div key={node.node_id}>
               <button
                 onClick={() => setExpandedNode(isExpanded ? null : node.node_id)}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-md text-left transition-colors hover:bg-slate-700/30 ${
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-md text-left transition-colors hover:bg-[#1a1a1d]/30 ${
                   isDivergence ? 'ring-2 ring-red-400/60 bg-red-500/5' : ''
                 } ${isDownstream ? 'border-l-2 border-orange-400' : ''}`}
                 aria-expanded={isExpanded}
@@ -98,13 +98,13 @@ function NodeMap({
                 {/* Vertical connector line */}
                 <div className="flex flex-col items-center w-5 shrink-0">
                   <div className={`w-3 h-3 rounded-full ${config.dotClass} ${isDivergence ? 'animate-pulse' : ''}`} />
-                  {!isLast && <div className="w-px h-6 bg-slate-600 mt-1" />}
+                  {!isLast && <div className="w-px h-6 bg-[#252528] mt-1" />}
                 </div>
 
                 {/* Node info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono text-slate-200 truncate">{node.node_id}</span>
+                    <span className="text-sm font-mono text-[#f0f0f0] truncate">{node.node_id}</span>
                     {isDivergence && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-900/50 text-red-300 border border-red-700 font-medium uppercase">
                         Divergence
@@ -125,9 +125,9 @@ function NodeMap({
                     {config.label}
                   </span>
                   {node.similarity !== null && (
-                    <span className="text-xs font-mono text-slate-500">{Math.round(node.similarity * 100)}%</span>
+                    <span className="text-xs font-mono text-[#4a4a52]">{Math.round(node.similarity * 100)}%</span>
                   )}
-                  <ChevronDown size={14} className={`text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`text-[#4a4a52] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                 </div>
               </button>
 
@@ -137,26 +137,26 @@ function NodeMap({
                   <div className="grid grid-cols-2 gap-3">
                     {node.good_status !== null && (
                       <div>
-                        <span className="text-slate-500 text-xs">Good Status</span>
-                        <p className="text-slate-200 text-xs mt-0.5">{node.good_status}</p>
+                        <span className="text-[#4a4a52] text-xs">Good Status</span>
+                        <p className="text-[#f0f0f0] text-xs mt-0.5">{node.good_status}</p>
                       </div>
                     )}
                     {node.bad_status !== null && (
                       <div>
-                        <span className="text-slate-500 text-xs">Bad Status</span>
-                        <p className="text-slate-200 text-xs mt-0.5">{node.bad_status}</p>
+                        <span className="text-[#4a4a52] text-xs">Bad Status</span>
+                        <p className="text-[#f0f0f0] text-xs mt-0.5">{node.bad_status}</p>
                       </div>
                     )}
                     {node.latency_good_ms !== null && (
                       <div>
-                        <span className="text-slate-500 text-xs">Latency Good</span>
-                        <p className="font-mono text-xs text-slate-300 mt-0.5">{node.latency_good_ms}ms</p>
+                        <span className="text-[#4a4a52] text-xs">Latency Good</span>
+                        <p className="font-mono text-xs text-[#80808a] mt-0.5">{node.latency_good_ms}ms</p>
                       </div>
                     )}
                     {node.latency_bad_ms !== null && (
                       <div>
-                        <span className="text-slate-500 text-xs">Latency Bad</span>
-                        <p className="font-mono text-xs text-slate-300 mt-0.5">{node.latency_bad_ms}ms</p>
+                        <span className="text-[#4a4a52] text-xs">Latency Bad</span>
+                        <p className="font-mono text-xs text-[#80808a] mt-0.5">{node.latency_bad_ms}ms</p>
                       </div>
                     )}
                   </div>
@@ -186,15 +186,15 @@ function DivergenceMetrics({ details }: { details: BisectDetails }) {
   const costWarning = hasCost && cost_good > 0 && cost_bad / cost_good > 2;
 
   return (
-    <div className="bg-slate-800/50 rounded-md p-3 my-3 border border-slate-700/50">
+    <div className="bg-[#1a1a1d]/50 rounded-md p-3 my-3 border border-[#252528]/50">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
         {hasLatency && (
           <div className="flex items-center justify-between">
-            <span className="text-slate-400">Latency</span>
+            <span className="text-[#80808a]">Latency</span>
             <div className="flex items-center gap-2 font-mono text-xs">
-              <span className="text-slate-300">{details.latency_good_ms}ms</span>
-              <span className="text-slate-600">&rarr;</span>
-              <span className="text-slate-300">{details.latency_bad_ms}ms</span>
+              <span className="text-[#80808a]">{details.latency_good_ms}ms</span>
+              <span className="text-[#4a4a52]">&rarr;</span>
+              <span className="text-[#80808a]">{details.latency_bad_ms}ms</span>
               {latencyPct !== null && (
                 <span className={`font-medium ${latencyDelta > 0 ? statusColors.failed.text : statusColors.completed.text}`}>
                   {latencyDelta > 0 ? '+' : ''}{latencyPct}%
@@ -205,14 +205,14 @@ function DivergenceMetrics({ details }: { details: BisectDetails }) {
         )}
         {hasCost && (
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 flex items-center gap-1">
+            <span className="text-[#80808a] flex items-center gap-1">
               Cost
               {costWarning && <AlertTriangle size={12} className="text-amber-400" />}
             </span>
             <div className="flex items-center gap-2 font-mono text-xs">
-              <span className="text-slate-300">${cost_good.toFixed(4)}</span>
-              <span className="text-slate-600">&rarr;</span>
-              <span className="text-slate-300">${cost_bad.toFixed(4)}</span>
+              <span className="text-[#80808a]">${cost_good.toFixed(4)}</span>
+              <span className="text-[#4a4a52]">&rarr;</span>
+              <span className="text-[#80808a]">${cost_bad.toFixed(4)}</span>
               <span className={`font-medium ${costDelta > 0 ? statusColors.failed.text : statusColors.completed.text}`}>
                 {costDelta > 0 ? '+' : ''}${costDelta.toFixed(4)}
               </span>
@@ -277,9 +277,9 @@ function BisectDAG({
   if (nodes.length === 0) return null;
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-card overflow-hidden" style={{ height: 300 }}>
-      <div className="px-4 py-2 border-b border-slate-700/50">
-        <h4 className="text-sm font-bold text-slate-300">Workflow DAG</h4>
+    <div className="bg-[#1a1a1d] border border-[#252528] rounded-card overflow-hidden" style={{ height: 300 }}>
+      <div className="px-4 py-2 border-b border-[#252528]/50">
+        <h4 className="text-sm font-bold text-[#80808a]">Workflow DAG</h4>
       </div>
       <ReactFlow
         nodes={nodes}
@@ -293,7 +293,7 @@ function BisectDAG({
         nodesConnectable={false}
         elementsSelectable={false}
         proOptions={{ hideAttribution: true }}
-        className="bg-slate-900"
+        className="bg-[#131315]"
       />
     </div>
   );
@@ -329,11 +329,11 @@ export default function BisectPage() {
       <PageHeader title="Bisect — Find Divergence" description="Compare two runs to find where they diverge" />
 
       {/* Selectors */}
-      <div className="bg-slate-800 border border-slate-700 rounded-card p-4 mt-6">
+      <div className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4 mt-6">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-400 mb-1">Good Run</label>
+              <label className="block text-sm font-medium text-[#80808a] mb-1">Good Run</label>
               <Select value={goodRun} onValueChange={setGoodRun}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a run..." />
@@ -352,7 +352,7 @@ export default function BisectPage() {
             </div>
 
             <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-400 mb-1">Bad Run</label>
+              <label className="block text-sm font-medium text-[#80808a] mb-1">Bad Run</label>
               <Select value={badRun} onValueChange={setBadRun}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a run..." />
@@ -373,8 +373,8 @@ export default function BisectPage() {
 
           {/* Threshold slider */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">
-              Similarity Threshold: <span className="text-slate-200 font-mono">{threshold.toFixed(2)}</span>
+            <label className="block text-sm font-medium text-[#80808a] mb-1">
+              Similarity Threshold: <span className="text-[#f0f0f0] font-mono">{threshold.toFixed(2)}</span>
             </label>
             <input
               type="range"
@@ -383,9 +383,9 @@ export default function BisectPage() {
               step="0.05"
               value={threshold}
               onChange={(e) => setThreshold(parseFloat(e.target.value))}
-              className="w-full accent-purple-500"
+              className="w-full accent-amber-500"
             />
-            <div className="flex justify-between text-xs text-slate-500 mt-1">
+            <div className="flex justify-between text-xs text-[#4a4a52] mt-1">
               <span>0.10</span>
               <span>1.00</span>
             </div>
@@ -418,10 +418,10 @@ export default function BisectPage() {
           {bisect.data.divergence_node ? (
             <>
               {/* Divergence found */}
-              <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
+              <div className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
                 <div className="flex items-center gap-3 mb-4">
                   <AlertCircle className="w-5 h-5 text-red-400" />
-                  <span className="text-sm font-bold text-slate-200">
+                  <span className="text-sm font-bold text-[#f0f0f0]">
                     Divergence at node:{' '}
                     <span className="font-mono text-red-400">{bisect.data.divergence_node}</span>
                   </span>
@@ -434,10 +434,10 @@ export default function BisectPage() {
                 {similarityPercent !== null && (
                   <div className="mb-4">
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-slate-400">Similarity</span>
-                      <span className="font-mono text-slate-200">{similarityPercent}%</span>
+                      <span className="text-[#80808a]">Similarity</span>
+                      <span className="font-mono text-[#f0f0f0]">{similarityPercent}%</span>
                     </div>
-                    <div className="w-full bg-slate-700 rounded-full h-3">
+                    <div className="w-full bg-[#252528] rounded-full h-3">
                       <div
                         className={`h-3 rounded-full transition-all ${
                           similarityPercent >= 80
@@ -454,15 +454,15 @@ export default function BisectPage() {
 
                 {/* Details card */}
                 {bisect.data.details && (
-                  <div className="bg-slate-900 border border-slate-700 rounded-card p-4">
-                    <h4 className="text-sm font-bold text-slate-300 mb-3">Divergence Details</h4>
+                  <div className="bg-[#131315] border border-[#252528] rounded-card p-4">
+                    <h4 className="text-sm font-bold text-[#80808a] mb-3">Divergence Details</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                       <div>
-                        <span className="text-slate-500 block mb-1">Good Run Status</span>
+                        <span className="text-[#4a4a52] block mb-1">Good Run Status</span>
                         <StatusBadge status={bisect.data.details.good_status} />
                       </div>
                       <div>
-                        <span className="text-slate-500 block mb-1">Bad Run Status</span>
+                        <span className="text-[#4a4a52] block mb-1">Bad Run Status</span>
                         <StatusBadge status={bisect.data.details.bad_status} />
                       </div>
                     </div>
@@ -473,16 +473,16 @@ export default function BisectPage() {
                     <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                       {bisect.data.details.good_output !== null && (
                         <div>
-                          <span className="text-slate-500 block mb-1">Good Output</span>
-                          <pre className="text-xs font-mono text-slate-300 bg-slate-950 p-2 rounded max-h-40 overflow-y-auto whitespace-pre-wrap break-all">
+                          <span className="text-[#4a4a52] block mb-1">Good Output</span>
+                          <pre className="text-xs font-mono text-[#80808a] bg-[#0b0b0c] p-2 rounded max-h-40 overflow-y-auto whitespace-pre-wrap break-all">
                             {bisect.data.details.good_output}
                           </pre>
                         </div>
                       )}
                       {bisect.data.details.bad_output !== null && (
                         <div>
-                          <span className="text-slate-500 block mb-1">Bad Output</span>
-                          <pre className="text-xs font-mono text-slate-300 bg-slate-950 p-2 rounded max-h-40 overflow-y-auto whitespace-pre-wrap break-all">
+                          <span className="text-[#4a4a52] block mb-1">Bad Output</span>
+                          <pre className="text-xs font-mono text-[#80808a] bg-[#0b0b0c] p-2 rounded max-h-40 overflow-y-auto whitespace-pre-wrap break-all">
                             {bisect.data.details.bad_output}
                           </pre>
                         </div>
@@ -491,7 +491,7 @@ export default function BisectPage() {
 
                     {bisect.data.details.diff && (
                       <div>
-                        <span className="text-slate-500 text-sm block mb-2">Output Diff</span>
+                        <span className="text-[#4a4a52] text-sm block mb-2">Output Diff</span>
                         <ArtifactDiff diff={bisect.data.details.diff} />
                       </div>
                     )}
@@ -519,12 +519,12 @@ export default function BisectPage() {
             </>
           ) : (
             /* No divergence found */
-            <div className="bg-slate-800 border border-slate-700 rounded-card p-4 flex items-center gap-3">
+            <div className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4 flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-green-400" />
               <span className="inline-flex items-center px-2.5 py-1 rounded text-sm font-medium bg-green-900/50 text-green-300 border border-green-700">
                 No divergence found
               </span>
-              <span className="text-slate-400 text-sm">
+              <span className="text-[#80808a] text-sm">
                 The runs are similar above the threshold.
               </span>
             </div>

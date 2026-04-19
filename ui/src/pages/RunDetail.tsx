@@ -136,7 +136,7 @@ export default function RunDetail() {
   if (!run) {
     return (
       <div className="p-6">
-        <p className="text-slate-400">Run not found.</p>
+        <p className="text-[#80808a]">Run not found.</p>
       </div>
     );
   }
@@ -168,24 +168,24 @@ export default function RunDetail() {
   return (
     <div className="flex flex-col h-screen">
       {/* Header bar */}
-      <div className="flex items-center gap-3 px-6 py-3 bg-slate-900 border-b border-slate-700/50">
+      <div className="flex items-center gap-3 px-6 py-3 bg-[#131315] border-b border-[#252528]/50">
         <button
           onClick={() => navigate('/')}
-          className="text-sm text-slate-400 hover:text-slate-200 transition-colors"
+          className="text-sm text-[#80808a] hover:text-[#f0f0f0] transition-colors"
         >
           ← Dashboard
         </button>
-        <span className="text-slate-600">/</span>
-        <span className="text-sm font-medium text-slate-200">{run.workflow_name}</span>
-        <span className="font-mono text-xs text-slate-500">{run.run_id.slice(0, 8)}</span>
+        <span className="text-[#4a4a52]">/</span>
+        <span className="text-sm font-medium text-[#f0f0f0]">{run.workflow_name}</span>
+        <span className="font-mono text-xs text-[#4a4a52]">{run.run_id.slice(0, 8)}</span>
         <StatusBadge status={run.status} />
         <div className="flex-1" />
         {/* Summary stats inline */}
-        <span className="text-xs text-slate-400">{run.completed_nodes}/{run.total_nodes} nodes</span>
-        <span className="text-xs text-slate-400">·</span>
-        <span className="text-xs text-slate-400">{duration !== null ? `${duration}s` : '...'}</span>
-        <span className="text-xs text-slate-400">·</span>
-        <span className="text-xs font-mono text-slate-400">${(run.total_cost ?? 0).toFixed(4)}</span>
+        <span className="text-xs text-[#80808a]">{run.completed_nodes}/{run.total_nodes} nodes</span>
+        <span className="text-xs text-[#80808a]">·</span>
+        <span className="text-xs text-[#80808a]">{duration !== null ? `${duration}s` : '...'}</span>
+        <span className="text-xs text-[#80808a]">·</span>
+        <span className="text-xs font-mono text-[#80808a]">${(run.total_cost ?? 0).toFixed(4)}</span>
         <div className="flex gap-1.5 ml-2">
           <Button variant="outline" size="sm" onClick={handleRerun} disabled={!run.workflow_path || createRun.isPending}>
             <RotateCcw className="w-3.5 h-3.5 mr-1" />
@@ -199,7 +199,7 @@ export default function RunDetail() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-0 px-6 bg-slate-900 border-b border-slate-700/50" role="tablist" aria-label="Run detail tabs">
+      <div className="flex items-center gap-0 px-6 bg-[#131315] border-b border-[#252528]/50" role="tablist" aria-label="Run detail tabs">
         {(['overview', 'graph', 'trace', 'debug'] as Tab[]).map((tab) => (
           <button
             key={tab}
@@ -210,10 +210,10 @@ export default function RunDetail() {
             onClick={() => setActiveTab(tab)}
             className={cn(
               'px-4 min-h-[44px] text-sm font-medium border-b-2 transition-colors capitalize',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-inset',
               activeTab === tab
-                ? 'border-blue-500 text-blue-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200',
+                ? 'border-amber-500 text-amber-400'
+                : 'border-transparent text-[#80808a] hover:text-[#f0f0f0]',
             )}
           >
             {tab}
@@ -221,7 +221,7 @@ export default function RunDetail() {
         ))}
         {/* More dropdown for Diagnose, Lineage, Diff */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="px-4 py-2.5 text-sm font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent">
+          <DropdownMenuTrigger className="px-4 py-2.5 text-sm font-medium text-[#80808a] hover:text-[#f0f0f0] border-b-2 border-transparent">
             More ▾
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -245,14 +245,14 @@ export default function RunDetail() {
         {activeTab === 'overview' && (
           <div className="p-6 flex flex-col gap-6" role="tabpanel" id="run-tabpanel-overview" aria-labelledby="run-tab-overview">
             {/* Summary card */}
-            <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-300">
+            <div className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-[#80808a]">
                 <div>
-                  <span className="font-medium text-slate-100">Run ID</span>
+                  <span className="font-medium text-[#f0f0f0]">Run ID</span>
                   <p className="font-mono text-xs mt-0.5 break-all">{run.run_id}</p>
                 </div>
                 <div>
-                  <span className="font-medium text-slate-100">Nodes</span>
+                  <span className="font-medium text-[#f0f0f0]">Nodes</span>
                   <p className="mt-0.5">
                     {run.completed_nodes}/{run.total_nodes} completed
                     {run.failed_nodes > 0 && (
@@ -263,34 +263,34 @@ export default function RunDetail() {
                   </p>
                 </div>
                 <div>
-                  <span className="font-medium text-slate-100">Duration</span>
+                  <span className="font-medium text-[#f0f0f0]">Duration</span>
                   <p className="mt-0.5">
                     {duration !== null ? `${duration}s` : 'In progress...'}
                   </p>
                 </div>
                 <div>
-                  <span className="font-medium text-slate-100">Total Cost</span>
+                  <span className="font-medium text-[#f0f0f0]">Total Cost</span>
                   <p className="mt-0.5 font-mono">${(run.total_cost ?? 0).toFixed(4)}</p>
                 </div>
               </div>
             </div>
 
             {/* Artifacts table */}
-            <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
-              <h3 className="text-sm font-medium text-slate-200 mb-3">Artifacts</h3>
+            <div className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
+              <h3 className="text-sm font-medium text-[#f0f0f0] mb-3">Artifacts</h3>
               {!artifacts || artifacts.length === 0 ? (
-                <p className="text-slate-500 text-sm">No artifacts</p>
+                <p className="text-[#4a4a52] text-sm">No artifacts</p>
               ) : (
                 <table className="min-w-full text-sm">
                   <thead>
-                    <tr className="text-left text-slate-400">
+                    <tr className="text-left text-[#80808a]">
                       <th className="pb-2 font-medium">Producer</th>
                       <th className="pb-2 font-medium">Type</th>
                       <th className="pb-2 font-medium">Step</th>
                       <th className="pb-2 font-medium">Content</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800">
+                  <tbody className="divide-y divide-[#252528]">
                     {artifacts.map((a) => {
                       const content = typeof a.content === 'string' ? a.content : JSON.stringify(a.content, null, 2);
                       const artKey = `${a.lineage.produced_by}:${a.type}`;
@@ -299,13 +299,13 @@ export default function RunDetail() {
                       return (
                         <Fragment key={artKey}>
                           <tr
-                            className={isLong ? 'cursor-pointer hover:bg-slate-900' : ''}
+                            className={isLong ? 'cursor-pointer hover:bg-[#131315]' : ''}
                             onClick={() => isLong && setExpandedArtifact(isExpanded ? null : artKey)}
                           >
                             <td className="py-2 font-mono text-xs">{a.lineage.produced_by}</td>
                             <td className="py-2">{a.type}</td>
                             <td className="py-2">{a.lineage.step}</td>
-                            <td className="py-2 text-slate-300 max-w-md">
+                            <td className="py-2 text-[#80808a] max-w-md">
                               {isExpanded ? null : (
                                 <span className="block truncate">
                                   {content.slice(0, 120)}
@@ -313,7 +313,7 @@ export default function RunDetail() {
                                 </span>
                               )}
                               {isLong && (
-                                <span className="text-blue-500 text-xs ml-1">
+                                <span className="text-amber-400 text-xs ml-1">
                                   {isExpanded ? 'collapse' : 'expand'}
                                 </span>
                               )}
@@ -322,7 +322,7 @@ export default function RunDetail() {
                           {isExpanded && (
                             <tr>
                               <td colSpan={4} className="p-0">
-                                <pre className="bg-slate-900 p-4 text-xs text-slate-300 whitespace-pre-wrap break-words max-h-96 overflow-y-auto border-t border-b border-slate-700">
+                                <pre className="bg-[#131315] p-4 text-xs text-[#80808a] whitespace-pre-wrap break-words max-h-96 overflow-y-auto border-t border-b border-[#252528]">
                                   {content}
                                 </pre>
                               </td>
@@ -337,25 +337,25 @@ export default function RunDetail() {
             </div>
 
             {/* Costs table */}
-            <div className="bg-slate-800 border border-slate-700 rounded-card p-4">
-              <h3 className="text-sm font-medium text-slate-200 mb-3">Costs</h3>
+            <div className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
+              <h3 className="text-sm font-medium text-[#f0f0f0] mb-3">Costs</h3>
               {!costSummary || costSummary.records.length === 0 ? (
-                <p className="text-slate-500 text-sm">No cost records</p>
+                <p className="text-[#4a4a52] text-sm">No cost records</p>
               ) : (
                 <>
-                  <p className="text-sm text-slate-300 mb-3">
+                  <p className="text-sm text-[#80808a] mb-3">
                     Total: <span className="font-mono font-bold">${(costSummary.total_cost ?? 0).toFixed(4)}</span>
                   </p>
                   <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="text-left text-slate-400">
+                      <tr className="text-left text-[#80808a]">
                         <th className="pb-2 font-medium">Node</th>
                         <th className="pb-2 font-medium">Model</th>
                         <th className="pb-2 font-medium">Source</th>
                         <th className="pb-2 font-medium text-right">Cost</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800">
+                    <tbody className="divide-y divide-[#252528]">
                       {costSummary.records.map((c) => (
                         <tr key={`${c.node_id}:${c.model ?? 'unknown'}`}>
                           <td className="py-2 font-mono text-xs">{c.node_id}</td>
@@ -385,7 +385,7 @@ export default function RunDetail() {
                   }
                 />
               ) : (
-                <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+                <div className="flex items-center justify-center h-full text-[#4a4a52] text-sm">
                   No execution records yet
                 </div>
               )}
@@ -393,12 +393,12 @@ export default function RunDetail() {
 
             {/* Node Side Panel */}
             {selectedNodeId && (
-              <div className="w-80 bg-slate-800 border-l border-slate-700 p-4 overflow-y-auto">
+              <div className="w-80 bg-[#1a1a1d] border-l border-[#252528] p-4 overflow-y-auto">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-bold text-sm">{selectedNodeId}</h3>
                   <button
                     onClick={() => setSelectedNodeId(null)}
-                    className="p-1 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-700 transition-colors"
+                    className="p-1 rounded text-[#4a4a52] hover:text-[#80808a] hover:bg-[#252528] transition-colors"
                     aria-label="Close"
                   >
                     <X size={16} />
@@ -407,16 +407,16 @@ export default function RunDetail() {
                 {selectedRecord && (
                   <div className="space-y-2 text-sm mb-4">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Status</span>
+                      <span className="text-[#80808a]">Status</span>
                       <StatusBadge status={selectedRecord.status} />
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Latency</span>
+                      <span className="text-[#80808a]">Latency</span>
                       <span>{selectedRecord.latency_ms}ms</span>
                     </div>
                     {selectedRecord.error && (
                       <div>
-                        <span className="text-slate-400">Error</span>
+                        <span className="text-[#80808a]">Error</span>
                         <p className="text-red-400 text-xs mt-1 bg-red-900/30 p-2 rounded">
                           {selectedRecord.error}
                         </p>
@@ -426,23 +426,23 @@ export default function RunDetail() {
                 )}
                 {selectedCost && (
                   <div className="text-sm border-t pt-2 mb-4">
-                    <span className="text-slate-400">Cost</span>
+                    <span className="text-[#80808a]">Cost</span>
                     <p className="font-mono">${(selectedCost.cost ?? 0).toFixed(6)}</p>
                     {selectedCost.model && (
-                      <p className="text-xs text-slate-500">{selectedCost.model}</p>
+                      <p className="text-xs text-[#4a4a52]">{selectedCost.model}</p>
                     )}
                   </div>
                 )}
                 {selectedArtifacts.length > 0 && (
                   <div className="text-sm border-t pt-2">
-                    <span className="text-slate-400">Artifacts ({selectedArtifacts.length})</span>
+                    <span className="text-[#80808a]">Artifacts ({selectedArtifacts.length})</span>
                     <div className="mt-1 space-y-2">
                       {selectedArtifacts.map((a) => {
                         const content = typeof a.content === 'string' ? a.content : JSON.stringify(a.content, null, 2);
                         return (
-                          <div key={`${a.lineage.produced_by}:${a.type}`} className="bg-slate-900 rounded p-2 text-xs break-all">
+                          <div key={`${a.lineage.produced_by}:${a.type}`} className="bg-[#131315] rounded p-2 text-xs break-all">
                             <span className="font-medium">{a.type}</span>
-                            <pre className="text-slate-300 mt-0.5 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                            <pre className="text-[#80808a] mt-0.5 whitespace-pre-wrap max-h-60 overflow-y-auto">
                               {content}
                             </pre>
                           </div>
@@ -465,8 +465,8 @@ export default function RunDetail() {
               <p className="text-red-400">Failed to load trace: {(traceQuery.error as Error).message}</p>
             ) : !traceQuery.data || traceQuery.data.timeline.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <p className="text-slate-400 text-sm">No trace data available for this run.</p>
-                <p className="text-slate-500 text-xs mt-1">Trace data is recorded during workflow execution.</p>
+                <p className="text-[#80808a] text-sm">No trace data available for this run.</p>
+                <p className="text-[#4a4a52] text-xs mt-1">Trace data is recorded during workflow execution.</p>
               </div>
             ) : (
               <>
@@ -476,8 +476,8 @@ export default function RunDetail() {
                   totalDuration={traceQuery.data?.total_duration_s ?? 0}
                   anomalies={traceQuery.data?.anomalies ?? []}
                 />
-                <div className="border border-slate-700 rounded-card bg-slate-800/50 p-4">
-                  <h2 className="text-sm font-medium text-slate-300 mb-3">Execution Timeline</h2>
+                <div className="border border-[#252528] rounded-card bg-[#1a1a1d]/50 p-4">
+                  <h2 className="text-sm font-medium text-[#80808a] mb-3">Execution Timeline</h2>
                   {traceQuery.data && traceQuery.data.timeline.length > 0 ? (
                     <TraceGantt
                       timeline={traceQuery.data.timeline}
@@ -485,7 +485,7 @@ export default function RunDetail() {
                       anomalyNodeIds={anomalyNodeIds}
                     />
                   ) : (
-                    <p className="text-slate-500 text-sm">No timeline entries</p>
+                    <p className="text-[#4a4a52] text-sm">No timeline entries</p>
                   )}
                 </div>
               </>
@@ -502,8 +502,8 @@ export default function RunDetail() {
               <p className="text-red-400">Failed to load debug data: {(debugQuery.error as Error).message}</p>
             ) : !debugQuery.data || debugQuery.data.nodes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <p className="text-slate-400 text-sm">No debug data available for this run.</p>
-                <p className="text-slate-500 text-xs mt-1">Debug data includes node inputs, outputs, and errors.</p>
+                <p className="text-[#80808a] text-sm">No debug data available for this run.</p>
+                <p className="text-[#4a4a52] text-xs mt-1">Debug data includes node inputs, outputs, and errors.</p>
               </div>
             ) : (
               <div className="flex gap-4 flex-1 min-h-0">

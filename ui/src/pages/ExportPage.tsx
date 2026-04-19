@@ -4,7 +4,7 @@ import { Download, Check } from 'lucide-react';
 const statusClasses: Record<string, string> = {
   completed: 'bg-green-500/20 text-green-400',
   failed: 'bg-red-500/20 text-red-400',
-  running: 'bg-blue-500/20 text-blue-400',
+  running: 'bg-amber-500/20 text-amber-400',
 };
 import { useRuns } from '../hooks/useRuns';
 import { useExport } from '../hooks/useUtilities';
@@ -93,23 +93,23 @@ export default function ExportPage() {
 
       <div className="mt-6 flex flex-col gap-6 max-w-4xl">
         {/* Selection mode */}
-        <div className="border border-slate-700 rounded-card bg-slate-800/50 p-4 space-y-4">
+        <div className="border border-[#252528] rounded-card bg-[#1a1a1d]/50 p-4 space-y-4">
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-[#80808a] cursor-pointer">
               <input
                 type="radio"
                 checked={!useLastN}
                 onChange={() => setUseLastN(false)}
-                className="text-blue-500"
+                className="text-amber-400"
               />
               Select specific runs
             </label>
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-[#80808a] cursor-pointer">
               <input
                 type="radio"
                 checked={useLastN}
                 onChange={() => setUseLastN(true)}
-                className="text-blue-500"
+                className="text-amber-400"
               />
               Last N runs
             </label>
@@ -117,7 +117,7 @@ export default function ExportPage() {
 
           {useLastN ? (
             <div className="flex items-center gap-3">
-              <label className="text-sm text-slate-400">Number of runs:</label>
+              <label className="text-sm text-[#80808a]">Number of runs:</label>
               <Input
                 type="number"
                 min={1}
@@ -137,12 +137,12 @@ export default function ExportPage() {
                   message={runsError instanceof Error ? runsError.message : String(runsError)}
                 />
               ) : sortedRuns.length === 0 ? (
-                <p className="text-slate-500 text-sm">No runs available.</p>
+                <p className="text-[#4a4a52] text-sm">No runs available.</p>
               ) : (
-                <div className="border border-slate-700 rounded-card overflow-hidden max-h-64 overflow-y-auto">
+                <div className="border border-[#252528] rounded-card overflow-hidden max-h-64 overflow-y-auto">
                   <table className="min-w-full text-sm">
-                    <thead className="sticky top-0 bg-slate-900">
-                      <tr className="border-b border-slate-700">
+                    <thead className="sticky top-0 bg-[#131315]">
+                      <tr className="border-b border-[#252528]">
                         <th className="text-left px-3 py-2 w-8">
                           <input
                             type="checkbox"
@@ -151,29 +151,29 @@ export default function ExportPage() {
                               selectedRunIds.size === sortedRuns.length
                             }
                             onChange={toggleAll}
-                            className="rounded border-slate-600 bg-slate-900 text-blue-500"
+                            className="rounded border-[#333338] bg-[#131315] text-amber-400"
                             aria-label="Select all runs"
                           />
                         </th>
-                        <th className="text-left px-3 py-2 font-medium text-slate-400">
+                        <th className="text-left px-3 py-2 font-medium text-[#80808a]">
                           Run ID
                         </th>
-                        <th className="text-left px-3 py-2 font-medium text-slate-400">
+                        <th className="text-left px-3 py-2 font-medium text-[#80808a]">
                           Workflow
                         </th>
-                        <th className="text-left px-3 py-2 font-medium text-slate-400">
+                        <th className="text-left px-3 py-2 font-medium text-[#80808a]">
                           Status
                         </th>
-                        <th className="text-left px-3 py-2 font-medium text-slate-400">
+                        <th className="text-left px-3 py-2 font-medium text-[#80808a]">
                           Created
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-700/50">
+                    <tbody className="divide-y divide-[#252528]/50">
                       {sortedRuns.map((run) => (
                         <tr
                           key={run.run_id}
-                          className="hover:bg-slate-700/30 cursor-pointer transition-colors"
+                          className="hover:bg-[#1a1a1d]/30 cursor-pointer transition-colors"
                           onClick={() => toggleRun(run.run_id)}
                         >
                           <td className="px-3 py-2">
@@ -182,24 +182,24 @@ export default function ExportPage() {
                               checked={selectedRunIds.has(run.run_id)}
                               onChange={() => toggleRun(run.run_id)}
                               onClick={(e) => e.stopPropagation()}
-                              className="rounded border-slate-600 bg-slate-900 text-blue-500"
+                              className="rounded border-[#333338] bg-[#131315] text-amber-400"
                               aria-label={`Select run ${run.run_id}`}
                             />
                           </td>
-                          <td className="px-3 py-2 font-mono text-xs text-slate-300">
+                          <td className="px-3 py-2 font-mono text-xs text-[#80808a]">
                             {run.run_id.slice(0, 12)}...
                           </td>
-                          <td className="px-3 py-2 text-slate-300">
+                          <td className="px-3 py-2 text-[#80808a]">
                             {run.workflow_name}
                           </td>
                           <td className="px-3 py-2">
                             <span
-                              className={`text-xs px-1.5 py-0.5 rounded ${statusClasses[run.status] ?? 'bg-slate-600/20 text-slate-400'}`}
+                              className={`text-xs px-1.5 py-0.5 rounded ${statusClasses[run.status] ?? 'bg-[#333338]/20 text-[#80808a]'}`}
                             >
                               {run.status}
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-xs text-slate-500">
+                          <td className="px-3 py-2 text-xs text-[#4a4a52]">
                             {new Date(run.started_at).toLocaleString()}
                           </td>
                         </tr>
@@ -209,7 +209,7 @@ export default function ExportPage() {
                 </div>
               )}
               {selectedRunIds.size > 0 && (
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="text-xs text-[#4a4a52] mt-2">
                   {selectedRunIds.size} run{selectedRunIds.size > 1 ? 's' : ''} selected
                 </p>
               )}
@@ -218,20 +218,20 @@ export default function ExportPage() {
         </div>
 
         {/* Options */}
-        <div className="border border-slate-700 rounded-card bg-slate-800/50 p-4 space-y-4">
-          <h3 className="text-sm font-medium text-slate-300">Export Options</h3>
+        <div className="border border-[#252528] rounded-card bg-[#1a1a1d]/50 p-4 space-y-4">
+          <h3 className="text-sm font-medium text-[#80808a]">Export Options</h3>
 
           {/* Format */}
           <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-400">Format:</span>
-            <div className="flex gap-1 border border-slate-700 rounded-lg bg-slate-900 p-0.5">
+            <span className="text-sm text-[#80808a]">Format:</span>
+            <div className="flex gap-1 border border-[#252528] rounded-lg bg-[#131315] p-0.5">
               {(['csv', 'json'] as FormatOption[]).map((f) => (
                 <Button
                   key={f}
                   onClick={() => setFormat(f)}
                   variant={format === f ? 'default' : 'ghost'}
                   size="sm"
-                  className={format === f ? '' : 'text-slate-400 hover:text-slate-200'}
+                  className={format === f ? '' : 'text-[#80808a] hover:text-[#f0f0f0]'}
                 >
                   {f.toUpperCase()}
                 </Button>
@@ -240,12 +240,12 @@ export default function ExportPage() {
           </div>
 
           {/* Include artifacts */}
-          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+          <label className="flex items-center gap-2 text-sm text-[#80808a] cursor-pointer">
             <input
               type="checkbox"
               checked={includeArtifacts}
               onChange={(e) => setIncludeArtifacts(e.target.checked)}
-              className="rounded border-slate-600 bg-slate-900 text-blue-500"
+              className="rounded border-[#333338] bg-[#131315] text-amber-400"
             />
             Include artifacts
           </label>

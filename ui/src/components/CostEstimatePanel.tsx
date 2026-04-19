@@ -10,12 +10,12 @@ interface CostEstimatePanelProps {
 const TYPE_COLORS: Record<string, string> = {
   llm: 'bg-blue-500',
   local: 'bg-green-500',
-  human: 'bg-purple-500',
-  a2a: 'bg-slate-500',
+  human: 'bg-emerald-500',
+  a2a: 'bg-pink-500',
 };
 
 function getNodeTypeColor(type: string): string {
-  return TYPE_COLORS[type] ?? 'bg-slate-500';
+  return TYPE_COLORS[type] ?? 'bg-[#4a4a52]';
 }
 
 export function CostEstimatePanel({ yamlContent }: CostEstimatePanelProps) {
@@ -49,18 +49,18 @@ export function CostEstimatePanel({ yamlContent }: CostEstimatePanelProps) {
     : 1;
 
   return (
-    <div className="border-t border-slate-700 bg-slate-800">
+    <div className="border-t border-[#252528] bg-[#1a1a1d]">
       {/* Compact header — always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-slate-700/50 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-[#252528]/50 transition-colors"
       >
         <div className="flex items-center gap-2">
           <DollarSign className="w-3.5 h-3.5 text-green-400" />
-          <span className="text-xs font-medium text-slate-300">Cost</span>
-          {estimate.isPending && <Loader2 className="w-3 h-3 text-slate-500 animate-spin" />}
+          <span className="text-xs font-medium text-[#80808a]">Cost</span>
+          {estimate.isPending && <Loader2 className="w-3 h-3 text-[#4a4a52] animate-spin" />}
           {data && (
-            <span className="text-xs font-mono text-slate-100">${total.toFixed(4)}</span>
+            <span className="text-xs font-mono text-[#f0f0f0]">${total.toFixed(4)}</span>
           )}
           {warningCount > 0 && (
             <span className="flex items-center gap-0.5 text-amber-400">
@@ -69,10 +69,10 @@ export function CostEstimatePanel({ yamlContent }: CostEstimatePanelProps) {
             </span>
           )}
           {nodeCount > 0 && (
-            <span className="text-[10px] text-slate-500">{nodeCount} nodes</span>
+            <span className="text-[10px] text-[#4a4a52]">{nodeCount} nodes</span>
           )}
         </div>
-        {expanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" /> : <ChevronUp className="w-3.5 h-3.5 text-slate-500" />}
+        {expanded ? <ChevronDown className="w-3.5 h-3.5 text-[#4a4a52]" /> : <ChevronUp className="w-3.5 h-3.5 text-[#4a4a52]" />}
       </button>
 
       {/* Expanded detail */}
@@ -87,16 +87,16 @@ export function CostEstimatePanel({ yamlContent }: CostEstimatePanelProps) {
               return (
                 <div key={node.node_id} className="flex items-center gap-1.5">
                   <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${color}`} />
-                  <span className="text-[10px] text-slate-400 w-16 truncate shrink-0" title={node.node_id}>
+                  <span className="text-[10px] text-[#80808a] w-16 truncate shrink-0" title={node.node_id}>
                     {node.node_id}
                   </span>
-                  <div className="flex-1 bg-slate-700 rounded-full h-1.5">
+                  <div className="flex-1 bg-[#252528] rounded-full h-1.5">
                     <div
                       className={`h-1.5 rounded-full ${color}`}
                       style={{ width: `${Math.max(widthPct, 2)}%` }}
                     />
                   </div>
-                  <span className="text-[10px] font-mono text-slate-500 w-14 text-right shrink-0">
+                  <span className="text-[10px] font-mono text-[#4a4a52] w-14 text-right shrink-0">
                     {cost > 0 ? `$${cost.toFixed(4)}` : 'N/A'}
                   </span>
                 </div>

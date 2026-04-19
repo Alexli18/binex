@@ -13,13 +13,13 @@ export function DebugErrorPanel({ error }: DebugErrorPanelProps) {
     <div>
       <div className="flex items-center gap-1.5 mb-1">
         <AlertTriangle size={14} className={statusColors.failed.text} />
-        <span className="text-sm text-slate-500">Error</span>
+        <span className="text-sm text-[#4a4a52]">Error</span>
       </div>
       <div className={`mt-1 rounded-md ${statusColors.failed.bg} border ${statusColors.failed.border} p-3 text-sm ${statusColors.failed.text} font-mono whitespace-pre-wrap break-words`}>
         {error}
       </div>
       {isStackTrace && (
-        <p className="mt-1.5 text-xs text-slate-500">
+        <p className="mt-1.5 text-xs text-[#4a4a52]">
           Tip: Check the stack trace above for the root cause. The last line usually contains the error message.
         </p>
       )}

@@ -102,38 +102,38 @@ function CaoAdapterCard() {
 
   return (
     <div>
-      <h3 className="text-sm font-medium text-slate-300 mb-3">
+      <h3 className="text-sm font-medium text-[#80808a] mb-3">
         CLI Agent Orchestrator (1)
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+        <div className="rounded-lg border border-[#252528] bg-[#1a1a1d]/50 p-4">
           <div className="flex items-start gap-3 mb-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-              <TerminalSquare size={16} className="text-purple-400" />
+            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+              <TerminalSquare size={16} className="text-orange-400" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h4 className="text-sm font-medium text-slate-200">CAO Agent</h4>
+                <h4 className="text-sm font-medium text-[#f0f0f0]">CAO Agent</h4>
                 <code className="text-xs font-mono text-cyan-400">cao://</code>
                 <span className="flex items-center gap-1.5 ml-auto">
                   <span className={`inline-block w-2 h-2 rounded-full ${style.dot}`} />
                   <span className={`text-xs ${style.text}`}>{style.label}</span>
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-[#80808a] mt-1">
                 Orchestrate CLI AI agents (Claude Code, Kiro CLI, Amazon Q CLI)
                 via AWS CAO tmux terminals.
               </p>
             </div>
           </div>
-          <div className="bg-slate-900 rounded p-2 overflow-x-auto flex items-center justify-between">
-            <code className="text-xs font-mono text-slate-300">agent: cao://developer</code>
-            <span className="text-[10px] font-mono text-slate-500 ml-2 shrink-0">{serverUrl}</span>
+          <div className="bg-[#131315] rounded p-2 overflow-x-auto flex items-center justify-between">
+            <code className="text-xs font-mono text-[#80808a]">agent: cao://developer</code>
+            <span className="text-[10px] font-mono text-[#4a4a52] ml-2 shrink-0">{serverUrl}</span>
           </div>
           <div className="mt-2 flex items-center justify-between">
             <div className="flex flex-wrap gap-1.5">
               {['claude_code', 'kiro_cli', 'q_cli'].map((p) => (
-                <span key={p} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">
+                <span key={p} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#252528] text-[#80808a]">
                   {p}
                 </span>
               ))}
@@ -202,14 +202,14 @@ export default function PluginsPage() {
       <div className="mt-6 flex flex-col gap-6 max-w-4xl">
         {/* Built-in Adapters — card grid */}
         <div>
-          <h3 className="text-sm font-medium text-slate-300 mb-3">
+          <h3 className="text-sm font-medium text-[#80808a] mb-3">
             Built-in Adapters ({BUILTIN_ADAPTERS.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {BUILTIN_ADAPTERS.map((adapter) => (
               <div
                 key={adapter.prefix}
-                className="rounded-lg border border-slate-700 bg-slate-800/50 p-4"
+                className="rounded-lg border border-[#252528] bg-[#1a1a1d]/50 p-4"
               >
                 <div className="flex items-start gap-3 mb-3">
                   <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
@@ -217,14 +217,14 @@ export default function PluginsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-medium text-slate-200">{adapter.name}</h4>
+                      <h4 className="text-sm font-medium text-[#f0f0f0]">{adapter.name}</h4>
                       <code className="text-xs font-mono text-cyan-400">{adapter.prefix}://</code>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">{adapter.description}</p>
+                    <p className="text-xs text-[#80808a] mt-1">{adapter.description}</p>
                   </div>
                 </div>
-                <div className="bg-slate-900 rounded p-2 overflow-x-auto">
-                  <code className="text-xs font-mono text-slate-300">{adapter.usage}</code>
+                <div className="bg-[#131315] rounded p-2 overflow-x-auto">
+                  <code className="text-xs font-mono text-[#80808a]">{adapter.usage}</code>
                 </div>
               </div>
             ))}
@@ -237,29 +237,29 @@ export default function PluginsPage() {
         {/* Framework Adapters — only if external plugins exist */}
         {externalPlugins.length > 0 && (
           <div>
-            <h3 className="text-sm font-medium text-slate-300 mb-3">
+            <h3 className="text-sm font-medium text-[#80808a] mb-3">
               Framework Adapters ({externalPlugins.length})
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {externalPlugins.map((plugin) => (
                 <div
                   key={plugin.name}
-                  className="rounded-lg border border-slate-700 bg-slate-800/50 p-4"
+                  className="rounded-lg border border-[#252528] bg-[#1a1a1d]/50 p-4"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-medium text-slate-200">{plugin.name}</h4>
+                      <h4 className="text-sm font-medium text-[#f0f0f0]">{plugin.name}</h4>
                       <code className="text-xs font-mono text-cyan-400">{plugin.name}://</code>
                     </div>
                     {plugin.version && (
-                      <span className="text-xs font-mono text-slate-500">v{plugin.version}</span>
+                      <span className="text-xs font-mono text-[#4a4a52]">v{plugin.version}</span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400 mb-3">
+                  <p className="text-xs text-[#80808a] mb-3">
                     {FRAMEWORK_DESCRIPTIONS[plugin.name] ?? plugin.description}
                   </p>
-                  <div className="bg-slate-900 rounded p-2 overflow-x-auto">
-                    <code className="text-xs font-mono text-slate-300">
+                  <div className="bg-[#131315] rounded p-2 overflow-x-auto">
+                    <code className="text-xs font-mono text-[#80808a]">
                       {FRAMEWORK_USAGE[plugin.name] ?? `agent: ${plugin.name}://my_agent`}
                     </code>
                   </div>
@@ -270,39 +270,39 @@ export default function PluginsPage() {
         )}
 
         {/* Create Your Own Plugin — collapsible */}
-        <div className="rounded-lg border border-slate-700 bg-slate-800/50 overflow-hidden">
+        <div className="rounded-lg border border-[#252528] bg-[#1a1a1d]/50 overflow-hidden">
           <button
             onClick={() => setShowCreateGuide(!showCreateGuide)}
-            className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-700/30 transition-colors"
+            className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[#1a1a1d]/30 transition-colors"
           >
             <div className="flex items-center gap-2">
-              <Puzzle size={16} className="text-slate-400" />
-              <span className="text-sm font-medium text-slate-300">Create Your Own Plugin</span>
+              <Puzzle size={16} className="text-[#80808a]" />
+              <span className="text-sm font-medium text-[#80808a]">Create Your Own Plugin</span>
             </div>
             <ChevronDown
               size={14}
-              className={`text-slate-500 transition-transform duration-200 ${showCreateGuide ? '' : '-rotate-90'}`}
+              className={`text-[#4a4a52] transition-transform duration-200 ${showCreateGuide ? '' : '-rotate-90'}`}
             />
           </button>
           {showCreateGuide && (
-            <div className="px-4 pb-4 border-t border-slate-700/50">
-              <p className="text-xs text-slate-400 mt-3 mb-3">
+            <div className="px-4 pb-4 border-t border-[#252528]/50">
+              <p className="text-xs text-[#80808a] mt-3 mb-3">
                 Binex discovers plugins via Python entry points. Add this to your{' '}
                 <code className="text-cyan-400">pyproject.toml</code>:
               </p>
-              <pre className="text-xs font-mono text-slate-400 bg-slate-900 rounded p-3 overflow-x-auto">
+              <pre className="text-xs font-mono text-[#80808a] bg-[#131315] rounded p-3 overflow-x-auto">
 {`[project.entry-points."binex.plugins"]
 my_adapter = "my_package.plugin:MyAdapterPlugin"`}
               </pre>
-              <p className="text-xs text-slate-400 mt-3 mb-2">
+              <p className="text-xs text-[#80808a] mt-3 mb-2">
                 Your plugin class must implement <code className="text-cyan-400">create_adapter(uri, config)</code>:
               </p>
-              <pre className="text-xs font-mono text-slate-400 bg-slate-900 rounded p-3 overflow-x-auto">
+              <pre className="text-xs font-mono text-[#80808a] bg-[#131315] rounded p-3 overflow-x-auto">
 {`class MyAdapterPlugin:
     def create_adapter(self, uri: str, config: dict):
         return MyAdapter(uri, **config)`}
               </pre>
-              <p className="text-xs text-slate-500 mt-3">
+              <p className="text-xs text-[#4a4a52] mt-3">
                 After installing, your adapter is available as{' '}
                 <code className="text-cyan-400">my_adapter://</code> in workflow YAML.
               </p>
@@ -312,10 +312,10 @@ my_adapter = "my_package.plugin:MyAdapterPlugin"`}
 
         {/* Empty state fallback */}
         {plugins.length === 0 && (
-          <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-8 text-center">
-            <Puzzle size={40} className="mx-auto text-slate-600 mb-3" />
-            <p className="text-slate-300 font-medium">No plugins detected</p>
-            <p className="text-sm text-slate-500 mt-1">
+          <div className="border border-[#252528] rounded-lg bg-[#1a1a1d]/50 p-8 text-center">
+            <Puzzle size={40} className="mx-auto text-[#4a4a52] mb-3" />
+            <p className="text-[#80808a] font-medium">No plugins detected</p>
+            <p className="text-sm text-[#4a4a52] mt-1">
               Built-in adapters should be available automatically.
               Try restarting <code className="text-cyan-400 text-xs">binex ui</code>.
             </p>

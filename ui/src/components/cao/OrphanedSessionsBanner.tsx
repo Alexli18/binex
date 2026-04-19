@@ -68,12 +68,12 @@ export function OrphanedSessionsBanner() {
           {orphaned.map((s) => (
             <div
               key={s.terminal_id}
-              className="flex items-center gap-3 text-xs text-slate-400 font-mono bg-slate-800/50 rounded px-3 py-1.5"
+              className="flex items-center gap-3 text-xs text-[#80808a] font-mono bg-[#1a1a1d]/50 rounded px-3 py-1.5"
             >
-              <span className="text-slate-300">{s.terminal_id.slice(0, 12)}</span>
+              <span className="text-[#80808a]">{s.terminal_id.slice(0, 12)}</span>
               <span>{s.node_name}</span>
-              <span className="text-slate-500">{s.run_id.slice(0, 8)}</span>
-              <span className="ml-auto text-slate-500">
+              <span className="text-[#4a4a52]">{s.run_id.slice(0, 8)}</span>
+              <span className="ml-auto text-[#4a4a52]">
                 {new Date(s.started_at).toLocaleString()}
               </span>
             </div>

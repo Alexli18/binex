@@ -95,8 +95,8 @@ export default function SchedulerPage() {
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full bg-green-400 shadow-lg shadow-green-400/50 animate-pulse" />
               <div>
-                <span className="text-sm font-medium text-slate-200">Scheduler Running</span>
-                <span className="text-xs text-slate-500 ml-2">Auto-refreshes every 10s</span>
+                <span className="text-sm font-medium text-[#f0f0f0]">Scheduler Running</span>
+                <span className="text-xs text-[#4a4a52] ml-2">Auto-refreshes every 10s</span>
               </div>
             </div>
             <Button
@@ -110,10 +110,10 @@ export default function SchedulerPage() {
             </Button>
           </div>
         ) : (
-          <div className="rounded-lg border p-6 bg-slate-800/50 border-slate-700">
+          <div className="rounded-lg border p-6 bg-[#1a1a1d]/50 border-[#252528]">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-4 h-4 rounded-full bg-slate-500" />
-              <h2 className="text-lg font-semibold text-slate-200">Scheduler Stopped</h2>
+              <div className="w-4 h-4 rounded-full bg-[#4a4a52]" />
+              <h2 className="text-lg font-semibold text-[#f0f0f0]">Scheduler Stopped</h2>
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -124,8 +124,8 @@ export default function SchedulerPage() {
                 <Play className="w-3.5 h-3.5 mr-1.5" />
                 Start Scheduler
               </Button>
-              <span className="text-sm text-slate-500">or run from CLI:</span>
-              <code className="text-sm font-mono text-cyan-400 bg-slate-900 rounded px-3 py-1.5">
+              <span className="text-sm text-[#4a4a52]">or run from CLI:</span>
+              <code className="text-sm font-mono text-cyan-400 bg-[#131315] rounded px-3 py-1.5">
                 binex scheduler start
               </code>
             </div>
@@ -150,32 +150,32 @@ export default function SchedulerPage() {
             description="Add a schedule field to your workflow YAML to see it here."
           />
         ) : (
-          <div className="border border-slate-700 rounded-lg bg-slate-800/50 overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-700">
-              <h3 className="text-sm font-medium text-slate-300">
+          <div className="border border-[#252528] rounded-lg bg-[#1a1a1d]/50 overflow-hidden">
+            <div className="px-4 py-3 border-b border-[#252528]">
+              <h3 className="text-sm font-medium text-[#80808a]">
                 Scheduled Workflows ({workflows.length})
               </h3>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-700">
-                    <th className="text-left px-4 py-3 font-medium text-slate-400">Name</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-400">Schedule</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-400">Status</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-400">Last Run</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-400">Next Run</th>
+                  <tr className="border-b border-[#252528]">
+                    <th className="text-left px-4 py-3 font-medium text-[#80808a]">Name</th>
+                    <th className="text-left px-4 py-3 font-medium text-[#80808a]">Schedule</th>
+                    <th className="text-left px-4 py-3 font-medium text-[#80808a]">Status</th>
+                    <th className="text-left px-4 py-3 font-medium text-[#80808a]">Last Run</th>
+                    <th className="text-left px-4 py-3 font-medium text-[#80808a]">Next Run</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700/50">
+                <tbody className="divide-y divide-[#252528]/50">
                   {workflows.map((wf) => (
-                    <tr key={wf.file_path} className="hover:bg-slate-700/30 transition-colors">
-                      <td className="px-4 py-3 font-medium text-slate-200" title={wf.file_path}>
+                    <tr key={wf.file_path} className="hover:bg-[#1a1a1d]/30 transition-colors">
+                      <td className="px-4 py-3 font-medium text-[#f0f0f0]" title={wf.file_path}>
                         {wf.name}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs text-slate-300">{describeCron(wf.schedule)}</span>
-                        <span className="text-xs font-mono text-slate-600 ml-2" title="Cron expression">
+                        <span className="text-xs text-[#80808a]">{describeCron(wf.schedule)}</span>
+                        <span className="text-xs font-mono text-[#4a4a52] ml-2" title="Cron expression">
                           {wf.schedule}
                         </span>
                       </td>
@@ -183,13 +183,13 @@ export default function SchedulerPage() {
                         {wf.last_status ? (
                           <StatusBadge status={wf.last_status} dot />
                         ) : (
-                          <span className="text-xs text-slate-500">pending</span>
+                          <span className="text-xs text-[#4a4a52]">pending</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
+                      <td className="px-4 py-3 text-xs text-[#4a4a52]">
                         {wf.last_run ? new Date(wf.last_run).toLocaleString() : '\u2014'}
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-400">
+                      <td className="px-4 py-3 text-xs text-[#80808a]">
                         {wf.next_run ? new Date(wf.next_run).toLocaleString() : '\u2014'}
                       </td>
                     </tr>
@@ -201,9 +201,9 @@ export default function SchedulerPage() {
         )}
 
         {/* History Log with filter + run_id links */}
-        <div className="border border-slate-700 rounded-lg bg-slate-800/50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-            <h3 className="text-sm font-medium text-slate-300">Run History</h3>
+        <div className="border border-[#252528] rounded-lg bg-[#1a1a1d]/50 overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#252528] flex items-center justify-between">
+            <h3 className="text-sm font-medium text-[#80808a]">Run History</h3>
             {workflowNames.length > 1 && (
               <Select value={historyFilter} onValueChange={setHistoryFilter}>
                 <SelectTrigger className="w-[180px] h-8" aria-label="Filter by workflow">
@@ -220,10 +220,10 @@ export default function SchedulerPage() {
           </div>
           {filteredHistory.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-[#4a4a52]">
                 {historyFilter === 'all' ? 'No scheduler runs yet.' : `No runs for "${historyFilter}".`}
               </p>
-              <p className="text-xs text-slate-600 mt-1">
+              <p className="text-xs text-[#4a4a52] mt-1">
                 History will appear here once workflows are executed by the scheduler.
               </p>
             </div>
@@ -231,44 +231,44 @@ export default function SchedulerPage() {
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-700">
-                    <th className="text-left px-4 py-3 font-medium text-slate-400">Time</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-400">Workflow</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-400">Run</th>
-                    <th className="text-left px-4 py-3 font-medium text-slate-400">Status</th>
-                    <th className="text-right px-4 py-3 font-medium text-slate-400">Duration</th>
-                    <th className="text-right px-4 py-3 font-medium text-slate-400">Cost</th>
+                  <tr className="border-b border-[#252528]">
+                    <th className="text-left px-4 py-3 font-medium text-[#80808a]">Time</th>
+                    <th className="text-left px-4 py-3 font-medium text-[#80808a]">Workflow</th>
+                    <th className="text-left px-4 py-3 font-medium text-[#80808a]">Run</th>
+                    <th className="text-left px-4 py-3 font-medium text-[#80808a]">Status</th>
+                    <th className="text-right px-4 py-3 font-medium text-[#80808a]">Duration</th>
+                    <th className="text-right px-4 py-3 font-medium text-[#80808a]">Cost</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700/50">
+                <tbody className="divide-y divide-[#252528]/50">
                   {filteredHistory.map((entry: HistoryEntry, i: number) => (
-                    <tr key={`${entry.timestamp}-${i}`} className="hover:bg-slate-700/30 transition-colors">
-                      <td className="px-4 py-3 text-xs text-slate-500">
+                    <tr key={`${entry.timestamp}-${i}`} className="hover:bg-[#1a1a1d]/30 transition-colors">
+                      <td className="px-4 py-3 text-xs text-[#4a4a52]">
                         {new Date(entry.timestamp).toLocaleString()}
                       </td>
-                      <td className="px-4 py-3 text-slate-200">{entry.workflow_name}</td>
+                      <td className="px-4 py-3 text-[#f0f0f0]">{entry.workflow_name}</td>
                       <td className="px-4 py-3">
                         {entry.run_id ? (
                           <Link
                             to={`/runs/${entry.run_id}`}
-                            className="text-blue-400 hover:text-blue-300 hover:underline font-mono text-xs"
+                            className="text-amber-400 hover:text-amber-300 hover:underline font-mono text-xs"
                           >
                             {entry.run_id}
                           </Link>
                         ) : (
-                          <span className="text-xs text-slate-600">{'\u2014'}</span>
+                          <span className="text-xs text-[#4a4a52]">{'\u2014'}</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={entry.status} dot />
                         {entry.skip_reason && (
-                          <span className="text-xs text-slate-500 ml-2">({entry.skip_reason})</span>
+                          <span className="text-xs text-[#4a4a52] ml-2">({entry.skip_reason})</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-xs text-slate-400">
+                      <td className="px-4 py-3 text-right font-mono text-xs text-[#80808a]">
                         {entry.duration != null ? `${entry.duration.toFixed(1)}s` : '\u2014'}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-xs text-slate-400">
+                      <td className="px-4 py-3 text-right font-mono text-xs text-[#80808a]">
                         {entry.cost != null ? `$${entry.cost.toFixed(4)}` : '\u2014'}
                       </td>
                     </tr>

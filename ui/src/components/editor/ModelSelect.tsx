@@ -11,8 +11,8 @@ const TIER_CONFIG: Record<TierKey, { label: string; icon: typeof Sparkles; iconC
   balanced:  { label: 'Balanced',  icon: Gauge,    iconClass: 'text-sky-400' },
   fast:      { label: 'Fast',      icon: Zap,      iconClass: 'text-green-400' },
   reasoning: { label: 'Reasoning', icon: Brain,    iconClass: 'text-rose-400' },
-  free:      { label: 'Free',      icon: Gift,     iconClass: 'text-purple-400' },
-  local:     { label: 'Local',     icon: Box,      iconClass: 'text-blue-400' },
+  free:      { label: 'Free',      icon: Gift,     iconClass: 'text-[#80808a]' },
+  local:     { label: 'Local',     icon: Box,      iconClass: 'text-amber-400' },
 };
 
 // --- Fallback data (used when API is unavailable) ---
@@ -73,14 +73,14 @@ const FALLBACK_PROVIDERS: ApiProvider[] = [
 const PROVIDER_COLORS: Record<string, string> = {
   openai: 'bg-emerald-500/15 text-emerald-400',
   anthropic: 'bg-orange-500/15 text-orange-400',
-  google: 'bg-blue-500/15 text-blue-400',
-  gemini: 'bg-blue-500/15 text-blue-400',
-  ollama: 'bg-slate-500/15 text-slate-400',
+  google: 'bg-amber-500/15 text-amber-400',
+  gemini: 'bg-amber-500/15 text-amber-400',
+  ollama: 'bg-[#4a4a52]/15 text-[#80808a]',
   deepseek: 'bg-cyan-500/15 text-cyan-400',
-  openrouter: 'bg-purple-500/15 text-purple-400',
+  openrouter: 'bg-violet-500/15 text-violet-400',
   groq: 'bg-red-500/15 text-red-400',
   mistral: 'bg-amber-500/15 text-amber-400',
-  together: 'bg-indigo-500/15 text-indigo-400',
+  together: 'bg-amber-500/15 text-amber-400',
 };
 
 function shortName(id: string): string {
@@ -265,11 +265,11 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-200 hover:bg-slate-600/80 focus:outline-none focus:border-blue-500 transition-colors"
+        className="w-full flex items-center justify-between bg-[#252528] border border-[#333338] rounded px-2 py-1 text-xs text-[#f0f0f0] hover:bg-[#333338]/80 focus:outline-none focus:border-amber-500 transition-colors"
       >
         <span className="truncate flex items-center gap-1.5">
           {currentProvider && (
-            <span className={`px-1 py-0 rounded text-[9px] font-medium ${PROVIDER_COLORS[currentProvider] || 'bg-slate-600 text-slate-300'}`}>
+            <span className={`px-1 py-0 rounded text-[9px] font-medium ${PROVIDER_COLORS[currentProvider] || 'bg-[#333338] text-[#80808a]'}`}>
               {currentProvider}
             </span>
           )}
@@ -280,10 +280,10 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full min-w-[280px] bg-slate-800 border border-slate-600 rounded-md shadow-xl shadow-black/40 overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full min-w-[280px] bg-[#1a1a1d] border border-[#333338] rounded-md shadow-xl shadow-black/40 overflow-hidden">
           {/* Search */}
-          <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-slate-700">
-            <Search size={12} className="text-slate-500 shrink-0" />
+          <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-[#252528]">
+            <Search size={12} className="text-[#4a4a52] shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -291,7 +291,7 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search models..."
-              className="w-full bg-transparent text-xs text-slate-200 placeholder:text-slate-600 outline-none"
+              className="w-full bg-transparent text-xs text-[#f0f0f0] placeholder:text-[#4a4a52] outline-none"
             />
           </div>
 
@@ -299,7 +299,7 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
             {/* Recently Used */}
             {!q && recent.length > 0 && (
               <div>
-                <GroupHeader icon={Clock} iconClass="text-slate-400" label="Recent" />
+                <GroupHeader icon={Clock} iconClass="text-[#80808a]" label="Recent" />
                 {recent.map((modelId, i) => (
                   <ModelRow
                     key={`recent-${modelId}`}
@@ -344,7 +344,7 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
 
             {/* Separator */}
             {filteredConfigured.length > 0 && filteredUnconfigured.length > 0 && (
-              <div className="border-t border-slate-700 my-0.5" />
+              <div className="border-t border-[#252528] my-0.5" />
             )}
 
             {/* Unconfigured providers */}
@@ -381,8 +381,8 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
                 data-model-item
                 className={`flex items-center gap-2 px-2 py-1.5 text-xs cursor-pointer transition-colors ${
                   highlightIdx === flatItems.length - 1
-                    ? 'bg-blue-600/20 text-blue-300'
-                    : 'text-blue-400 hover:bg-slate-700'
+                    ? 'bg-amber-500/20 text-amber-300'
+                    : 'text-amber-400 hover:bg-[#252528]'
                 }`}
                 onClick={() => selectModel(`__custom__:${q}`)}
                 onMouseEnter={() => setHighlightIdx(flatItems.length - 1)}
@@ -392,13 +392,13 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
             )}
 
             {filteredConfigured.length === 0 && filteredUnconfigured.length === 0 && !q && (
-              <div className="py-4 text-center text-xs text-slate-600">No models available</div>
+              <div className="py-4 text-center text-xs text-[#4a4a52]">No models available</div>
             )}
 
             {/* Custom model — provider picker */}
             {!customMode && (
-              <div className="border-t border-slate-700 mt-0.5 pt-0.5">
-                <GroupHeader icon={PenLine} iconClass="text-blue-400" label="Custom model" />
+              <div className="border-t border-[#252528] mt-0.5 pt-0.5">
+                <GroupHeader icon={PenLine} iconClass="text-amber-400" label="Custom model" />
                 <div className="flex flex-wrap gap-1 px-2 py-1.5">
                   {PROVIDER_PREFIXES.map((pp) => (
                     <button
@@ -410,7 +410,7 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
                         setTimeout(() => customInputRef.current?.focus(), 50);
                       }}
                       className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors
-                        ${PROVIDER_COLORS[pp.name.toLowerCase()] || 'bg-slate-600/50 text-slate-300'}
+                        ${PROVIDER_COLORS[pp.name.toLowerCase()] || 'bg-[#333338]/50 text-[#80808a]'}
                         hover:opacity-80 cursor-pointer`}
                     >
                       {pp.name}
@@ -422,20 +422,20 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
 
             {/* Custom model — input after provider selected */}
             {customMode !== null && (
-              <div className="border-t border-slate-700 mt-0.5 p-2">
+              <div className="border-t border-[#252528] mt-0.5 p-2">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <button
                     type="button"
                     onClick={() => setCustomMode(null)}
-                    className="text-[10px] text-slate-400 hover:text-slate-200"
+                    className="text-[10px] text-[#80808a] hover:text-[#f0f0f0]"
                   >
                     ← Back
                   </button>
-                  <span className="text-[10px] text-slate-500">Custom model</span>
+                  <span className="text-[10px] text-[#4a4a52]">Custom model</span>
                 </div>
                 <div className="flex items-center gap-1">
                   {customMode && (
-                    <span className="text-[10px] text-slate-400 font-mono shrink-0">{customMode}</span>
+                    <span className="text-[10px] text-[#80808a] font-mono shrink-0">{customMode}</span>
                   )}
                   <input
                     ref={customInputRef}
@@ -451,15 +451,15 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
                       }
                     }}
                     placeholder="model-name"
-                    className="flex-1 bg-slate-700/50 border border-slate-600 rounded px-2 py-1
-                      text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 font-mono"
+                    className="flex-1 bg-[#252528]/50 border border-[#333338] rounded px-2 py-1
+                      text-xs text-[#f0f0f0] placeholder:text-[#4a4a52] focus:outline-none focus:border-amber-500 font-mono"
                   />
                   <button
                     type="button"
                     disabled={!customModel.trim()}
                     onClick={() => { if (customModel.trim()) selectModel(customMode + customModel.trim()); }}
-                    className="px-2 py-1 rounded bg-blue-600 text-white text-[10px] font-medium
-                      hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                    className="px-2 py-1 rounded bg-amber-500 text-black text-[10px] font-medium
+                      hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
                   >
                     Use
                   </button>
@@ -480,7 +480,7 @@ function tierIcon(tier?: TierKey): typeof Sparkles {
 }
 
 function tierIconClass(tier?: TierKey): string {
-  return tier ? (TIER_CONFIG[tier]?.iconClass ?? 'text-slate-400') : 'text-slate-400';
+  return tier ? (TIER_CONFIG[tier]?.iconClass ?? 'text-[#80808a]') : 'text-[#80808a]';
 }
 
 // --- GroupHeader ---
@@ -492,9 +492,9 @@ function GroupHeader({ label, icon: Icon, iconClass, configured }: {
   configured?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+    <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-medium text-[#4a4a52] uppercase tracking-wider">
       {configured !== undefined && (
-        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${configured ? 'bg-green-500' : 'bg-slate-600'}`} />
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${configured ? 'bg-green-500' : 'bg-[#333338]'}`} />
       )}
       <Icon size={10} className={iconClass} />
       {label}
@@ -530,23 +530,23 @@ function ModelRow({
     <div
       data-model-item
       className={`flex items-center gap-1.5 px-2 py-1.5 text-xs cursor-pointer transition-colors ${
-        isHighlighted ? 'bg-slate-700' : 'hover:bg-slate-700/50'
-      } ${isSelected ? 'text-blue-300' : 'text-slate-300'}`}
+        isHighlighted ? 'bg-[#252528]' : 'hover:bg-[#252528]/50'
+      } ${isSelected ? 'text-amber-300' : 'text-[#80808a]'}`}
       onClick={onSelect}
       onMouseEnter={onHover}
     >
-      <span className={`shrink-0 px-1 py-0 rounded text-[9px] font-medium ${PROVIDER_COLORS[prov] || 'bg-slate-600 text-slate-300'}`}>
+      <span className={`shrink-0 px-1 py-0 rounded text-[9px] font-medium ${PROVIDER_COLORS[prov] || 'bg-[#333338] text-[#80808a]'}`}>
         {prov}
       </span>
       <span className="flex-1 truncate">{shortName(modelId)}</span>
       {contextK != null && (
-        <span className="text-[9px] text-slate-500 tabular-nums shrink-0">{contextK}k</span>
+        <span className="text-[9px] text-[#4a4a52] tabular-nums shrink-0">{contextK}k</span>
       )}
       {tierCfg && (
         <span className={`text-[9px] ${tierCfg.iconClass}`}>{tierCfg.label}</span>
       )}
       {isSelected && (
-        <span className="text-blue-400 text-[10px]">✓</span>
+        <span className="text-amber-400 text-[10px]">✓</span>
       )}
     </div>
   );

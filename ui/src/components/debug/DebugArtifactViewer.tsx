@@ -18,7 +18,7 @@ export function DebugArtifactViewer({
 
   return (
     <div>
-      <span className="text-sm text-slate-500">
+      <span className="text-sm text-[#4a4a52]">
         {title} ({artifacts.length})
       </span>
       <div className="mt-2 space-y-2">
@@ -31,29 +31,29 @@ export function DebugArtifactViewer({
           return (
             <div
               key={i}
-              className="rounded-md border border-slate-700 bg-slate-800/50"
+              className="rounded-md border border-[#252528] bg-[#1a1a1d]/50"
             >
               <button
                 onClick={() => setExpandedIndex(isExpanded ? null : i)}
-                className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-slate-700/30 transition-colors"
+                className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-[#1a1a1d]/30 transition-colors"
               >
-                <span className="font-medium text-slate-300">
+                <span className="font-medium text-[#80808a]">
                   {a.type}
-                  <span className="ml-2 text-xs text-slate-500 font-mono">
+                  <span className="ml-2 text-xs text-[#4a4a52] font-mono">
                     {a.id}
                   </span>
                   {(a as { produced_by?: string }).produced_by && (
-                    <span className="ml-2 text-xs text-slate-600">
+                    <span className="ml-2 text-xs text-[#4a4a52]">
                       from {(a as { produced_by?: string }).produced_by}
                     </span>
                   )}
                 </span>
-                <span className="text-xs text-blue-400">
+                <span className="text-xs text-amber-400">
                   {isExpanded ? 'collapse' : 'expand'}
                 </span>
               </button>
               {isExpanded && (
-                <pre className="border-t border-slate-700 bg-slate-900 p-3 text-xs text-slate-300 whitespace-pre-wrap break-words max-h-80 overflow-y-auto">
+                <pre className="border-t border-[#252528] bg-[#131315] p-3 text-xs text-[#80808a] whitespace-pre-wrap break-words max-h-80 overflow-y-auto">
                   {content}
                 </pre>
               )}

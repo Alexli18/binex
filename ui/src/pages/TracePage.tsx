@@ -17,7 +17,7 @@ export default function TracePage() {
 
   if (!runId) {
     return (
-      <div className="flex items-center justify-center h-full text-slate-500">
+      <div className="flex items-center justify-center h-full text-[#4a4a52]">
         Select a run first to view trace timeline.
       </div>
     );
@@ -26,15 +26,15 @@ export default function TracePage() {
   if (isLoading) {
     return (
       <div className="p-6 flex flex-col gap-4">
-        <Skeleton className="h-4 w-48 bg-slate-800" />
+        <Skeleton className="h-4 w-48 bg-[#1a1a1d]" />
         <div className="space-y-1">
-          <Skeleton className="h-8 w-40 bg-slate-800" />
-          <Skeleton className="h-4 w-64 bg-slate-800" />
+          <Skeleton className="h-8 w-40 bg-[#1a1a1d]" />
+          <Skeleton className="h-4 w-64 bg-[#1a1a1d]" />
         </div>
-        <Skeleton className="h-64 w-full bg-slate-800 rounded-lg" />
+        <Skeleton className="h-64 w-full bg-[#1a1a1d] rounded-lg" />
         <div className="flex gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-4 w-20 bg-slate-800" />
+            <Skeleton key={i} className="h-4 w-20 bg-[#1a1a1d]" />
           ))}
         </div>
       </div>
@@ -69,8 +69,8 @@ export default function TracePage() {
       />
 
       {/* Gantt chart */}
-      <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-4">
-        <h2 className="text-sm font-medium text-slate-300 mb-3">
+      <div className="border border-[#252528] rounded-lg bg-[#1a1a1d]/50 p-4">
+        <h2 className="text-sm font-medium text-[#80808a] mb-3">
           Execution Timeline
         </h2>
         {data && data.timeline.length > 0 ? (
@@ -80,7 +80,7 @@ export default function TracePage() {
             anomalyNodeIds={anomalyNodeIds}
           />
         ) : (
-          <p className="text-slate-500 text-sm">No timeline entries</p>
+          <p className="text-[#4a4a52] text-sm">No timeline entries</p>
         )}
       </div>
     </div>

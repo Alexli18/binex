@@ -83,18 +83,18 @@ export function NewRunModal({ open, onClose }: NewRunModalProps) {
           <div>
             <label
               htmlFor="workflow-select"
-              className="block text-sm font-medium text-slate-300 mb-1"
+              className="block text-sm font-medium text-[#80808a] mb-1"
             >
               Workflow
             </label>
             {loadingWorkflows ? (
-              <p className="text-sm text-slate-500">Loading workflows...</p>
+              <p className="text-sm text-[#4a4a52]">Loading workflows...</p>
             ) : (
               <select
                 id="workflow-select"
                 value={selectedWorkflow}
                 onChange={(e) => setSelectedWorkflow(e.target.value)}
-                className="w-full border border-slate-600 rounded-md px-3 py-1.5 text-sm bg-slate-700 text-slate-200 focus:outline-none focus:border-blue-500"
+                className="w-full border border-[#333338] rounded-md px-3 py-1.5 text-sm bg-[#252528] text-[#f0f0f0] focus:outline-none focus:border-amber-500"
               >
                 <option value="">-- Select a workflow --</option>
                 {(workflows ?? []).map((w) => (
@@ -109,7 +109,7 @@ export function NewRunModal({ open, onClose }: NewRunModalProps) {
           <div>
             <label
               htmlFor="variables-input"
-              className="block text-sm font-medium text-slate-300 mb-1"
+              className="block text-sm font-medium text-[#80808a] mb-1"
             >
               Variables (key=value, one per line)
             </label>
@@ -119,7 +119,7 @@ export function NewRunModal({ open, onClose }: NewRunModalProps) {
               onChange={(e) => setVariablesText(e.target.value)}
               placeholder={"topic=AI\nlanguage=en"}
               rows={3}
-              className="w-full border border-slate-600 rounded-md px-3 py-1.5 text-sm font-mono bg-slate-700 text-slate-200 focus:outline-none focus:border-blue-500"
+              className="w-full border border-[#333338] rounded-md px-3 py-1.5 text-sm font-mono bg-[#252528] text-[#f0f0f0] focus:outline-none focus:border-amber-500"
             />
           </div>
 
