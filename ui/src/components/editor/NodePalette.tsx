@@ -13,14 +13,14 @@ export interface NodeTypeConfig {
   category?: string;
 }
 
-// Colors aligned with design-tokens.ts nodeTypeColors
+// Colors matching UI Kit design system
 const NODE_COLOR = {
-  llm: '#8b5cf6',     // violet-500
-  local: '#06b6d4',   // cyan-500
-  human: '#f59e0b',   // amber-500
-  a2a: '#6366f1',     // indigo-500
-  cao: chartColors.cao, // purple-500
-  pattern: '#ec4899',   // pink-500
+  llm: '#e8a020',     // amber — primary accent
+  local: '#22d3ee',   // cyan
+  human: '#22c55e',   // green
+  a2a: '#f472b6',     // magenta
+  cao: '#f97316',     // orange
+  pattern: '#a78bfa', // violet
 } as const;
 
 export const NODE_TYPES: NodeTypeConfig[] = [
