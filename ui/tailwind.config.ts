@@ -44,25 +44,25 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // Brand palette
+        // Amber accent palette
         brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
+          50:  '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#e8a020',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+          950: '#451a03',
         },
-        // Surface palette — dark-first
+        // Surface palette — warm dark
         surface: {
-          DEFAULT: '#0f172a',  // slate-900
-          raised: '#1e293b',   // slate-800
-          overlay: '#334155',  // slate-700
+          DEFAULT: '#0b0b0c',
+          raised:  '#131315',
+          overlay: '#1a1a1d',
         },
       },
 
@@ -110,12 +110,12 @@ export default {
       // Border radius
       // ----------------------------------------------------------------
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-        'badge': '0.3125rem',   // 5px — compact badges
-        'card': '0.625rem',     // 10px — cards / panels
-        'modal': '0.75rem',     // 12px — modals / dialogs
+        lg: '0px',
+        md: '0px',
+        sm: '0px',
+        'badge': '0px',
+        'card': '0px',
+        'modal': '0px',
       },
 
       // ----------------------------------------------------------------

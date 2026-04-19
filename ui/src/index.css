@@ -1,38 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Warm near-black backgrounds */
+    --background: 240 7% 5%;       /* #0b0b0c */
+    --foreground: 240 10% 94%;     /* #f0f0f0 */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 5% 8%;             /* #131315 */
+    --card-foreground: 240 10% 94%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 4% 11%;         /* #1a1a1d */
+    --popover-foreground: 240 10% 94%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Amber accent */
+    --primary: 38 82% 51%;         /* #e8a020 */
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 4% 11%;       /* #1a1a1d */
+    --secondary-foreground: 240 10% 94%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 3% 15%;           /* #252528 */
+    --muted-foreground: 240 5% 52%; /* #80808a */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 240 3% 14%;          /* #222226 */
+    --accent-foreground: 240 10% 94%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;      /* #ef4444 */
+    --destructive-foreground: 240 10% 94%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 240 3% 15%;          /* #252528 */
+    --input: 240 4% 11%;           /* #1a1a1d */
+    --ring: 38 82% 51%;            /* amber */
 
-    --radius: 0.5rem;
+    --radius: 0rem;                /* sharp corners */
   }
 
   * {
@@ -41,9 +45,16 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    -webkit-font-smoothing: antialiased;
   }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #333338; }
 }
 
+/* Animations */
 @keyframes slide-in-right {
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }
@@ -53,12 +64,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-slide-in-right {
-    animation: none;
-  }
+  .animate-slide-in-right { animation: none; }
 }
 
-/* Node entrance animation — plays when node first appears on canvas */
 @keyframes node-appear {
   from { opacity: 0; transform: scale(0.92); }
   to { opacity: 1; transform: scale(1); }
@@ -67,21 +75,30 @@
   animation: node-appear 0.2s ease-out;
 }
 
-/* React Flow controls — override defaults for dark theme */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.pulse { animation: pulse 1.6s ease-in-out infinite; }
+
+@keyframes dash { to { stroke-dashoffset: -20; } }
+.edge-flow { animation: dash 1.2s linear infinite; }
+
+/* React Flow overrides */
 .react-flow__controls {
-  border-radius: 8px !important;
+  border-radius: 0 !important;
   overflow: hidden;
 }
 .react-flow__controls-button {
-  background-color: rgb(30 41 59) !important; /* slate-800 */
-  border-color: rgb(51 65 85) !important; /* slate-700 */
-  color: rgb(148 163 184) !important; /* slate-400 */
+  background-color: #131315 !important;
+  border-color: #252528 !important;
+  color: #80808a !important;
   width: 28px !important;
   height: 28px !important;
 }
 .react-flow__controls-button:hover {
-  background-color: rgb(51 65 85) !important; /* slate-700 */
-  color: rgb(226 232 240) !important; /* slate-200 */
+  background-color: #1a1a1d !important;
+  color: #f0f0f0 !important;
 }
 .react-flow__controls-button svg {
   fill: currentColor !important;
@@ -89,13 +106,10 @@
   max-height: 14px;
 }
 
-/* React Flow minimap — subtle dark theme */
 .react-flow__minimap {
-  border-radius: 6px !important;
-  border: 1px solid rgb(51 65 85 / 0.5) !important;
+  border-radius: 0 !important;
+  border: 1px solid #252528 !important;
   opacity: 0.6;
   transition: opacity 0.2s;
 }
-.react-flow__minimap:hover {
-  opacity: 1;
-}
+.react-flow__minimap:hover { opacity: 1; }
