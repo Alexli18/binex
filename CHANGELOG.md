@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.7.5
+
+Amber redesign, pattern step editor, and repository polish.
+
+### Features
+
+- **Amber UI redesign** — full palette audit across editor, dashboard, and landing page. Amber primary token, sharp corners, JetBrains Mono typography, dark #0b0b0c base.
+- **Pattern Step Editor** — per-step model, prompt, and `max_retries` overrides in the visual editor. Collapsible step rows with model inheritance display.
+- **Per-step retry policy** — `max_retries` in YAML `steps:` block applies `RetryPolicy` with exponential backoff to individual pattern sub-nodes at runtime.
+- **Built-in prompts** — 20 prompt templates for all 9 pattern types (`.md` files in prompt library + "Default" button in step editor).
+- **Docs theme** — MkDocs documentation restyled to match landing page: amber accent, dark background, JetBrains Mono, no light mode.
+
+### Bug Fixes
+
+- **Dropdown clipping** — fixed `CollapsibleSection` `overflow-hidden` blocking ModelSelect dropdown in node editor.
+- **Landing page links** — replaced all placeholder `href="#"` with real GitHub/docs URLs.
+- **E2E navigation test** — updated sidebar collapse/active-link assertions for inline-style sidebar (no Tailwind classes).
+
+### Chore
+
+- Removed internal dev files from repo root: `SCAN_RESULTS.md`, `improvement_log.md`, `program.md`, `program_propose.md`, VHS tape scripts.
+
 ## v0.7.0
 
 Pattern Nodes release — macro-node patterns that expand into full sub-DAG pipelines.
