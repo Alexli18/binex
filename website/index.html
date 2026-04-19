@@ -863,7 +863,7 @@ h1.hero-h .accent::after {
     <a class="logo" href="https://github.com/Alexli18/binex" target="_blank" rel="noopener">
       <span class="logo-glyph"></span>
       <span>BINEX</span>
-      <span class="v">v0.7.5</span>
+      <span class="v" id="ver-nav">v0.7.5</span>
     </a>
     <div class="nav-links">
       <a href="#what">what</a>
@@ -883,7 +883,7 @@ h1.hero-h .accent::after {
   <div class="hero-grid-bg" aria-hidden="true"></div>
   <div class="wrap hero-inner">
     <div class="hero-left">
-      <span class="eyebrow"><span class="blip"></span>open source · v0.7.5 · MIT licensed</span>
+      <span class="eyebrow"><span class="blip"></span>open source · <span id="ver-hero">v0.7.5</span> · MIT licensed</span>
       <h1 class="hero-h" data-tone-swap>
         Build agent workflows <span class="accent">you can actually debug</span>.
       </h1>
@@ -1516,7 +1516,7 @@ $ binex replay run/0421-a7f2 writer \
         <div class="sub">stars on GitHub — early days, but growing fast. Every star genuinely helps.</div>
         <div class="metrics">
           <div class="metric"><div class="k">contributors</div><div class="v">2</div></div>
-          <div class="metric"><div class="k">releases</div><div class="v">v0.7.5</div></div>
+          <div class="metric"><div class="k">releases</div><div class="v" id="ver-metric">v0.7.5</div></div>
           <div class="metric"><div class="k">open issues</div><div class="v">8</div></div>
         </div>
       </div>
@@ -2098,6 +2098,23 @@ document.addEventListener('DOMContentLoaded', () => {
   startTerminal();
   runDemoLoop();
 });
+</script>
+
+<script>
+/* Fetch latest release version from GitHub and update all version badges */
+fetch('https://api.github.com/repos/Alexli18/binex/releases/latest', {
+  headers: { Accept: 'application/vnd.github+json' }
+})
+  .then(r => r.json())
+  .then(data => {
+    const tag = data.tag_name;
+    if (!tag) return;
+    ['ver-nav', 'ver-hero', 'ver-metric'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = tag;
+    });
+  })
+  .catch(() => { /* keep hardcoded fallback */ });
 </script>
 
 </body>
