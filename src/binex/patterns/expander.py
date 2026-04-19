@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from binex.models.workflow import BackEdge, WorkflowSpec
 from binex.models.task import RetryPolicy
+from binex.models.workflow import BackEdge, WorkflowSpec
 from binex.patterns.models import PatternSpec, StepConfig
 from binex.patterns.templates import expand_pattern
 
