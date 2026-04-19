@@ -19,20 +19,50 @@ export function graphToYaml(nodes: Node[], edges: Edge[], workflowName = 'my-wor
 
   for (const node of nodes) {
     const d = node.data;
-    const entry: Record<string, unknown> = {
-      agent: d.agent ?? 'local://echo',
-      outputs: ['output'],
-    };
+    const isPattern = typeof d.agent === 'string' && (d.agent as string).startsWith('pattern://');
+    const entry: Record<string, unknown> = { outputs: ['output'] };
+
+    if (isPattern) {
+      entry.pattern = (d.agent as string).replace('pattern://', '');
+      const globalModel = d.config?.model as string | undefined;
+      if (globalModel) entry.model = `llm://${globalModel}`;
+      const stepsConfig = d.config?.steps as Record<string, { model?: string; prompt?: string }> | undefined;
+      if (stepsConfig) {
+        const stepsOut: Record<string, Record<string, string>> = {};
+        for (const [key, sc] of Object.entries(stepsConfig)) {
+          const stepEntry: Record<string, string> = {};
+          if (sc.model) stepEntry.model = `llm://${sc.model}`;
+          if (sc.prompt) stepEntry.prompt = sc.prompt;
+          if (Object.keys(stepEntry).length > 0) stepsOut[key] = stepEntry;
+        }
+        if (Object.keys(stepsOut).length > 0) entry.steps = stepsOut;
+      }
+    } else {
+      entry.agent = d.agent ?? 'local://echo';
+    }
 
     // system_prompt is top-level in YAML (used by LLM and Human adapters)
-    const promptText = d.system_prompt ?? d.config?.system_prompt ?? d.config?.prompt_message;
-    if (promptText) entry.system_prompt = promptText;
+    if (!isPattern) {
+      const promptText = d.system_prompt ?? d.config?.system_prompt ?? d.config?.prompt_message;
+      if (promptText) entry.system_prompt = promptText;
+    }
 
     const config: Record<string, unknown> = {};
-    if (d.config?.max_tokens) config.max_tokens = d.config.max_tokens;
-    if (d.config?.temperature != null) config.temperature = d.config.temperature;
-    if (d.config?.budget_limit) config.budget_limit = d.config.budget_limit;
-    if (d.config?.skill) config.skill = d.config.skill;
+    if (!isPattern) {
+      if (d.config?.max_tokens) config.max_tokens = d.config.max_tokens;
+      if (d.config?.temperature != null) config.temperature = d.config.temperature;
+      if (d.config?.budget_limit) config.budget_limit = d.config.budget_limit;
+      if (d.config?.skill) config.skill = d.config.skill;
+    } else {
+      const numericFields = ['rounds', 'agents', 'variants', 'max_iterations', 'max_workers'];
+      for (const f of numericFields) {
+        if (d.config?.[f] != null) config[f] = d.config[f];
+      }
+      if (d.config?.states) {
+        const raw = d.config.states as string;
+        config.states = raw.split(',').map((s: string) => s.trim()).filter(Boolean);
+      }
+    }
     if (Object.keys(config).length > 0) entry.config = config;
 
     // CAO adapter config block
