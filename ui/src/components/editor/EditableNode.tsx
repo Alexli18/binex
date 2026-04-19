@@ -113,7 +113,7 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
           <span className="text-[13px] font-medium text-slate-200 truncate">{label}</span>
           <span className="text-[10px] text-slate-500 shrink-0">{TYPE_LABELS[data.nodeType] || data.nodeType}</span>
           {tools.length > 0 && (
-            <span className="flex items-center gap-0.5 text-[9px] text-blue-400 bg-blue-500/10 px-1 py-0.5 rounded shrink-0">
+            <span className="flex items-center gap-0.5 text-[9px] px-1 py-0.5 shrink-0" style={{ color: "#e8a020", background: "rgba(232,160,32,0.12)" }}>
               <Wrench size={8} />
               {tools.length}
             </span>
@@ -204,7 +204,7 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
             <CollapsibleSection
               title="Tools"
               badge={tools.length > 0 ? (
-                <span className="text-[9px] bg-blue-500/15 text-blue-400 px-1.5 py-0.5 rounded-full font-medium">
+                <span className="text-[9px] px-1.5 py-0.5 font-medium" style={{ color: "#e8a020", background: "rgba(232,160,32,0.12)" }}>
                   {tools.length}
                 </span>
               ) : undefined}

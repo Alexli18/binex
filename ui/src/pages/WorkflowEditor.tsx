@@ -34,14 +34,13 @@ import { chartColors } from '@/lib/design-tokens';
  *   human  → amber-500   (#f59e0b)
  */
 function agentToNodeType(agent: string): { nodeType: string; color: string } {
-  if (agent.startsWith('llm://')) return { nodeType: 'llm', color: '#8b5cf6' };
-  if (agent.startsWith('local://')) return { nodeType: 'local', color: '#06b6d4' };
+  if (agent.startsWith('llm://')) return { nodeType: 'llm', color: '#e8a020' };
+  if (agent.startsWith('local://')) return { nodeType: 'local', color: '#22d3ee' };
   if (agent.startsWith('human://')) {
-    // human-input and human-approve both map to human:// prefix in design-tokens
-    if (agent.includes('input')) return { nodeType: 'human-input', color: '#f59e0b' };
-    return { nodeType: 'human-approve', color: '#f59e0b' };
+    if (agent.includes('input')) return { nodeType: 'human-input', color: '#60a5fa' };
+    return { nodeType: 'human-approve', color: '#22c55e' };
   }
-  if (agent.startsWith('a2a://')) return { nodeType: 'a2a', color: '#6366f1' };
+  if (agent.startsWith('a2a://')) return { nodeType: 'a2a', color: '#f472b6' };
   if (agent.startsWith('cao://')) return { nodeType: 'cao', color: chartColors.cao };
   return { nodeType: 'local', color: '#06b6d4' };
 }
