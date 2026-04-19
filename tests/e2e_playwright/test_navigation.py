@@ -64,25 +64,25 @@ with sync_playwright() as p:
     page.goto(BASE, wait_until="networkidle")
 
     sidebar = page.locator("aside")
-    initial_class = sidebar.get_attribute("class") or ""
-    check("Sidebar initially expanded", "w-60" in initial_class)
+    initial_style = sidebar.get_attribute("style") or ""
+    check("Sidebar initially expanded", "width: 200px" in initial_style or "200" in initial_style)
 
     collapse_btn = sidebar.locator("button").first
     collapse_btn.click()
     page.wait_for_timeout(300)
-    collapsed_class = sidebar.get_attribute("class") or ""
-    check("Sidebar collapsed", "w-12" in collapsed_class)
+    collapsed_style = sidebar.get_attribute("style") or ""
+    check("Sidebar collapsed", "width: 40px" in collapsed_style or "40" in collapsed_style)
 
     collapse_btn.click()
     page.wait_for_timeout(300)
-    expanded_class = sidebar.get_attribute("class") or ""
-    check("Sidebar re-expanded", "w-60" in expanded_class)
+    expanded_style = sidebar.get_attribute("style") or ""
+    check("Sidebar re-expanded", "width: 200px" in expanded_style or "200" in expanded_style)
 
     # --- Test 4: Active nav state ---
     print("\n=== Test: Active Nav State ===")
     page.goto(f"{BASE}/editor", wait_until="networkidle")
-    # Active links use bg-slate-800/80 class
-    active_link = page.locator("a.bg-slate-800\\/80")
+    # Active links use aria-current="page" set by React Router NavLink
+    active_link = page.locator("a[aria-current='page']")
     check("Active link highlighted", active_link.count() > 0)
 
     browser.close()
