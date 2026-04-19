@@ -1,0 +1,24 @@
+name: my-workflow
+nodes:
+  human-input_1:
+    agent: human://input
+    outputs:
+      - output
+    inputs:
+      query: ${user.query}
+  pattern-critic_5:
+    agent: pattern://critic
+    outputs:
+      - output
+    depends_on:
+      - human-input_1
+    inputs:
+      query: ${user.query}
+  human-output_4:
+    agent: human://output
+    outputs:
+      - output
+    depends_on:
+      - pattern-critic_5
+    inputs:
+      pattern-critic_5: ${pattern-critic_5.output}

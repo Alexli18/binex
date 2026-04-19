@@ -1,29 +1,43 @@
-name: gemini-research
-description: "Research pipeline using Gemini 2.5 Flash"
-
+name: my-workflow
 nodes:
+  human-input_4:
+    agent: human://input
+    outputs:
+      - output
+    inputs:
+      query: ${user.query}
   planner:
-    agent: "llm://gemini/gemini-2.5-flash"
-    system_prompt: "file://prompts/gen-research-planner.md"
+    agent: llm://gemini/gemini-2.5-flash
+    depends_on:
+      - human-input_4
     inputs:
-      query: "${user.query}"
-    outputs: [plan]
-
+      human-input_4: ${human-input_4.output}
+    outputs:
+      - output
+    system_prompt: file://prompts/gen-research-planner.md
   researcher:
-    agent: "llm://gemini/gemini-2.5-flash"
-    system_prompt: "file://prompts/gen-researcher.md"
+    agent: llm://gemini/gemini-2.5-flash
+    outputs:
+      - output
+    system_prompt: file://prompts/gen-researcher.md
+    depends_on:
+      - planner
     inputs:
-      questions: "${planner.plan}"
-    outputs: [findings]
-    depends_on: [planner]
-
+      planner: ${planner.output}
   summarizer:
-    agent: "llm://gemini/gemini-2.5-flash"
-    system_prompt: "file://prompts/gen-research-synthesizer.md"
+    agent: llm://gemini/gemini-2.5-flash
+    outputs:
+      - output
+    system_prompt: file://prompts/gen-research-synthesizer.md
+    depends_on:
+      - researcher
     inputs:
-      research: "${researcher.findings}"
-    outputs: [report]
-    depends_on: [researcher]
-
-defaults:
-  deadline_ms: 300000
+      researcher: ${researcher.output}
+  human-output_3:
+    agent: human://output
+    outputs:
+      - output
+    depends_on:
+      - summarizer
+    inputs:
+      summarizer: ${summarizer.output}

@@ -1,0 +1,30 @@
+name: my-workflow
+nodes:
+  human-input_1:
+    agent: human://input
+    outputs:
+      - output
+    inputs:
+      query: ${user.query}
+  ask_claude:
+    agent: cao://code_supervisor
+    outputs:
+      - output
+    system_prompt: |
+      Answer the following question concisely in one sentence: ${human-input_1.output}
+    cao:
+      provider: claude_code
+      output_format: text
+      timeout_minutes: 15
+    depends_on:
+      - human-input_1
+    inputs:
+      human-input_1: ${human-input_1.output}
+  human-output_2:
+    agent: human://output
+    outputs:
+      - output
+    depends_on:
+      - ask_claude
+    inputs:
+      ask_claude: ${ask_claude.output}
