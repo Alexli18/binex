@@ -29,7 +29,6 @@ function timeAgo(dateStr: string): string {
 
 interface CostRunsTableProps {
   runs: RunSummary[];
-  /** Run IDs that contain CAO adapter nodes (subscription-based cost). */
   caoRunIds?: Set<string>;
 }
 
@@ -78,21 +77,21 @@ export function CostRunsTable({ runs, caoRunIds }: CostRunsTableProps) {
 
   const SortHeader = ({ field, label, className }: { field: SortField; label: string; className?: string }) => (
     <th
-      className={cn('px-4 py-2.5 font-medium text-slate-400 cursor-pointer select-none', className)}
+      className={cn('px-4 py-2.5 font-medium text-[#80808a] cursor-pointer select-none', className)}
       onClick={() => toggleSort(field)}
       aria-sort={sortField === field ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
     >
       <span className="inline-flex items-center gap-1">
         {label}
-        <ArrowUpDown size={12} className={sortField === field ? 'text-blue-400' : 'text-slate-600'} />
+        <ArrowUpDown size={12} className={sortField === field ? 'text-amber-400' : 'text-[#4a4a52]'} />
       </span>
     </th>
   );
 
   return (
-    <div className="bg-slate-900 rounded-card border border-slate-700/60 overflow-hidden">
+    <div className="bg-[#131315] rounded-card border border-[#252528] overflow-hidden">
       {/* Filters */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-700/60">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[#252528]">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[160px]" aria-label="Filter by status">
             <SelectValue />
@@ -113,52 +112,52 @@ export function CostRunsTable({ runs, caoRunIds }: CostRunsTableProps) {
           className="w-56"
           aria-label="Search runs"
         />
-        <span className="ml-auto text-xs text-slate-500">{filtered.length} runs</span>
+        <span className="ml-auto text-xs text-[#4a4a52]">{filtered.length} runs</span>
       </div>
 
       {/* Table */}
       {filtered.length === 0 ? (
-        <div className="p-8 text-center text-sm text-slate-500">No runs match your filters</div>
+        <div className="p-8 text-center text-sm text-[#4a4a52]">No runs match your filters</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-800/50 sticky top-0 z-10">
+            <thead className="bg-[#1a1a1d] sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-2.5 font-medium text-slate-400">Run ID</th>
+                <th className="text-left px-4 py-2.5 font-medium text-[#80808a]">Run ID</th>
                 <SortHeader field="workflow_name" label="Workflow" className="text-left" />
                 <SortHeader field="status" label="Status" className="text-left" />
                 <SortHeader field="total_cost" label="Cost" className="text-right" />
-                <th className="text-center px-4 py-2.5 font-medium text-slate-400 hidden md:table-cell">Nodes</th>
+                <th className="text-center px-4 py-2.5 font-medium text-[#80808a] hidden md:table-cell">Nodes</th>
                 <SortHeader field="started_at" label="Date" className="text-left" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-[#252528]">
               {filtered.map((run) => (
                 <tr
                   key={run.run_id}
                   className={cn(
-                    'hover:bg-slate-800/60 transition-colors',
+                    'hover:bg-[#1a1a1d] transition-colors',
                     run.status === 'over_budget' && 'bg-amber-900/10',
                   )}
                 >
                   <td className="px-4 py-2.5">
                     <Link
                       to={`/runs/${run.run_id}`}
-                      className="text-blue-400 hover:text-blue-300 hover:underline font-mono text-xs"
+                      className="text-amber-400 hover:text-amber-300 hover:underline font-mono text-xs"
                     >
                       {run.run_id.slice(0, 8)}
                     </Link>
                   </td>
-                  <td className="px-4 py-2.5 text-slate-200 truncate max-w-[200px]">{run.workflow_name}</td>
+                  <td className="px-4 py-2.5 text-[#f0f0f0] truncate max-w-[200px]">{run.workflow_name}</td>
                   <td className="px-4 py-2.5"><StatusBadge status={run.status} /></td>
-                  <td className="px-4 py-2.5 text-right font-mono text-slate-300">
+                  <td className="px-4 py-2.5 text-right font-mono text-[#80808a]">
                     {caoRunIds?.has(run.run_id) ? (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="inline-flex items-center gap-1 cursor-help">
                               ${(run.total_cost ?? 0).toFixed(4)}
-                              <Info size={12} className="text-purple-400" />
+                              <Info size={12} className="text-[#80808a]" />
                             </span>
                           </TooltipTrigger>
                           <TooltipContent side="left" className="max-w-[220px]">
@@ -172,10 +171,10 @@ export function CostRunsTable({ runs, caoRunIds }: CostRunsTableProps) {
                       <span>${(run.total_cost ?? 0).toFixed(4)}</span>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 text-center text-slate-300 hidden md:table-cell">
+                  <td className="px-4 py-2.5 text-center text-[#80808a] hidden md:table-cell">
                     {run.completed_nodes}/{run.total_nodes}
                   </td>
-                  <td className="px-4 py-2.5 text-slate-500 text-xs" title={new Date(run.started_at).toLocaleString()}>
+                  <td className="px-4 py-2.5 text-[#4a4a52] text-xs" title={new Date(run.started_at).toLocaleString()}>
                     {timeAgo(run.started_at)}
                   </td>
                 </tr>
