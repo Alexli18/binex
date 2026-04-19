@@ -126,7 +126,7 @@ export default function CostDashboard() {
             subtitle={budgetLimit && budgetLimit > 0 ? undefined : 'Not configured'}
           >
             {budgetLimit && budgetLimit > 0 && (
-              <div className="mt-2 w-full bg-slate-700 rounded-full h-2">
+              <div className="mt-2 w-full bg-[#252528] rounded-full h-2">
                 <div
                   className={`h-2 rounded-full ${budgetColor} transition-all`}
                   style={{ width: `${budgetUsed}%` }}
@@ -142,10 +142,10 @@ export default function CostDashboard() {
         </div>
 
         {/* Cost Trend */}
-        <div className="bg-slate-900 rounded-card border border-slate-700/60 p-4">
-          <h2 className="text-sm font-semibold text-slate-100 mb-4">Cost Trend</h2>
+        <div className="bg-[#131315] rounded-card border border-[#252528]/60 p-4">
+          <h2 className="text-sm font-semibold text-[#f0f0f0] mb-4">Cost Trend</h2>
           {costQuery.isLoading ? (
-            <div className="h-[300px] bg-slate-800 rounded animate-pulse" />
+            <div className="h-[300px] bg-[#1a1a1d] rounded animate-pulse" />
           ) : (
             <CostTrendChart data={costData?.cost_trend ?? []} />
           )}
@@ -169,7 +169,7 @@ export default function CostDashboard() {
 
         {/* Runs Table */}
         <div>
-          <h2 className="text-sm font-semibold text-slate-100 mb-3">Runs by Cost</h2>
+          <h2 className="text-sm font-semibold text-[#f0f0f0] mb-3">Runs by Cost</h2>
           {runsLoading ? (
             <LoadingState message="Loading runs..." variant="inline" />
           ) : (

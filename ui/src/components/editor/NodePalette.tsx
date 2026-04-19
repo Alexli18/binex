@@ -1,5 +1,4 @@
 import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, Terminal, Repeat, Users, Trophy, RefreshCw, GitBranch, Workflow, Scale, CheckCheck, ListChecks } from 'lucide-react';
-import { chartColors } from '@/lib/design-tokens';
 
 export interface NodeTypeConfig {
   type: string;
@@ -13,14 +12,14 @@ export interface NodeTypeConfig {
   category?: string;
 }
 
-// Colors aligned with design-tokens.ts nodeTypeColors
+// Colors matching UI Kit design system
 const NODE_COLOR = {
-  llm: '#8b5cf6',     // violet-500
-  local: '#06b6d4',   // cyan-500
-  human: '#f59e0b',   // amber-500
-  a2a: '#6366f1',     // indigo-500
-  cao: chartColors.cao, // purple-500
-  pattern: '#ec4899',   // pink-500
+  llm: '#e8a020',     // amber — primary accent
+  local: '#22d3ee',   // cyan
+  human: '#22c55e',   // green
+  a2a: '#f472b6',     // magenta
+  cao: '#f97316',     // orange
+  pattern: '#a78bfa', // violet
 } as const;
 
 export const NODE_TYPES: NodeTypeConfig[] = [
@@ -53,6 +52,15 @@ export function NodePalette() {
   const cliAgents = NODE_TYPES.filter((nt) => nt.category === 'CLI AGENTS');
   const patternNodes = NODE_TYPES.filter((nt) => nt.category === 'PATTERNS');
 
+  const sectionLabel: React.CSSProperties = {
+    padding: "6px 14px 3px",
+    fontSize: 9,
+    color: "#4a4a52",
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    userSelect: "none",
+  };
+
   const renderItem = (nt: NodeTypeConfig) => {
     const Icon = nt.icon;
     return (
@@ -60,43 +68,50 @@ export function NodePalette() {
         key={nt.type}
         draggable
         onDragStart={(e) => onDragStart(e, nt)}
-        className="flex items-center gap-2 px-2 py-1.5 rounded cursor-grab active:cursor-grabbing hover:bg-slate-800/60 transition-colors"
         title={nt.description}
-        style={{ borderLeft: `2px solid ${nt.color}` }}
+        style={{
+          display: "flex", alignItems: "center", gap: 8,
+          padding: "7px 14px",
+          borderLeft: `2px solid ${nt.color}`,
+          cursor: "grab",
+          transition: "background 0.1s",
+        }}
+        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1a1a1d")}
+        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
       >
-        <Icon size={13} style={{ color: nt.color }} className="shrink-0" />
-        <div className="min-w-0 flex-1">
-          <span className="text-[12px] text-slate-300">{nt.label}</span>
-          <span className="text-[10px] text-slate-600 ml-1.5">{nt.description}</span>
+        <Icon size={13} style={{ color: nt.color, flexShrink: 0 }} />
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <span style={{ fontSize: 11, color: "#f0f0f0" }}>{nt.label}</span>
+          <span style={{ fontSize: 9, color: "#4a4a52", marginLeft: 6 }}>{nt.description}</span>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="flex flex-col gap-px p-1.5 border-r border-slate-700/50 bg-slate-900 w-48 shrink-0">
-      <div className="px-2 py-1 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
-        Agents
-      </div>
+    <div style={{
+      display: "flex", flexDirection: "column", gap: 0,
+      borderRight: "1px solid #252528",
+      background: "#131315",
+      width: 192, flexShrink: 0,
+      overflowY: "auto",
+    }}>
+      <div style={sectionLabel}>Agents</div>
       {defaultNodes.map(renderItem)}
       {cliAgents.length > 0 && (
         <>
-          <div className="px-2 pt-2 py-1 text-[10px] font-medium text-slate-500 uppercase tracking-wider border-t border-slate-700/30 mt-1">
-            CLI
-          </div>
+          <div style={{ ...sectionLabel, borderTop: "1px solid #252528", marginTop: 4, paddingTop: 10 }}>CLI</div>
           {cliAgents.map(renderItem)}
         </>
       )}
       {patternNodes.length > 0 && (
         <>
-          <div className="px-2 pt-2 py-1 text-[10px] font-medium text-slate-500 uppercase tracking-wider border-t border-slate-700/30 mt-1">
-            Patterns
-          </div>
+          <div style={{ ...sectionLabel, borderTop: "1px solid #252528", marginTop: 4, paddingTop: 10 }}>Patterns</div>
           {patternNodes.map(renderItem)}
         </>
       )}
-      <div className="mt-auto px-2 py-1.5 text-[9px] text-slate-600">
-        Drag onto canvas
+      <div style={{ marginTop: "auto", padding: "8px 14px", fontSize: 9, color: "#4a4a52" }}>
+        drag onto canvas
       </div>
     </div>
   );

@@ -24,6 +24,8 @@ class SqliteExecutionStore:
         self._db_path = db_path
         self._db: aiosqlite.Connection | None = None
         self._initialized = False
+        # In-memory running totals: invalidated on close/reinit
+        self._node_costs: dict[str, dict[str, float]] = {}
 
     async def _ensure_initialized(self) -> aiosqlite.Connection:
         if not self._initialized:
@@ -104,6 +106,8 @@ class SqliteExecutionStore:
                 ON cost_records (run_id);
             CREATE INDEX IF NOT EXISTS idx_cost_records_run_task
                 ON cost_records (run_id, task_id);
+            CREATE INDEX IF NOT EXISTS idx_cost_records_covering
+                ON cost_records (run_id, task_id, cost);
             CREATE INDEX IF NOT EXISTS idx_cao_sessions_status
                 ON cao_sessions (status);
         """)
@@ -353,6 +357,11 @@ class SqliteExecutionStore:
             ),
         )
         await db.commit()
+        # Update in-memory running totals
+        run_totals = self._node_costs.setdefault(cost_record.run_id, {})
+        run_totals[cost_record.task_id] = (
+            run_totals.get(cost_record.task_id, 0.0) + cost_record.cost
+        )
 
     async def list_costs(self, run_id: str) -> list[CostRecord]:
         db = await self._ensure_initialized()
@@ -434,11 +443,23 @@ class SqliteExecutionStore:
         return float(row[0]) if row is not None else 0.0
 
     async def get_run_cost_summary(self, run_id: str) -> RunCostSummary:
-        records = await self.list_costs(run_id)
-        total_cost = sum(r.cost for r in records)
-        node_costs: dict[str, float] = {}
-        for r in records:
-            node_costs[r.task_id] = node_costs.get(r.task_id, 0.0) + r.cost
+        # Serve from in-memory totals if available (populated by record_cost)
+        if run_id in self._node_costs:
+            node_costs = dict(self._node_costs[run_id])
+            return RunCostSummary(
+                run_id=run_id,
+                total_cost=sum(node_costs.values()),
+                node_costs=node_costs,
+            )
+        # Fallback to SQL for runs recorded by other store instances or before restart
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
+            "SELECT task_id, SUM(cost) FROM cost_records WHERE run_id = ? GROUP BY task_id",
+            (run_id,),
+        )
+        rows = await cursor.fetchall()
+        node_costs = {row[0]: float(row[1]) for row in rows}
+        total_cost = sum(node_costs.values())
         return RunCostSummary(
             run_id=run_id,
             total_cost=total_cost,

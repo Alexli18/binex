@@ -13,8 +13,8 @@ const severityColors: Record<string, { badge: string; border: string }> = {
     border: 'border-yellow-500/30',
   },
   LOW: {
-    badge: 'bg-blue-500/20 text-blue-300 border-blue-500/50',
-    border: 'border-blue-500/30',
+    badge: 'bg-amber-500/20 text-amber-300 border-amber-500/50',
+    border: 'border-amber-500/30',
   },
   NONE: {
     badge: 'bg-green-500/20 text-green-300 border-green-500/50',
@@ -28,7 +28,7 @@ export default function DiagnosePage() {
 
   if (!runId) {
     return (
-      <div className="flex items-center justify-center h-full text-slate-500">
+      <div className="flex items-center justify-center h-full text-[#4a4a52]">
         Select a run first to view diagnosis.
       </div>
     );
@@ -37,10 +37,10 @@ export default function DiagnosePage() {
   if (isLoading) {
     return (
       <div className="p-6 space-y-4">
-        <div className="h-8 w-48 bg-slate-800 rounded animate-pulse" />
+        <div className="h-8 w-48 bg-[#1a1a1d] rounded animate-pulse" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="h-40 bg-slate-800 rounded animate-pulse" />
-          <div className="h-40 bg-slate-800 rounded animate-pulse" />
+          <div className="h-40 bg-[#1a1a1d] rounded animate-pulse" />
+          <div className="h-40 bg-[#1a1a1d] rounded animate-pulse" />
         </div>
       </div>
     );
@@ -82,13 +82,13 @@ export default function DiagnosePage() {
         <div className="flex items-center gap-3">
           <Link
             to={`/runs/${runId}/debug`}
-            className="text-xs text-blue-400 hover:text-blue-300"
+            className="text-xs text-amber-400 hover:text-amber-300"
           >
             Debug
           </Link>
           <Link
             to={`/runs/${runId}/trace`}
-            className="text-xs text-blue-400 hover:text-blue-300"
+            className="text-xs text-amber-400 hover:text-amber-300"
           >
             Trace
           </Link>
@@ -97,26 +97,26 @@ export default function DiagnosePage() {
 
       {/* Summary bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-3">
-          <span className="text-xs text-slate-500">Status</span>
+        <div className="border border-[#252528] rounded-lg bg-[#1a1a1d]/50 p-3">
+          <span className="text-xs text-[#4a4a52]">Status</span>
           <p className="mt-1 font-medium capitalize">{data?.status}</p>
         </div>
-        <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-3">
-          <span className="text-xs text-slate-500">Root Causes</span>
+        <div className="border border-[#252528] rounded-lg bg-[#1a1a1d]/50 p-3">
+          <span className="text-xs text-[#4a4a52]">Root Causes</span>
           <p className="mt-1 font-medium text-red-400">
             {data?.root_causes.length ?? 0}
           </p>
         </div>
-        <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-3">
-          <span className="text-xs text-slate-500">Latency Anomalies</span>
+        <div className="border border-[#252528] rounded-lg bg-[#1a1a1d]/50 p-3">
+          <span className="text-xs text-[#4a4a52]">Latency Anomalies</span>
           <p className="mt-1 font-medium text-yellow-400">
             {data?.latency_anomalies.length ?? 0}
           </p>
         </div>
-        <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-3 flex items-center gap-2">
+        <div className="border border-[#252528] rounded-lg bg-[#1a1a1d]/50 p-3 flex items-center gap-2">
           <DollarSign size={14} className="text-green-400" />
           <div>
-            <span className="text-xs text-slate-500">Total Cost</span>
+            <span className="text-xs text-[#4a4a52]">Total Cost</span>
             <p className="mt-0.5 font-mono font-medium">
               ${(data?.total_cost ?? 0).toFixed(4)}
             </p>
@@ -140,7 +140,7 @@ export default function DiagnosePage() {
                 className="border border-red-700/50 rounded-lg bg-red-900/10 p-4"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-sm text-slate-200">
+                  <span className="font-mono text-sm text-[#f0f0f0]">
                     {rc.node_id}
                   </span>
                   <span className="text-xs text-red-400 capitalize">
@@ -172,7 +172,7 @@ export default function DiagnosePage() {
                 className="border border-yellow-700/50 rounded-lg bg-yellow-900/10 p-4"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-sm text-slate-200">
+                  <span className="font-mono text-sm text-[#f0f0f0]">
                     {la.node_id}
                   </span>
                   <span className="text-xs text-yellow-400">
@@ -181,14 +181,14 @@ export default function DiagnosePage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-xs text-slate-500">Actual</span>
+                    <span className="text-xs text-[#4a4a52]">Actual</span>
                     <p className="font-mono text-yellow-300">
                       {(la.duration_s ?? 0).toFixed(3)}s
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-slate-500">Expected</span>
-                    <p className="font-mono text-slate-400">
+                    <span className="text-xs text-[#4a4a52]">Expected</span>
+                    <p className="font-mono text-[#80808a]">
                       {(la.expected_s ?? 0).toFixed(3)}s
                     </p>
                   </div>
@@ -203,19 +203,19 @@ export default function DiagnosePage() {
       {data && data.recommendations.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Lightbulb size={16} className="text-blue-400" />
-            <h2 className="text-sm font-medium text-blue-300">
+            <Lightbulb size={16} className="text-amber-400" />
+            <h2 className="text-sm font-medium text-amber-300">
               Recommendations ({data.recommendations.length})
             </h2>
           </div>
-          <div className="border border-blue-700/50 rounded-lg bg-blue-900/10 p-4">
+          <div className="border border-amber-700/50 rounded-lg bg-amber-900/10 p-4">
             <ol className="space-y-2">
               {data.recommendations.map((rec, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2 text-sm text-slate-300"
+                  className="flex items-start gap-2 text-sm text-[#80808a]"
                 >
-                  <span className="text-blue-400 font-medium shrink-0">
+                  <span className="text-amber-400 font-medium shrink-0">
                     {i + 1}.
                   </span>
                   <span>{rec}</span>

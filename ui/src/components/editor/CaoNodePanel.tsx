@@ -57,18 +57,18 @@ export function CaoNodePanel({ agent, config, onAgentChange, onConfigChange }: C
                 onAgentChange(`cao://${e.target.value}`);
               }}
               placeholder="profile_name.md"
-              className="h-7 bg-slate-700 border-slate-600 text-slate-200 font-mono"
+              className="h-7 bg-[#252528] border-[#333338] text-[#f0f0f0] font-mono"
               onClick={(e) => e.stopPropagation()}
             />
           </div>
         ) : (
           <div>
-            <label className="text-slate-400 block mb-0.5">Agent Profile</label>
+            <label className="text-[#80808a] block mb-0.5">Agent Profile</label>
             <Select
               value={profileName}
               onValueChange={(v) => onAgentChange(`cao://${v}`)}
             >
-              <SelectTrigger className="h-7 bg-slate-700 border-slate-600 text-slate-200">
+              <SelectTrigger className="h-7 bg-[#252528] border-[#333338] text-[#f0f0f0]">
                 <SelectValue placeholder="Select profile..." />
               </SelectTrigger>
               <SelectContent>
@@ -88,12 +88,12 @@ export function CaoNodePanel({ agent, config, onAgentChange, onConfigChange }: C
         )}
 
         <div>
-          <label className="text-slate-400 block mb-0.5">Provider</label>
+          <label className="text-[#80808a] block mb-0.5">Provider</label>
           <Select
             value={(config.provider as string) || 'claude_code'}
             onValueChange={(v) => onConfigChange('provider', v)}
           >
-            <SelectTrigger className="h-7 bg-slate-700 border-slate-600 text-slate-200">
+            <SelectTrigger className="h-7 bg-[#252528] border-[#333338] text-[#f0f0f0]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -110,12 +110,12 @@ export function CaoNodePanel({ agent, config, onAgentChange, onConfigChange }: C
       {/* Output Section */}
       <CollapsibleSection title="Output">
         <div>
-          <label className="text-slate-400 block mb-0.5">Format</label>
+          <label className="text-[#80808a] block mb-0.5">Format</label>
           <Select
             value={(config.output_format as string) || 'auto'}
             onValueChange={(v) => onConfigChange('output_format', v)}
           >
-            <SelectTrigger className="h-7 bg-slate-700 border-slate-600 text-slate-200">
+            <SelectTrigger className="h-7 bg-[#252528] border-[#333338] text-[#f0f0f0]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -127,12 +127,12 @@ export function CaoNodePanel({ agent, config, onAgentChange, onConfigChange }: C
         </div>
         {(config.output_format as string) === 'json' && (
           <div>
-            <label className="text-slate-400 block mb-0.5">Output Field (JSONPath)</label>
+            <label className="text-[#80808a] block mb-0.5">Output Field (JSONPath)</label>
             <Input
               value={(config.output_field as string) || ''}
               onChange={(e) => onConfigChange('output_field', e.target.value)}
               placeholder="$.result"
-              className="h-7 bg-slate-700 border-slate-600 text-slate-200 font-mono"
+              className="h-7 bg-[#252528] border-[#333338] text-[#f0f0f0] font-mono"
               onClick={(e) => e.stopPropagation()}
             />
           </div>
@@ -142,14 +142,14 @@ export function CaoNodePanel({ agent, config, onAgentChange, onConfigChange }: C
       {/* Advanced Section */}
       <CollapsibleSection title="Advanced">
         <div>
-          <label className="text-slate-400 block mb-0.5">Timeout (minutes)</label>
+          <label className="text-[#80808a] block mb-0.5">Timeout (minutes)</label>
           <Input
             type="number"
             min={1}
             max={120}
             value={(config.timeout_minutes as number) || 60}
             onChange={(e) => onConfigChange('timeout_minutes', parseInt(e.target.value) || 60)}
-            className="h-7 bg-slate-700 border-slate-600 text-slate-200"
+            className="h-7 bg-[#252528] border-[#333338] text-[#f0f0f0]"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

@@ -14,18 +14,18 @@ import {
 // --- Category colors ---
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  Business:    { bg: 'bg-blue-500/10',    text: 'text-blue-400',    border: 'border-blue-500/30' },
+  Business:    { bg: 'bg-amber-500/10',    text: 'text-amber-400',    border: 'border-amber-500/30' },
   Content:     { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
   Data:        { bg: 'bg-orange-500/10',  text: 'text-orange-400',  border: 'border-orange-500/30' },
-  Development: { bg: 'bg-purple-500/10',  text: 'text-purple-400',  border: 'border-purple-500/30' },
+  Development: { bg: 'bg-violet-500/10',  text: 'text-violet-400',  border: 'border-violet-500/30' },
   Education:   { bg: 'bg-cyan-500/10',    text: 'text-cyan-400',    border: 'border-cyan-500/30' },
-  General:     { bg: 'bg-slate-500/10',   text: 'text-slate-400',   border: 'border-slate-500/30' },
+  General:     { bg: 'bg-[#4a4a52]/10',   text: 'text-[#80808a]',   border: 'border-[#4a4a52]/30' },
   Legal:       { bg: 'bg-red-500/10',     text: 'text-red-400',     border: 'border-red-500/30' },
   Support:     { bg: 'bg-amber-500/10',   text: 'text-amber-400',   border: 'border-amber-500/30' },
   Workflow:    { bg: 'bg-rose-500/10',    text: 'text-rose-400',    border: 'border-rose-500/30' },
 };
 
-const DEFAULT_COLORS = { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/30' };
+const DEFAULT_COLORS = { bg: 'bg-[#4a4a52]/10', text: 'text-[#80808a]', border: 'border-[#4a4a52]/30' };
 
 function getCategoryColors(category: string) {
   return CATEGORY_COLORS[category] || DEFAULT_COLORS;
@@ -57,19 +57,19 @@ function PromptCard({
       onClick={() => onSelect(template)}
       className={`group text-left w-full border rounded-lg p-3 transition-all duration-150 ${
         isSelected
-          ? 'border-blue-500 bg-blue-500/10'
-          : 'border-slate-700 bg-slate-800/50 hover:bg-slate-700/40 hover:border-slate-600'
+          ? 'border-amber-500 bg-amber-500/10'
+          : 'border-[#252528] bg-[#1a1a1d]/50 hover:bg-[#1a1a1d] hover:border-[#333338]'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
-        <h4 className="text-sm font-medium text-slate-200 truncate flex-1">
+        <h4 className="text-sm font-medium text-[#f0f0f0] truncate flex-1">
           {humanizeName(template.name)}
         </h4>
         <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium border ${colors.bg} ${colors.text} ${colors.border}`}>
           {template.category}
         </span>
       </div>
-      <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+      <p className="text-xs text-[#4a4a52] mt-1 line-clamp-2 leading-relaxed">
         {template.description}
       </p>
     </button>
@@ -91,7 +91,7 @@ function PromptPreview({
 
   if (!name) {
     return (
-      <div className="flex items-center justify-center h-full text-slate-600 text-sm">
+      <div className="flex items-center justify-center h-full text-[#4a4a52] text-sm">
         Select a prompt to preview
       </div>
     );
@@ -100,10 +100,10 @@ function PromptPreview({
   if (isLoading) {
     return (
       <div className="p-4 space-y-3">
-        <div className="h-6 bg-slate-800 rounded animate-pulse w-48" />
-        <div className="h-4 bg-slate-800 rounded animate-pulse w-full" />
-        <div className="h-4 bg-slate-800 rounded animate-pulse w-3/4" />
-        <div className="h-4 bg-slate-800 rounded animate-pulse w-5/6" />
+        <div className="h-6 bg-[#1a1a1d] rounded animate-pulse w-48" />
+        <div className="h-4 bg-[#1a1a1d] rounded animate-pulse w-full" />
+        <div className="h-4 bg-[#1a1a1d] rounded animate-pulse w-3/4" />
+        <div className="h-4 bg-[#1a1a1d] rounded animate-pulse w-5/6" />
       </div>
     );
   }
@@ -112,9 +112,9 @@ function PromptPreview({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#252528]">
         <div>
-          <h3 className="text-sm font-medium text-slate-200">{humanizeName(data.name)}</h3>
+          <h3 className="text-sm font-medium text-[#f0f0f0]">{humanizeName(data.name)}</h3>
           {data.category && (
             <span className={`text-[10px] ${getCategoryColors(data.category).text}`}>
               {data.category}
@@ -145,7 +145,7 @@ function PromptPreview({
         </div>
       </div>
       <div className="flex-1 overflow-auto p-4">
-        <pre className="text-xs text-slate-300 whitespace-pre-wrap font-mono leading-relaxed">
+        <pre className="text-xs text-[#80808a] whitespace-pre-wrap font-mono leading-relaxed">
           {data.content}
         </pre>
       </div>
@@ -189,10 +189,10 @@ function PromptLibraryCore({ onUse, compact = false }: PromptLibraryCoreProps) {
   if (compact && selectedPrompt) {
     return (
       <div className="flex flex-col h-full">
-        <div className="p-3 border-b border-slate-700">
+        <div className="p-3 border-b border-[#252528]">
           <button
             onClick={() => setSelectedPrompt(null)}
-            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-[#80808a] hover:text-[#f0f0f0] transition-colors"
           >
             <ArrowLeft size={12} />
             Back to library
@@ -208,11 +208,11 @@ function PromptLibraryCore({ onUse, compact = false }: PromptLibraryCoreProps) {
   return (
     <div className={`flex ${compact ? 'flex-col h-full' : 'gap-0 h-[calc(100vh-12rem)]'}`}>
       {/* Left: search + category pills + cards list */}
-      <div className={`flex flex-col ${compact ? 'flex-1 min-h-0' : 'w-[340px] border-r border-slate-700'}`}>
+      <div className={`flex flex-col ${compact ? 'flex-1 min-h-0' : 'w-[340px] border-r border-[#252528]'}`}>
         {/* Search */}
-        <div className="p-3 border-b border-slate-700">
+        <div className="p-3 border-b border-[#252528]">
           <div className="relative">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#4a4a52]" />
             <Input
               type="text"
               value={search}
@@ -224,13 +224,13 @@ function PromptLibraryCore({ onUse, compact = false }: PromptLibraryCoreProps) {
         </div>
 
         {/* Category pills */}
-        <div className="flex flex-wrap gap-1.5 p-3 border-b border-slate-700">
+        <div className="flex flex-wrap gap-1.5 p-3 border-b border-[#252528]">
           <button
             onClick={() => setSelectedCategory(null)}
             className={`px-2 py-1 rounded-full text-[11px] font-medium transition-colors ${
               !selectedCategory
-                ? 'bg-blue-600 text-white'
-                : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-amber-500 text-black'
+                : 'bg-[#1a1a1d] text-[#80808a] hover:text-[#f0f0f0]'
             }`}
           >
             All
@@ -241,8 +241,8 @@ function PromptLibraryCore({ onUse, compact = false }: PromptLibraryCoreProps) {
               onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
               className={`px-2 py-1 rounded-full text-[11px] font-medium transition-colors ${
                 selectedCategory === cat
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                  ? 'bg-amber-500 text-black'
+                  : 'bg-[#1a1a1d] text-[#80808a] hover:text-[#f0f0f0]'
               }`}
             >
               {cat}
@@ -254,10 +254,10 @@ function PromptLibraryCore({ onUse, compact = false }: PromptLibraryCoreProps) {
         <div className="flex-1 overflow-auto p-3 space-y-2">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-16 bg-slate-800 rounded-lg animate-pulse" />
+              <div key={i} className="h-16 bg-[#1a1a1d] rounded-lg animate-pulse" />
             ))
           ) : filtered.length === 0 ? (
-            <div className="text-center py-8 text-sm text-slate-500">
+            <div className="text-center py-8 text-sm text-[#4a4a52]">
               No prompts found.
             </div>
           ) : (
@@ -301,13 +301,13 @@ export function PromptLibraryPanel({
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       {/* Panel */}
-      <div className="relative w-[400px] h-full bg-slate-900 border-l border-slate-700 shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+      <div className="relative w-[400px] h-full bg-[#131315] border-l border-[#252528] shadow-2xl flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#252528]">
           <div className="flex items-center gap-2">
-            <BookOpen size={16} className="text-blue-400" />
-            <h2 className="text-sm font-medium text-slate-200">Prompt Library</h2>
+            <BookOpen size={16} className="text-amber-400" />
+            <h2 className="text-sm font-medium text-[#f0f0f0]">Prompt Library</h2>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300">
+          <button onClick={onClose} className="text-[#4a4a52] hover:text-[#80808a]">
             <X size={16} />
           </button>
         </div>
@@ -360,16 +360,16 @@ function NewPromptForm({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-slate-900 border border-slate-700 rounded-modal shadow-xl w-[560px] max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/60">
-          <h2 className="text-lg font-semibold text-slate-100">New Prompt</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition-colors p-1 rounded hover:bg-slate-800">
+      <div className="relative bg-[#131315] border border-[#252528] rounded-modal shadow-xl w-[560px] max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#252528]/60">
+          <h2 className="text-lg font-semibold text-[#f0f0f0]">New Prompt</h2>
+          <button onClick={onClose} className="text-[#80808a] hover:text-[#f0f0f0] transition-colors p-1 rounded hover:bg-[#1a1a1d]">
             <X size={16} />
           </button>
         </div>
         <div className="px-6 py-5 space-y-4 flex-1 overflow-auto">
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Name</label>
+            <label className="block text-xs text-[#80808a] mb-1">Name</label>
             <Input
               type="text"
               value={name}
@@ -378,8 +378,8 @@ function NewPromptForm({ onClose }: { onClose: () => void }) {
               className={!nameValid ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
             {name.trim() && nameValid && (
-              <p className="text-[11px] text-slate-500 mt-1">
-                Will be saved as <span className="text-slate-400 font-mono">{prefix}-{name.trim()}</span>
+              <p className="text-[11px] text-[#4a4a52] mt-1">
+                Will be saved as <span className="text-[#80808a] font-mono">{prefix}-{name.trim()}</span>
               </p>
             )}
             {!nameValid && (
@@ -389,7 +389,7 @@ function NewPromptForm({ onClose }: { onClose: () => void }) {
             )}
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Category</label>
+            <label className="block text-xs text-[#80808a] mb-1">Category</label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -402,13 +402,13 @@ function NewPromptForm({ onClose }: { onClose: () => void }) {
             </Select>
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Content</label>
+            <label className="block text-xs text-[#80808a] mb-1">Content</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Write your prompt in markdown..."
               rows={12}
-              className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 font-mono resize-none"
+              className="w-full bg-[#1a1a1d] border border-[#252528] rounded-md px-3 py-2 text-sm text-[#f0f0f0] placeholder:text-[#4a4a52] focus:outline-none focus:border-amber-500 font-mono resize-none"
             />
           </div>
           {createPrompt.error && (
@@ -417,7 +417,7 @@ function NewPromptForm({ onClose }: { onClose: () => void }) {
             </div>
           )}
         </div>
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-700/60">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[#252528]/60">
           <Button variant="outline" size="sm" onClick={onClose} className="h-8 text-xs">
             Cancel
           </Button>
@@ -459,7 +459,7 @@ export default function PromptLibrary() {
           </Button>
         }
       />
-      <div className="mt-6 border border-slate-700 rounded-card overflow-hidden">
+      <div className="mt-6 border border-[#252528] rounded-card overflow-hidden">
         <PromptLibraryCore />
       </div>
       {showNewForm && <NewPromptForm onClose={() => setShowNewForm(false)} />}

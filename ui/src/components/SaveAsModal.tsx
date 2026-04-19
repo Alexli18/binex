@@ -16,20 +16,20 @@ export function SaveAsModal({ onSave, onClose, isPending }: SaveAsModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-slate-900 rounded-modal shadow-xl border border-slate-700/60 w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold text-slate-100 mb-4">Save Workflow</h3>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Filename</label>
+      <div className="bg-[#131315] rounded-modal shadow-xl border border-[#252528]/60 w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold text-[#f0f0f0] mb-4">Save Workflow</h3>
+        <label className="block text-sm font-medium text-[#80808a] mb-1">Filename</label>
         <input
           type="text"
           value={filename}
           onChange={(e) => setFilename(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-          className="w-full border border-slate-600 rounded px-3 py-1.5 text-sm bg-slate-700 text-slate-200 mb-4 focus:outline-none focus:border-blue-500"
+          className="w-full border border-[#333338] rounded px-3 py-1.5 text-sm bg-[#252528] text-[#f0f0f0] mb-4 focus:outline-none focus:border-amber-500"
           autoFocus
         />
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-1.5 text-sm border border-slate-600 rounded text-slate-300 hover:bg-slate-700">Cancel</button>
-          <button onClick={handleSubmit} disabled={!filename.trim() || isPending} className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-50">
+          <button onClick={onClose} className="px-4 py-1.5 text-sm border border-[#333338] rounded text-[#80808a] hover:bg-[#252528]">Cancel</button>
+          <button onClick={handleSubmit} disabled={!filename.trim() || isPending} className="px-4 py-1.5 text-sm bg-amber-500 text-black rounded hover:bg-amber-400 disabled:opacity-50">
             {isPending ? 'Saving...' : 'Save'}
           </button>
         </div>

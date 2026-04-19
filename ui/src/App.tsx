@@ -38,7 +38,7 @@ export default function App() {
   useKeyboardShortcuts(shortcuts);
 
   return (
-    <div className="flex h-screen bg-slate-900 text-slate-100">
+    <div className="flex h-screen" style={{ background: "#0b0b0c", color: "#f0f0f0" }}>
       <Toaster position="top-right" richColors />
       <CommandPalette open={cmdPaletteOpen} onOpenChange={setCmdPaletteOpen} />
       <Sidebar />

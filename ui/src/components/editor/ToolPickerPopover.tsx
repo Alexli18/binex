@@ -49,7 +49,7 @@ export function ToolPickerPopover({ selectedTools, onToggleTool }: ToolPickerPop
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen(true); }}
-        className="flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
+        className="flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300 transition-colors"
       >
         <Plus size={10} />
         Add Tool
@@ -59,18 +59,18 @@ export function ToolPickerPopover({ selectedTools, onToggleTool }: ToolPickerPop
 
   return (
     <div
-      className="absolute left-0 right-0 top-full mt-1 z-50 bg-slate-800 border border-slate-600 rounded-lg shadow-xl shadow-black/40 max-h-[320px] overflow-y-auto"
+      className="absolute left-0 right-0 top-full mt-1 z-50 bg-[#1a1a1d] border border-[#333338] rounded-lg shadow-xl shadow-black/40 max-h-[320px] overflow-y-auto"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-slate-700/50">
-        <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1">
+      <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-[#252528]/50">
+        <span className="text-[11px] font-semibold text-[#80808a] flex items-center gap-1">
           <Wrench size={11} /> Add Tools
         </span>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-[10px] text-slate-500 hover:text-slate-300"
+          className="text-[10px] text-[#4a4a52] hover:text-[#80808a]"
         >
           Done
         </button>
@@ -79,12 +79,12 @@ export function ToolPickerPopover({ selectedTools, onToggleTool }: ToolPickerPop
       {/* Search */}
       <div className="px-2.5 py-1.5">
         <div className="relative">
-          <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-[#4a4a52]" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search tools..."
-            className="h-6 pl-6 text-[11px] bg-slate-700 border-slate-600"
+            className="h-6 pl-6 text-[11px] bg-[#252528] border-[#333338]"
             onClick={(e) => e.stopPropagation()}
           />
         </div>
@@ -96,7 +96,7 @@ export function ToolPickerPopover({ selectedTools, onToggleTool }: ToolPickerPop
         if (!tools?.length) return null;
         return (
           <div key={cat} className="px-2.5 pb-1">
-            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-[#4a4a52] mb-0.5">
               {CAT_LABELS[cat]}
             </div>
             {tools.map((t) => {
@@ -105,18 +105,18 @@ export function ToolPickerPopover({ selectedTools, onToggleTool }: ToolPickerPop
               return (
                 <label
                   key={t.name}
-                  className="flex items-start gap-1.5 py-0.5 cursor-pointer hover:bg-slate-700/50 rounded px-1 -mx-1"
+                  className="flex items-start gap-1.5 py-0.5 cursor-pointer hover:bg-[#252528]/50 rounded px-1 -mx-1"
                 >
                   <input
                     type="checkbox"
                     checked={checked}
                     onChange={() => onToggleTool(uri)}
-                    className="mt-0.5 accent-blue-500"
+                    className="mt-0.5 accent-amber-500"
                     onClick={(e) => e.stopPropagation()}
                   />
                   <div className="min-w-0">
-                    <div className="text-[11px] text-slate-200">{t.name}</div>
-                    <div className="text-[9px] text-slate-500 truncate">{t.description}</div>
+                    <div className="text-[11px] text-[#f0f0f0]">{t.name}</div>
+                    <div className="text-[9px] text-[#4a4a52] truncate">{t.description}</div>
                   </div>
                 </label>
               );
@@ -127,8 +127,8 @@ export function ToolPickerPopover({ selectedTools, onToggleTool }: ToolPickerPop
 
       {/* MCP servers */}
       {filteredMcp.length > 0 && (
-        <div className="px-2.5 pb-1 border-t border-slate-700/50 pt-1">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+        <div className="px-2.5 pb-1 border-t border-[#252528]/50 pt-1">
+          <div className="text-[9px] font-bold uppercase tracking-wider text-[#4a4a52] mb-0.5">
             MCP Servers
           </div>
           {filteredMcp.map((name) => {
@@ -137,7 +137,7 @@ export function ToolPickerPopover({ selectedTools, onToggleTool }: ToolPickerPop
             return (
               <label
                 key={name}
-                className="flex items-center gap-1.5 py-0.5 cursor-pointer hover:bg-slate-700/50 rounded px-1 -mx-1"
+                className="flex items-center gap-1.5 py-0.5 cursor-pointer hover:bg-[#252528]/50 rounded px-1 -mx-1"
               >
                 <input
                   type="checkbox"
@@ -154,8 +154,8 @@ export function ToolPickerPopover({ selectedTools, onToggleTool }: ToolPickerPop
       )}
 
       {/* Custom python:// */}
-      <div className="px-2.5 py-1.5 border-t border-slate-700/50">
-        <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+      <div className="px-2.5 py-1.5 border-t border-[#252528]/50">
+        <div className="text-[9px] font-bold uppercase tracking-wider text-[#4a4a52] mb-0.5">
           Custom
         </div>
         <div className="flex gap-1">
@@ -163,7 +163,7 @@ export function ToolPickerPopover({ selectedTools, onToggleTool }: ToolPickerPop
             value={customUri}
             onChange={(e) => setCustomUri(e.target.value)}
             placeholder="python://module.func"
-            className="h-5 text-[10px] bg-slate-700 border-slate-600 font-mono flex-1"
+            className="h-5 text-[10px] bg-[#252528] border-[#333338] font-mono flex-1"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && customUri.trim()) {
@@ -182,7 +182,7 @@ export function ToolPickerPopover({ selectedTools, onToggleTool }: ToolPickerPop
                 setCustomUri('');
               }
             }}
-            className="text-[10px] text-emerald-400 hover:text-emerald-300 px-1"
+            className="text-[10px] text-amber-400 hover:text-amber-300 px-1"
           >
             Add
           </button>

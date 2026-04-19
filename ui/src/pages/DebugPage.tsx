@@ -27,7 +27,7 @@ export default function DebugPage() {
 
   if (!runId) {
     return (
-      <div className="flex items-center justify-center h-full text-slate-500">
+      <div className="flex items-center justify-center h-full text-[#4a4a52]">
         Select a run first to view debug information.
       </div>
     );
@@ -36,8 +36,8 @@ export default function DebugPage() {
   if (isLoading) {
     return (
       <div className="p-6 flex flex-col gap-4 h-full">
-        <Skeleton className="h-4 w-48 bg-slate-800" />
-        <Skeleton className="h-8 w-32 bg-slate-800" />
+        <Skeleton className="h-4 w-48 bg-[#1a1a1d]" />
+        <Skeleton className="h-8 w-32 bg-[#1a1a1d]" />
         <div className="flex gap-4 flex-1 min-h-0">
           <DebugNodeListSkeleton />
           <DebugNodeDetailSkeleton />
@@ -77,15 +77,15 @@ export default function DebugPage() {
             />
           </h1>
           {data?.workflow_name && (
-            <p className="text-sm text-slate-400 mt-0.5">{data.workflow_name}</p>
+            <p className="text-sm text-[#80808a] mt-0.5">{data.workflow_name}</p>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-slate-400">{data?.status}</span>
-          <Link to={`/runs/${runId}/trace`} className="text-xs text-blue-400 hover:text-blue-300">
+          <span className="text-sm text-[#80808a]">{data?.status}</span>
+          <Link to={`/runs/${runId}/trace`} className="text-xs text-amber-400 hover:text-amber-300">
             View Trace
           </Link>
-          <Link to={`/runs/${runId}/diagnose`} className="text-xs text-blue-400 hover:text-blue-300">
+          <Link to={`/runs/${runId}/diagnose`} className="text-xs text-amber-400 hover:text-amber-300">
             Diagnose
           </Link>
         </div>

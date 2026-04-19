@@ -46,8 +46,8 @@ const CATEGORY_META: Record<string, { label: string; description: string; icon: 
 const CATEGORY_ORDER = ['core', 'control', 'human', 'integration', 'cao', 'agentic'];
 
 const CATEGORY_COLORS: Record<string, { border: string; text: string; dot: string; bg: string }> = {
-  blue:   { border: 'border-l-blue-500',   text: 'text-blue-400',   dot: 'bg-blue-400',   bg: 'bg-blue-500/5' },
-  purple: { border: 'border-l-purple-500', text: 'text-purple-400', dot: 'bg-purple-400', bg: 'bg-purple-500/5' },
+  blue:   { border: 'border-l-amber-500',   text: 'text-amber-400',   dot: 'bg-amber-400',   bg: 'bg-amber-500/5' },
+  purple: { border: 'border-l-violet-500', text: 'text-violet-400', dot: 'bg-violet-400', bg: 'bg-violet-500/5' },
   green:  { border: 'border-l-emerald-500', text: 'text-emerald-400', dot: 'bg-emerald-400', bg: 'bg-emerald-500/5' },
   orange: { border: 'border-l-orange-500', text: 'text-orange-400', dot: 'bg-orange-400', bg: 'bg-orange-500/5' },
   cyan:   { border: 'border-l-cyan-500',   text: 'text-cyan-400',   dot: 'bg-cyan-400',   bg: 'bg-cyan-500/5' },
@@ -132,13 +132,13 @@ function PatternCard({
     <button
       onClick={() => onSelect(pattern)}
       title={dsl}
-      className={`group text-left border border-slate-700 ${colors.border} border-l-2 rounded-lg p-4
-        bg-slate-800/50 hover:bg-slate-700/40 hover:border-slate-600
+      className={`group text-left border border-[#252528] ${colors.border} border-l-2 rounded-lg p-4
+        bg-[#1a1a1d]/50 hover:bg-[#1a1a1d] hover:border-[#333338]
         transition-all duration-150`}
     >
       {/* Header: name + node count + popular badge */}
       <div className="flex items-center gap-2 mb-2">
-        <h4 className="font-medium text-slate-200 text-sm flex-1 truncate">
+        <h4 className="font-medium text-[#f0f0f0] text-sm flex-1 truncate">
           {pattern.name}
         </h4>
         {isPopular && (
@@ -153,16 +153,16 @@ function PatternCard({
       </div>
 
       {/* Mini graph */}
-      <div className="flex items-center justify-center py-2 mb-2 rounded bg-slate-900/50">
+      <div className="flex items-center justify-center py-2 mb-2 rounded bg-[#131315]/50">
         <MiniGraph dsl={dsl} color={color} />
       </div>
 
       {/* Description + use case */}
-      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+      <p className="text-xs text-[#80808a] line-clamp-2 leading-relaxed">
         {pattern.description}
       </p>
       {pattern.use_case && (
-        <p className="text-[10px] text-slate-500 mt-1.5 italic line-clamp-1">
+        <p className="text-[10px] text-[#4a4a52] mt-1.5 italic line-clamp-1">
           {pattern.use_case}
         </p>
       )}
@@ -171,7 +171,7 @@ function PatternCard({
       {pattern.tags && pattern.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {pattern.tags.map(tag => (
-            <span key={tag} className="px-1.5 py-0.5 rounded text-[10px] bg-slate-700/50 text-slate-500">
+            <span key={tag} className="px-1.5 py-0.5 rounded text-[10px] bg-[#252528]/50 text-[#4a4a52]">
               {tag}
             </span>
           ))}
@@ -240,15 +240,15 @@ export default function Scaffold() {
 
       <div className="mt-6 flex flex-col gap-6">
         {/* Mode tabs */}
-        <div className="flex gap-1 border border-slate-700 rounded-lg bg-slate-800/50 p-1 w-fit">
+        <div className="flex gap-1 border border-[#252528] rounded-lg bg-[#1a1a1d]/50 p-1 w-fit">
           {TAB_CONFIG.map(({ mode: m, label, icon: Icon }) => (
             <button
               key={m}
               onClick={() => setMode(m)}
               className={`flex items-center gap-2 px-4 py-2 text-sm rounded-md transition-colors ${
                 mode === m
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                  ? 'bg-amber-500 text-black'
+                  : 'text-[#80808a] hover:text-[#f0f0f0] hover:bg-[#252528]/50'
               }`}
             >
               <Icon size={16} />
@@ -260,8 +260,8 @@ export default function Scaffold() {
         {/* DSL Mode */}
         {mode === 'dsl' && (
           <div className="space-y-4">
-            <div className="border border-slate-700 rounded-card bg-slate-800/50 p-4 space-y-3">
-              <label className="block text-sm text-slate-400">
+            <div className="border border-[#252528] rounded-card bg-[#1a1a1d]/50 p-4 space-y-3">
+              <label className="block text-sm text-[#80808a]">
                 DSL Expression
               </label>
               <div className="flex gap-2">
@@ -277,7 +277,7 @@ export default function Scaffold() {
                   onClick={handleGenerate}
                   disabled={!expression.trim() || scaffold.isPending}
                   size="sm"
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-amber-500 hover:bg-amber-600"
                 >
                   {scaffold.isPending ? (
                     'Generating...'
@@ -289,7 +289,7 @@ export default function Scaffold() {
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#4a4a52]">
                 Use arrows to define flow: "A -&gt; B" for sequential, "A -&gt; B, C" for parallel branching.
               </p>
             </div>
@@ -301,9 +301,9 @@ export default function Scaffold() {
             )}
 
             {generatedYaml && (
-              <div className="border border-slate-700 rounded-card overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700">
-                  <span className="text-sm font-medium text-slate-300">
+              <div className="border border-[#252528] rounded-card overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-[#252528]">
+                  <span className="text-sm font-medium text-[#80808a]">
                     Generated YAML
                   </span>
                   <div className="flex items-center gap-2">
@@ -325,7 +325,7 @@ export default function Scaffold() {
                     </Button>
                   </div>
                 </div>
-                <pre className="p-4 text-xs text-slate-300 whitespace-pre-wrap font-mono overflow-x-auto max-h-96 overflow-y-auto bg-slate-900">
+                <pre className="p-4 text-xs text-[#80808a] whitespace-pre-wrap font-mono overflow-x-auto max-h-96 overflow-y-auto bg-[#131315]">
                   {generatedYaml}
                 </pre>
               </div>
@@ -339,12 +339,12 @@ export default function Scaffold() {
             {loadingPatterns ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="h-36 bg-slate-800 rounded-lg animate-pulse" />
+                  <div key={i} className="h-36 bg-[#1a1a1d] rounded-lg animate-pulse" />
                 ))}
               </div>
             ) : !patternsData?.patterns || patternsData.patterns.length === 0 ? (
-              <div className="border border-slate-700 rounded-card bg-slate-800/50 p-8 text-center">
-                <p className="text-slate-400">No patterns available.</p>
+              <div className="border border-[#252528] rounded-card bg-[#1a1a1d]/50 p-8 text-center">
+                <p className="text-[#80808a]">No patterns available.</p>
               </div>
             ) : (
               CATEGORY_ORDER.map((catId) => {
@@ -357,8 +357,8 @@ export default function Scaffold() {
                   <div key={catId}>
                     <div className="flex items-center gap-2 mb-3">
                       <Icon size={16} className={CATEGORY_COLORS[color].text} />
-                      <h3 className="text-sm font-medium text-slate-300">{label}</h3>
-                      <span className="text-xs text-slate-500">&mdash; {description}</span>
+                      <h3 className="text-sm font-medium text-[#80808a]">{label}</h3>
+                      <span className="text-xs text-[#4a4a52]">&mdash; {description}</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {items.map(pattern => (
@@ -376,7 +376,7 @@ export default function Scaffold() {
             )}
 
             {scaffold.isPending && (
-              <p className="text-sm text-slate-400">Generating workflow...</p>
+              <p className="text-sm text-[#80808a]">Generating workflow...</p>
             )}
             {scaffold.error && (
               <div className="rounded-md bg-red-900/30 border border-red-700/50 p-3 text-sm text-red-300">
@@ -389,9 +389,9 @@ export default function Scaffold() {
         {/* Blank Mode */}
         {mode === 'blank' && (
           <div className="space-y-4">
-            <div className="border border-slate-700 rounded-card overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700">
-                <span className="text-sm font-medium text-slate-300">
+            <div className="border border-[#252528] rounded-card overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2 border-b border-[#252528]">
+                <span className="text-sm font-medium text-[#80808a]">
                   Starter Template
                 </span>
                 <Button
@@ -402,7 +402,7 @@ export default function Scaffold() {
                   Open in Editor
                 </Button>
               </div>
-              <pre className="p-4 text-xs text-slate-300 whitespace-pre-wrap font-mono overflow-x-auto bg-slate-900">
+              <pre className="p-4 text-xs text-[#80808a] whitespace-pre-wrap font-mono overflow-x-auto bg-[#131315]">
                 {BLANK_YAML}
               </pre>
             </div>

@@ -47,7 +47,7 @@ export function TraceGantt({
 
   if (totalDuration === 0) {
     return (
-      <p className="text-slate-500 text-sm p-4">
+      <p className="text-[#4a4a52] text-sm p-4">
         No timeline data (total duration is 0).
       </p>
     );
@@ -57,7 +57,7 @@ export function TraceGantt({
     <div className="relative">
       {/* Time axis */}
       <div
-        className="flex items-center text-xs text-slate-500 mb-2"
+        className="flex items-center text-xs text-[#4a4a52] mb-2"
         style={{ paddingLeft: labelWidth + chartPadding }}
       >
         <span>0s</span>
@@ -82,13 +82,13 @@ export function TraceGantt({
             <div
               key={entry.node_id}
               className={`flex items-center gap-2 rounded transition-colors ${
-                isSelected ? 'bg-slate-700/50' : 'hover:bg-slate-800/50'
+                isSelected ? 'bg-[#252528]/50' : 'hover:bg-[#1a1a1d]/50'
               }`}
               style={{ height: barHeight }}
             >
               {/* Label */}
               <div
-                className="text-xs font-mono text-slate-400 truncate shrink-0 text-right pr-2"
+                className="text-xs font-mono text-[#80808a] truncate shrink-0 text-right pr-2"
                 style={{ width: labelWidth }}
                 title={entry.node_id}
               >
@@ -102,9 +102,9 @@ export function TraceGantt({
                   tabIndex={0}
                   aria-label={`${entry.node_id} — ${entry.status}${entry.duration_s != null ? `, ${entry.duration_s.toFixed(3)}s` : ''}${isAnomaly ? ', anomaly detected' : ''}`}
                   aria-pressed={isSelected}
-                  className={`absolute top-0 h-full rounded cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-900 ${statusBarColor(entry.status)} ${
+                  className={`absolute top-0 h-full rounded cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0b0b0c] ${statusBarColor(entry.status)} ${
                     isAnomaly
-                      ? 'ring-2 ring-orange-400 ring-offset-1 ring-offset-slate-900'
+                      ? 'ring-2 ring-orange-400 ring-offset-1 ring-offset-[#0b0b0c]'
                       : ''
                   } ${isSelected ? 'opacity-100' : 'opacity-80 hover:opacity-100'}`}
                   style={{
@@ -135,25 +135,25 @@ export function TraceGantt({
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="fixed z-50 bg-slate-800 border border-slate-600 rounded-lg shadow-xl px-3 py-2 text-xs pointer-events-none"
+          className="fixed z-50 bg-[#1a1a1d] border border-[#333338] rounded-lg shadow-xl px-3 py-2 text-xs pointer-events-none"
           style={{ left: tooltip.x + 12, top: tooltip.y - 10 }}
         >
-          <p className="font-mono font-bold text-slate-200">
+          <p className="font-mono font-bold text-[#f0f0f0]">
             {tooltip.entry.node_id}
           </p>
-          <div className="mt-1 space-y-0.5 text-slate-400">
+          <div className="mt-1 space-y-0.5 text-[#80808a]">
             <p>
-              Status: <span className="text-slate-200">{tooltip.entry.status}</span>
+              Status: <span className="text-[#f0f0f0]">{tooltip.entry.status}</span>
             </p>
             <p>
               Duration:{' '}
-              <span className="text-slate-200">
+              <span className="text-[#f0f0f0]">
                 {tooltip.entry.duration_s?.toFixed(3) ?? '-'}s
               </span>
             </p>
             <p>
               Offset:{' '}
-              <span className="text-slate-200">
+              <span className="text-[#f0f0f0]">
                 {tooltip.entry.offset_s?.toFixed(3) ?? '-'}s
               </span>
             </p>
@@ -166,29 +166,29 @@ export function TraceGantt({
 
       {/* Selected detail */}
       {selectedId && (
-        <div className="mt-4 p-3 rounded-lg border border-slate-700 bg-slate-800/50 text-sm">
+        <div className="mt-4 p-3 rounded-lg border border-[#252528] bg-[#1a1a1d]/50 text-sm">
           {(() => {
             const entry = sorted.find((e) => e.node_id === selectedId);
             if (!entry) return null;
             return (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
-                  <span className="text-slate-500 text-xs">Node</span>
+                  <span className="text-[#4a4a52] text-xs">Node</span>
                   <p className="font-mono text-xs mt-0.5">{entry.node_id}</p>
                 </div>
                 <div>
-                  <span className="text-slate-500 text-xs">Status</span>
+                  <span className="text-[#4a4a52] text-xs">Status</span>
                   <p className="capitalize mt-0.5">{entry.status}</p>
                 </div>
                 <div>
-                  <span className="text-slate-500 text-xs">Duration</span>
+                  <span className="text-[#4a4a52] text-xs">Duration</span>
                   <p className="font-mono mt-0.5">
                     {entry.duration_s?.toFixed(3) ?? '-'}s
                   </p>
                 </div>
                 <div>
-                  <span className="text-slate-500 text-xs">Started</span>
-                  <p className="font-mono text-xs mt-0.5 text-slate-400">
+                  <span className="text-[#4a4a52] text-xs">Started</span>
+                  <p className="font-mono text-xs mt-0.5 text-[#80808a]">
                     {entry.started_at ?? '-'}
                   </p>
                 </div>

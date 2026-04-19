@@ -50,13 +50,13 @@ export function DebugNodeList({
   }, [nodes, filter]);
 
   return (
-    <div className="w-80 flex flex-col border border-slate-700 rounded-lg bg-slate-800/50 overflow-hidden">
+    <div className="w-80 flex flex-col border border-[#252528] rounded-lg bg-[#1a1a1d]/50 overflow-hidden">
       {/* Filter */}
-      <div className="p-3 border-b border-slate-700 space-y-2">
+      <div className="p-3 border-b border-[#252528] space-y-2">
         <div className="relative">
           <Search
             size={14}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#4a4a52]"
           />
           <Input
             type="text"
@@ -66,12 +66,12 @@ export function DebugNodeList({
             className="pl-8"
           />
         </div>
-        <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+        <label className="flex items-center gap-2 text-xs text-[#80808a] cursor-pointer">
           <input
             type="checkbox"
             checked={errorsOnly}
             onChange={(e) => onErrorsOnlyChange(e.target.checked)}
-            className="rounded border-slate-600 bg-slate-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+            className="rounded border-[#333338] bg-[#131315] text-amber-400 focus:ring-amber-500 focus:ring-offset-0"
           />
           Errors only
         </label>
@@ -80,9 +80,9 @@ export function DebugNodeList({
       {/* Node list */}
       <div className="flex-1 overflow-y-auto">
         {filteredNodes.length === 0 ? (
-          <p className="p-4 text-sm text-slate-500">No nodes found</p>
+          <p className="p-4 text-sm text-[#4a4a52]">No nodes found</p>
         ) : (
-          <ul className="divide-y divide-slate-700/50">
+          <ul className="divide-y divide-[#252528]/50">
             {filteredNodes.map((node) => (
               <li key={node.node_id}>
                 <button
@@ -94,8 +94,8 @@ export function DebugNodeList({
                   className={cn(
                     'w-full text-left px-3 py-2.5 flex items-center gap-2.5 text-sm transition-colors',
                     selectedNodeId === node.node_id
-                      ? 'bg-blue-600/20 border-l-2 border-blue-500'
-                      : 'hover:bg-slate-700/30 border-l-2 border-transparent',
+                      ? 'bg-amber-500/20 border-l-2 border-amber-500'
+                      : 'hover:bg-[#1a1a1d]/30 border-l-2 border-transparent',
                   )}
                 >
                   {statusIcon(node.status)}
@@ -104,7 +104,7 @@ export function DebugNodeList({
                       {node.node_id}
                     </p>
                     {node.duration_s !== null && (
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-[#4a4a52] mt-0.5">
                         {node.duration_s.toFixed(3)}s
                       </p>
                     )}
@@ -124,14 +124,14 @@ export function DebugNodeList({
 
 export function DebugNodeListSkeleton() {
   return (
-    <div className="w-80 flex flex-col border border-slate-700 rounded-lg bg-slate-800/50 overflow-hidden">
-      <div className="p-3 border-b border-slate-700 space-y-2">
-        <Skeleton className="h-8 w-full bg-slate-700" />
-        <Skeleton className="h-4 w-24 bg-slate-700" />
+    <div className="w-80 flex flex-col border border-[#252528] rounded-lg bg-[#1a1a1d]/50 overflow-hidden">
+      <div className="p-3 border-b border-[#252528] space-y-2">
+        <Skeleton className="h-8 w-full bg-[#252528]" />
+        <Skeleton className="h-4 w-24 bg-[#252528]" />
       </div>
       <div className="flex-1 space-y-1 p-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full bg-slate-700" />
+          <Skeleton key={i} className="h-12 w-full bg-[#252528]" />
         ))}
       </div>
     </div>

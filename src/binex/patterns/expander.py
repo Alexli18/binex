@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from binex.models.task import RetryPolicy
 from binex.models.workflow import BackEdge, WorkflowSpec
 from binex.patterns.models import PatternSpec, StepConfig
 from binex.patterns.templates import expand_pattern
@@ -44,6 +45,14 @@ def expand_patterns(spec: WorkflowSpec) -> WorkflowSpec:
                 budget=node.budget,
             )
             nodes, edges, back_edges = expand_pattern(pspec)
+
+            # Apply per-step retry policies
+            for n in nodes:
+                step_key = n.id.removeprefix(f"{pspec.id}.").split(".")[0]
+                step_cfg = pspec.steps.get(step_key)
+                if step_cfg and step_cfg.max_retries is not None:
+                    n.retry_policy = RetryPolicy(max_retries=step_cfg.max_retries)
+
             for n in nodes:
                 expanded_nodes[n.id] = n
 

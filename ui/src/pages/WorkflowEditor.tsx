@@ -16,7 +16,6 @@ import { api } from '../lib/api';
 import { toast } from 'sonner';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { Input } from '@/components/ui/input';
-import { chartColors } from '@/lib/design-tokens';
 
 // ---------------------------------------------------------------------------
 // Helpers (kept local — only used by the orchestrator)
@@ -34,23 +33,34 @@ import { chartColors } from '@/lib/design-tokens';
  *   human  → amber-500   (#f59e0b)
  */
 function agentToNodeType(agent: string): { nodeType: string; color: string } {
-  if (agent.startsWith('llm://')) return { nodeType: 'llm', color: '#8b5cf6' };
-  if (agent.startsWith('local://')) return { nodeType: 'local', color: '#06b6d4' };
+  if (agent.startsWith('llm://')) return { nodeType: 'llm', color: '#e8a020' };
+  if (agent.startsWith('local://')) return { nodeType: 'local', color: '#22d3ee' };
   if (agent.startsWith('human://')) {
-    // human-input and human-approve both map to human:// prefix in design-tokens
-    if (agent.includes('input')) return { nodeType: 'human-input', color: '#f59e0b' };
-    return { nodeType: 'human-approve', color: '#f59e0b' };
+    if (agent.includes('input')) return { nodeType: 'human-input', color: '#22c55e' };
+    return { nodeType: 'human-approve', color: '#22c55e' };
   }
-  if (agent.startsWith('a2a://')) return { nodeType: 'a2a', color: '#6366f1' };
-  if (agent.startsWith('cao://')) return { nodeType: 'cao', color: chartColors.cao };
-  return { nodeType: 'local', color: '#06b6d4' };
+  if (agent.startsWith('a2a://')) return { nodeType: 'a2a', color: '#f472b6' };
+  if (agent.startsWith('cao://')) return { nodeType: 'cao', color: '#f97316' };
+  return { nodeType: 'local', color: '#22d3ee' };
 }
 
 interface ParsedYamlWorkflow {
   name?: string;
   schedule?: string;
   mcp_servers?: Record<string, unknown>;
-  nodes?: Record<string, { agent: string; depends_on?: string[]; config?: Record<string, unknown>; system_prompt?: string; inputs?: Record<string, string>; outputs?: string[]; tools?: string[]; cao?: Record<string, unknown> }>;
+  nodes?: Record<string, {
+    agent?: string;
+    pattern?: string;
+    model?: string;
+    steps?: Record<string, { model?: string; prompt?: string; max_retries?: number }>;
+    depends_on?: string[];
+    config?: Record<string, unknown>;
+    system_prompt?: string;
+    inputs?: Record<string, string>;
+    outputs?: string[];
+    tools?: string[];
+    cao?: Record<string, unknown>;
+  }>;
 }
 
 interface YamlParseResult {
@@ -67,8 +77,42 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
 
   const entries = Object.entries(parsed.nodes);
   const nodes: Node[] = entries.map(([id, spec], i) => {
-    const agent = spec.agent ?? 'local://echo';
-    const { nodeType, color } = agentToNodeType(agent);
+    const isPattern = !!spec.pattern;
+    const agent = isPattern ? `pattern://${spec.pattern}` : (spec.agent ?? 'local://echo');
+    const { nodeType, color } = isPattern
+      ? { nodeType: 'pattern', color: '#a78bfa' }
+      : agentToNodeType(agent);
+
+    const patternModel = spec.model?.startsWith('llm://')
+      ? spec.model.slice(6)
+      : spec.model;
+
+    const parsedSteps = spec.steps
+      ? Object.fromEntries(
+          Object.entries(spec.steps).map(([k, v]) => [
+            k,
+            {
+              model: v.model?.startsWith('llm://') ? v.model.slice(6) : (v.model ?? ''),
+              prompt: v.prompt ?? '',
+              ...(v.max_retries !== undefined ? { max_retries: v.max_retries } : {}),
+            },
+          ]),
+        )
+      : undefined;
+
+    const config: Record<string, unknown> = {
+      ...spec.config,
+      ...(spec.system_prompt ? { system_prompt: spec.system_prompt } : {}),
+      ...(spec.cao ?? {}),
+    };
+    if (isPattern) {
+      if (patternModel) config.model = patternModel;
+      if (parsedSteps) config.steps = parsedSteps;
+      if (Array.isArray(config.states)) {
+        config.states = (config.states as string[]).join(',');
+      }
+    }
+
     return {
       id,
       type: 'editable',
@@ -77,7 +121,7 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
         label: id,
         nodeType,
         agent,
-        config: { ...spec.config, ...(spec.system_prompt ? { system_prompt: spec.system_prompt } : {}), ...(spec.cao ?? {}) },
+        config,
         system_prompt: spec.system_prompt,
         inputs: spec.inputs,
         outputs: spec.outputs,
@@ -415,11 +459,11 @@ export default function WorkflowEditor() {
       />
 
       {/* Status bar */}
-      <div className="flex items-center gap-4 px-4 py-1.5 bg-slate-900/80 border-t border-slate-700/50 text-xs text-slate-500">
+      <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "4px 16px", background: "#131315", borderTop: "1px solid #252528", fontSize: 10, color: "#4a4a52" }}>
         {parseError ? (
-          <span className="text-red-400">Parse error: {parseError}</span>
+          <span style={{ color: "#ef4444" }}>Parse error: {parseError}</span>
         ) : content.trim() ? (
-          <span className="text-emerald-400">YAML valid</span>
+          <span style={{ color: "#e8a020" }}>YAML valid</span>
         ) : null}
         {graphNodes.length > 0 && (
           <span>Nodes: {graphNodes.length}</span>

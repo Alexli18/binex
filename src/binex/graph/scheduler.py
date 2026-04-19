@@ -17,6 +17,12 @@ class Scheduler:
         self._running: set[str] = set()
         self._skipped: set[str] = set()
         self._execution_count: dict[str, int] = {}
+        self._pending: set[str] = set(dag.nodes)
+        # Push-based readiness: track unsatisfied dep count per node
+        self._dep_count: dict[str, int] = {
+            nid: len(dag.dependencies(nid)) for nid in dag.nodes
+        }
+        self._ready: set[str] = {nid for nid, cnt in self._dep_count.items() if cnt == 0}
 
     @property
     def completed(self) -> set[str]:
@@ -36,32 +42,40 @@ class Scheduler:
     def ready_nodes(self) -> list[str]:
         """Return node IDs whose dependencies are all completed/skipped
         and not already running/done."""
-        ready = []
-        satisfied = self._completed | self._skipped
-        already_handled = (
-            self._completed | self._failed | self._running | self._skipped
-        )
-        for node_id in sorted(self._dag.nodes):
-            if node_id in already_handled:
+        return list(self._ready)
+
+    def _satisfy(self, node_id: str) -> None:
+        """Mark node_id as satisfied (completed or skipped); unlock its dependents."""
+        for dep in self._dag.dependents(node_id):
+            if dep not in self._pending:
                 continue
-            deps = self._dag.dependencies(node_id)
-            if deps <= satisfied:
-                ready.append(node_id)
-        return ready
+            self._dep_count[dep] -= 1
+            if self._dep_count[dep] == 0:
+                self._ready.add(dep)
 
     def mark_running(self, node_id: str) -> None:
+        self._pending.discard(node_id)
+        self._ready.discard(node_id)
         self._running.add(node_id)
 
     def mark_completed(self, node_id: str) -> None:
+        self._pending.discard(node_id)
+        self._ready.discard(node_id)
         self._running.discard(node_id)
         self._completed.add(node_id)
+        self._satisfy(node_id)
 
     def mark_failed(self, node_id: str) -> None:
+        self._pending.discard(node_id)
+        self._ready.discard(node_id)
         self._running.discard(node_id)
         self._failed.add(node_id)
 
     def mark_skipped(self, node_id: str) -> None:
+        self._pending.discard(node_id)
+        self._ready.discard(node_id)
         self._skipped.add(node_id)
+        self._satisfy(node_id)
 
     def get_execution_count(self, node_id: str) -> int:
         """Return how many times a node has been re-executed (0 = never reset)."""
@@ -69,10 +83,26 @@ class Scheduler:
 
     def mark_pending_again(self, node_id: str) -> None:
         """Reset a completed/failed node back to pending for re-execution."""
+        was_satisfied = node_id in self._completed or node_id in self._skipped
         self._completed.discard(node_id)
         self._failed.discard(node_id)
         self._running.discard(node_id)
+        self._ready.discard(node_id)
+        self._pending.add(node_id)
         self._execution_count[node_id] = self._execution_count.get(node_id, 0) + 1
+        # Recompute dep_count for this node from current satisfied set
+        satisfied = self._completed | self._skipped
+        self._dep_count[node_id] = sum(
+            1 for d in self._dag.dependencies(node_id) if d not in satisfied
+        )
+        if self._dep_count[node_id] == 0:
+            self._ready.add(node_id)
+        # If this node was satisfied before, its dependents lose one satisfied dep
+        if was_satisfied:
+            for dep in self._dag.dependents(node_id):
+                if dep in self._pending:
+                    self._dep_count[dep] += 1
+                    self._ready.discard(dep)
 
     def reset_chain(self, from_node: str, to_node: str, dag: DAG) -> list[str]:
         """Reset all nodes on any path from from_node to to_node (inclusive)."""
@@ -86,7 +116,7 @@ class Scheduler:
             forward_reachable.add(current)
             if current == to_node:
                 continue  # don't go past to_node
-            for dep in sorted(dag.dependents(current)):
+            for dep in dag.dependents(current):
                 queue.append(dep)
 
         # Backward reachable from to_node (bounded by from_node)
@@ -99,7 +129,7 @@ class Scheduler:
             backward_reachable.add(current)
             if current == from_node:
                 continue
-            for dep in sorted(dag.dependencies(current)):
+            for dep in dag.dependencies(current):
                 queue.append(dep)
 
         # Intersection = nodes on path from from_node to to_node
@@ -111,8 +141,8 @@ class Scheduler:
         return sorted(result)
 
     def is_complete(self) -> bool:
-        return self._dag.nodes <= (self._completed | self._failed | self._skipped)
+        return not self._pending and not self._running
 
     def is_blocked(self) -> bool:
         """True if no more progress can be made (failed nodes block remaining)."""
-        return not self.is_complete() and not self.ready_nodes() and not self._running
+        return not self.is_complete() and not self._ready and not self._running

@@ -90,8 +90,8 @@ export function HelpPanel() {
         className={cn(
           'fixed top-14 right-3 z-40 p-2 rounded-full transition-colors',
           open
-            ? 'bg-blue-600 text-white'
-            : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700 border border-slate-700',
+            ? 'bg-amber-500 text-black'
+            : 'bg-[#1a1a1d] text-[#80808a] hover:text-[#f0f0f0] hover:bg-[#252528] border border-[#252528]',
         )}
         aria-label="Toggle help panel"
       >
@@ -107,14 +107,14 @@ export function HelpPanel() {
             onClick={() => setOpen(false)}
           />
           {/* Panel */}
-          <div className="fixed top-0 right-0 z-50 h-full w-80 bg-slate-900 border-l border-slate-700 shadow-xl overflow-y-auto animate-in slide-in-from-right duration-200">
-            <div className="flex items-center justify-between p-4 border-b border-slate-800">
-              <h2 className="text-sm font-semibold text-slate-200">
+          <div className="fixed top-0 right-0 z-50 h-full w-80 bg-[#131315] border-l border-[#252528] shadow-xl overflow-y-auto animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-[#252528]">
+              <h2 className="text-sm font-semibold text-[#f0f0f0]">
                 {help.title}
               </h2>
               <button
                 onClick={() => setOpen(false)}
-                className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                className="p-1 rounded text-[#80808a] hover:text-[#f0f0f0] hover:bg-[#1a1a1d]"
               >
                 <X size={16} />
               </button>
@@ -122,10 +122,10 @@ export function HelpPanel() {
             <div className="p-4 space-y-4">
               {help.sections.map((section) => (
                 <div key={section.heading}>
-                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                  <h3 className="text-xs font-semibold text-[#80808a] uppercase tracking-wider mb-1">
                     {section.heading}
                   </h3>
-                  <p className="text-sm text-slate-300 leading-relaxed">
+                  <p className="text-sm text-[#80808a] leading-relaxed">
                     {section.body}
                   </p>
                 </div>

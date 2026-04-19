@@ -12,6 +12,7 @@ VALID_PATTERNS = frozenset({
 class StepConfig(BaseModel):
     prompt: str | None = None
     model: str | None = None
+    max_retries: int | None = None
 
 class PatternSpec(BaseModel):
     id: str
