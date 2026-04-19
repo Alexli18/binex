@@ -48,7 +48,19 @@ interface ParsedYamlWorkflow {
   name?: string;
   schedule?: string;
   mcp_servers?: Record<string, unknown>;
-  nodes?: Record<string, { agent: string; depends_on?: string[]; config?: Record<string, unknown>; system_prompt?: string; inputs?: Record<string, string>; outputs?: string[]; tools?: string[]; cao?: Record<string, unknown> }>;
+  nodes?: Record<string, {
+    agent?: string;
+    pattern?: string;
+    model?: string;
+    steps?: Record<string, { model?: string; prompt?: string }>;
+    depends_on?: string[];
+    config?: Record<string, unknown>;
+    system_prompt?: string;
+    inputs?: Record<string, string>;
+    outputs?: string[];
+    tools?: string[];
+    cao?: Record<string, unknown>;
+  }>;
 }
 
 interface YamlParseResult {
@@ -65,8 +77,41 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
 
   const entries = Object.entries(parsed.nodes);
   const nodes: Node[] = entries.map(([id, spec], i) => {
-    const agent = spec.agent ?? 'local://echo';
-    const { nodeType, color } = agentToNodeType(agent);
+    const isPattern = !!spec.pattern;
+    const agent = isPattern ? `pattern://${spec.pattern}` : (spec.agent ?? 'local://echo');
+    const { nodeType, color } = isPattern
+      ? { nodeType: 'pattern', color: '#a78bfa' }
+      : agentToNodeType(agent);
+
+    const patternModel = spec.model?.startsWith('llm://')
+      ? spec.model.slice(6)
+      : spec.model;
+
+    const parsedSteps = spec.steps
+      ? Object.fromEntries(
+          Object.entries(spec.steps).map(([k, v]) => [
+            k,
+            {
+              model: v.model?.startsWith('llm://') ? v.model.slice(6) : (v.model ?? ''),
+              prompt: v.prompt ?? '',
+            },
+          ]),
+        )
+      : undefined;
+
+    const config: Record<string, unknown> = {
+      ...spec.config,
+      ...(spec.system_prompt ? { system_prompt: spec.system_prompt } : {}),
+      ...(spec.cao ?? {}),
+    };
+    if (isPattern) {
+      if (patternModel) config.model = patternModel;
+      if (parsedSteps) config.steps = parsedSteps;
+      if (Array.isArray(config.states)) {
+        config.states = (config.states as string[]).join(',');
+      }
+    }
+
     return {
       id,
       type: 'editable',
@@ -75,7 +120,7 @@ function yamlToRfGraph(yamlContent: string): YamlParseResult {
         label: id,
         nodeType,
         agent,
-        config: { ...spec.config, ...(spec.system_prompt ? { system_prompt: spec.system_prompt } : {}), ...(spec.cao ?? {}) },
+        config,
         system_prompt: spec.system_prompt,
         inputs: spec.inputs,
         outputs: spec.outputs,
