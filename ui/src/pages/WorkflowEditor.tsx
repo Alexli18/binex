@@ -16,7 +16,6 @@ import { api } from '../lib/api';
 import { toast } from 'sonner';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { Input } from '@/components/ui/input';
-import { chartColors } from '@/lib/design-tokens';
 
 // ---------------------------------------------------------------------------
 // Helpers (kept local — only used by the orchestrator)

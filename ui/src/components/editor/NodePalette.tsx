@@ -1,5 +1,4 @@
 import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, Terminal, Repeat, Users, Trophy, RefreshCw, GitBranch, Workflow, Scale, CheckCheck, ListChecks } from 'lucide-react';
-import { chartColors } from '@/lib/design-tokens';
 
 export interface NodeTypeConfig {
   type: string;

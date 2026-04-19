@@ -1,6 +1,6 @@
 import { memo, useState, useCallback, useEffect, useRef } from 'react';
 import { Handle, Position, useReactFlow, type NodeProps } from 'reactflow';
-import { Bot, Monitor, ShieldCheck, MessageSquare, Globe, Eye, X, Trash2, BookOpen, Wrench, Terminal, Check } from 'lucide-react';
+import { X, Trash2, BookOpen, Wrench, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ModelSelect } from './ModelSelect';
 import { CollapsibleSection } from './CollapsibleSection';
@@ -10,11 +10,6 @@ import { PromptLibraryPanel } from '../../pages/PromptLibrary';
 import { CaoNodePanel } from './CaoNodePanel';
 import { PatternConfig } from './PatternConfig';
 
-const ICONS: Record<string, React.ElementType> = {
-  llm: Bot, local: Monitor, 'human-approve': ShieldCheck,
-  'human-input': MessageSquare, 'human-output': Eye, a2a: Globe,
-  cao: Terminal,
-};
 
 const TYPE_LABELS: Record<string, string> = {
   llm: 'LLM', local: 'Script', 'human-approve': 'Approve',
@@ -47,7 +42,6 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
     deleteElements({ nodes: [{ id }] });
   }, [deleteElements, id]);
 
-  const Icon = ICONS[data.nodeType] || Bot;
   const model = agent.includes('://') ? agent.split('://')[1] : agent;
 
   const notifyChange = useCallback(() => {

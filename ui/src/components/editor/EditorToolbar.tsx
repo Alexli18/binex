@@ -1,6 +1,4 @@
 import { FolderOpen, Settings } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 
 export type EditorMode = 'visual' | 'yaml';
 
@@ -22,7 +20,6 @@ export interface EditorToolbarProps {
 const AMBER = "#e8a020";
 const BG = "#131315";
 const BORDER = "#252528";
-const S2 = "#1a1a1d";
 const MUTED = "#80808a";
 const TEXT = "#f0f0f0";
 
@@ -142,11 +139,11 @@ export function EditorToolbar({
           transition: "all 0.1s",
         }}
         onMouseEnter={(e) => {
-          const el = e.currentTarget as HTMLElement;
+          const el = e.currentTarget as HTMLButtonElement;
           if (!el.disabled) { el.style.color = TEXT; el.style.borderColor = "#333338"; }
         }}
         onMouseLeave={(e) => {
-          const el = e.currentTarget as HTMLElement;
+          const el = e.currentTarget as HTMLButtonElement;
           if (!el.disabled) { el.style.color = MUTED; el.style.borderColor = BORDER; }
         }}
       >
