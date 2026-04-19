@@ -10,10 +10,11 @@ export interface PatternStepEditorProps {
   model: string;
   prompt: string;
   maxRetries: number | undefined;
+  defaultPrompt?: string;
   onChange: (model: string, prompt: string, maxRetries: number | undefined) => void;
 }
 
-export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, maxRetries, onChange }: PatternStepEditorProps) {
+export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, maxRetries, defaultPrompt, onChange }: PatternStepEditorProps) {
   const [open, setOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
 
@@ -68,16 +69,28 @@ export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, max
           <div>
             <div className="flex items-center justify-between mb-0.5">
               <label className="text-[10px] text-[#4a4a52]">Prompt override</label>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setLibraryOpen(true); }}
-                className="flex items-center gap-1 transition-colors text-[10px]"
-                style={{ color: '#e8a020' }}
-                title="Browse prompt library"
-              >
-                <BookOpen size={10} />
-                Browse
-              </button>
+              <div className="flex items-center gap-2">
+                {defaultPrompt && (
+                  <button
+                    type="button"
+                    onClick={() => onChange(model, defaultPrompt, maxRetries)}
+                    className="text-[10px] text-[#4a4a52] hover:text-[#80808a] transition-colors"
+                    title={`Load default: "${defaultPrompt.slice(0, 60)}..."`}
+                  >
+                    Default
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setLibraryOpen(true); }}
+                  className="flex items-center gap-1 transition-colors text-[10px]"
+                  style={{ color: '#e8a020' }}
+                  title="Browse prompt library"
+                >
+                  <BookOpen size={10} />
+                  Browse
+                </button>
+              </div>
             </div>
             <textarea
               value={prompt}

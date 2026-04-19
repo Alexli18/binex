@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { CollapsibleSection } from './CollapsibleSection';
 import { ModelSelect } from './ModelSelect';
 import { PatternStepEditor } from './PatternStepEditor';
+import { PATTERN_DEFAULT_PROMPTS } from '@/lib/pattern-defaults';
 
 // ---------------------------------------------------------------------------
 // Step registry
@@ -247,6 +248,7 @@ export function PatternConfig({ patternType, config, onChange }: PatternConfigPr
                   model={stepCfg.model ?? ''}
                   prompt={stepCfg.prompt ?? ''}
                   maxRetries={stepCfg.max_retries}
+                  defaultPrompt={PATTERN_DEFAULT_PROMPTS[patternType]?.[step.key]}
                   onChange={(m, p, r) => handleStepChange(step.key, m, p, r)}
                 />
               );
