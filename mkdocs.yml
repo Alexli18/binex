@@ -8,17 +8,9 @@ theme:
   name: material
   palette:
     - scheme: slate
-      primary: deep purple
-      accent: amber
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-    - scheme: default
-      primary: deep purple
-      accent: amber
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
+      primary: custom
+      accent: custom
+  font: false
   icon:
     logo: material/bug-check
   features:
@@ -27,6 +19,9 @@ theme:
     - content.code.copy
     - navigation.top
     - header.autohide
+
+extra_css:
+  - stylesheets/extra.css
 
 plugins:
   - search
