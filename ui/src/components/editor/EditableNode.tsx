@@ -136,7 +136,7 @@ function EditableNodeInner({ data, id, selected }: NodeProps<EditableNodeData>) 
 
   // Expanded view
   return (
-    <div style={{ ...nodeBase, width: 260 }} className="nowheel">
+    <div style={{ ...nodeBase, width: agent.startsWith('pattern://') ? 280 : 260 }} className="nowheel">
       <Handle type="target" position={Position.Top} className={handleStyle} />
 
       {/* Header */}
