@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ChevronRight, X } from 'lucide-react';
+import { ChevronRight, X, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModelSelect } from './ModelSelect';
+import { PromptLibraryPanel } from '../../pages/PromptLibrary';
 
 export interface PatternStepEditorProps {
   stepKey: string;
@@ -13,6 +14,7 @@ export interface PatternStepEditorProps {
 
 export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, onChange }: PatternStepEditorProps) {
   const [open, setOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   const modelDisplay = model
     ? (model.split('/').pop() ?? model).slice(0, 16)
@@ -63,7 +65,19 @@ export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, onC
             />
           </div>
           <div>
-            <label className="block text-[10px] text-[#4a4a52] mb-0.5">Prompt override</label>
+            <div className="flex items-center justify-between mb-0.5">
+              <label className="text-[10px] text-[#4a4a52]">Prompt override</label>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setLibraryOpen(true); }}
+                className="flex items-center gap-1 transition-colors text-[10px]"
+                style={{ color: '#e8a020' }}
+                title="Browse prompt library"
+              >
+                <BookOpen size={10} />
+                Browse
+              </button>
+            </div>
             <textarea
               value={prompt}
               onChange={(e) => onChange(model, e.target.value)}
@@ -74,6 +88,17 @@ export function PatternStepEditor({ stepKey: _stepKey, label, model, prompt, onC
             />
           </div>
         </div>
+      )}
+
+      {libraryOpen && (
+        <PromptLibraryPanel
+          open={libraryOpen}
+          onClose={() => setLibraryOpen(false)}
+          onUse={(content) => {
+            onChange(model, content);
+            setLibraryOpen(false);
+          }}
+        />
       )}
     </div>
   );

@@ -32,7 +32,7 @@ export function CollapsibleSection({ title, defaultOpen = false, badge, children
           open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
         )}
       >
-        <div className="overflow-hidden">
+        <div className={open ? 'overflow-visible' : 'overflow-hidden'}>
           <div className="px-2.5 pb-2 space-y-1.5">{children}</div>
         </div>
       </div>
