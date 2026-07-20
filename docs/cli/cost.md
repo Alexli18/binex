@@ -98,6 +98,44 @@ $ binex cost show run_f7a1b2c3 --json
 
 The `budget` and `remaining_budget` fields only appear when the workflow defines a `budget` section.
 
+## Cost Simulate
+
+Estimates what a run **would have cost** on a different model, using the token
+counts already stored for the run and litellm's pricing table. It makes **zero
+LLM calls**.
+
+```bash
+# Swap one node to a cheaper model
+$ binex cost simulate run_f7a1b2c3 --node researcher --model claude-3-haiku-20240307
+
+Cost simulation for run run_f7a1b2c3 → claude-3-haiku-20240307
+
+  → researcher           $1.2000 → $0.0450–$0.0550
+  ~ summarizer           $0.8000 → $0.4800–$1.1200
+    planner              $0.5000 → $0.5000
+
+Total: $2.5000 → $1.0250–$1.6750 (estimated)
+```
+
+```bash
+# Re-price the entire pipeline
+$ binex cost simulate run_f7a1b2c3 --all-nodes gpt-4o-mini
+```
+
+Estimates are shown as a **range**, never a point:
+
+- The swapped node (`→`) gets a ±10% band for tokenizer differences.
+- Nodes **downstream** of the swap (`~`) get a wider band — a different model
+  may answer at a different length, and that output feeds the next node's input,
+  so the uncertainty cascades. Downstream detection uses the run's stored
+  workflow graph.
+- Other nodes are unchanged.
+- If the target model isn't in the pricing table, that node keeps its original
+  cost and is flagged.
+
+Add `--json` for machine-readable output. Use the order-of-magnitude answer
+("$4 or $0.30?"), not the exact cents.
+
 ## Cost History
 
 Displays cost events in chronological order:

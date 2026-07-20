@@ -45,6 +45,32 @@ def cost_show_cmd(run_id: str, json_out: bool) -> None:
     asyncio.run(_cost_show(run_id, json_out))
 
 
+@cost_group.command("simulate", epilog="""\b
+Examples:
+  binex cost simulate <run_id> --node writer --model claude-3-haiku-20240307
+  binex cost simulate <run_id> --all-nodes gpt-4o-mini
+""")
+@click.argument("run_id")
+@click.option("--node", "node", default=None, help="Node to swap (with --model)")
+@click.option("--model", "model", default=None, help="Target model for --node")
+@click.option("--all-nodes", "all_nodes_model", default=None,
+              help="Re-price every node with this model")
+@click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
+def cost_simulate_cmd(
+    run_id: str, node: str | None, model: str | None,
+    all_nodes_model: str | None, json_out: bool,
+) -> None:
+    """Estimate what a run would cost on a different model (no LLM calls)."""
+    if all_nodes_model:
+        if node or model:
+            raise click.UsageError("--all-nodes cannot be combined with --node/--model")
+    elif node and model:
+        pass
+    else:
+        raise click.UsageError("provide either --all-nodes MODEL or --node NODE --model MODEL")
+    asyncio.run(_cost_simulate(run_id, node, model, all_nodes_model, json_out))
+
+
 async def _cost_show(run_id: str, json_out: bool) -> None:
     execution_store, _ = _get_stores()
     try:
@@ -63,6 +89,135 @@ async def _cost_show(run_id: str, json_out: bool) -> None:
             print_cost_text(run_id, cost_summary, cost_records)
     finally:
         await execution_store.close()
+
+
+def _descendants(dag: Any, node: str) -> set[str]:
+    """All nodes transitively reachable from ``node`` via forward edges."""
+    seen: set[str] = set()
+    stack = list(dag.dependents(node))
+    while stack:
+        current = stack.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        stack.extend(dag.dependents(current))
+    return seen
+
+
+async def _load_dag(execution_store: Any, run: Any) -> Any | None:
+    """Rebuild the run's DAG from its stored workflow snapshot (best-effort)."""
+    import yaml  # type: ignore[import-untyped]
+
+    from binex.graph.dag import DAG
+    from binex.models.workflow import WorkflowSpec
+
+    if not run.workflow_hash:
+        return None
+    snapshot = await execution_store.get_workflow_snapshot(run.workflow_hash)
+    if not snapshot or "content" not in snapshot:
+        return None
+    try:
+        spec = WorkflowSpec(**yaml.safe_load(snapshot["content"]))
+        return DAG.from_workflow(spec)
+    except Exception:
+        return None
+
+
+async def _cost_simulate(
+    run_id: str, node: str | None, model: str | None,
+    all_nodes_model: str | None, json_out: bool,
+) -> None:
+    from binex.cost_simulation import simulate
+
+    execution_store, _ = _get_stores()
+    try:
+        run = await execution_store.get_run(run_id)
+        if run is None:
+            click.echo(f"Error: Run '{run_id}' not found.", err=True)
+            sys.exit(1)
+
+        cost_records = await execution_store.list_costs(run_id)
+        all_node_ids = {rec.task_id for rec in cost_records}
+
+        if all_nodes_model:
+            target_model = all_nodes_model
+            swapped = set(all_node_ids)
+            downstream: set[str] = set()
+        else:
+            assert node is not None and model is not None
+            if node not in all_node_ids:
+                click.echo(
+                    f"Error: node '{node}' has no cost records in run '{run_id}'.",
+                    err=True,
+                )
+                sys.exit(1)
+            target_model = model
+            swapped = {node}
+            dag = await _load_dag(execution_store, run)
+            downstream = _descendants(dag, node) & all_node_ids if dag else set()
+
+        result = simulate(
+            cost_records, target_model=target_model,
+            swapped_nodes=swapped, downstream_nodes=downstream,
+        )
+
+        graph_used = bool(downstream) or bool(all_nodes_model)
+        if json_out:
+            _print_simulation_json(run_id, result)
+        else:
+            _print_simulation_text(run_id, result, dag_available=graph_used)
+    finally:
+        await execution_store.close()
+
+
+def _print_simulation_json(run_id: str, result: Any) -> None:
+    data = {
+        "run_id": run_id,
+        "target_model": result.target_model,
+        "original_total": round(result.orig_total, 6),
+        "estimated_total_low": round(result.est_low_total, 6),
+        "estimated_total_high": round(result.est_high_total, 6),
+        "disclaimer": result.disclaimer,
+        "nodes": [
+            {
+                "node": n.node_id,
+                "affected": n.affected,
+                "original_cost": round(n.orig_cost, 6),
+                "estimated_low": round(n.est_low, 6),
+                "estimated_high": round(n.est_high, 6),
+                "model_from": n.model_from,
+                "model_to": n.model_to,
+                "priced": n.priced,
+            }
+            for n in result.nodes
+        ],
+    }
+    click.echo(json.dumps(data, indent=2))
+
+
+def _print_simulation_text(run_id: str, result: Any, *, dag_available: bool) -> None:
+    click.echo(f"Cost simulation for run {run_id} → {result.target_model}")
+    click.echo("")
+    for n in result.nodes:
+        tag = {"swapped": "→", "downstream": "~", "unchanged": " "}[n.affected]
+        note = "" if n.priced else "  (unpriced model — kept original)"
+        rng = (
+            f"${n.est_low:.4f}"
+            if abs(n.est_high - n.est_low) < 1e-9
+            else f"${n.est_low:.4f}–${n.est_high:.4f}"
+        )
+        click.echo(f"  {tag} {n.node_id:<20} ${n.orig_cost:.4f} → {rng}{note}")
+    click.echo("")
+    click.echo(
+        f"Total: ${result.orig_total:.4f} → "
+        f"${result.est_low_total:.4f}–${result.est_high_total:.4f} (estimated)"
+    )
+    if not dag_available and any(n.affected == "swapped" for n in result.nodes):
+        click.echo(
+            "Note: workflow graph unavailable — downstream cost impact not estimated.",
+            err=True,
+        )
+    click.echo(f"\n{result.disclaimer}", err=True)
 
 
 def _print_cost_json(run_id: str, cost_summary: Any, cost_records: Any) -> None:
