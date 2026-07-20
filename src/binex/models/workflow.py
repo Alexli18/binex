@@ -72,6 +72,24 @@ class CaoConfig(BaseModel):
         return self
 
 
+class RepairConfig(BaseModel):
+    """Auto-repair settings for a node with an ``output_schema``.
+
+    Deterministic repair (strip code fences, extract balanced JSON) is always on
+    for schema-validated nodes; ``max_attempts`` controls the LLM feedback loop.
+    """
+
+    max_attempts: int = 0  # feedback-loop attempts (LLM nodes only)
+    escalate: bool = False  # promote to next fallback model on exhaustion (see #67)
+
+    @field_validator("max_attempts")
+    @classmethod
+    def _non_negative(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError("repair.max_attempts must be >= 0")
+        return v
+
+
 class NodeSpec(BaseModel):
     """A single node definition within a workflow."""
 
@@ -92,6 +110,7 @@ class NodeSpec(BaseModel):
     back_edge: BackEdge | None = None
     output_schema: dict[str, Any] | None = None
     cache: bool = False
+    repair: RepairConfig | None = None
     routing: dict[str, Any] | None = None
     cao: CaoConfig | None = None
 
@@ -164,6 +183,7 @@ __all__ = [
     "DefaultsSpec",
     "McpServerConfig",
     "NodeSpec",
+    "RepairConfig",
     "WebhookConfig",
     "WorkflowSpec",
 ]

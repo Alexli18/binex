@@ -87,6 +87,83 @@ class LLMAdapter:
                 kwargs[key] = value
         return kwargs
 
+    def _maybe_add_structured_output(
+        self, kwargs: dict[str, Any], output_schema: dict[str, Any] | None,
+    ) -> None:
+        """Step 2: ask the provider for schema-conformant output when supported.
+
+        Detected per-model; silently skipped where the provider doesn't support
+        it, so malformed output mostly never happens in the first place.
+        """
+        if not output_schema:
+            return
+        try:
+            supported = litellm.supports_response_schema(self._model)
+        except Exception:
+            supported = False
+        if supported:
+            kwargs["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": "output", "schema": output_schema},
+            }
+
+    async def _repair_feedback_loop(
+        self,
+        messages: list[dict[str, Any]],
+        base_kwargs: dict[str, Any],
+        content: Any,
+        output_schema: dict[str, Any],
+        max_attempts: int,
+    ) -> tuple[Any, list[Any], dict[str, Any] | None]:
+        """Step 3: re-ask the model to fix schema-invalid output, in context.
+
+        Returns (final_content, extra_responses, repair_metadata). Deterministic
+        repair runs first (0 tokens); only genuinely invalid output triggers a
+        model call. Every attempt's response is returned so its cost is counted.
+        """
+        from binex.runtime.schema_validator import validate_output
+
+        extra_responses: list[Any] = []
+        validation = validate_output(content, output_schema)
+        if validation.valid:
+            if validation.repaired and isinstance(content, str):
+                return (
+                    json.dumps(validation.normalized), extra_responses,
+                    {"repair_attempts": 0, "repair_step": "deterministic"},
+                )
+            return content, extra_responses, None
+
+        convo = [*messages, {"role": "assistant", "content": content}]
+        for attempt in range(1, max_attempts + 1):
+            errors = "; ".join(validation.errors)
+            convo.append({
+                "role": "user",
+                "content": (
+                    f"Your previous output failed schema validation: {errors}. "
+                    "Return ONLY valid JSON matching the schema — no prose, no code fences."
+                ),
+            })
+            kwargs = {**base_kwargs, "messages": convo}
+            response = await self._completion_with_retry(**kwargs)
+            extra_responses.append(response)
+            content = response.choices[0].message.content
+            convo.append({"role": "assistant", "content": content})
+
+            validation = validate_output(content, output_schema)
+            if validation.valid:
+                final = (
+                    json.dumps(validation.normalized)
+                    if isinstance(content, str) else content
+                )
+                return final, extra_responses, {
+                    "repair_attempts": attempt, "repair_step": "feedback",
+                }
+
+        return content, extra_responses, {
+            "repair_attempts": max_attempts, "repair_step": "feedback",
+            "repaired": False, "validation_errors": validation.errors,
+        }
+
     async def _run_tool_loop(
         self,
         messages: list[dict[str, Any]],
@@ -211,6 +288,12 @@ class LLMAdapter:
 
         kwargs = self._build_completion_kwargs(messages)
 
+        # Auto-repair setup (issue #65)
+        output_schema = task.config.get("output_schema")
+        repair_cfg = task.config.get("repair") or {}
+        repair_attempts = int(repair_cfg.get("max_attempts", 0))
+        self._maybe_add_structured_output(kwargs, output_schema)
+
         # Tool calling setup
         max_tool_rounds = task.config.get("max_tool_rounds", 10)
         resolved_tools: list[Any] = []
@@ -251,18 +334,30 @@ class LLMAdapter:
         all_responses = [response]
 
         # Run tool-calling loop if needed
-        if getattr(message, "tool_calls", None) and resolved_tools:
+        used_tools = bool(getattr(message, "tool_calls", None) and resolved_tools)
+        if used_tools:
             message, extra_responses = await self._run_tool_loop(
                 messages, kwargs, message, resolved_tools, max_tool_rounds,
             )
             all_responses.extend(extra_responses)
+
+        content = message.content
+        repair_metadata: dict[str, Any] | None = None
+
+        # Step 3: schema-repair feedback loop (structured-output nodes without tools).
+        if output_schema and repair_attempts > 0 and not used_tools:
+            content, repair_responses, repair_metadata = await self._repair_feedback_loop(
+                messages, kwargs, content, output_schema, repair_attempts,
+            )
+            all_responses.extend(repair_responses)
 
         artifacts = [
             Artifact(
                 id=f"art_{uuid.uuid4().hex[:12]}",
                 run_id=task.run_id,
                 type="llm_response",
-                content=message.content,
+                content=content,
+                metadata=repair_metadata,
                 lineage=Lineage(
                     produced_by=task.node_id,
                     derived_from=[a.id for a in input_artifacts],
