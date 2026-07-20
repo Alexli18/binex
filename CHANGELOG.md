@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- **`binex resume <run-id>`** — continue a failed or interrupted run from where it stopped. Completed nodes are cached (artifacts reused, budget not re-spent); failed, timed-out, pending, and orphaned-running nodes are re-executed. The resumed run is a new immutable child linked via `resumed_from`. Partitioning is by node status (not a topological prefix), so parallel-branch failures resume correctly. Per-node drift detection re-runs only nodes whose definition changed; a topology change is refused unless `--force`. `cancelled`/`stopped` runs resume with a warning; `running` runs are refused without `--force` to avoid double execution. `--from <node>` forces re-execution from a node and its descendants. Budget is cumulative across the resume chain. (#54)
+
 ## v0.7.5
 
 Amber redesign, pattern step editor, and repository polish.

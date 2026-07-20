@@ -53,6 +53,7 @@ nav:
     - debug: cli/debug.md
     - trace: cli/trace.md
     - replay: cli/replay.md
+    - resume: cli/resume.md
     - diff: cli/diff.md
     - artifacts: cli/artifacts.md
     - dev: cli/dev.md
