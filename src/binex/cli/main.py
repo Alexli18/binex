@@ -24,6 +24,7 @@ from binex.cli.init_cmd import init_cmd
 from binex.cli.list_cmd import list_cmd
 from binex.cli.plugins_cmd import plugins_group
 from binex.cli.replay import replay_cmd
+from binex.cli.resume import resume_cmd
 from binex.cli.run import cancel_cmd, run_cmd
 from binex.cli.scaffold import scaffold_group
 from binex.cli.scheduler import scheduler_group
@@ -64,6 +65,7 @@ cli.add_command(cancel_cmd, "cancel")
 cli.add_command(trace_cmd, "trace")
 cli.add_command(artifacts_cmd, "artifacts")
 cli.add_command(replay_cmd, "replay")
+cli.add_command(resume_cmd, "resume")
 cli.add_command(debug_cmd, "debug")
 cli.add_command(diff_cmd, "diff")
 cli.add_command(hello_cmd, "hello")
