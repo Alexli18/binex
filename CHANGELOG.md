@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- **`binex cost simulate`** — estimate what a run would cost on a different model from its stored token counts and litellm pricing, with **zero LLM calls**. `--node NODE --model M` swaps one node; `--all-nodes M` re-prices the whole pipeline. Results are shown as a range, not a point: the swapped node gets a ±10% tokenizer band, nodes downstream of the swap get a wider band (a different model may change output length, cascading into downstream inputs), and unpriced models keep the original cost and are flagged. `--json` for machine-readable output. (#70)
+
 ## v0.7.5
 
 Amber redesign, pattern step editor, and repository polish.
