@@ -135,35 +135,55 @@ class Orchestrator:
         node_artifacts_history: dict[str, list[list[Artifact]]] = {}
         accumulated_cost = 0.0
         budget_exceeded = False
+        budget_warned = False
 
-        while not scheduler.is_complete() and not scheduler.is_blocked():
-            ready = scheduler.ready_nodes()
-            if not ready:
-                await asyncio.sleep(0.01)
-                continue
+        # Event-driven loop: dispatch every ready node immediately (the
+        # concurrency limiter caps how many actually run), then wake on the
+        # first completion \u2014 no batch barrier, no polling. A slow node no
+        # longer blocks nodes whose dependencies already completed.
+        in_flight: set[asyncio.Task[None]] = set()
+        while True:
+            # Budget gates only the dispatch of *new* work; skip the check when
+            # nothing is ready so a floating-point overshoot on the final node
+            # doesn't flip a finished run to over_budget.
+            if not budget_exceeded and scheduler.ready_nodes():
+                budget_action = check_batch_budget(spec, accumulated_cost)
+                if budget_action == "stop":
+                    budget_exceeded = True
+                    skip_all_remaining(scheduler, scheduler.ready_nodes())
+                elif budget_action == "warn" and spec.budget and not budget_warned:
+                    budget_warned = True
+                    msg = (
+                        f"Budget exceeded: ${accumulated_cost:.2f} / "
+                        f"${spec.budget.max_cost:.2f} (policy: warn, continuing)"
+                    )
+                    logger.warning(msg)
+                    click.echo(f"\u26a0 {msg}", err=True)
 
-            # Budget check before scheduling next batch
-            budget_action = check_batch_budget(spec, accumulated_cost)
-            if budget_action == "stop":
-                budget_exceeded = True
-                skip_all_remaining(scheduler, ready)
+            # Dispatch the whole ready frontier. Re-check after each batch
+            # because when-skips synchronously unblock further nodes.
+            if not budget_exceeded:
+                while ready := scheduler.ready_nodes():
+                    coros = self._schedule_ready_nodes(
+                        spec, dag, scheduler, run_id, trace_id,
+                        ready, node_artifacts, accumulated_cost,
+                        node_artifacts_history,
+                    )
+                    if not coros:
+                        continue  # every ready node was skipped
+                    for coro in coros:
+                        in_flight.add(asyncio.ensure_future(coro))
+
+            if not in_flight:
                 break
-            if budget_action == "warn" and spec.budget:
-                msg = (
-                    f"Budget exceeded: ${accumulated_cost:.2f} / "
-                    f"${spec.budget.max_cost:.2f} (policy: warn, continuing)"
-                )
-                logger.warning(msg)
-                click.echo(f"\u26a0 {msg}", err=True)
 
-            tasks = self._schedule_ready_nodes(
-                spec, dag, scheduler, run_id, trace_id,
-                ready, node_artifacts, accumulated_cost,
-                node_artifacts_history,
+            done, in_flight = await asyncio.wait(
+                in_flight, return_when=asyncio.FIRST_COMPLETED,
             )
-
-            if tasks:
-                await asyncio.gather(*tasks)
+            for task in done:
+                exc = task.exception()
+                if exc is not None:
+                    logger.error("Node execution task crashed: %s", exc)
 
             # Update accumulated cost from store
             cost_summary = await self.execution_store.get_run_cost_summary(run_id)

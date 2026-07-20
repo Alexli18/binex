@@ -41,6 +41,10 @@ When the runtime dispatches a node to its [agent](agents.md), it creates an `Exe
 
 Execution records are persisted in `.binex/binex.db` (SQLite) via `SqliteExecutionStore`. Each record links to its [artifacts](artifacts.md) through `input_artifact_refs` and `output_artifact_refs`, and is grouped by `run_id` and `trace_id` for replay and debugging.
 
+## Scheduling
+
+The orchestrator is **event-driven**: a node is dispatched the moment all its dependencies complete, rather than in lockstep batches. When any node finishes, the newly-unblocked nodes on its branch start immediately — a slow node never holds up nodes on other branches whose dependencies are already satisfied. How many nodes run at once is bounded by the [concurrency cap](../workflows/format.md#concurrency); the rest queue until a slot frees.
+
 ## Example
 
 Query past executions from the CLI:
