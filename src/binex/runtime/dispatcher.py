@@ -200,6 +200,12 @@ def _validate_schema(
     content = result.artifacts[0].content
     validation = validate_output(content, output_schema)
     if validation.valid:
+        # Deterministic repair fired: replace the fenced/prose-wrapped string
+        # with clean JSON so downstream nodes receive valid data.
+        if validation.repaired and isinstance(content, str):
+            import json
+
+            result.artifacts[0].content = json.dumps(validation.normalized)
         return None
 
     error_msg = "; ".join(validation.errors)

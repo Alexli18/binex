@@ -24,6 +24,7 @@ class Artifact(BaseModel):
     content: Any = None
     status: Literal["complete", "partial"] = "complete"
     lineage: Lineage
+    metadata: dict[str, Any] | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
