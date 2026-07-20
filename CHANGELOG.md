@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Security
+
+- **SSRF protection for `fetch_url` / `http_request` (#59)** — the HTTP tools now resolve a URL's host and reject private, loopback, link-local, reserved, multicast, and unspecified addresses (RFC 1918, `127.0.0.0/8`, `169.254.0.0/16` cloud metadata, `::1`, `fc00::/7`, `0.0.0.0`) before connecting. Redirects are followed manually and every hop is re-validated, so a public URL can't `302` into the metadata service; only `http`/`https` schemes are allowed. Opt out for local use with `BINEX_ALLOW_PRIVATE_URLS=1`. Matters on servers running `binex gateway` / `binex scheduler`.
+
 ### Features
 
 - **Node caching** — reuse a node's result when nothing that affects its output has changed, so editing a downstream prompt no longer forces re-running (and re-paying for) unchanged upstream nodes. The cache key is a content hash of the agent, resolved prompt, model parameters, tools, and input-artifact content; a hit is served at `$0` with a distinct `node:cache_hit` trace event pointing to the source run. Opt-in via per-node `cache: true` or run-level `binex run --cache`; `binex run --offline` runs only from cache (a miss fails the node — VCR-style iteration). New `binex clean cache [--older-than DAYS] [--dry-run]` clears the cache. (#68)
