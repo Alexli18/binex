@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug Fixes
+
+- **SQLite WAL mode** — the store now opens the database with `PRAGMA journal_mode=WAL` (plus `busy_timeout=5000` and `synchronous=NORMAL`). The Web UI can read run data while the orchestrator is actively writing execution/cost records, instead of hitting `database is locked` during live runs. (#57)
+
 ## v0.7.5
 
 Amber redesign, pattern step editor, and repository polish.
