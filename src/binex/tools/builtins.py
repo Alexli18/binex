@@ -121,17 +121,18 @@ def dice_roll(notation: str) -> str:
 
 @tool(description="Fetch contents of a URL via HTTP GET")
 async def fetch_url(url: str) -> str:
-    """Fetch URL contents."""
-    import httpx
+    """Fetch URL contents (public addresses only — see SSRF policy)."""
+    from binex.tools.ssrf import BlockedURLError, guarded_fetch
 
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            resp = await client.get(url)
-            resp.raise_for_status()
-            text = resp.text
-            if len(text) > 50_000:
-                text = text[:50_000] + "\n...(truncated to 50KB)"
-            return text
+        resp = await guarded_fetch("GET", url)
+        resp.raise_for_status()
+        text = str(resp.text)
+        if len(text) > 50_000:
+            text = text[:50_000] + "\n...(truncated to 50KB)"
+        return text
+    except BlockedURLError as exc:
+        return f"Error: blocked URL — {exc}"
     except Exception as exc:
         return f"Error fetching {url}: {exc}"
 
@@ -142,24 +143,23 @@ async def fetch_url(url: str) -> str:
 
 @tool(description="Make an HTTP request (GET/POST/PUT/DELETE)")
 async def http_request(url: str, method: str = "GET", body: str = "") -> str:
-    """Make an HTTP request."""
-    import httpx
+    """Make an HTTP request (public addresses only — see SSRF policy)."""
+    from binex.tools.ssrf import BlockedURLError, guarded_fetch
 
     method = method.upper()
     if method not in ("GET", "POST", "PUT", "DELETE", "PATCH"):
         return f"Error: unsupported method '{method}'"
 
+    send_body = body if body and method in ("POST", "PUT", "PATCH") else None
+    headers = {"Content-Type": "application/json"} if send_body else None
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            kwargs: dict[str, Any] = {"method": method, "url": url}
-            if body and method in ("POST", "PUT", "PATCH"):
-                kwargs["content"] = body
-                kwargs["headers"] = {"Content-Type": "application/json"}
-            resp = await client.request(**kwargs)
-            text = resp.text
-            if len(text) > 50_000:
-                text = text[:50_000] + "\n...(truncated to 50KB)"
-            return f"HTTP {resp.status_code}\n{text}"
+        resp = await guarded_fetch(method, url, content=send_body, headers=headers)
+        text = str(resp.text)
+        if len(text) > 50_000:
+            text = text[:50_000] + "\n...(truncated to 50KB)"
+        return f"HTTP {resp.status_code}\n{text}"
+    except BlockedURLError as exc:
+        return f"Error: blocked URL — {exc}"
     except Exception as exc:
         return f"Error: {exc}"
 
