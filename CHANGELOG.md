@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Security
+
+- **`shell_command` executable allowlist (#58)** — the built-in shell tool no longer runs arbitrary binaries chosen by the model. It now permits only a conservative default allowlist (`ls`, `cat`, `grep`, `wc`, …); `rm`, `curl`, `python -c ...`, etc. are blocked unless explicitly allowed via `BINEX_SHELL_ALLOW="python3,..."` or `BINEX_SHELL_ALLOW_ALL=1`. An absolute path can't bypass the check (it matches on the basename). A prompt-injected or confused agent can no longer run destructive or exfiltrating commands by default.
+
 ### Features
 
 - **Node caching** — reuse a node's result when nothing that affects its output has changed, so editing a downstream prompt no longer forces re-running (and re-paying for) unchanged upstream nodes. The cache key is a content hash of the agent, resolved prompt, model parameters, tools, and input-artifact content; a hit is served at `$0` with a distinct `node:cache_hit` trace event pointing to the source run. Opt-in via per-node `cache: true` or run-level `binex run --cache`; `binex run --offline` runs only from cache (a miss fails the node — VCR-style iteration). New `binex clean cache [--older-than DAYS] [--dry-run]` clears the cache. (#68)
