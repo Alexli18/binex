@@ -14,6 +14,22 @@ Binex built-in tools run with the permissions of the orchestrator process. Two t
 - 30-second timeout on all shell commands
 - Output truncated to 10KB
 - No shell expansion (`|`, `&&`, `;`, backticks have no effect)
+- **Executable allowlist (issue #58):** even with `shell=False`, the tool would
+  still run *any* binary the model named (`rm`, `curl`, `python -c ...`). It now
+  runs only a conservative allowlist by default — `ls`, `cat`, `head`, `tail`,
+  `grep`, `wc`, `echo`, `pwd`, `find`, `sort`, `uniq`, `cut`, `tr`, `date`,
+  `basename`, `dirname`, `stat`, `file`, `which`. Anything else is blocked with a
+  clear message. An absolute path (`/usr/bin/curl`) can't bypass it — the check
+  is on the basename.
+
+**Widening the policy (opt-in, explicit):**
+- `BINEX_SHELL_ALLOW="python3,git"` — add specific executables to the allowlist.
+- `BINEX_SHELL_ALLOW_ALL=1` — disable the allowlist entirely (not recommended;
+  restores arbitrary command execution).
+
+**Follow-ups (tracked in #58):** per-workflow `tools_policy`, an optional
+`human://approve` gate showing the exact command before it runs, and sandboxed
+execution (container / restricted user).
 
 ### fetch_url / http_request — SSRF (patched, issue #59)
 

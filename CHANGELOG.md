@@ -5,6 +5,7 @@
 ### Security
 
 - **SSRF protection for `fetch_url` / `http_request` (#59)** — the HTTP tools now resolve a URL's host and reject private, loopback, link-local, reserved, multicast, and unspecified addresses (RFC 1918, `127.0.0.0/8`, `169.254.0.0/16` cloud metadata, `::1`, `fc00::/7`, `0.0.0.0`) before connecting. Redirects are followed manually and every hop is re-validated, so a public URL can't `302` into the metadata service; only `http`/`https` schemes are allowed. Opt out for local use with `BINEX_ALLOW_PRIVATE_URLS=1`. Matters on servers running `binex gateway` / `binex scheduler`.
+- **`shell_command` executable allowlist (#58)** — the built-in shell tool no longer runs arbitrary binaries chosen by the model. It now permits only a conservative default allowlist (`ls`, `cat`, `grep`, `wc`, …); `rm`, `curl`, `python -c ...`, etc. are blocked unless explicitly allowed via `BINEX_SHELL_ALLOW="python3,..."` or `BINEX_SHELL_ALLOW_ALL=1`. An absolute path can't bypass the check (it matches on the basename). A prompt-injected or confused agent can no longer run destructive or exfiltrating commands by default.
 
 ### Features
 
