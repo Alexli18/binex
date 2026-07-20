@@ -7,6 +7,7 @@ from collections import deque
 from typing import Any
 
 from binex.models.artifact import Artifact
+from binex.models.cache import CacheEntry
 from binex.models.cost import CostRecord, RunCostSummary
 from binex.models.execution import ExecutionRecord, RunSummary
 
@@ -53,9 +54,36 @@ class InMemoryExecutionStore:
         self._cost_records: list[CostRecord] = []
         self._cao_sessions: dict[str, dict[str, str]] = {}
         self._workflow_snapshots: dict[str, dict[str, Any]] = {}
+        self._cache_entries: dict[str, CacheEntry] = {}
 
     async def close(self) -> None:
         pass
+
+    # ------------------------------------------------------------------
+    # Node cache
+    # ------------------------------------------------------------------
+
+    async def get_cache_entry(self, cache_key: str) -> CacheEntry | None:
+        return self._cache_entries.get(cache_key)
+
+    async def put_cache_entry(self, entry: CacheEntry) -> None:
+        self._cache_entries[entry.cache_key] = entry
+
+    async def count_cache_entries(self) -> int:
+        return len(self._cache_entries)
+
+    async def clear_cache_entries(self, older_than_days: float | None = None) -> int:
+        if older_than_days is None:
+            n = len(self._cache_entries)
+            self._cache_entries.clear()
+            return n
+        from datetime import UTC, datetime, timedelta
+
+        cutoff = datetime.now(UTC) - timedelta(days=older_than_days)
+        stale = [k for k, e in self._cache_entries.items() if e.created_at < cutoff]
+        for k in stale:
+            del self._cache_entries[k]
+        return len(stale)
 
     async def record(self, execution_record: ExecutionRecord) -> None:
         self._records.append(execution_record)

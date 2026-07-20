@@ -35,6 +35,7 @@ Complete schema reference for Binex workflow files.
 | `budget` | `float` or `NodeBudget` | no | Per-node budget limit (shorthand: `budget: 0.50`, full: `budget: { max_cost: 0.50 }`) |
 | `tools` | `list[str]` | no | Tool URIs available to this node (see [Tools](#tools) below) |
 | `output_schema` | `dict` | no | JSON Schema for validating node output. Failed validation triggers auto-retry |
+| `cache` | `bool` | no | Reuse this node's cached result when its inputs are unchanged (see below) |
 | `routing` | `dict` | no | Per-node Gateway routing overrides (see below) |
 
 ### `config` keys (LLM adapter)
@@ -164,6 +165,38 @@ With `--json`, the run output includes budget information:
   "remaining_budget": -0.23
 }
 ```
+
+## Node Caching
+
+Editing the prompt of node 7 shouldn't force re-running (and re-paying for)
+nodes 1–6. With caching on, Binex reuses a node's stored result whenever nothing
+that affects its output has changed — like `make` for pipelines.
+
+The cache key is a content hash of the node's agent, resolved prompt, model
+parameters, tool set, and the content of its **input artifacts**. Change any of
+them and the node re-executes; leave them alone and it's served from cache at
+`$0`, in a distinct trace event pointing back to the source run.
+
+Caching is **opt-in**, because reusing a result isn't always safe (a
+temperature > 0 model is intentionally nondeterministic; a `local://` script may
+have side effects). Two ways to enable it:
+
+```yaml
+nodes:
+  transcribe:
+    agent: "local://whisper"
+    outputs: [text]
+    cache: true          # always cache this node
+```
+
+```bash
+binex run pipeline.yaml --cache      # iteration mode: cache every node this run
+binex run pipeline.yaml --offline    # run ONLY from cache; a miss fails the node
+```
+
+`--offline` (implies `--cache`) is the VCR-style mode: record once, then iterate
+on downstream logic for free and without network access. Clear the cache with
+[`binex clean cache`](../cli/clean.md).
 
 ## Concurrency
 
