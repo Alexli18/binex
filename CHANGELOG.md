@@ -4,6 +4,7 @@
 
 ### Features
 
+- **Event-driven scheduler** — the orchestrator now dispatches each node as soon as its dependencies complete, waking on the first completion (`asyncio.wait(FIRST_COMPLETED)`) instead of awaiting a whole batch. A slow node no longer blocks nodes whose dependencies already finished, and the busy-wait polling loop is gone. Combined with the concurrency cap, wide DAGs are both faster and safe. (#56)
 - **Concurrency cap** — the orchestrator no longer dispatches unlimited nodes at once. A `concurrency` workflow field caps in-flight node execution, as a global scalar (`concurrency: 8`) or a per-provider mapping (`concurrency: {default: 8, openai: 5, ollama: 1}`). Providers are derived from the agent URI; a node holds a global slot plus its provider slot (acquired global-first, so no deadlock). Configurable via the `BINEX_MAX_CONCURRENCY` env var (default `8`); the workflow field takes precedence. Prevents wide fan-out (e.g. `scatter` with N=50) from tripping provider rate limits. (#55)
 
 ## v0.7.5
