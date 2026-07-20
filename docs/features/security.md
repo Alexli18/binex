@@ -15,6 +15,16 @@ Binex built-in tools run with the permissions of the orchestrator process. Two t
 - Output truncated to 10KB
 - No shell expansion (`|`, `&&`, `;`, backticks have no effect)
 
+### Scaffolded agent server — network exposure (patched, issue #61)
+
+**Before:** `binex scaffold agent` generated a `server.py` that ran
+`uvicorn.run(app, host="0.0.0.0", ...)` — exposing the new agent to the whole
+local network, with no auth, the moment it was started.
+
+**After:** the generated server binds to `127.0.0.1` by default and accepts a
+`--host` flag (mirroring `binex ui`). Exposing it on the network is now an
+explicit `--host 0.0.0.0` decision.
+
 ### calculator — Arbitrary Code Execution (CRITICAL, patched)
 
 **Before:** Used raw `eval(expression)` — any agent could execute arbitrary Python code.

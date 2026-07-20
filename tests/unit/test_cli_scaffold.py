@@ -53,6 +53,21 @@ class TestScaffoldAgent:
         server_py = (target / "server.py").read_text()
         assert "cool-bot" in server_py or "cool_bot" in server_py
 
+    def test_server_binds_loopback_by_default(self, tmp_path: Path) -> None:
+        runner = CliRunner()
+        target = tmp_path / "safebot"
+        result = runner.invoke(
+            scaffold_group, ["agent", "--name", "safebot", "--dir", str(target)],
+        )
+        assert result.exit_code == 0
+
+        server_py = (target / "server.py").read_text()
+        # Must not expose on all interfaces by default; --host lets you opt in.
+        assert 'host="0.0.0.0"' not in server_py
+        assert '"127.0.0.1"' in server_py
+        assert "--host" in server_py
+        compile(server_py, "server.py", "exec")  # generated file is valid Python
+
     def test_dir_flag_changes_target_directory(self, tmp_path: Path) -> None:
         runner = CliRunner()
         custom_dir = tmp_path / "custom" / "location"

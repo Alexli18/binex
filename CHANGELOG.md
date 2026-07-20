@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Security
+
+- **Scaffolded agent binds to loopback (#61)** — `binex scaffold agent` generated a `server.py` that ran `uvicorn.run(app, host="0.0.0.0", ...)`, exposing the new agent to the whole local network with no auth. The generated server now defaults to `127.0.0.1` and takes a `--host` flag (mirroring `binex ui`); exposing it is an explicit `--host 0.0.0.0` choice.
+
 ### Features
 
 - **Node caching** — reuse a node's result when nothing that affects its output has changed, so editing a downstream prompt no longer forces re-running (and re-paying for) unchanged upstream nodes. The cache key is a content hash of the agent, resolved prompt, model parameters, tools, and input-artifact content; a hit is served at `$0` with a distinct `node:cache_hit` trace event pointing to the source run. Opt-in via per-node `cache: true` or run-level `binex run --cache`; `binex run --offline` runs only from cache (a miss fails the node — VCR-style iteration). New `binex clean cache [--older-than DAYS] [--dry-run]` clears the cache. (#68)
