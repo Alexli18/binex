@@ -20,6 +20,9 @@ class Settings:
         self.default_max_retries: int = int(
             os.environ.get("BINEX_DEFAULT_MAX_RETRIES", "1")
         )
+        self.max_concurrency: int = int(
+            os.environ.get("BINEX_MAX_CONCURRENCY", "8")
+        )
         self.default_backoff: Literal["fixed", "exponential"] = os.environ.get(  # type: ignore[assignment]
             "BINEX_DEFAULT_BACKOFF", "exponential"
         )
