@@ -109,6 +109,7 @@ class NodeSpec(BaseModel):
     budget: float | NodeBudget | None = None
     back_edge: BackEdge | None = None
     output_schema: dict[str, Any] | None = None
+    cache: bool = False
     repair: RepairConfig | None = None
     routing: dict[str, Any] | None = None
     cao: CaoConfig | None = None

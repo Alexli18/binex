@@ -10,6 +10,7 @@ from typing import Any
 
 import aiosqlite
 
+from binex.models.cache import CacheEntry
 from binex.models.cost import CostRecord, RunCostSummary
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
@@ -104,6 +105,14 @@ class SqliteExecutionStore:
                 hash TEXT PRIMARY KEY,
                 content TEXT NOT NULL,
                 version INTEGER NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS cache_entries (
+                cache_key TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL,
+                node_id TEXT NOT NULL,
+                artifact_ids TEXT NOT NULL,
+                saved_cost REAL DEFAULT 0.0,
                 created_at TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_execution_records_run_id
@@ -625,6 +634,60 @@ class SqliteExecutionStore:
         if row is None:
             return None
         return {"hash": row[0], "content": row[1], "version": row[2], "created_at": row[3]}
+
+    # ------------------------------------------------------------------
+    # Node cache
+    # ------------------------------------------------------------------
+
+    async def get_cache_entry(self, cache_key: str) -> CacheEntry | None:
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
+            "SELECT cache_key, run_id, node_id, artifact_ids, saved_cost, created_at"
+            " FROM cache_entries WHERE cache_key = ?",
+            (cache_key,),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            return None
+        return CacheEntry(
+            cache_key=row[0], run_id=row[1], node_id=row[2],
+            artifact_ids=json.loads(row[3]), saved_cost=float(row[4] or 0.0),
+            created_at=datetime.fromisoformat(row[5]),
+        )
+
+    async def put_cache_entry(self, entry: CacheEntry) -> None:
+        db = await self._ensure_initialized()
+        await db.execute(
+            "INSERT OR REPLACE INTO cache_entries"
+            " (cache_key, run_id, node_id, artifact_ids, saved_cost, created_at)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                entry.cache_key, entry.run_id, entry.node_id,
+                json.dumps(entry.artifact_ids), entry.saved_cost,
+                entry.created_at.isoformat(),
+            ),
+        )
+        await db.commit()
+
+    async def count_cache_entries(self) -> int:
+        db = await self._ensure_initialized()
+        cursor = await db.execute("SELECT COUNT(*) FROM cache_entries")
+        row = await cursor.fetchone()
+        return int(row[0]) if row else 0
+
+    async def clear_cache_entries(self, older_than_days: float | None = None) -> int:
+        db = await self._ensure_initialized()
+        if older_than_days is None:
+            cursor = await db.execute("DELETE FROM cache_entries")
+        else:
+            from datetime import timedelta
+
+            cutoff = (datetime.now(UTC) - timedelta(days=older_than_days)).isoformat()
+            cursor = await db.execute(
+                "DELETE FROM cache_entries WHERE created_at < ?", (cutoff,),
+            )
+        await db.commit()
+        return cursor.rowcount if cursor.rowcount is not None else 0
 
 
 __all__ = ["SqliteExecutionStore"]

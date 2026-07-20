@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from binex.cli import BinexGroup
 from binex.cli.artifacts import artifacts_cmd
 from binex.cli.bisect import bisect_cmd
+from binex.cli.clean import clean_group
 from binex.cli.cost import cost_group
 from binex.cli.debug import debug_cmd
 from binex.cli.dev import dev_cmd
@@ -78,6 +79,7 @@ cli.add_command(list_cmd, "list")
 cli.add_command(start_cmd, "start")
 cli.add_command(explore_cmd, "explore")
 cli.add_command(cost_group, "cost")
+cli.add_command(clean_group, "clean")
 cli.add_command(diagnose_cmd, "diagnose")
 cli.add_command(bisect_cmd, "bisect")
 cli.add_command(gateway, "gateway")

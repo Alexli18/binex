@@ -40,9 +40,14 @@ Examples:
               help="Stream LLM output tokens (auto-enabled in TTY, use --no-stream to disable)")
 @click.option("--gateway", "gateway_url", default=None,
               help="A2A Gateway URL for routing a2a:// agents (e.g. http://localhost:8420)")
+@click.option("--cache", is_flag=True,
+              help="Reuse cached results for unchanged nodes (iteration mode)")
+@click.option("--offline", is_flag=True,
+              help="Run only from cache; a cache miss fails the node (implies --cache)")
 def run_cmd(
     workflow_file: str, var: tuple[str, ...], json_out: bool, verbose: bool,
     stream_out: bool | None, gateway_url: str | None,
+    cache: bool, offline: bool,
 ) -> None:
     """Execute a workflow definition."""
     user_vars = _parse_vars(var)
@@ -62,7 +67,10 @@ def run_cmd(
         sys.exit(2)
 
     summary, node_errors, artifacts = asyncio.run(
-        _run(spec, verbose, stream_out=stream_out, gateway_url=gateway_url),
+        _run(
+            spec, verbose, stream_out=stream_out, gateway_url=gateway_url,
+            cache=cache or offline, offline=offline,
+        ),
     )
 
     # Identify terminal nodes (no downstream dependents)
@@ -191,6 +199,7 @@ def _print_rich_output(summary: Any, spec: Any, artifacts: Any, terminal_nodes: 
 async def _run(
     spec: Any, verbose: bool = False, *,
     stream_out: bool | None = None, gateway_url: str | None = None,
+    cache: bool = False, offline: bool = False,
 ) -> tuple[Any, list[tuple[str, str]], list[Artifact]]:
     execution_store, artifact_store = _get_stores()
 
@@ -208,6 +217,8 @@ async def _run(
         execution_store=execution_store,
         stream=use_stream,
         stream_callback=stream_callback,
+        cache=cache,
+        offline=offline,
     )
 
     all_artifacts: list[Artifact] = []

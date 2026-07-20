@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
+from binex.models.cache import CacheEntry
 from binex.models.cost import CostRecord, RunCostSummary
 from binex.models.execution import ExecutionRecord, RunSummary
 
@@ -117,6 +118,26 @@ class ExecutionStore(Protocol):
 
     async def get_workflow_snapshot(self, content_hash: str) -> dict[str, Any] | None:
         """Retrieve a workflow snapshot by hash."""
+        ...
+
+    # ------------------------------------------------------------------
+    # Node cache
+    # ------------------------------------------------------------------
+
+    async def get_cache_entry(self, cache_key: str) -> CacheEntry | None:
+        """Retrieve a cached node result by key, or None on miss."""
+        ...
+
+    async def put_cache_entry(self, entry: CacheEntry) -> None:
+        """Store (or overwrite) a cached node result."""
+        ...
+
+    async def count_cache_entries(self) -> int:
+        """Return the number of cache entries."""
+        ...
+
+    async def clear_cache_entries(self, older_than_days: float | None = None) -> int:
+        """Delete cache entries (all, or older than N days). Returns count deleted."""
         ...
 
 

@@ -16,8 +16,10 @@ import yaml  # type: ignore[import-untyped]
 from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
 from binex.models.artifact import Artifact
+from binex.models.cache import CacheEntry
+from binex.models.cost import CostRecord
 from binex.models.execution import RunSummary
-from binex.models.task import RetryPolicy, TaskNode
+from binex.models.task import RetryPolicy, TaskNode, TaskStatus
 from binex.models.workflow import NodeSpec, WorkflowSpec
 from binex.runtime._node_executor import collect_input_artifacts, now_ms, record_execution
 from binex.runtime.back_edge import evaluate_back_edge, evaluate_when
@@ -50,6 +52,8 @@ class Orchestrator:
         stream_callback: Callable[[str], None] | None = None,
         event_callback: Callable[[dict[str, Any]], Any] | None = None,
         interactive: bool = True,
+        cache: bool = False,
+        offline: bool = False,
     ) -> None:
         self.artifact_store = artifact_store
         self.execution_store = execution_store
@@ -59,6 +63,9 @@ class Orchestrator:
         self._stream_callback = stream_callback
         self._event_callback = event_callback
         self._interactive = interactive
+        # Node caching: run-level flags. Per-node `cache: true` also opts in.
+        self._cache = cache
+        self._offline = offline  # only-from-cache; a miss fails the node
         # Default cap; replaced per-run once the workflow spec is known.
         self._limiter = ConcurrencyLimiter(Settings().max_concurrency)
 
@@ -431,11 +438,37 @@ class Orchestrator:
             "timestamp": datetime.now(UTC).isoformat(),
         })
 
+        # Node cache: reuse a prior result when nothing that affects this node's
+        # output has changed. Opt-in via run-level --cache or per-node cache:true.
+        cacheable = self._cache or node_spec.cache
+        cache_key: str | None = None
+        if cacheable:
+            from binex.runtime.cache_key import compute_cache_key
+
+            cache_key = compute_cache_key(task, input_artifacts)
+            hit = await self._load_cache(cache_key)
+            if hit is not None:
+                await self._apply_cache_hit(
+                    spec, dag, scheduler, run_id, trace_id, node_id, node_spec,
+                    input_artifacts, node_artifacts, node_artifacts_history,
+                    hit, start_ms,
+                )
+                return
+            if self._offline:
+                await self._fail_cache_offline(
+                    scheduler, run_id, trace_id, node_id, node_spec,
+                    input_artifacts, start_ms,
+                )
+                return
+
         async with self._limiter.slot(node_spec.agent):
             succeeded, error_msg, output_artifacts = await self._retry_loop(
                 spec, run_id, node_id, task, input_artifacts, trace_id,
                 node_max, max_retries, retry_policy, node_artifacts,
             )
+
+        if succeeded and cache_key is not None:
+            await self._store_cache(cache_key, run_id, node_id, output_artifacts)
 
         if succeeded:
             scheduler.mark_completed(node_id)
@@ -471,6 +504,112 @@ class Orchestrator:
             latency_ms=latency_ms,
             trace_id=trace_id,
             error=error_msg,
+        )
+
+    # ------------------------------------------------------------------
+    # Node cache
+    # ------------------------------------------------------------------
+
+    async def _load_cache(
+        self, cache_key: str,
+    ) -> tuple[CacheEntry, list[Artifact]] | None:
+        """Return (entry, artifacts) on a cache hit, or None (miss/dangling)."""
+        entry = await self.execution_store.get_cache_entry(cache_key)
+        if entry is None:
+            return None
+        artifacts: list[Artifact] = []
+        for art_id in entry.artifact_ids:
+            art = await self.artifact_store.get(art_id)
+            if art is None:
+                return None  # artifact was pruned — treat as a miss
+            artifacts.append(art)
+        return entry, artifacts
+
+    async def _store_cache(
+        self, cache_key: str, run_id: str, node_id: str,
+        output_artifacts: list[Artifact],
+    ) -> None:
+        """Record this node's result for reuse by future runs."""
+        saved_cost = await self.execution_store.get_node_cost(run_id, node_id)
+        await self.execution_store.put_cache_entry(CacheEntry(
+            cache_key=cache_key, run_id=run_id, node_id=node_id,
+            artifact_ids=[a.id for a in output_artifacts], saved_cost=saved_cost,
+        ))
+
+    async def _apply_cache_hit(
+        self,
+        spec: WorkflowSpec,
+        dag: DAG,
+        scheduler: Scheduler,
+        run_id: str,
+        trace_id: str,
+        node_id: str,
+        node_spec: NodeSpec,
+        input_artifacts: list[Artifact],
+        node_artifacts: dict[str, list[Artifact]],
+        node_artifacts_history: dict[str, list[list[Artifact]]],
+        hit: tuple[CacheEntry, list[Artifact]],
+        start_ms: int,
+    ) -> None:
+        """Reuse a cached result: no execution, $0 cost, distinct trace event."""
+        entry, artifacts = hit
+        node_artifacts[node_id] = artifacts
+        scheduler.mark_completed(node_id)
+
+        await self.execution_store.record_cost(CostRecord(
+            id=f"cost_{uuid.uuid4().hex[:12]}",
+            run_id=run_id, task_id=node_id, cost=0.0, source="cache",
+        ))
+        await evaluate_back_edge(
+            spec, scheduler, dag, node_id, node_artifacts,
+            node_artifacts_history, self._pending_feedback,
+            interactive=self._interactive,
+        )
+
+        latency_ms = now_ms() - start_ms
+        await self._emit_event({
+            "type": "node:cache_hit",
+            "run_id": run_id,
+            "node_id": node_id,
+            "source_run_id": entry.run_id,
+            "saved_cost": entry.saved_cost,
+            "timestamp": datetime.now(UTC).isoformat(),
+            "latency_ms": latency_ms,
+        })
+        await record_execution(
+            self.execution_store,
+            run_id=run_id, node_id=node_id, agent_id=node_spec.agent,
+            status=TaskStatus.COMPLETED,
+            input_artifacts=input_artifacts, output_artifacts=artifacts,
+            latency_ms=latency_ms, trace_id=trace_id, error=None,
+        )
+
+    async def _fail_cache_offline(
+        self,
+        scheduler: Scheduler,
+        run_id: str,
+        trace_id: str,
+        node_id: str,
+        node_spec: NodeSpec,
+        input_artifacts: list[Artifact],
+        start_ms: int,
+    ) -> None:
+        """Offline mode: a cache miss fails the node instead of executing it."""
+        scheduler.mark_failed(node_id)
+        error_msg = "cache miss in offline mode (--offline)"
+        latency_ms = now_ms() - start_ms
+        await self._emit_event({
+            "type": "node:failed",
+            "run_id": run_id, "node_id": node_id,
+            "timestamp": datetime.now(UTC).isoformat(),
+            "latency_ms": latency_ms, "error": error_msg,
+        })
+        await record_execution(
+            self.execution_store,
+            run_id=run_id, node_id=node_id, agent_id=node_spec.agent,
+            status=TaskStatus.FAILED,
+            input_artifacts=input_artifacts, output_artifacts=[],
+            latency_ms=latency_ms, trace_id=trace_id, error=error_msg,
         )
 
     @staticmethod

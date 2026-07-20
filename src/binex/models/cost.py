@@ -15,6 +15,7 @@ CostSource = Literal[
     "agent_report",
     "local",
     "subscription_based",
+    "cache",
     "unknown",
 ]
 
