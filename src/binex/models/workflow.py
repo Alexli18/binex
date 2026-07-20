@@ -127,6 +127,7 @@ class WorkflowSpec(BaseModel):
     webhook: WebhookConfig | None = None
     mcp_servers: dict[str, McpServerConfig] = Field(default_factory=dict)
     schedule: str | None = None
+    concurrency: int | dict[str, int] | None = None
     source_path: str | None = None
 
     @field_validator("version")
@@ -134,6 +135,18 @@ class WorkflowSpec(BaseModel):
     def version_must_be_positive(cls, v: int) -> int:
         if v < 1:
             raise ValueError("version must be >= 1")
+        return v
+
+    @field_validator("concurrency")
+    @classmethod
+    def concurrency_must_be_positive(
+        cls, v: int | dict[str, int] | None,
+    ) -> int | dict[str, int] | None:
+        if v is None:
+            return v
+        values = [v] if isinstance(v, int) else list(v.values())
+        if any(n < 1 for n in values):
+            raise ValueError("concurrency limits must be >= 1")
         return v
 
     @model_validator(mode="after")

@@ -14,6 +14,7 @@ Complete schema reference for Binex workflow files.
 | `budget` | `BudgetConfig` | no | Budget constraints for the run (see below) |
 | `webhook` | `WebhookConfig` | no | Webhook notification target (see below) |
 | `schedule` | `str` | no | Cron expression (5-field) for scheduled execution |
+| `concurrency` | `int` or `dict[str, int]` | no | Cap on concurrent node execution (see below) |
 | `mcp_servers` | `dict[str, McpServerConfig]` | no | MCP server configurations (see below) |
 
 ## Node — `NodeSpec`
@@ -163,6 +164,41 @@ With `--json`, the run output includes budget information:
   "remaining_budget": -0.23
 }
 ```
+
+## Concurrency
+
+By default the orchestrator would dispatch every ready node at once. A wide
+fan-out (e.g. a `scatter` pattern with 50 workers) then fires 50 simultaneous
+LLM calls and trips provider rate limits. `concurrency` caps how many nodes run
+at the same time.
+
+**Global cap (scalar):**
+
+```yaml
+name: wide-pipeline
+concurrency: 8        # at most 8 nodes in flight at once
+nodes:
+  ...
+```
+
+**Per-provider caps (mapping):** the `default` key is the global cap; every
+other key limits a single provider. A node holds a global slot *and* its
+provider slot, so a local Ollama (one GPU) and a hosted API can coexist:
+
+```yaml
+concurrency:
+  default: 8          # global cap (falls back to BINEX_MAX_CONCURRENCY, then 8)
+  openai: 5           # at most 5 concurrent openai calls
+  ollama: 1           # serialize the local model
+```
+
+The provider is derived from the agent URI: `llm://openai/gpt-4o` → `openai`,
+`llm://ollama/llama3` → `ollama`, and non-LLM agents fall back to their scheme
+(`local://` → `local`, `a2a://` → `a2a`).
+
+**Precedence:** the workflow `concurrency` field overrides the
+`BINEX_MAX_CONCURRENCY` environment variable, which overrides the default of
+`8`. All limits must be `>= 1`.
 
 ## Node Cost Hint — `NodeCostHint`
 

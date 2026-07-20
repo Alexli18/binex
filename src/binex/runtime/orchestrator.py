@@ -27,7 +27,9 @@ from binex.runtime.budget import (
     get_node_max_cost,
     skip_all_remaining,
 )
+from binex.runtime.concurrency import ConcurrencyLimiter
 from binex.runtime.dispatcher import Dispatcher, _backoff_delay
+from binex.settings import Settings
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
 from binex.telemetry import get_tracer
@@ -57,6 +59,8 @@ class Orchestrator:
         self._stream_callback = stream_callback
         self._event_callback = event_callback
         self._interactive = interactive
+        # Default cap; replaced per-run once the workflow spec is known.
+        self._limiter = ConcurrencyLimiter(Settings().max_concurrency)
 
     async def _emit_event(self, event: dict[str, Any]) -> None:
         """Emit a lifecycle event if a callback is configured."""
@@ -93,6 +97,11 @@ class Orchestrator:
         scheduler = Scheduler(dag)
         run_id = run_id or f"run_{uuid.uuid4().hex[:12]}"
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
+
+        # Cap concurrent node execution: workflow field > env > default.
+        self._limiter = ConcurrencyLimiter.from_spec(
+            spec.concurrency, Settings().max_concurrency,
+        )
 
         # Store workflow snapshot
         workflow_yaml = yaml.dump(
@@ -402,10 +411,11 @@ class Orchestrator:
             "timestamp": datetime.now(UTC).isoformat(),
         })
 
-        succeeded, error_msg, output_artifacts = await self._retry_loop(
-            spec, run_id, node_id, task, input_artifacts, trace_id,
-            node_max, max_retries, retry_policy, node_artifacts,
-        )
+        async with self._limiter.slot(node_spec.agent):
+            succeeded, error_msg, output_artifacts = await self._retry_loop(
+                spec, run_id, node_id, task, input_artifacts, trace_id,
+                node_max, max_retries, retry_policy, node_artifacts,
+            )
 
         if succeeded:
             scheduler.mark_completed(node_id)
