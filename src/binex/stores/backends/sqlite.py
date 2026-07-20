@@ -37,6 +37,13 @@ class SqliteExecutionStore:
         import os
         os.makedirs(os.path.dirname(self._db_path) or ".", exist_ok=True)
         self._db = await aiosqlite.connect(self._db_path)
+        # WAL lets the Web UI read run data while the orchestrator writes,
+        # instead of raising "database is locked" in rollback-journal mode.
+        # busy_timeout waits out brief write locks; synchronous=NORMAL is the
+        # safe, recommended pairing with WAL.
+        await self._db.execute("PRAGMA journal_mode=WAL")
+        await self._db.execute("PRAGMA busy_timeout=5000")
+        await self._db.execute("PRAGMA synchronous=NORMAL")
         await self._db.executescript("""
             CREATE TABLE IF NOT EXISTS runs (
                 run_id TEXT PRIMARY KEY,
