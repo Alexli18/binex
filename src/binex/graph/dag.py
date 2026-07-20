@@ -51,6 +51,18 @@ class DAG:
     def dependents(self, node_id: str) -> set[str]:
         return self._forward.get(node_id, set())
 
+    def descendants(self, node_id: str) -> set[str]:
+        """Return all nodes transitively reachable via forward edges (exclusive)."""
+        result: set[str] = set()
+        queue = deque(self._forward.get(node_id, set()))
+        while queue:
+            current = queue.popleft()
+            if current in result:
+                continue
+            result.add(current)
+            queue.extend(self._forward.get(current, set()))
+        return result
+
     def entry_nodes(self) -> list[str]:
         return sorted(nid for nid in self._nodes if not self._backward[nid])
 

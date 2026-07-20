@@ -46,6 +46,7 @@ class RunSummary(BaseModel):
     skipped_nodes: int = 0
     forked_from: str | None = None
     forked_at_step: str | None = None
+    resumed_from: str | None = None
     workflow_hash: str | None = None
     total_cost: float = 0.0
 

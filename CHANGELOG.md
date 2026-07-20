@@ -4,6 +4,7 @@
 
 ### Features
 
+- **`binex resume <run-id>`** — continue a failed or interrupted run from where it stopped. Completed nodes are cached (artifacts reused, budget not re-spent); failed, timed-out, pending, and orphaned-running nodes are re-executed. The resumed run is a new immutable child linked via `resumed_from`. Partitioning is by node status (not a topological prefix), so parallel-branch failures resume correctly. Per-node drift detection re-runs only nodes whose definition changed; a topology change is refused unless `--force`. `cancelled`/`stopped` runs resume with a warning; `running` runs are refused without `--force` to avoid double execution. `--from <node>` forces re-execution from a node and its descendants. Budget is cumulative across the resume chain. (#54)
 - **`binex cost simulate`** — estimate what a run would cost on a different model from its stored token counts and litellm pricing, with **zero LLM calls**. `--node NODE --model M` swaps one node; `--all-nodes M` re-prices the whole pipeline. Results are shown as a range, not a point: the swapped node gets a ±10% tokenizer band, nodes downstream of the swap get a wider band (a different model may change output length, cascading into downstream inputs), and unpriced models keep the original cost and are flagged. `--json` for machine-readable output. (#70)
 ### Bug Fixes
 
