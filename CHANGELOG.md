@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Features
+
+- **`binex cost simulate`** — estimate what a run would cost on a different model from its stored token counts and litellm pricing, with **zero LLM calls**. `--node NODE --model M` swaps one node; `--all-nodes M` re-prices the whole pipeline. Results are shown as a range, not a point: the swapped node gets a ±10% tokenizer band, nodes downstream of the swap get a wider band (a different model may change output length, cascading into downstream inputs), and unpriced models keep the original cost and are flagged. `--json` for machine-readable output. (#70)
 ### Bug Fixes
 
 - **SQLite WAL mode** — the store now opens the database with `PRAGMA journal_mode=WAL` (plus `busy_timeout=5000` and `synchronous=NORMAL`). The Web UI can read run data while the orchestrator is actively writing execution/cost records, instead of hitting `database is locked` during live runs. (#57)

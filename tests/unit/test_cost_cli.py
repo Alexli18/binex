@@ -256,8 +256,9 @@ class TestRunCostOutput:
             total_cost=0.50,
         )
 
-        from binex.models.cost import BudgetConfig
         from unittest.mock import MagicMock
+
+        from binex.models.cost import BudgetConfig
         spec = MagicMock()
         spec.nodes = {"step1": MagicMock(depends_on=[])}
         spec.budget = BudgetConfig(max_cost=5.00, policy="warn")
@@ -287,8 +288,9 @@ class TestRunCostOutput:
             total_cost=12.00,
         )
 
-        from binex.models.cost import BudgetConfig
         from unittest.mock import MagicMock
+
+        from binex.models.cost import BudgetConfig
         spec = MagicMock()
         spec.nodes = {
             "a": MagicMock(depends_on=[]),
@@ -309,3 +311,63 @@ class TestRunCostOutput:
         assert "Budget exceeded" in result.output or "budget exceeded" in result.output.lower()
         assert "$12.00" in result.output
         assert "$10.00" in result.output
+
+
+# ── cost simulate ──────────────────────────────────────────────────────
+
+class TestCostSimulate:
+    """Tests for `binex cost simulate <run_id>`."""
+
+    def test_all_nodes_swap_cheaper_model(self, runner, store_with_costs):
+        from binex.cli.cost import cost_simulate_cmd
+        with patch(
+            "binex.cli.cost._get_stores",
+            return_value=(store_with_costs, InMemoryArtifactStore()),
+        ):
+            result = runner.invoke(
+                cost_simulate_cmd,
+                ["run_test123", "--all-nodes", "gpt-4o-mini"],
+            )
+        assert result.exit_code == 0
+        assert "gpt-4o-mini" in result.output
+        assert "planner" in result.output and "researcher" in result.output
+        assert "estimated" in result.output.lower()
+
+    def test_single_node_swap_json(self, runner, store_with_costs):
+        from binex.cli.cost import cost_simulate_cmd
+        with patch(
+            "binex.cli.cost._get_stores",
+            return_value=(store_with_costs, InMemoryArtifactStore()),
+        ):
+            result = runner.invoke(
+                cost_simulate_cmd,
+                ["run_test123", "--node", "planner", "--model", "gpt-4o-mini", "--json"],
+            )
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        assert data["target_model"] == "gpt-4o-mini"
+        planner = next(n for n in data["nodes"] if n["node"] == "planner")
+        assert planner["affected"] == "swapped"
+        assert planner["estimated_low"] <= planner["estimated_high"]
+
+    def test_missing_args_errors(self, runner, store_with_costs):
+        from binex.cli.cost import cost_simulate_cmd
+        with patch(
+            "binex.cli.cost._get_stores",
+            return_value=(store_with_costs, InMemoryArtifactStore()),
+        ):
+            result = runner.invoke(cost_simulate_cmd, ["run_test123"])
+        assert result.exit_code != 0
+
+    def test_unknown_node_errors(self, runner, store_with_costs):
+        from binex.cli.cost import cost_simulate_cmd
+        with patch(
+            "binex.cli.cost._get_stores",
+            return_value=(store_with_costs, InMemoryArtifactStore()),
+        ):
+            result = runner.invoke(
+                cost_simulate_cmd,
+                ["run_test123", "--node", "ghost", "--model", "gpt-4o-mini"],
+            )
+        assert result.exit_code == 1
+        assert "no cost records" in result.output
