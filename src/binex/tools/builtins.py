@@ -250,12 +250,42 @@ def write_file(path: str, content: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 8. shell_command — subprocess with timeout and output limit
+# 8. shell_command — subprocess with timeout, output limit, and an allowlist
 # ---------------------------------------------------------------------------
 
-@tool(description="Execute a shell command (timeout 30s, max output 10KB)")
+# Executables permitted by default. Everything else is blocked unless the
+# operator explicitly widens the policy — so a prompt-injected or confused agent
+# cannot run rm/curl/python/etc. See issue #58.
+_SHELL_DEFAULT_ALLOWLIST = frozenset({
+    "ls", "cat", "head", "tail", "grep", "wc", "echo", "pwd", "find", "sort",
+    "uniq", "cut", "tr", "date", "basename", "dirname", "stat", "file", "which",
+})
+
+
+def _shell_allowed(executable: str) -> tuple[bool, str]:
+    """Decide whether ``executable`` may run under the current shell policy."""
+    import os
+
+    if os.environ.get("BINEX_SHELL_ALLOW_ALL") == "1":
+        return True, ""
+    name = os.path.basename(executable)
+    extra = {
+        x.strip() for x in os.environ.get("BINEX_SHELL_ALLOW", "").split(",")
+        if x.strip()
+    }
+    if name in (_SHELL_DEFAULT_ALLOWLIST | extra):
+        return True, ""
+    allowed = ", ".join(sorted(_SHELL_DEFAULT_ALLOWLIST | extra))
+    return False, (
+        f"Error: command '{name}' is not permitted by the shell allowlist. "
+        f"Allowed: {allowed}. Add it via BINEX_SHELL_ALLOW='{name},...' or set "
+        f"BINEX_SHELL_ALLOW_ALL=1 to disable the allowlist (not recommended)."
+    )
+
+
+@tool(description="Execute an allowlisted shell command (timeout 30s, max output 10KB)")
 def shell_command(command: str) -> str:
-    """Execute a shell command with safety constraints."""
+    """Execute a shell command, restricted to an allowlist of executables."""
     import shlex
     import subprocess
 
@@ -263,6 +293,13 @@ def shell_command(command: str) -> str:
         args = shlex.split(command)
     except ValueError as exc:
         return f"Error: failed to parse command: {exc}"
+
+    if not args:
+        return "Error: empty command"
+
+    ok, denial = _shell_allowed(args[0])
+    if not ok:
+        return denial
 
     try:
         result = subprocess.run(

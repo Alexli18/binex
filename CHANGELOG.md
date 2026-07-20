@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Security
+
+- **`shell_command` executable allowlist (#58)** — the built-in shell tool no longer runs arbitrary binaries chosen by the model. It now permits only a conservative default allowlist (`ls`, `cat`, `grep`, `wc`, …); `rm`, `curl`, `python -c ...`, etc. are blocked unless explicitly allowed via `BINEX_SHELL_ALLOW="python3,..."` or `BINEX_SHELL_ALLOW_ALL=1`. An absolute path can't bypass the check (it matches on the basename). A prompt-injected or confused agent can no longer run destructive or exfiltrating commands by default.
+
 ### Features
 
 - **Auto-repair for structured output** — instead of failing (or blindly re-running) a node whose output doesn't match its `output_schema`, Binex now repairs it via a cheapest-first ladder: (1) **deterministic repair**, always on and zero-token — strips markdown fences, extracts the first balanced JSON value, drops trailing commas, and replaces the artifact content with clean JSON for downstream nodes (works for every agent type); (2) **native structured output** — `llm://` nodes whose model supports it get the schema passed into the completion call (`response_format`), detected per-model; (3) **feedback loop** — `repair: { max_attempts: N }` re-asks the model in-context with the validation errors, up to N times (`local://`/`a2a://` stay fail-fast). Repair tokens are counted in run cost; the artifact records `metadata.repair_attempts` and which step succeeded. (#65)
