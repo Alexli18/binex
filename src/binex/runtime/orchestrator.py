@@ -494,10 +494,12 @@ class Orchestrator:
             max_retries = 1  # single attempt, dispatcher handles retry
             task_retry_policy = retry_policy
 
-        # Build config dict, injecting output_schema if present
+        # Build config dict, injecting output_schema / repair if present
         config = dict(node_spec.config)
         if node_spec.output_schema is not None:
             config["output_schema"] = node_spec.output_schema
+        if node_spec.repair is not None:
+            config["repair"] = node_spec.repair.model_dump()
 
         task = TaskNode(
             id=f"{run_id}_{node_id}",

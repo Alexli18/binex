@@ -299,6 +299,44 @@ If the LLM returns output that doesn't match the schema (e.g., missing `title` f
 
 The validator handles both JSON string output (parsed first) and dict output (validated directly).
 
+## Auto-Repair
+
+Blindly re-running a node on invalid output usually makes the model repeat the
+same mistake — and you pay twice. When a node has an `output_schema`, Binex
+applies a repair ladder, cheapest first:
+
+1. **Deterministic repair (0 tokens, always on).** Most "invalid JSON" is just a
+   markdown code fence around the payload, prose before/after it, or a trailing
+   comma. Binex strips the fence, extracts the first balanced JSON value, and
+   re-parses — before any model call. Applies to every agent type, and the
+   cleaned JSON replaces the artifact content so downstream nodes get valid data.
+2. **Native structured output.** For `llm://` nodes whose model supports it,
+   Binex passes the schema into the completion call (`response_format`), so
+   malformed output mostly never happens. Detected per-model; silently skipped
+   when unsupported.
+3. **Feedback loop (`repair.max_attempts`).** If output is still invalid, Binex
+   appends the model's answer plus the validation errors to the conversation and
+   re-asks up to `max_attempts` times. `local://` and `a2a://` nodes keep
+   fail-fast semantics — there's no model to ask.
+
+```yaml
+nodes:
+  extract:
+    agent: "llm://openai/gpt-4o-mini"
+    outputs: [result]
+    output_schema: { type: object, required: [title] }
+    repair:
+      max_attempts: 2      # feedback-loop attempts; deterministic repair is always on
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `repair.max_attempts` | `int` | `0` | LLM feedback-loop attempts on schema-invalid output |
+
+Every repair attempt's tokens are counted in the run cost. The produced
+artifact records `metadata.repair_attempts` and which ladder step succeeded; on
+exhaustion the node fails with the validation errors.
+
 ## Routing Overrides
 
 When a Gateway is configured (either embedded via `gateway.yaml` or standalone via `--gateway`), individual nodes can override the default routing behavior using the `routing` field:
