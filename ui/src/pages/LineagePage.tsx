@@ -24,7 +24,7 @@ interface ArtifactNodeData extends LineageNodeData {
   label: string;
 }
 
-function ArtifactNode({ data }: NodeProps<ArtifactNodeData>) {
+export function ArtifactNode({ data }: NodeProps<ArtifactNodeData>) {
   const typeColors: Record<string, string> = {
     text: 'border-blue-500',
     code: 'border-purple-500',
@@ -34,6 +34,7 @@ function ArtifactNode({ data }: NodeProps<ArtifactNodeData>) {
   };
 
   const border = typeColors[data.type] || 'border-slate-500';
+  const isImage = data.binary && (data.mime ?? '').startsWith('image/');
   const contentPreview =
     typeof data.content === 'string'
       ? data.content.slice(0, 50)
@@ -48,17 +49,28 @@ function ArtifactNode({ data }: NodeProps<ArtifactNodeData>) {
         <span className="text-xs uppercase tracking-wider text-slate-500 bg-slate-700 px-1.5 py-0.5 rounded">
           {data.type}
         </span>
+        {data.binary && data.mime && (
+          <span className="text-[10px] text-amber-400">{data.mime}</span>
+        )}
       </div>
       <p className="text-xs font-mono text-slate-300 truncate" title={data.id}>
         {data.id}
       </p>
-      <p
-        className="text-xs text-slate-500 mt-1 truncate"
-        title={typeof data.content === 'string' ? data.content : ''}
-      >
-        {contentPreview}
-        {(typeof data.content === 'string' ? data.content : JSON.stringify(data.content)).length > 50 && '...'}
-      </p>
+      {isImage && data.blob_url ? (
+        <img
+          src={data.blob_url}
+          alt={data.id}
+          className="mt-1 max-h-20 w-full rounded border border-slate-700 object-contain bg-slate-900"
+        />
+      ) : (
+        <p
+          className="text-xs text-slate-500 mt-1 truncate"
+          title={typeof data.content === 'string' ? data.content : ''}
+        >
+          {contentPreview}
+          {(typeof data.content === 'string' ? data.content : JSON.stringify(data.content)).length > 50 && '...'}
+        </p>
+      )}
       <p className="text-xs text-slate-600 mt-1">
         by: {data.produced_by}
       </p>
@@ -282,11 +294,33 @@ export default function LineagePage() {
               </div>
               <div>
                 <span className="text-slate-500 text-xs">Content</span>
-                <pre className="mt-1 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-300 whitespace-pre-wrap break-words max-h-80 overflow-y-auto">
-                  {typeof selectedArtifact.content === 'string'
-                    ? selectedArtifact.content
-                    : JSON.stringify(selectedArtifact.content, null, 2)}
-                </pre>
+                {selectedArtifact.binary && selectedArtifact.blob_url ? (
+                  <div className="mt-1">
+                    {(selectedArtifact.mime ?? '').startsWith('image/') ? (
+                      <img
+                        src={selectedArtifact.blob_url}
+                        alt={selectedArtifact.id}
+                        className="max-h-64 w-full rounded border border-slate-700 object-contain bg-slate-900"
+                      />
+                    ) : (selectedArtifact.mime ?? '').startsWith('audio/') ? (
+                      <audio src={selectedArtifact.blob_url} controls className="w-full" />
+                    ) : (
+                      <a
+                        href={selectedArtifact.blob_url}
+                        download
+                        className="text-xs text-blue-400 hover:underline"
+                      >
+                        Download {selectedArtifact.mime ?? 'file'}
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <pre className="mt-1 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-300 whitespace-pre-wrap break-words max-h-80 overflow-y-auto">
+                    {typeof selectedArtifact.content === 'string'
+                      ? selectedArtifact.content
+                      : JSON.stringify(selectedArtifact.content, null, 2)}
+                  </pre>
+                )}
               </div>
             </div>
           </div>

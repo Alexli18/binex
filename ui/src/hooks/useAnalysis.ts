@@ -89,8 +89,12 @@ export interface DiagnoseData {
 export interface LineageNode {
   id: string;
   type: string;
-  content: string;
+  content: string | Record<string, unknown>;
   produced_by: string;
+  // Binary artifacts (#76): thumbnail via blob_url.
+  binary?: boolean;
+  mime?: string;
+  blob_url?: string;
 }
 
 export interface LineageEdge {

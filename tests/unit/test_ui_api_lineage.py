@@ -132,3 +132,25 @@ async def test_lineage_multiple_parents(client, stores):
     edge_pairs = {(e["source"], e["target"]) for e in data["edges"]}
     assert ("p1", "child") in edge_pairs
     assert ("p2", "child") in edge_pairs
+
+
+@pytest.mark.asyncio
+async def test_lineage_flags_binary_artifacts_with_thumbnail_url(
+    client, stores, tmp_path, monkeypatch,
+):
+    """Binary lineage nodes carry binary/mime/blob_url for thumbnails (#76)."""
+    monkeypatch.setenv("BINEX_STORE_PATH", str(tmp_path / ".binex"))
+    from binex.artifacts.binary import make_binary_artifact
+
+    exec_store, art_store = stores
+    art = make_binary_artifact("run-1", "gen", b"PNG" * 40, "image/png")
+    await art_store.store(art)
+
+    with patch("binex.ui.api.lineage._get_stores", return_value=(exec_store, art_store)):
+        resp = await client.get("/api/v1/runs/run-1/lineage")
+
+    assert resp.status_code == 200
+    node = next(n for n in resp.json()["nodes"] if n["id"] == art.id)
+    assert node["binary"] is True
+    assert node["mime"] == "image/png"
+    assert node["blob_url"] == f"/api/v1/runs/run-1/artifacts/{art.id}/blob"
