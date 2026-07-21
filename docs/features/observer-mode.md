@@ -21,6 +21,19 @@ calls, per-call costs, and response artifacts — on your untouched code. Opaque
 spend is one of the most common CrewAI complaints; a local, private cost
 breakdown is the hook.
 
+## Try it without a Crew
+
+To see observer mode work without wiring up a real CrewAI project, run the
+built-in demo — it simulates a small multi-agent flow whose calls use LiteLLM
+`mock_response` (no API key, no network), so it exercises the *real* capture path
+offline:
+
+```bash
+binex observe-demo
+# Captured 4 LLM call(s) into observed run 'obs_...' (≈$0.0005)
+binex debug obs_...     # trace + per-call breakdown, marked [observed]
+```
+
 ## How it works
 
 Interception is at the **LiteLLM** layer, not CrewAI callbacks. CrewAI uses

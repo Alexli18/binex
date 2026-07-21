@@ -151,6 +151,19 @@ def test_observe_reexported_from_package() -> None:
     assert binex.observe is observe
 
 
+def test_observe_demo_command_offline() -> None:
+    """`binex observe-demo` produces an observed run with no API calls."""
+    from click.testing import CliRunner
+
+    from binex.cli.observe_demo import observe_demo_cmd
+
+    result = CliRunner().invoke(observe_demo_cmd, ["--name", "demo-run"])
+    assert result.exit_code == 0
+    assert "Captured 4 LLM call(s)" in result.output
+    assert "observed run 'obs_" in result.output
+    assert "binex debug obs_" in result.output
+
+
 @pytest.mark.asyncio
 async def test_observed_run_shows_in_debug() -> None:
     calls = [CapturedCall("gpt-4o", [{"role": "user", "content": "a"}], "r",

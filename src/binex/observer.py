@@ -55,6 +55,7 @@ class _Capture:
     """Mutable collector shared with the LiteLLM logger."""
 
     calls: list[CapturedCall] = field(default_factory=list)
+    run_id: str | None = None  # set to the observed run's id after flush
 
 
 def _extract_response_text(response_obj: Any) -> str:
@@ -152,7 +153,7 @@ def observe(run_name: str) -> Iterator[_Capture]:
         with contextlib.suppress(Exception):
             litellm.callbacks = previous
         try:
-            _flush_sync(run_name, capture.calls)
+            capture.run_id = _flush_sync(run_name, capture.calls)
         except Exception as exc:  # noqa: BLE001 — flushing must not crash the user
             logger.warning("observe: failed to persist observed run: %s", exc)
 
