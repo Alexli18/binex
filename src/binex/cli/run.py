@@ -44,12 +44,17 @@ Examples:
               help="Reuse cached results for unchanged nodes (iteration mode)")
 @click.option("--offline", is_flag=True,
               help="Run only from cache; a cache miss fails the node (implies --cache)")
+@click.option("--no-fallback", "no_fallback", is_flag=True,
+              help="Disable model fallback chains (for clean model benchmarks)")
 def run_cmd(
     workflow_file: str, var: tuple[str, ...], json_out: bool, verbose: bool,
     stream_out: bool | None, gateway_url: str | None,
-    cache: bool, offline: bool,
+    cache: bool, offline: bool, no_fallback: bool,
 ) -> None:
     """Execute a workflow definition."""
+    if no_fallback:
+        import os
+        os.environ["BINEX_NO_FALLBACK"] = "1"
     user_vars = _parse_vars(var)
     spec = load_workflow(workflow_file, user_vars=user_vars)
 

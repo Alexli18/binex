@@ -349,3 +349,47 @@ def _cao_server_reachable(server_url: str) -> bool:
         return resp.status_code == 200
     except Exception:
         return False
+
+
+def check_fallback_chains(spec: WorkflowSpec) -> list[str]:
+    """Advisory warnings for model fallback chains (issue #66).
+
+    Warns when a fallback model has a smaller context window than the primary,
+    or lacks function-calling while the node declares tools. These are
+    non-blocking — a smaller-context fallback is a legitimate choice.
+    """
+    import litellm
+
+    def _context(model: str) -> int | None:
+        try:
+            info = litellm.get_model_info(model) or {}
+            return info.get("max_input_tokens") or info.get("max_tokens")
+        except Exception:
+            return None
+
+    def _supports_tools(model: str) -> bool:
+        try:
+            return bool(litellm.supports_function_calling(model))
+        except Exception:
+            return True  # unknown -> don't warn
+
+    warnings: list[str] = []
+    for node_id, node in spec.nodes.items():
+        if not node.fallbacks or not node.agent.startswith("llm://"):
+            continue
+        primary = node.agent.removeprefix("llm://")
+        primary_ctx = _context(primary)
+        has_tools = bool(node.tools)
+        for fb in node.fallbacks:
+            fb_ctx = _context(fb)
+            if primary_ctx and fb_ctx and fb_ctx < primary_ctx:
+                warnings.append(
+                    f"node '{node_id}': fallback '{fb}' has a smaller context "
+                    f"window ({fb_ctx}) than primary '{primary}' ({primary_ctx})"
+                )
+            if has_tools and not _supports_tools(fb):
+                warnings.append(
+                    f"node '{node_id}': fallback '{fb}' lacks function-calling "
+                    f"but the node declares tools"
+                )
+    return warnings

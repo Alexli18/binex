@@ -485,14 +485,21 @@ class Orchestrator:
             status = task.status.__class__("failed")
 
         latency_ms = now_ms() - start_ms
-        await self._emit_event({
+        # Surface model fallback (issue #66) from the produced artifact's metadata.
+        meta = output_artifacts[0].metadata if output_artifacts else None
+        requested_model = meta.get("requested_model") if meta else None
+        actual_model = meta.get("actual_model") if meta else None
+        event: dict[str, Any] = {
             "type": f"node:{'completed' if succeeded else 'failed'}",
             "run_id": run_id,
             "node_id": node_id,
             "timestamp": datetime.now(UTC).isoformat(),
             "latency_ms": latency_ms,
             **({"error": error_msg} if error_msg else {}),
-        })
+        }
+        if meta and meta.get("fallbacks"):
+            event["fallbacks"] = meta["fallbacks"]
+        await self._emit_event(event)
         await record_execution(
             self.execution_store,
             run_id=run_id,
@@ -504,6 +511,8 @@ class Orchestrator:
             latency_ms=latency_ms,
             trace_id=trace_id,
             error=error_msg,
+            requested_model=requested_model,
+            actual_model=actual_model,
         )
 
     # ------------------------------------------------------------------
@@ -639,6 +648,8 @@ class Orchestrator:
             config["output_schema"] = node_spec.output_schema
         if node_spec.repair is not None:
             config["repair"] = node_spec.repair.model_dump()
+        if node_spec.fallbacks:
+            config["fallbacks"] = node_spec.fallbacks
 
         task = TaskNode(
             id=f"{run_id}_{node_id}",

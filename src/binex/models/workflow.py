@@ -111,6 +111,7 @@ class NodeSpec(BaseModel):
     output_schema: dict[str, Any] | None = None
     cache: bool = False
     repair: RepairConfig | None = None
+    fallbacks: list[str] = Field(default_factory=list)
     routing: dict[str, Any] | None = None
     cao: CaoConfig | None = None
 
