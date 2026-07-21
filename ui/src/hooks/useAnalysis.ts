@@ -117,6 +117,20 @@ export function useDebug(runId: string | undefined, errorsOnly = false) {
   });
 }
 
+export interface FilesChangedData {
+  run_id: string;
+  has_workspace: boolean;
+  nodes: Record<string, string[]>;
+}
+
+export function useFilesChanged(runId: string | undefined) {
+  return useQuery<FilesChangedData>({
+    queryKey: ['files-changed', runId],
+    queryFn: () => api.get<FilesChangedData>(`/runs/${runId}/files-changed`),
+    enabled: !!runId,
+  });
+}
+
 export function useTrace(runId: string | undefined) {
   return useQuery<TraceData>({
     queryKey: ['trace', runId],

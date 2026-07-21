@@ -204,4 +204,36 @@ class Workspace:
         shutil.rmtree(self.root, ignore_errors=True)
 
 
-__all__ = ["Workspace", "WorkspaceConfig", "WorkspaceError", "DEFAULT_BASE_DIR"]
+def list_node_changes(
+    run_id: str, base_dir: str = DEFAULT_BASE_DIR,
+) -> dict[str, list[str]] | None:
+    """Reconstruct per-node file changes from a finished run's workspace (#75 UI).
+
+    The in-memory node→commit map is gone after the run, so read it back from the
+    workspace repo: each ``node: <id>`` commit's changed files vs its parent.
+    Returns ``None`` when the run has no workspace.
+    """
+    root = Path(base_dir) / run_id
+    if not (root / ".git").exists():
+        return None
+    out = _git(["log", "--reverse", "--pretty=format:%H%x09%s"], cwd=str(root))
+    changes: dict[str, list[str]] = {}
+    for line in out.splitlines():
+        sha, _, subject = line.partition("\t")
+        if not subject.startswith("node: "):
+            continue
+        node_id = subject[len("node: "):]
+        files = _git(
+            ["show", "--name-only", "--pretty=format:", sha], cwd=str(root),
+        )
+        changes[node_id] = [f for f in files.splitlines() if f]
+    return changes
+
+
+__all__ = [
+    "DEFAULT_BASE_DIR",
+    "Workspace",
+    "WorkspaceConfig",
+    "WorkspaceError",
+    "list_node_changes",
+]

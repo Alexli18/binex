@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useDebug } from '../hooks/useAnalysis';
+import { useDebug, useFilesChanged } from '../hooks/useAnalysis';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { HelpTooltip } from '@/components/common/HelpTooltip';
 import { ReplayModal } from '../components/ReplayModal';
@@ -21,6 +21,7 @@ export default function DebugPage() {
   const [replayCallNode, setReplayCallNode] = useState<string | null>(null);
 
   const { data, isLoading, error } = useDebug(runId, errorsOnly);
+  const { data: filesChanged } = useFilesChanged(runId);
 
   const selectedNode = useMemo(
     () => data?.nodes.find((n) => n.node_id === selectedNodeId) ?? null,
@@ -107,6 +108,7 @@ export default function DebugPage() {
           onReplay={setReplayNode}
           observed={data?.observed}
           onReplayCall={setReplayCallNode}
+          filesChanged={selectedNodeId ? filesChanged?.nodes[selectedNodeId] : undefined}
         />
       </div>
 
