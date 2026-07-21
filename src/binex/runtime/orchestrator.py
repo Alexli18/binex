@@ -57,7 +57,7 @@ class Orchestrator:
     ) -> None:
         self.artifact_store = artifact_store
         self.execution_store = execution_store
-        self.dispatcher = Dispatcher()
+        self.dispatcher = Dispatcher(event_callback=self._emit_event)
         self._pending_feedback: dict[str, list[Artifact]] = {}
         self._stream = stream
         self._stream_callback = stream_callback
@@ -650,6 +650,8 @@ class Orchestrator:
             config["repair"] = node_spec.repair.model_dump()
         if node_spec.fallbacks:
             config["fallbacks"] = node_spec.fallbacks
+        if node_spec.heartbeat_timeout_ms is not None:
+            config["heartbeat_timeout_ms"] = node_spec.heartbeat_timeout_ms
 
         task = TaskNode(
             id=f"{run_id}_{node_id}",

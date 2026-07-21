@@ -63,6 +63,19 @@ except ImportError:
             self._checkpoints[label] = data
             self._emit("checkpoint", label=label, data_preview=str(data)[:200])
 
+        def progress(self, fraction: float, message: str = "") -> None:
+            """Report progress on a long-running task (issue #78).
+
+            ``fraction`` is 0..1; ``message`` is a short status like
+            "transcribing 48/120 min". Keeps the node visibly alive so the
+            heartbeat watchdog doesn't kill it.
+            """
+            self._emit(
+                "progress",
+                fraction=max(0.0, min(1.0, fraction)),
+                message=message,
+            )
+
         def _emit(self, event_type: str, **kwargs: Any) -> None:
             """Write structured JSON event to stderr."""
             event = {"_binex_trace": True, "type": event_type, "ts": time.time(), **kwargs}
