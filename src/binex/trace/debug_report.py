@@ -217,6 +217,28 @@ def _format_node_plain(node: NodeReport, lines: list[str]) -> None:
     lines.append("")
 
 
+def _artifact_json(a: Artifact, run_id: str) -> dict[str, Any]:
+    """Serialize one output artifact, flagging binaries with preview metadata (#76)."""
+    from binex.artifacts.binary import is_binary_artifact
+
+    if is_binary_artifact(a):
+        env = a.content
+        return {
+            "id": a.id,
+            "type": a.type,
+            "content": env,  # the envelope (mime/size/sha256) — never raw bytes
+            "binary": True,
+            "mime": env.get("mime"),
+            "size": env.get("size"),
+            "blob_url": f"/api/v1/runs/{run_id}/artifacts/{a.id}/blob",
+        }
+    return {
+        "id": a.id,
+        "type": a.type,
+        "content": _truncate(str(a.content)) if a.content else None,
+    }
+
+
 def format_debug_report_json(report: DebugReport) -> dict[str, Any]:
     """Format a debug report as a JSON-serializable dict."""
     return {
@@ -242,11 +264,7 @@ def format_debug_report_json(report: DebugReport) -> dict[str, Any]:
                 "blocked_by": n.blocked_by,
                 "input_artifacts": [a.id for a in n.input_artifacts],
                 "output_artifacts": [
-                    {
-                        "id": a.id,
-                        "type": a.type,
-                        "content": _truncate(str(a.content)) if a.content else None,
-                    }
+                    _artifact_json(a, report.run_id)
                     for a in n.output_artifacts
                 ],
             }

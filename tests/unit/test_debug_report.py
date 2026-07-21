@@ -332,3 +332,27 @@ async def test_format_json():
     assert len(data["nodes"]) == 2
     assert data["nodes"][0]["node_id"] == "step_a"
     assert len(data["nodes"][0]["output_artifacts"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_format_json_flags_binary_artifacts(tmp_path, monkeypatch):
+    """Binary output artifacts carry binary/mime/blob_url for UI previews (#76)."""
+    monkeypatch.setenv("BINEX_STORE_PATH", str(tmp_path / ".binex"))
+    from binex.artifacts.binary import make_binary_artifact
+    from binex.trace.debug_report import format_debug_report_json
+
+    run = _run_summary(total=1, completed=1)
+    bin_art = make_binary_artifact(RUN_ID, "step_a", b"PNG" * 30, "image/png")
+    records = [_record("step_a", output_refs=[bin_art.id])]
+    exec_store, art_store = await _make_stores(
+        run=run, records=records, artifacts=[bin_art],
+    )
+    report = await build_debug_report(exec_store, art_store, RUN_ID)
+    data = format_debug_report_json(report)
+
+    oa = data["nodes"][0]["output_artifacts"][0]
+    assert oa["binary"] is True
+    assert oa["mime"] == "image/png"
+    assert oa["blob_url"] == f"/api/v1/runs/{RUN_ID}/artifacts/{bin_art.id}/blob"
+    # content stays the envelope (not stringified/truncated)
+    assert oa["content"]["kind"] == "binary"

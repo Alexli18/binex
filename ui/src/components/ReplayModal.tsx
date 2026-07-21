@@ -90,12 +90,21 @@ export function ReplayModal({
             <div>
               <label className="block text-sm text-[#80808a] mb-1">Input Artifacts ({artifacts.length})</label>
               <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                {artifacts.map((art) => (
-                  <div key={art.id} className="bg-[#131315] rounded px-3 py-2 text-xs">
-                    <span className="text-[#4a4a52]">{art.type}</span>
-                    <p className="text-[#80808a] mt-0.5 truncate">{art.content.slice(0, 150)}{art.content.length > 150 ? '...' : ''}</p>
-                  </div>
-                ))}
+                {artifacts.map((art) => {
+                  const text =
+                    typeof art.content === 'string'
+                      ? art.content
+                      : JSON.stringify(art.content ?? '');
+                  return (
+                    <div key={art.id} className="bg-[#131315] rounded px-3 py-2 text-xs">
+                      <span className="text-[#4a4a52]">{art.type}</span>
+                      <p className="text-[#80808a] mt-0.5 truncate">
+                        {text.slice(0, 150)}
+                        {text.length > 150 ? '...' : ''}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
