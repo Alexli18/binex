@@ -110,7 +110,11 @@ async def test_flush_creates_observed_run() -> None:
         assert len(costs) == 2
 
         arts = await art_store.list_by_run(run_id)
-        assert {a.content for a in arts} == {"resp-a", "resp-b"}
+        responses = {a.content for a in arts if a.type == "result"}
+        assert responses == {"resp-a", "resp-b"}
+        # Each call also stored its raw request for replay (#74).
+        requests = [a for a in arts if a.type == "llm_request"]
+        assert len(requests) == 2
     finally:
         await exec_store.close()
 
