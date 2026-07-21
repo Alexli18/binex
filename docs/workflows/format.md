@@ -168,6 +168,29 @@ With `--json`, the run output includes budget information:
 }
 ```
 
+## Declaring Cost (non-LLM nodes)
+
+Cost tracking isn't limited to LLM tokens. Cloud STT bills per minute, TTS per
+character, image generation per request. A `local://` / `python://` handler
+declares its own cost by accepting a `report_cost` parameter — the value flows
+into the same cost records, dashboard, and budgets as token cost (budgets
+operate on dollars, so enforcement is unchanged; only ingestion widens).
+
+```python
+async def transcribe(task, inputs, report_cost):
+    audio_seconds = 7200
+    ...
+    report_cost(seconds=audio_seconds, unit_price=0.0001)  # $0.72
+    return [artifact]
+```
+
+`report_cost` accepts an explicit `cost=` in dollars, or a `quantity` +
+`unit_price` (their product), with convenience unit keywords `seconds=`,
+`characters=`, `requests=`. Records carry `unit` (`tokens`/`seconds`/
+`characters`/`requests`/`custom`), `quantity`, `unit_price`, and `provenance`
+(`litellm`/`declared`/`manual`). `binex cost simulate` leaves non-token costs
+unchanged when swapping models (they don't scale with the model).
+
 ## Long-Running Nodes & Progress
 
 An LLM node streams tokens, so it's visibly alive. A `local://` node running

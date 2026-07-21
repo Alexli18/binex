@@ -27,21 +27,27 @@ class LocalPythonAdapter:
         *,
         progress: Any | None = None,
     ) -> ExecutionResult:
-        # Pass report_progress only to handlers that opt in by declaring it,
-        # so existing two-arg handlers keep working (issue #78).
-        if progress is not None and self._handler_wants_progress():
-            artifacts = await self._handler(
-                task, input_artifacts, report_progress=progress.report,
-            )
-        else:
-            artifacts = await self._handler(task, input_artifacts)
-        return ExecutionResult(artifacts=artifacts)
+        from binex.runtime.cost_report import CostReporter
 
-    def _handler_wants_progress(self) -> bool:
+        # Pass report_progress / report_cost only to handlers that opt in by
+        # declaring them, so existing handlers keep working (#78, #79).
+        kwargs: dict[str, Any] = {}
+        if progress is not None and self._handler_accepts("report_progress"):
+            kwargs["report_progress"] = progress.report
+        cost_reporter: CostReporter | None = None
+        if self._handler_accepts("report_cost"):
+            cost_reporter = CostReporter(task)
+            kwargs["report_cost"] = cost_reporter.report
+
+        artifacts = await self._handler(task, input_artifacts, **kwargs)
+        cost = cost_reporter.record if cost_reporter else None
+        return ExecutionResult(artifacts=artifacts, cost=cost)
+
+    def _handler_accepts(self, param: str) -> bool:
         import inspect
 
         try:
-            return "report_progress" in inspect.signature(self._handler).parameters
+            return param in inspect.signature(self._handler).parameters
         except (ValueError, TypeError):
             return False
 

@@ -33,6 +33,11 @@ class CostRecord(BaseModel):
     completion_tokens: int | None = None
     model: str | None = None
     node_budget: float | None = None  # per-node budget limit (if set)
+    # Generalized billing beyond tokens (issue #79).
+    unit: str = "tokens"  # tokens | seconds | characters | requests | custom
+    quantity: float | None = None
+    unit_price: float | None = None
+    provenance: str = "litellm"  # litellm | declared | manual
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @field_validator("cost")

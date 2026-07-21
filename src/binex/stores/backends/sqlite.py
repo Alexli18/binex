@@ -92,7 +92,11 @@ class SqliteExecutionStore:
                 prompt_tokens INTEGER,
                 completion_tokens INTEGER,
                 model TEXT,
-                timestamp TEXT NOT NULL
+                timestamp TEXT NOT NULL,
+                unit TEXT DEFAULT 'tokens',
+                quantity REAL,
+                unit_price REAL,
+                provenance TEXT DEFAULT 'litellm'
             );
             CREATE TABLE IF NOT EXISTS cao_sessions (
                 terminal_id  TEXT PRIMARY KEY,
@@ -173,6 +177,18 @@ class SqliteExecutionStore:
             try:
                 await self._db.execute(
                     f"ALTER TABLE execution_records ADD COLUMN {_col} TEXT"
+                )
+                await self._db.commit()
+            except Exception as exc:
+                logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: generalized cost columns (issue #79)
+        for _col, _decl in (
+            ("unit", "TEXT DEFAULT 'tokens'"), ("quantity", "REAL"),
+            ("unit_price", "REAL"), ("provenance", "TEXT DEFAULT 'litellm'"),
+        ):
+            try:
+                await self._db.execute(
+                    f"ALTER TABLE cost_records ADD COLUMN {_col} {_decl}"
                 )
                 await self._db.commit()
             except Exception as exc:
@@ -380,8 +396,9 @@ class SqliteExecutionStore:
         db = await self._ensure_initialized()
         await db.execute(
             """INSERT INTO cost_records (id, run_id, task_id, cost, currency,
-               source, prompt_tokens, completion_tokens, model, timestamp)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               source, prompt_tokens, completion_tokens, model, timestamp,
+               unit, quantity, unit_price, provenance)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 cost_record.id,
                 cost_record.run_id,
@@ -393,6 +410,10 @@ class SqliteExecutionStore:
                 cost_record.completion_tokens,
                 cost_record.model,
                 cost_record.timestamp.isoformat(),
+                cost_record.unit,
+                cost_record.quantity,
+                cost_record.unit_price,
+                cost_record.provenance,
             ),
         )
         await db.commit()
@@ -518,6 +539,10 @@ class SqliteExecutionStore:
             completion_tokens=row[7],
             model=row[8],
             timestamp=datetime.fromisoformat(row[9]),
+            unit=row[10] if len(row) > 10 and row[10] is not None else "tokens",
+            quantity=row[11] if len(row) > 11 else None,
+            unit_price=row[12] if len(row) > 12 else None,
+            provenance=row[13] if len(row) > 13 and row[13] is not None else "litellm",
         )
 
     @staticmethod
