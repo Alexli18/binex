@@ -60,6 +60,12 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+// Anchors the first-run guided tour (issue #32) targets, keyed by nav path.
+const TOUR_ANCHORS: Record<string, string | undefined> = {
+  "/editor": "nav-editor",
+  "/scaffold": "nav-scaffold",
+};
+
 const AMBER = "#e8a020";
 const BG = "#131315";
 const BORDER = "#252528";
@@ -88,6 +94,7 @@ function NavGroupSection({ group, collapsed }: { group: NavGroup; collapsed: boo
             <NavLink
               to={item.path}
               end={item.path === "/"}
+              data-tour={TOUR_ANCHORS[item.path]}
               title={collapsed ? item.label : undefined}
               style={({ isActive }) => ({
                 display: "flex",
@@ -142,7 +149,7 @@ export default function Sidebar() {
   const w = collapsed ? 40 : 200;
 
   return (
-    <aside style={{
+    <aside data-tour="sidebar" style={{
       width: w,
       minWidth: w,
       height: "100vh",

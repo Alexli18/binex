@@ -24,6 +24,15 @@ binex ui [OPTIONS]
 
 The server reads data from the same `.binex/` store used by the CLI.
 
+### First-run guided tour
+
+The first time you open the dashboard with an empty store (no runs yet), a short
+5-step guided tour points out the key areas — sidebar navigation, the Editor, the
+Scaffold generator, running a workflow, and inspecting the results. It appears
+only once; skipping or finishing it is remembered in your browser's
+`localStorage`, so it won't reappear. You can re-launch it anytime with **"Take
+the guided tour"** at the bottom of the help panel (the **?** button).
+
 ## Options
 
 | Flag | Default | Description |
