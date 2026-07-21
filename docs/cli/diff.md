@@ -28,6 +28,45 @@ Exits `0` on success. Exits `1` if either run ID is not found.
 | `RUN_B` | `string` | Second run ID (the "comparison") |
 | `--json-output` / `--json` | flag | Output as a structured JSON object |
 | `--rich` / `--no-rich` | flag | Enable or disable rich table output. Auto-detected by default (enabled if `rich` is installed) |
+| `--semantic` | flag | Analyze *meaningful vs cosmetic* changes with a model (opt-in, spends tokens) |
+| `--semantic-model` | string | Model for `--semantic` (default: `$BINEX_JUDGE_MODEL` or a cheap default; use e.g. `ollama/llama3` for fully local) |
+| `--yes` / `-y` | flag | Skip the cost-confirmation prompt for `--semantic` |
+
+## Semantic diff (`--semantic`)
+
+Line-based diff of two LLM outputs is nearly useless — the texts always differ. `--semantic` distinguishes **"reworded the same answer"** from **"the answer actually changed"**.
+
+For each node whose content differs, a cheap model is asked **narrow, targeted questions** (rather than one vague "did the meaning change"):
+
+- **structure** — did the data structure / JSON schema change (fields, types)?
+- **facts** — did any factual claim, number, name, or conclusion change?
+- **tone_format** — did only the wording/tone/formatting change while the substance stayed the same?
+
+A node is flagged **meaningful** (⚠) when *structure* or *facts* changed; a *tone_format*-only change is collapsed as **cosmetic**. Each verdict carries a per-question **confidence** (high/medium/low), and the judge runs at **temperature 0** so a verdict is stable rather than a coin-flip.
+
+### Opt-in and cost-transparent
+
+This is the first feature where Binex spends *your* tokens, so it is never automatic:
+
+- It runs only when you pass `--semantic`.
+- Before any model call, it prints an **estimate** — number of judge calls, token count, and dollar cost on the chosen model — and asks you to confirm. `--yes` skips the prompt for scripts.
+- The judge model is configurable; point `--semantic-model` at a local Ollama model for a fully no-cloud run (cost shown as free).
+- A judge error or unparseable reply **fails safe** — the aspect is conservatively reported as *changed*, never silently collapsed.
+
+```
+$ binex diff run_a run_b --semantic
+Semantic analysis: 2 judge call(s) on 'gpt-4o-mini', ~1400 tokens, estimated cost ~$0.0006.
+Proceed? [y/N]: y
+... textual diff ...
+
+Semantic analysis
+  ⚠ validator: meaningful change: facts
+      - facts: changed (high) — validated count 9 → 5
+  · summarizer: cosmetic only (reworded/reformatted, same substance)
+      - tone_format: changed (high) — reordered sentences
+```
+
+With `--json`, a `semantic` array is added to the output, one entry per changed node with `meaningful`, `summary`, and per-question `changed`/`confidence`/`reason`.
 
 ## Plain Text Output
 
