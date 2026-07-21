@@ -11,6 +11,7 @@ from binex.adapters.base import AgentAdapter
 from binex.models.artifact import Artifact, Lineage
 from binex.models.cost import ExecutionResult
 from binex.models.task import TaskNode
+from binex.runtime.progress import ProgressReporter, run_with_heartbeat
 from binex.telemetry import get_tracer
 
 
@@ -21,8 +22,12 @@ class SchemaValidationError(Exception):
 class Dispatcher:
     """Dispatches tasks to the appropriate agent adapter with retry and timeout."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        event_callback: Callable[[dict[str, Any]], Any] | None = None,
+    ) -> None:
         self._adapters: dict[str, AgentAdapter] = {}
+        self._event_callback = event_callback
 
     def register_adapter(self, agent_key: str, adapter: AgentAdapter) -> None:
         self._adapters[agent_key] = adapter
@@ -40,14 +45,20 @@ class Dispatcher:
         trace_id: str,
         stream: bool,
         stream_callback: Callable[[str], None] | None,
+        progress: ProgressReporter | None = None,
     ) -> ExecutionResult | list[Artifact]:
-        """Call adapter.execute, forwarding stream params for LLM adapters."""
+        """Call adapter.execute, forwarding stream/progress to adapters that accept them."""
         from binex.adapters.llm import LLMAdapter
+        from binex.adapters.local import LocalPythonAdapter
 
         if stream and isinstance(adapter, LLMAdapter):
             return await adapter.execute(
                 task, input_artifacts, trace_id,
                 stream=stream, stream_callback=stream_callback,
+            )
+        if progress is not None and isinstance(adapter, LocalPythonAdapter):
+            return await adapter.execute(
+                task, input_artifacts, trace_id, progress=progress,
             )
         return await adapter.execute(task, input_artifacts, trace_id)
 
@@ -155,6 +166,23 @@ class Dispatcher:
         """
         return _validate_schema(result, output_schema, task, attempt, max_retries)
 
+    def _make_progress_reporter(self, task: TaskNode) -> ProgressReporter:
+        """A reporter that forwards node progress to the runtime event stream."""
+        def _on_progress(fraction: float, message: str) -> None:
+            if self._event_callback is None:
+                return
+            result = self._event_callback({
+                "type": "node:progress",
+                "run_id": task.run_id,
+                "node_id": task.node_id,
+                "fraction": fraction,
+                "message": message,
+            })
+            if asyncio.iscoroutine(result):
+                asyncio.ensure_future(result)
+
+        return ProgressReporter(on_progress=_on_progress)
+
     async def _execute_with_timeout(
         self,
         adapter: AgentAdapter,
@@ -164,12 +192,22 @@ class Dispatcher:
         stream: bool,
         stream_callback: Callable[[str], None] | None,
     ) -> ExecutionResult:
-        """Execute adapter call with optional timeout, normalizing result type."""
+        """Execute adapter call with a deadline and/or heartbeat, normalizing type."""
+        reporter = self._make_progress_reporter(task)
         coro = self._call_adapter(
             adapter, task, input_artifacts, trace_id,
-            stream, stream_callback,
+            stream, stream_callback, reporter,
         )
-        if task.deadline_ms:
+
+        heartbeat_ms = task.config.get("heartbeat_timeout_ms")
+        if heartbeat_ms:
+            # A node that reports progress is alive; the timeout is on silence.
+            result = await run_with_heartbeat(
+                asyncio.ensure_future(coro), reporter,
+                heartbeat_timeout_s=heartbeat_ms / 1000.0,
+                deadline_s=task.deadline_ms / 1000.0 if task.deadline_ms else None,
+            )
+        elif task.deadline_ms:
             result = await asyncio.wait_for(coro, timeout=task.deadline_ms / 1000.0)
         else:
             result = await coro

@@ -103,6 +103,7 @@ class NodeSpec(BaseModel):
     config: dict[str, Any] = Field(default_factory=dict)
     retry_policy: RetryPolicy | None = None
     deadline_ms: int | None = None
+    heartbeat_timeout_ms: int | None = None
     when: str | None = None
     tools: list[Any] = Field(default_factory=list)
     cost: NodeCostHint | None = None

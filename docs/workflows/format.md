@@ -29,7 +29,8 @@ Complete schema reference for Binex workflow files.
 | `depends_on` | `list[str]` | no | Node IDs that must complete before this node runs |
 | `config` | `dict[str, Any]` | no | Per-node config forwarded to the adapter (see below) |
 | `retry_policy` | `RetryPolicy` | no | Override the default retry settings |
-| `deadline_ms` | `int` | no | Override the default deadline for this node |
+| `deadline_ms` | `int` | no | Hard total-duration timeout for this node |
+| `heartbeat_timeout_ms` | `int` | no | Silence timeout for long nodes that report progress (see below) |
 | `when` | `str` | no | Conditional execution expression (see below) |
 | `cost` | `NodeCostHint` | no | Optional cost estimate for planning (see below) |
 | `budget` | `float` or `NodeBudget` | no | Per-node budget limit (shorthand: `budget: 0.50`, full: `budget: { max_cost: 0.50 }`) |
@@ -165,6 +166,41 @@ With `--json`, the run output includes budget information:
   "budget": 5.0,
   "remaining_budget": -0.23
 }
+```
+
+## Long-Running Nodes & Progress
+
+An LLM node streams tokens, so it's visibly alive. A `local://` node running
+Whisper on a two-hour track is silent for thirty minutes — and the default
+`deadline_ms` (120 s) kills it. A node that **reports progress** is alive, so the
+timeout can apply to *silence* rather than total duration.
+
+- **`heartbeat_timeout_ms`** — the node fails only if it produces no progress for
+  this long. `deadline_ms` still applies as an optional hard total-duration cap.
+- A `local://` / `python://` handler opts in by accepting a `report_progress`
+  parameter and calling `report_progress(fraction, message)` — e.g.
+  `report_progress(0.4, "transcribing 48/120 min")`. Handlers that don't accept
+  it are unchanged.
+- Subprocess / `a2a://` agents report via the binex-trace SDK: `trace.progress(fraction, message)`.
+- Progress surfaces as a `node:progress` runtime event (per-node progress in the
+  Web UI) and is captured as a trace event.
+
+```python
+# local handler
+async def transcribe(task, inputs, report_progress):
+    for i, chunk in enumerate(chunks):
+        ...
+        report_progress(i / len(chunks), f"transcribing {i}/{len(chunks)}")
+    return [artifact]
+```
+
+```yaml
+nodes:
+  transcribe:
+    agent: "local://whisper"
+    outputs: [text]
+    heartbeat_timeout_ms: 120000   # fail only after 2 min of silence
+    deadline_ms: 7200000           # but never run longer than 2 h
 ```
 
 ## Model Fallback Chains
