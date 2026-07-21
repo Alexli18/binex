@@ -391,17 +391,29 @@ nodes:
     agent: "llm://openai/gpt-4o-mini"
     outputs: [result]
     output_schema: { type: object, required: [title] }
+    fallbacks: ["openai/gpt-4o"]
     repair:
       max_attempts: 2      # feedback-loop attempts; deterministic repair is always on
+      escalate: true       # on repair exhaustion, retry the ladder on the next fallback model
 ```
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `repair.max_attempts` | `int` | `0` | LLM feedback-loop attempts on schema-invalid output |
+| `repair.escalate` | `bool` | `false` | On repair exhaustion, promote to the next [fallback](#model-fallback-chains) model and retry the ladder |
 
 Every repair attempt's tokens are counted in the run cost. The produced
 artifact records `metadata.repair_attempts` and which ladder step succeeded; on
 exhaustion the node fails with the validation errors.
+
+**Escalation (`repair.escalate`).** When the feedback loop is exhausted, that's
+a signal the model can't handle the schema — not a transient error. With
+`escalate: true` and a [fallback chain](#model-fallback-chains), Binex promotes
+to the next model and restarts the repair ladder there (trace event
+`escalated: schema_repair_exhausted`, distinct from a transport-error fallback).
+This turns repair + fallback into an automatic cost optimizer: route everything
+through a cheap model and let the strong model catch only the hard tail.
+`--no-fallback` disables escalation too.
 
 ## Routing Overrides
 
