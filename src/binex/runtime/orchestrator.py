@@ -15,7 +15,7 @@ import yaml  # type: ignore[import-untyped]
 
 from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
-from binex.models.artifact import Artifact
+from binex.models.artifact import Artifact, Lineage
 from binex.models.cache import CacheEntry
 from binex.models.cost import CostRecord
 from binex.models.execution import RunSummary
@@ -59,6 +59,10 @@ class Orchestrator:
         self.execution_store = execution_store
         self.dispatcher = Dispatcher(event_callback=self._emit_event)
         self._pending_feedback: dict[str, list[Artifact]] = {}
+        # Dynamic fan-out (#77): per-run foreach bookkeeping.
+        self._foreach_groups: dict[str, Any] = {}  # aggregator_id -> ForeachGroup
+        self._worker_group: dict[str, Any] = {}     # worker_id -> ForeachGroup
+        self._tolerated_failures: set[str] = set()  # continue-worker failures
         self._stream = stream
         self._stream_callback = stream_callback
         self._event_callback = event_callback
@@ -102,6 +106,9 @@ class Orchestrator:
     ) -> RunSummary:
         dag = DAG.from_workflow(spec)
         scheduler = Scheduler(dag)
+        self._foreach_groups = {}
+        self._worker_group = {}
+        self._tolerated_failures = set()
         run_id = run_id or f"run_{uuid.uuid4().hex[:12]}"
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
 
@@ -176,6 +183,15 @@ class Orchestrator:
             # because when-skips synchronously unblock further nodes.
             if not budget_exceeded:
                 while ready := scheduler.ready_nodes():
+                    # Dynamic fan-out (#77): expand foreach templates and run
+                    # aggregators inline (they mutate dag/scheduler, so must not
+                    # race concurrent dispatch). Re-loop so the freshly added
+                    # workers / unblocked nodes get dispatched next pass.
+                    if await self._process_foreach_ready(
+                        spec, dag, scheduler, run_id, trace_id,
+                        ready, node_artifacts, accumulated_cost,
+                    ):
+                        continue
                     coros = self._schedule_ready_nodes(
                         spec, dag, scheduler, run_id, trace_id,
                         ready, node_artifacts, accumulated_cost,
@@ -207,7 +223,7 @@ class Orchestrator:
         summary.skipped_nodes = len(scheduler.skipped)
         summary.total_cost = accumulated_cost
         summary.status = self._determine_final_status(
-            budget_exceeded, scheduler,
+            budget_exceeded, scheduler, self._tolerated_failures,
         )
 
         span.set_attribute("run.id", summary.run_id)
@@ -242,6 +258,200 @@ class Orchestrator:
 
         return summary
 
+    # ------------------------------------------------------------------
+    # Dynamic fan-out (#77)
+    # ------------------------------------------------------------------
+
+    async def _process_foreach_ready(
+        self,
+        spec: WorkflowSpec,
+        dag: DAG,
+        scheduler: Scheduler,
+        run_id: str,
+        trace_id: str,
+        ready: list[str],
+        node_artifacts: dict[str, list[Artifact]],
+        accumulated_cost: float,
+    ) -> bool:
+        """Expand ready foreach templates and run ready aggregators inline.
+
+        Returns True if anything was handled (so the caller re-loops).
+        """
+        handled = False
+        for node_id in list(ready):
+            if node_id in self._foreach_groups:
+                await self._run_aggregator(
+                    scheduler, run_id, trace_id, node_id, node_artifacts,
+                )
+                handled = True
+            elif node_id in spec.nodes and spec.nodes[node_id].foreach:
+                await self._expand_foreach(
+                    spec, dag, scheduler, run_id, trace_id,
+                    node_id, node_artifacts, accumulated_cost,
+                )
+                handled = True
+        return handled
+
+    async def _expand_foreach(
+        self,
+        spec: WorkflowSpec,
+        dag: DAG,
+        scheduler: Scheduler,
+        run_id: str,
+        trace_id: str,
+        foreach_id: str,
+        node_artifacts: dict[str, list[Artifact]],
+        accumulated_cost: float,
+    ) -> None:
+        from binex.runtime.foreach import (
+            ForeachError,
+            ForeachGroup,
+            aggregator_node_id,
+            build_aggregator_spec,
+            build_worker_spec,
+            estimate_expansion_cost,
+            item_identity,
+            make_item_artifact,
+            parse_items,
+            worker_node_id,
+        )
+
+        fnode = spec.nodes[foreach_id]
+        mapper_arts = node_artifacts.get(fnode.foreach or "", [])
+        try:
+            content = mapper_arts[0].content if mapper_arts else None
+            items = parse_items(content)
+        except (ForeachError, IndexError) as exc:
+            await self._fail_foreach(
+                scheduler, run_id, trace_id, foreach_id,
+                f"foreach mapper '{fnode.foreach}': {exc}",
+            )
+            return
+
+        if len(items) > fnode.max_items:
+            await self._fail_foreach(
+                scheduler, run_id, trace_id, foreach_id,
+                f"mapper returned {len(items)} items > max_items "
+                f"{fnode.max_items} (raise max_items to allow)",
+            )
+            return
+
+        est = estimate_expansion_cost(fnode, len(items))
+        if (
+            est is not None and spec.budget is not None
+            and accumulated_cost + est > spec.budget.max_cost
+        ):
+            await self._fail_foreach(
+                scheduler, run_id, trace_id, foreach_id,
+                f"expanding {len(items)} workers (est. ${est:.2f}) would exceed "
+                f"budget ${spec.budget.max_cost:.2f} "
+                f"(${accumulated_cost:.2f} already spent)",
+            )
+            return
+
+        agg_id = aggregator_node_id(foreach_id)
+        worker_ids: list[str] = []
+        seen: set[str] = set()
+        for i, item in enumerate(items):
+            ident = item_identity(item, fnode.item_key, i)
+            wid = worker_node_id(foreach_id, ident)
+            if wid in seen:
+                wid = f"{wid}-{i}"  # identity collision → disambiguate
+            seen.add(wid)
+            worker_ids.append(wid)
+            spec.nodes[wid] = build_worker_spec(fnode, wid)
+            dag.add_node(wid, set())
+            scheduler.add_node(wid, 0)
+            item_art = make_item_artifact(run_id, wid, item)
+            await self.artifact_store.store(item_art)
+            self._pending_feedback.setdefault(wid, []).append(item_art)
+
+        spec.nodes[agg_id] = build_aggregator_spec(fnode, agg_id, worker_ids)
+        dag.add_node(agg_id, set(worker_ids))
+        dag.rewire_dependents(foreach_id, agg_id)
+        scheduler.add_node(agg_id, len(worker_ids))
+
+        group = ForeachGroup(
+            foreach_id=foreach_id, mapper_id=fnode.foreach or "",
+            aggregator_id=agg_id, worker_ids=worker_ids,
+            on_item_failure=fnode.on_item_failure, outputs=list(fnode.outputs),
+        )
+        self._foreach_groups[agg_id] = group
+        for wid in worker_ids:
+            self._worker_group[wid] = group
+
+        # The placeholder is done; its dependents now wait on the aggregator.
+        scheduler.mark_completed(foreach_id)
+        node_artifacts[foreach_id] = []
+        await self._emit_event({
+            "type": "foreach:expanded", "run_id": run_id, "node_id": foreach_id,
+            "workers": len(worker_ids),
+            "timestamp": datetime.now(UTC).isoformat(),
+        })
+        await record_execution(
+            self.execution_store, run_id=run_id, node_id=foreach_id,
+            agent_id="internal://foreach", status=TaskStatus.COMPLETED,
+            input_artifacts=[], output_artifacts=[], latency_ms=0,
+            trace_id=trace_id, error=None,
+        )
+
+    async def _run_aggregator(
+        self,
+        scheduler: Scheduler,
+        run_id: str,
+        trace_id: str,
+        agg_id: str,
+        node_artifacts: dict[str, list[Artifact]],
+    ) -> None:
+        from binex.runtime.foreach import build_aggregate_content
+
+        group = self._foreach_groups[agg_id]
+        content = build_aggregate_content(group, node_artifacts)
+        derived = [
+            a.id for wid in group.worker_ids for a in node_artifacts.get(wid, [])
+        ]
+        art = Artifact(
+            id=f"art_{uuid.uuid4().hex[:12]}", run_id=run_id, type="result",
+            content=content,
+            lineage=Lineage(produced_by=agg_id, derived_from=derived),
+        )
+        await self.artifact_store.store(art)
+        node_artifacts[agg_id] = [art]
+        scheduler.mark_completed(agg_id)
+        await self._emit_event({
+            "type": "foreach:aggregated", "run_id": run_id, "node_id": agg_id,
+            "succeeded": content["succeeded"], "failed": len(content["failed"]),
+            "total": content["total"],
+            "timestamp": datetime.now(UTC).isoformat(),
+        })
+        await record_execution(
+            self.execution_store, run_id=run_id, node_id=agg_id,
+            agent_id="internal://foreach-aggregator", status=TaskStatus.COMPLETED,
+            input_artifacts=[], output_artifacts=[art], latency_ms=0,
+            trace_id=trace_id, error=None,
+        )
+
+    async def _fail_foreach(
+        self,
+        scheduler: Scheduler,
+        run_id: str,
+        trace_id: str,
+        foreach_id: str,
+        error: str,
+    ) -> None:
+        """Fail a foreach node (bad mapper output / guardrail tripped)."""
+        scheduler.mark_failed(foreach_id)
+        await self._emit_event({
+            "type": "node:failed", "run_id": run_id, "node_id": foreach_id,
+            "error": error, "timestamp": datetime.now(UTC).isoformat(),
+        })
+        await record_execution(
+            self.execution_store, run_id=run_id, node_id=foreach_id,
+            agent_id="internal://foreach", status=TaskStatus.FAILED,
+            input_artifacts=[], output_artifacts=[], latency_ms=0,
+            trace_id=trace_id, error=error,
+        )
+
     def _schedule_ready_nodes(
         self,
         spec: WorkflowSpec,
@@ -260,6 +470,10 @@ class Orchestrator:
         tasks = []
         for node_id in ready:
             node_spec = spec.nodes[node_id]
+            # foreach templates and aggregators are driven by the inline
+            # _process_foreach_ready pass, never dispatched as agent tasks.
+            if node_id in self._foreach_groups or node_spec.foreach:
+                continue
             if node_spec.when:
                 if not evaluate_when(node_spec.when, node_artifacts):
                     scheduler.mark_skipped(node_id)
@@ -278,11 +492,17 @@ class Orchestrator:
     @staticmethod
     def _determine_final_status(
         budget_exceeded: bool, scheduler: Scheduler,
+        tolerated_failures: set[str] | None = None,
     ) -> str:
-        """Determine the final run status."""
+        """Determine the final run status.
+
+        Foreach-worker failures under ``on_item_failure: continue`` are tolerated
+        — they are reported in the aggregate, not treated as a run failure (#77).
+        """
         if budget_exceeded:
             return "over_budget"
-        if scheduler.failed:
+        real_failures = scheduler.failed - (tolerated_failures or set())
+        if real_failures:
             return "failed"
         if scheduler.is_complete():
             return "completed"
@@ -498,6 +718,13 @@ class Orchestrator:
         else:
             scheduler.mark_failed(node_id)
             status = task.status.__class__("failed")
+            # Dynamic fan-out (#77): a failed worker under on_item_failure=continue
+            # must not block its aggregator — record the failure and let it proceed.
+            group = self._worker_group.get(node_id)
+            if group is not None and group.on_item_failure == "continue":
+                group.failed.append(node_id)
+                self._tolerated_failures.add(node_id)
+                scheduler.satisfy_dependents(node_id)
 
         latency_ms = now_ms() - start_ms
         # Surface model fallback (issue #66) from the produced artifact's metadata.

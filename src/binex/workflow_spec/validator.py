@@ -32,8 +32,25 @@ def validate_workflow(spec: WorkflowSpec) -> list[str]:
     _check_tool_uris(spec, errors)
     _check_cao_nodes(spec, errors)
     _check_assertions(spec, errors)
+    _check_foreach(spec, node_ids, errors)
 
     return errors
+
+
+def _check_foreach(
+    spec: WorkflowSpec, node_ids: set[str], errors: list[str],
+) -> None:
+    """A foreach node must reference an existing mapper (not itself)."""
+    for node_id, node in spec.nodes.items():
+        if not node.foreach:
+            continue
+        if node.foreach == node_id:
+            errors.append(f"Node '{node_id}': foreach cannot reference itself")
+        elif node.foreach not in node_ids:
+            errors.append(
+                f"Node '{node_id}': foreach references unknown node "
+                f"'{node.foreach}'"
+            )
 
 
 def _check_assertions(spec: WorkflowSpec, errors: list[str]) -> None:
