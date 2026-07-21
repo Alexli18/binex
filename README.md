@@ -124,6 +124,30 @@ pip install binex[telemetry]    # OpenTelemetry tracing
 pip install binex[rich]         # Rich colored CLI output
 ```
 
+### Docker
+
+Prefer a container? Run the CLI **and** Web UI without touching your Python
+environment:
+
+```bash
+# From the repo root — builds the frontend + installs Binex, serves the Web UI.
+docker compose -f docker/docker-compose.webui.yml up --build
+# → open http://localhost:8420
+```
+
+Runs, artifacts, and workspaces persist in the `binex-data` volume. Pass API keys
+via the environment (or a `.env` file), e.g. `OPENAI_API_KEY=… docker compose …`.
+For a fully-local setup, add the bundled Ollama sidecar with `--profile local`.
+Run one-off CLI commands against the same image:
+
+```bash
+docker build -f docker/Dockerfile.webui -t binex .
+docker run --rm -v binex-data:/data binex binex run workflow.yaml
+```
+
+> The separate `docker/docker-compose.yml` is a different deployment — the A2A
+> agent-server mesh (planner/researcher/… + Ollama + LiteLLM), not the Web UI.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
