@@ -171,11 +171,14 @@ function CaoDebugSection({
   const rawOutput = artifacts.find((a) => a.type === 'cao_raw_output');
   const parsedOutput = artifacts.find((a) => a.type === 'cao_output');
 
+  const asText = (c: DebugArtifact['content']): string =>
+    typeof c === 'string' ? c : JSON.stringify(c ?? '');
+
   // Extract terminal_id from parsed output JSON (best-effort)
   let terminalId: string | null = null;
   if (parsedOutput) {
     try {
-      const parsed = JSON.parse(parsedOutput.content);
+      const parsed = JSON.parse(asText(parsedOutput.content));
       terminalId = parsed.terminal_id ?? parsed.session_id ?? null;
     } catch {
       // not JSON — ignore
@@ -216,7 +219,7 @@ function CaoDebugSection({
         <div className="text-sm">
           <span className="text-[#4a4a52]">Parsed Output</span>
           <pre className="mt-1 text-xs text-[#80808a] bg-[#131315] border border-[#252528] rounded-lg p-3 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
-            {parsedOutput.content}
+            {asText(parsedOutput.content)}
           </pre>
         </div>
       )}
@@ -233,7 +236,7 @@ function CaoDebugSection({
           </button>
           {rawExpanded && (
             <pre className="mt-1 text-xs text-[#80808a] bg-[#131315] border border-[#252528] rounded-lg p-3 whitespace-pre-wrap max-h-64 overflow-y-auto leading-relaxed font-mono">
-              {rawOutput.content}
+              {asText(rawOutput.content)}
             </pre>
           )}
         </div>

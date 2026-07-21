@@ -60,4 +60,58 @@ describe('DebugArtifactViewer', () => {
     render(<DebugArtifactViewer title="Test" artifacts={[makeArtifact()]} defaultExpanded />);
     expect(screen.getByText('Hello world')).toBeInTheDocument();
   });
+
+  const binaryArtifact = (mime: string): DebugArtifact =>
+    makeArtifact({
+      id: 'img-1',
+      type: 'binary',
+      content: { kind: 'binary', mime, size: 2048, sha256: 'abc' },
+      binary: true,
+      mime,
+      size: 2048,
+      blob_url: '/api/v1/runs/r1/artifacts/img-1/blob',
+    });
+
+  it('shows a mime badge on binary artifacts', () => {
+    render(<DebugArtifactViewer title="Test" artifacts={[binaryArtifact('image/png')]} />);
+    expect(screen.getByText('image/png')).toBeInTheDocument();
+  });
+
+  it('renders an <img> preview for image binaries when expanded', async () => {
+    const user = userEvent.setup();
+    render(<DebugArtifactViewer title="Test" artifacts={[binaryArtifact('image/png')]} />);
+    await user.click(screen.getByText('expand'));
+    const img = screen.getByAltText('img-1') as HTMLImageElement;
+    expect(img.tagName).toBe('IMG');
+    expect(img.getAttribute('src')).toBe('/api/v1/runs/r1/artifacts/img-1/blob');
+  });
+
+  it('renders an <audio> player for audio binaries', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <DebugArtifactViewer title="Test" artifacts={[binaryArtifact('audio/wav')]} />,
+    );
+    await user.click(screen.getByText('expand'));
+    expect(container.querySelector('audio')).not.toBeNull();
+  });
+
+  it('falls back to a download link for other binaries', async () => {
+    const user = userEvent.setup();
+    render(<DebugArtifactViewer title="Test" artifacts={[binaryArtifact('application/zip')]} />);
+    await user.click(screen.getByText('expand'));
+    expect(screen.getByText(/Download application\/zip/)).toBeInTheDocument();
+  });
+
+  it('detects binary from envelope even without the binary flag', async () => {
+    const user = userEvent.setup();
+    const art = makeArtifact({
+      id: 'img-2',
+      content: { kind: 'binary', mime: 'image/png' },
+      blob_url: '/blob',
+      mime: 'image/png',
+    });
+    render(<DebugArtifactViewer title="Test" artifacts={[art]} />);
+    await user.click(screen.getByText('expand'));
+    expect(screen.getByAltText('img-2')).toBeInTheDocument();
+  });
 });

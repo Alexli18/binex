@@ -5,7 +5,12 @@ import { api } from '../lib/api';
 export interface DebugArtifact {
   id: string;
   type: string;
-  content: string;
+  content: string | Record<string, unknown> | null;
+  // Binary artifacts (#76): a content-addressed payload served via blob_url.
+  binary?: boolean;
+  mime?: string;
+  size?: number;
+  blob_url?: string;
 }
 
 export interface DebugNode {
