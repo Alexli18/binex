@@ -1,0 +1,25 @@
+# Keep the build context small and reproducible.
+.git
+.venv
+venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+
+# Frontend: node_modules and local build output are rebuilt inside the image.
+ui/node_modules
+ui/dist
+ui/test-results
+ui/playwright-report
+
+# The server's static dir is produced from ui/dist during the build.
+src/binex/ui/static
+
+# Local runtime data and scratch.
+.binex
+**/.binex
+datasets
+site
+*.log
