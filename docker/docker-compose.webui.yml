@@ -1,0 +1,42 @@
+# Binex CLI + Web UI (issue #33).
+#   docker compose -f docker/docker-compose.webui.yml up --build
+# Then open http://localhost:8420
+#
+# Data (runs, artifacts, workspaces) persists in the named volume `binex-data`.
+# Pass API keys through the environment (or a .env file next to this compose):
+#   OPENAI_API_KEY=... docker compose -f docker/docker-compose.webui.yml up
+
+services:
+  binex:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.webui
+    ports:
+      - "8420:8420"
+    volumes:
+      - binex-data:/data
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      # Fully local: talk to the Ollama sidecar below (uncomment the profile).
+      # - OLLAMA_API_BASE=http://ollama:11434
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8420/api/v1/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # Optional fully-local model backend. Enable with:
+  #   docker compose -f docker/docker-compose.webui.yml --profile local up --build
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["local"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+volumes:
+  binex-data:
+  ollama-data:

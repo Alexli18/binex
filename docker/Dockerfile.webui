@@ -1,0 +1,51 @@
+# Binex — CLI + Web UI in a single container (issue #33).
+#
+# This is separate from docker/Dockerfile, which builds the A2A agent servers.
+# Build from the repo root:
+#   docker build -f docker/Dockerfile.webui -t binex-webui .
+# Run:
+#   docker run -p 8420:8420 -v binex-data:/data binex-webui
+# Or use docker/docker-compose.webui.yml.
+
+# ---------------------------------------------------------------------------
+# Stage 1 — build the React frontend the Web UI serves.
+# ---------------------------------------------------------------------------
+FROM node:22-slim AS frontend
+WORKDIR /ui
+# Install deps first so the layer caches until the lockfile changes.
+COPY ui/package.json ui/package-lock.json ./
+RUN npm ci
+COPY ui/ ./
+RUN npm run build
+
+# ---------------------------------------------------------------------------
+# Stage 2 — install binex (with the built frontend) and serve the Web UI.
+# ---------------------------------------------------------------------------
+FROM python:3.11-slim AS runtime
+
+# No apt packages needed for the Web UI. The git-backed features (bisect,
+# freeze, run provenance) degrade gracefully to a no-op when git is absent
+# (git_info.capture_git_meta returns (None, False)), and a container run has no
+# repo to capture anyway. To use those features against a mounted repo, add:
+#   RUN apt-get update && apt-get install -y --no-install-recommends git \
+#       && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+# The server serves from src/binex/ui/static; drop the built frontend there so
+# it ships inside the installed wheel.
+COPY --from=frontend /ui/dist/ ./src/binex/ui/static/
+
+RUN pip install --no-cache-dir .
+
+# Persist the local store (.binex) on the mounted volume.
+ENV BINEX_STORE_PATH=/data/.binex
+VOLUME ["/data"]
+
+EXPOSE 8420
+
+# Bind to all interfaces so the port is reachable from the host; no browser in a
+# container. Override for CLI use, e.g.:  docker run --rm binex-webui binex run wf.yaml
+CMD ["binex", "ui", "--host", "0.0.0.0", "--port", "8420", "--no-browser"]
