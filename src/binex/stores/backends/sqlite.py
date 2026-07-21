@@ -60,7 +60,9 @@ class SqliteExecutionStore:
                 forked_at_step TEXT,
                 total_cost REAL DEFAULT 0.0,
                 workflow_path TEXT,
-                resumed_from TEXT
+                resumed_from TEXT,
+                git_sha TEXT,
+                git_dirty INTEGER DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS execution_records (
                 id TEXT PRIMARY KEY,
@@ -164,6 +166,13 @@ class SqliteExecutionStore:
             await self._db.commit()
         except Exception as exc:
             logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add git provenance columns to existing runs table (#72)
+        for _col, _decl in (("git_sha", "TEXT"), ("git_dirty", "INTEGER DEFAULT 0")):
+            try:
+                await self._db.execute(f"ALTER TABLE runs ADD COLUMN {_col} {_decl}")
+                await self._db.commit()
+            except Exception as exc:
+                logger.debug("Migration already applied or failed: %s", exc)
         # Migration: add trace_events column to existing execution_records table
         try:
             await self._db.execute(
@@ -233,8 +242,8 @@ class SqliteExecutionStore:
             """INSERT INTO runs (run_id, workflow_name, status, started_at,
                completed_at, total_nodes, completed_nodes, failed_nodes,
                skipped_nodes, forked_from, forked_at_step, total_cost,
-               workflow_path, workflow_hash, resumed_from)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               workflow_path, workflow_hash, resumed_from, git_sha, git_dirty)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 run_summary.run_id,
                 run_summary.workflow_name,
@@ -251,6 +260,8 @@ class SqliteExecutionStore:
                 run_summary.workflow_path,
                 run_summary.workflow_hash,
                 run_summary.resumed_from,
+                run_summary.git_sha,
+                int(run_summary.git_dirty),
             ),
         )
         await db.commit()
@@ -272,7 +283,8 @@ class SqliteExecutionStore:
             """UPDATE runs SET workflow_name=?, status=?, started_at=?,
                completed_at=?, total_nodes=?, completed_nodes=?, failed_nodes=?,
                skipped_nodes=?, forked_from=?, forked_at_step=?, total_cost=?,
-               workflow_path=?, workflow_hash=?, resumed_from=?
+               workflow_path=?, workflow_hash=?, resumed_from=?,
+               git_sha=?, git_dirty=?
                WHERE run_id=?""",
             (
                 run_summary.workflow_name,
@@ -289,6 +301,8 @@ class SqliteExecutionStore:
                 run_summary.workflow_path,
                 run_summary.workflow_hash,
                 run_summary.resumed_from,
+                run_summary.git_sha,
+                int(run_summary.git_dirty),
                 run_summary.run_id,
             ),
         )
@@ -298,7 +312,7 @@ class SqliteExecutionStore:
         "SELECT run_id, workflow_name, status, started_at, completed_at,"
         " total_nodes, completed_nodes, failed_nodes, skipped_nodes,"
         " forked_from, forked_at_step, total_cost, workflow_path,"
-        " workflow_hash, resumed_from FROM runs"
+        " workflow_hash, resumed_from, git_sha, git_dirty FROM runs"
     )
 
     async def list_runs(
@@ -390,6 +404,8 @@ class SqliteExecutionStore:
             workflow_path=row[12] if row[12] is not None else None,
             workflow_hash=str(row[13]) if row[13] is not None else None,
             resumed_from=row[14] if len(row) > 14 and row[14] is not None else None,
+            git_sha=row[15] if len(row) > 15 and row[15] is not None else None,
+            git_dirty=bool(row[16]) if len(row) > 16 and row[16] is not None else False,
         )
 
     async def record_cost(self, cost_record: CostRecord) -> None:

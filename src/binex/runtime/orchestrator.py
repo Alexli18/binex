@@ -127,6 +127,9 @@ class Orchestrator:
             summary.workflow_hash = workflow_hash
             await self.execution_store.update_run(summary)
         else:
+            from binex.git_info import capture_git_meta
+
+            git_sha, git_dirty = capture_git_meta(spec.source_path)
             summary = RunSummary(
                 run_id=run_id,
                 workflow_name=spec.name,
@@ -134,6 +137,8 @@ class Orchestrator:
                 workflow_hash=workflow_hash,
                 status="running",
                 total_nodes=len(spec.nodes),
+                git_sha=git_sha,
+                git_dirty=git_dirty,
             )
             await self.execution_store.create_run(summary)
 

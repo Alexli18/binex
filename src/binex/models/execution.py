@@ -51,6 +51,8 @@ class RunSummary(BaseModel):
     resumed_from: str | None = None
     workflow_hash: str | None = None
     total_cost: float = 0.0
+    git_sha: str | None = None      # commit the workflow ran at (for history bisect, #72)
+    git_dirty: bool = False         # working tree had uncommitted changes at run time
 
 
 __all__ = ["ExecutionRecord", "RunSummary"]
