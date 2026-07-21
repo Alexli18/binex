@@ -82,6 +82,7 @@ nav:
     - Adapters: architecture/adapters.md
     - Telemetry: architecture/telemetry.md
   - Features:
+    - Observer Mode: features/observer-mode.md
     - Binary Artifacts: features/binary-artifacts.md
     - Workspace: features/workspace.md
     - Dynamic Fan-out (foreach): features/foreach.md

@@ -25,6 +25,7 @@ from binex.cli.gateway_cmd import gateway
 from binex.cli.hello import hello_cmd
 from binex.cli.init_cmd import init_cmd
 from binex.cli.list_cmd import list_cmd
+from binex.cli.observe_demo import observe_demo_cmd
 from binex.cli.plugins_cmd import plugins_group
 from binex.cli.replay import replay_cmd
 from binex.cli.resume import resume_cmd
@@ -85,6 +86,7 @@ cli.add_command(explore_cmd, "explore")
 cli.add_command(cost_group, "cost")
 cli.add_command(clean_group, "clean")
 cli.add_command(diagnose_cmd, "diagnose")
+cli.add_command(observe_demo_cmd, "observe-demo")
 cli.add_command(bisect_group, "bisect")
 cli.add_command(gateway, "gateway")
 cli.add_command(plugins_group, "plugins")
