@@ -88,7 +88,7 @@ export default function Dashboard() {
               <DollarSign className="w-3.5 h-3.5 mr-1.5" />
               Costs
             </Button>
-            <Button onClick={() => setShowNewRun(true)} size="sm" className="bg-amber-500 hover:bg-amber-400 text-black border-0">
+            <Button data-tour="new-run" onClick={() => setShowNewRun(true)} size="sm" className="bg-amber-500 hover:bg-amber-400 text-black border-0">
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               New Run
             </Button>

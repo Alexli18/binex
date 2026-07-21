@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { HelpCircle, X } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { HelpCircle, X, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { startTour } from '@/lib/tour';
 
 const HELP_CONTENT: Record<string, { title: string; sections: { heading: string; body: string }[] }> = {
   '/': {
@@ -73,7 +74,16 @@ function getHelpForPath(pathname: string) {
 export function HelpPanel() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const help = getHelpForPath(location.pathname);
+
+  // Re-launch the guided tour on demand. Its anchors live on the Dashboard, so
+  // route there first, then start once the page has painted.
+  const handleTakeTour = () => {
+    setOpen(false);
+    navigate('/');
+    window.setTimeout(() => startTour(), 450);
+  };
 
   // Close panel on navigation
   useEffect(() => {
@@ -130,6 +140,15 @@ export function HelpPanel() {
                   </p>
                 </div>
               ))}
+            </div>
+            <div className="p-4 border-t border-[#252528]">
+              <button
+                onClick={handleTakeTour}
+                className="flex items-center gap-2 w-full justify-center py-2 rounded text-xs font-medium text-[#80808a] border border-[#252528] hover:text-[#f0f0f0] hover:border-[#333338] transition-colors"
+              >
+                <Compass size={14} />
+                Take the guided tour
+              </button>
             </div>
           </div>
         </>

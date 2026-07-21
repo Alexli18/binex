@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import { HelpPanel } from './components/common/HelpPanel';
 import { CommandPalette } from './components/common/CommandPalette';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useFirstRunTour } from './hooks/useFirstRunTour';
 import Dashboard from './pages/Dashboard';
 import RunDetail from './pages/RunDetail';
 import RunLive from './pages/RunLive';
@@ -36,6 +37,7 @@ export default function App() {
   ], [togglePalette]);
 
   useKeyboardShortcuts(shortcuts);
+  useFirstRunTour();
 
   return (
     <div className="flex h-screen" style={{ background: "#0b0b0c", color: "#f0f0f0" }}>
