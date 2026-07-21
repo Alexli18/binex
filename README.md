@@ -82,6 +82,26 @@ That's it. Browser opens. You're building AI workflows.
 - **Full debuggability** — every input, output, prompt, and cost is visible
 - **Any model** — OpenAI, Anthropic, Google, Ollama, OpenRouter, DeepSeek, and 40+ more via LiteLLM
 
+### How it compares
+
+LangGraph, CrewAI, and AutoGen are frameworks for **building** agents. Binex is a
+**debuggable runtime** — it competes on everything *after* "run": trace, cost,
+diff, bisect, replay, and regression gates, all local.
+
+| Capability | Binex | LangGraph | CrewAI | AutoGen |
+|---|:---:|:---:|:---:|:---:|
+| Built-in trace / replay / diff / bisect | ✅ | ⚠️ hosted (LangSmith) | ❌ | ❌ |
+| Per-node / per-call cost tracking | ✅ | ⚠️ | ⚠️ | ⚠️ |
+| Regression safety net (eval + golden-run diff) | ✅ | ❌ | ❌ | ❌ |
+| Visual editor **and** CLI | ✅ | ⚠️ Studio | ❌ | ⚠️ Studio |
+| YAML workflows | ✅ | ❌ | ⚠️ | ❌ |
+| Debug an existing run **without migrating** | ✅ observer | ❌ | ❌ | ❌ |
+| Local-first, no cloud | ✅ | ✅ | ✅ | ✅ |
+
+They also compose — point Binex's `observe()` at an existing CrewAI/LangGraph
+run to get its debugging without migrating. Full breakdown, including where each
+tool shines, in [docs/comparison.md](docs/comparison.md).
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---

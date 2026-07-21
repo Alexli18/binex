@@ -42,6 +42,9 @@ nav:
   - Home: index.md
   - Demo: demo.md
   - Quickstart: quickstart.md
+  - Comparison: comparison.md
+  - Guides:
+    - Debugging & Observability: guides/debugging.md
   - Concepts:
     - Agents: concepts/agents.md
     - Workflows: concepts/workflows.md

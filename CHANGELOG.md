@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Documentation
+
+- **Framework comparison** — a `docs/comparison.md` (and a short table in the README) covering Binex vs. LangGraph / CrewAI / AutoGen, honest about where each tool's weight sits: the others build agents, Binex debugs them. (#28)
+- **Debugging & Observability guide** — a single `docs/guides/debugging.md` that walks the whole toolkit end-to-end (debug → trace → diagnose → diff/semantic → bisect → eval → cost → replay → observer), with a "which tool, when" table, so new users see the full power available. (#30)
+
 ### Security
 
 - **Scaffolded agent binds to loopback (#61)** — `binex scaffold agent` generated a `server.py` that ran `uvicorn.run(app, host="0.0.0.0", ...)`, exposing the new agent to the whole local network with no auth. The generated server now defaults to `127.0.0.1` and takes a `--host` flag (mirroring `binex ui`); exposing it is an explicit `--host 0.0.0.0` choice.
