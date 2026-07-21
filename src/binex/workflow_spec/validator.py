@@ -31,8 +31,24 @@ def validate_workflow(spec: WorkflowSpec) -> list[str]:
     _check_schedule_cron(spec, errors)
     _check_tool_uris(spec, errors)
     _check_cao_nodes(spec, errors)
+    _check_assertions(spec, errors)
 
     return errors
+
+
+def _check_assertions(spec: WorkflowSpec, errors: list[str]) -> None:
+    """Assertion regexes must compile."""
+    for node_id, node in spec.nodes.items():
+        for a in node.assertions:
+            if a.matches is None:
+                continue
+            try:
+                re.compile(a.matches)
+            except re.error as exc:
+                errors.append(
+                    f"Node '{node_id}': assertion has invalid regex "
+                    f"/{a.matches}/ ({exc})"
+                )
 
 
 def _check_depends_on_refs(

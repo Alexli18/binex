@@ -467,6 +467,16 @@ class Orchestrator:
                 node_max, max_retries, retry_policy, node_artifacts,
             )
 
+        # Post-execution assertions (issue #60): a declared contract that blocks
+        # the node — and its dependents — when the output/metrics violate it.
+        if succeeded and node_spec.assertions:
+            assert_error = await self._check_node_assertions(
+                run_id, node_id, node_spec, output_artifacts, start_ms,
+            )
+            if assert_error is not None:
+                succeeded = False
+                error_msg = assert_error
+
         if succeeded and cache_key is not None:
             await self._store_cache(cache_key, run_id, node_id, output_artifacts)
 
@@ -514,6 +524,36 @@ class Orchestrator:
             requested_model=requested_model,
             actual_model=actual_model,
         )
+
+    async def _check_node_assertions(
+        self,
+        run_id: str,
+        node_id: str,
+        node_spec: NodeSpec,
+        output_artifacts: list[Artifact],
+        start_ms: int,
+    ) -> str | None:
+        """Evaluate a node's declared assertions. Returns an error message if any
+        fail (so the caller can fail the node), or None when all pass.
+        """
+        from binex.eval.assertions import evaluate_assertions, summarize_failures
+        from binex.eval.judge import make_judge
+
+        content = output_artifacts[0].content if output_artifacts else ""
+        latency_ms = now_ms() - start_ms
+        node_cost = await self.execution_store.get_node_cost(run_id, node_id)
+        judge = make_judge() if any(a.judge for a in node_spec.assertions) else None
+
+        outcomes = await evaluate_assertions(
+            node_spec.assertions,
+            content=content,
+            cost=node_cost,
+            latency_ms=latency_ms,
+            judge=judge,
+        )
+        if all(o.passed for o in outcomes):
+            return None
+        return "assertion failed: " + summarize_failures(outcomes)
 
     # ------------------------------------------------------------------
     # Node cache
