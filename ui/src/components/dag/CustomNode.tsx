@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from 'reactflow';
-import { Bot, Monitor, Globe, User, Cog } from 'lucide-react';
+import { Bot, Monitor, Globe, User, Cog, Repeat } from 'lucide-react';
 import type { WorkflowNode } from '../../lib/yaml-to-graph';
 import { getNodeTypeColors, getStatusColors } from '../../lib/design-tokens';
 
@@ -32,6 +32,14 @@ export function CustomNode({ data }: NodeProps<WorkflowNode>) {
       {data.patternGroup && (
         <div className={`text-[9px] mt-0.5 truncate ${typeTokens.text}`}>
           {data.patternType ?? 'pattern'}
+        </div>
+      )}
+      {data.foreach && (
+        <div
+          className="mt-1 inline-flex items-center gap-1 rounded bg-amber-400/10 px-1.5 py-0.5 text-[9px] text-amber-400"
+          title={`Fans out at runtime, one worker per item from '${data.foreach}'`}
+        >
+          <Repeat size={9} />×N runtime
         </div>
       )}
       <Handle type="source" position={Position.Bottom} className="!bg-[#4a4a52] !border-[#333338] !rounded-none" />
