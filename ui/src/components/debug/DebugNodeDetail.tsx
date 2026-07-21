@@ -16,9 +16,19 @@ const statusColor = (status: string): string => {
 export interface DebugNodeDetailProps {
   node: DebugNode | null;
   onReplay: (nodeId: string) => void;
+  // Observed runs (#73): the node is a captured LLM call; Replay does a
+  // stateless single-call replay (#74) instead of a from-step node replay.
+  observed?: boolean;
+  onReplayCall?: (callId: string) => void;
 }
 
-export function DebugNodeDetail({ node, onReplay }: DebugNodeDetailProps) {
+export function DebugNodeDetail({
+  node,
+  onReplay,
+  observed = false,
+  onReplayCall,
+}: DebugNodeDetailProps) {
+  const isCallReplay = observed && !!onReplayCall;
   if (!node) {
     return (
       <div className="flex-1 border border-[#252528] rounded-lg bg-[#1a1a1d]/50 overflow-y-auto">
@@ -36,12 +46,14 @@ export function DebugNodeDetail({ node, onReplay }: DebugNodeDetailProps) {
           <h3 className="font-bold font-mono text-sm">{node.node_id}</h3>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => onReplay(node.node_id)}
+              onClick={() =>
+                isCallReplay ? onReplayCall!(node.node_id) : onReplay(node.node_id)
+              }
               className="flex items-center gap-1 px-2 py-0.5 rounded text-xs border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-400/20 transition-colors"
-              title="Replay from this node"
+              title={isCallReplay ? 'Replay this captured call' : 'Replay from this node'}
             >
               <RotateCcw size={12} />
-              Replay
+              {isCallReplay ? 'Replay call' : 'Replay'}
             </button>
             <div
               className={cn('px-2 py-0.5 rounded text-xs border', statusColor(node.status))}

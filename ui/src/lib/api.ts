@@ -71,4 +71,28 @@ export function sendCaoTerminalInput(terminalId: string, message: string): Promi
   return api.post(`/cao/terminals/${encodeURIComponent(terminalId)}/input`, { message });
 }
 
+// Stateless single-call replay of an observed run (#74)
+export interface ReplayCallResult {
+  run_id: string;
+  call_id: string;
+  original_model: string;
+  replay_model: string;
+  original_response: string;
+  replay_response: string;
+  changed: boolean;
+  cost: number | null;
+  tool_requests: { name: string; arguments: string }[];
+}
+
+export function replayCall(
+  runId: string,
+  callId: string,
+  opts?: { model?: string; prompt?: string; mock_response?: string },
+): Promise<ReplayCallResult> {
+  return api.post<ReplayCallResult>(
+    `/runs/${encodeURIComponent(runId)}/calls/${encodeURIComponent(callId)}/replay`,
+    opts ?? {},
+  );
+}
+
 export { ApiError };

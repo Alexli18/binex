@@ -33,6 +33,7 @@ export interface DebugData {
   workflow_name: string | null;
   workflow_path: string | null;
   nodes: DebugNode[];
+  observed?: boolean; // captured via observe() rather than orchestrated (#73)
 }
 
 // Trace types

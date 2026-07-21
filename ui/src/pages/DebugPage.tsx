@@ -4,6 +4,7 @@ import { useDebug } from '../hooks/useAnalysis';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { HelpTooltip } from '@/components/common/HelpTooltip';
 import { ReplayModal } from '../components/ReplayModal';
+import { CallReplayModal } from '../components/CallReplayModal';
 import {
   DebugNodeList,
   DebugNodeListSkeleton,
@@ -17,6 +18,7 @@ export default function DebugPage() {
   const [errorsOnly, setErrorsOnly] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [replayNode, setReplayNode] = useState<string | null>(null);
+  const [replayCallNode, setReplayCallNode] = useState<string | null>(null);
 
   const { data, isLoading, error } = useDebug(runId, errorsOnly);
 
@@ -103,6 +105,8 @@ export default function DebugPage() {
         <DebugNodeDetail
           node={selectedNode}
           onReplay={setReplayNode}
+          observed={data?.observed}
+          onReplayCall={setReplayCallNode}
         />
       </div>
 
@@ -117,6 +121,18 @@ export default function DebugPage() {
             workflowPath={data.workflow_path || data.workflow_name}
             artifacts={nodeData?.artifacts}
             onClose={() => setReplayNode(null)}
+          />
+        );
+      })()}
+
+      {replayCallNode && data && (() => {
+        const nodeData = data.nodes.find((n) => n.node_id === replayCallNode);
+        return (
+          <CallReplayModal
+            runId={runId!}
+            callId={replayCallNode}
+            originalModel={nodeData?.model || 'gpt-4o'}
+            onClose={() => setReplayCallNode(null)}
           />
         );
       })()}
