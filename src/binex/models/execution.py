@@ -53,6 +53,7 @@ class RunSummary(BaseModel):
     total_cost: float = 0.0
     git_sha: str | None = None      # commit the workflow ran at (for history bisect, #72)
     git_dirty: bool = False         # working tree had uncommitted changes at run time
+    observed: bool = False          # captured via observe() rather than orchestrated (#73)
 
 
 __all__ = ["ExecutionRecord", "RunSummary"]

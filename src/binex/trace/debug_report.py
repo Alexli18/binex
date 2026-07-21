@@ -39,6 +39,7 @@ class DebugReport:
     nodes: list[NodeReport] = field(default_factory=list)
     git_sha: str | None = None
     git_dirty: bool = False
+    observed: bool = False
 
 
 def _build_node_reports(
@@ -131,6 +132,7 @@ async def build_debug_report(
         nodes=nodes,
         git_sha=getattr(run, "git_sha", None),
         git_dirty=getattr(run, "git_dirty", False),
+        observed=getattr(run, "observed", False),
     )
 
 
@@ -152,7 +154,8 @@ def format_debug_report(
 
     # Header
     lines.append(f"=== Debug: {report.run_id} ===")
-    lines.append(f"Workflow: {report.workflow_name}")
+    obs = " [observed]" if report.observed else ""
+    lines.append(f"Workflow: {report.workflow_name}{obs}")
     lines.append(
         f"Status:   {report.status} ({report.completed_nodes}/{report.total_nodes} completed)"
     )
@@ -226,6 +229,7 @@ def format_debug_report_json(report: DebugReport) -> dict[str, Any]:
         "duration_ms": report.duration_ms,
         "git_sha": report.git_sha,
         "git_dirty": report.git_dirty,
+        "observed": report.observed,
         "nodes": [
             {
                 "node_id": n.node_id,
