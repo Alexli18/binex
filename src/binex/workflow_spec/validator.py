@@ -33,8 +33,21 @@ def validate_workflow(spec: WorkflowSpec) -> list[str]:
     _check_cao_nodes(spec, errors)
     _check_assertions(spec, errors)
     _check_foreach(spec, node_ids, errors)
+    _check_workspace(spec, errors)
 
     return errors
+
+
+def _check_workspace(spec: WorkflowSpec, errors: list[str]) -> None:
+    """A node can only request workspace access if the workflow declares one."""
+    if spec.workspace is not None:
+        return
+    for node_id, node in spec.nodes.items():
+        if node.workspace is not None:
+            errors.append(
+                f"Node '{node_id}': workspace access '{node.workspace}' requires "
+                "the workflow to declare a top-level 'workspace'"
+            )
 
 
 def _check_foreach(

@@ -20,6 +20,8 @@ Examples:
   binex clean cache                    Clear all cached node results
   binex clean cache --older-than 7     Clear cache entries older than 7 days
   binex clean cache --dry-run          Show how much cache is stored
+  binex clean workspaces               Delete all run workspaces
+  binex clean workspaces --older-than 7 --dry-run
 """)
 def clean_group() -> None:
     """Reclaim local disk space."""
@@ -49,3 +51,37 @@ async def _clean_cache(older_than: float | None, dry_run: bool) -> None:
         click.echo(f"Cleared {deleted} cache {'entry' if deleted == 1 else 'entries'}{scope}.")
     finally:
         await execution_store.close()
+
+
+@clean_group.command("workspaces")
+@click.option("--older-than", type=float, default=None,
+              help="Only delete workspaces older than this many days")
+@click.option("--dry-run", is_flag=True, help="Report without deleting")
+def clean_workspaces_cmd(older_than: float | None, dry_run: bool) -> None:
+    """Delete run workspaces (heavy git-backed dirs under .binex/workspaces)."""
+    import shutil
+    import time
+    from pathlib import Path
+
+    from binex.runtime.workspace import DEFAULT_BASE_DIR
+
+    base = Path(DEFAULT_BASE_DIR)
+    if not base.is_dir():
+        click.echo("No workspaces to clean.")
+        return
+
+    cutoff = None if older_than is None else time.time() - older_than * 86400
+    targets = [
+        d for d in base.iterdir()
+        if d.is_dir() and (cutoff is None or d.stat().st_mtime < cutoff)
+    ]
+    scope = f" older than {older_than} days" if older_than is not None else ""
+    if dry_run:
+        click.echo(f"{len(targets)} workspace(s){scope} would be deleted.")
+        return
+    for d in targets:
+        shutil.rmtree(d, ignore_errors=True)
+    click.echo(
+        f"Deleted {len(targets)} workspace"
+        f"{'' if len(targets) == 1 else 's'}{scope}."
+    )
