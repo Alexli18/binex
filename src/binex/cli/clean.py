@@ -22,6 +22,7 @@ Examples:
   binex clean cache --dry-run          Show how much cache is stored
   binex clean workspaces               Delete all run workspaces
   binex clean workspaces --older-than 7 --dry-run
+  binex clean blobs                    GC binary-artifact blobs not referenced by any run
 """)
 def clean_group() -> None:
     """Reclaim local disk space."""
@@ -84,4 +85,47 @@ def clean_workspaces_cmd(older_than: float | None, dry_run: bool) -> None:
     click.echo(
         f"Deleted {len(targets)} workspace"
         f"{'' if len(targets) == 1 else 's'}{scope}."
+    )
+
+
+@clean_group.command("blobs")
+@click.option("--dry-run", is_flag=True, help="Report without deleting")
+def clean_blobs_cmd(dry_run: bool) -> None:
+    """Garbage-collect binary-artifact blobs not referenced by any run (#76)."""
+    asyncio.run(_clean_blobs(dry_run))
+
+
+async def _clean_blobs(dry_run: bool) -> None:
+    from binex.artifacts.binary import blob_dir, is_binary_artifact
+
+    directory = blob_dir()
+    if not directory.is_dir():
+        click.echo("No blobs to clean.")
+        return
+
+    exec_store, art_store = _get_stores()
+    referenced: set[str] = set()
+    try:
+        for run in await exec_store.list_runs():
+            for art in await art_store.list_by_run(run.run_id):
+                if is_binary_artifact(art):
+                    sha = art.content.get("sha256")
+                    if sha:
+                        referenced.add(sha)
+    finally:
+        await exec_store.close()
+
+    orphans = [p for p in directory.iterdir() if p.is_file() and p.name not in referenced]
+    freed = sum(p.stat().st_size for p in orphans)
+    if dry_run:
+        click.echo(
+            f"{len(orphans)} orphan blob(s) ({freed} bytes) would be deleted "
+            f"({len(referenced)} still referenced)."
+        )
+        return
+    for p in orphans:
+        p.unlink(missing_ok=True)
+    click.echo(
+        f"Deleted {len(orphans)} orphan blob"
+        f"{'' if len(orphans) == 1 else 's'} ({freed} bytes freed)."
     )

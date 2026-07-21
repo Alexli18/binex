@@ -24,6 +24,12 @@ MAX_RETRIES = 3
 RETRY_BACKOFF = 2  # seconds, doubles each attempt
 
 
+def _is_binary(artifact: Any) -> bool:
+    """True if an artifact carries a binary envelope (#76)."""
+    c = getattr(artifact, "content", None)
+    return isinstance(c, dict) and c.get("kind") == "binary"
+
+
 def _fallback_reason(exc: Exception) -> str | None:
     """Classify an exception as a fallback trigger, or None if not retriable.
 
@@ -367,12 +373,12 @@ class LLMAdapter:
         stream: bool = False,
         stream_callback: Callable[[str], None] | None = None,
     ) -> ExecutionResult:
-        prompt = self._build_prompt(task, input_artifacts)
+        user_content = self._build_user_content(task, input_artifacts)
 
         messages: list[dict[str, Any]] = []
         if task.system_prompt:
             messages.append({"role": "system", "content": task.system_prompt})
-        messages.append({"role": "user", "content": prompt})
+        messages.append({"role": "user", "content": user_content})
 
         kwargs = self._build_completion_kwargs(messages)
 
@@ -566,7 +572,14 @@ class LLMAdapter:
                     continue
                 parts.append(f"{key}: {value}")
         for art in input_artifacts:
-            if art.type == "feedback":
+            if _is_binary(art):
+                # Binaries are routed by _build_user_content; a descriptor stands
+                # in here so text-only prompt building stays correct.
+                from binex.artifacts.binary import binary_descriptor
+                parts.append(
+                    "\n" + binary_descriptor(art.content, art.lineage.produced_by)
+                )
+            elif art.type == "feedback":
                 parts.append(
                     f"\nYour previous output was rejected. "
                     f"Please revise based on this feedback:\n{art.content}"
@@ -574,6 +587,55 @@ class LLMAdapter:
             else:
                 parts.append(f"\nInput ({art.type}):\n{art.content}")
         return "\n".join(parts) if parts else "No input provided."
+
+    def _build_user_content(
+        self, task: TaskNode, input_artifacts: list[Artifact],
+    ) -> str | list[dict[str, Any]]:
+        """Build the user message content, routing binaries by mime type (#76).
+
+        Images go into the message as image parts when the model supports vision
+        (LiteLLM multimodal); otherwise (and for audio/video) a textual descriptor
+        goes into the prompt so the payload still travels the DAG intact.
+        """
+        text = self._build_prompt(task, input_artifacts)
+        image_parts: list[dict[str, Any]] = []
+
+        has_image = any(
+            _is_binary(a) and str(a.content.get("mime", "")).startswith("image/")
+            for a in input_artifacts
+        )
+        vision = self._model_supports_vision()
+        if has_image and not vision:
+            logger.warning(
+                "node '%s' receives an image but model '%s' lacks vision — "
+                "passing it as a textual descriptor instead.",
+                task.node_id, self._model,
+            )
+
+        if vision:
+            from binex.artifacts.binary import to_data_uri
+            for art in input_artifacts:
+                env = art.content if _is_binary(art) else None
+                if env and str(env.get("mime", "")).startswith("image/"):
+                    try:
+                        image_parts.append({
+                            "type": "image_url",
+                            "image_url": {"url": to_data_uri(env)},
+                        })
+                    except Exception as exc:  # noqa: BLE001 — fall back to descriptor
+                        logger.warning("could not attach image artifact: %s", exc)
+
+        if not image_parts:
+            return text
+        return [{"type": "text", "text": text}, *image_parts]
+
+    def _model_supports_vision(self) -> bool:
+        try:
+            import litellm
+
+            return bool(litellm.supports_vision(self._model))
+        except Exception:
+            return False
 
     async def cancel(self, task_id: str) -> None:
         pass
