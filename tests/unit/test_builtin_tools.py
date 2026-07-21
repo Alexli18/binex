@@ -213,6 +213,34 @@ class TestShellCommand:
         result = shell.callable(command="ls /nonexistent_dir_12345")
         assert "Exit code" in result or "Error" in result or "No such file" in result
 
+    def test_dangerous_command_blocked_by_default(self):
+        shell = get_builtin("shell_command")
+        result = shell.callable(command="rm -rf /tmp/whatever")
+        assert "not permitted by the shell allowlist" in result
+        assert "rm" in result
+
+    def test_absolute_path_cannot_bypass_allowlist(self):
+        shell = get_builtin("shell_command")
+        result = shell.callable(command="/usr/bin/curl http://example.com")
+        assert "not permitted" in result
+
+    def test_empty_command(self):
+        shell = get_builtin("shell_command")
+        assert shell.callable(command="") == "Error: empty command"
+
+    def test_allowlist_extension_via_env(self, monkeypatch):
+        monkeypatch.setenv("BINEX_SHELL_ALLOW", "python3")
+        shell = get_builtin("shell_command")
+        result = shell.callable(command="python3 -c \"print(6*7)\"")
+        assert "42" in result
+
+    def test_allow_all_disables_allowlist(self, monkeypatch):
+        monkeypatch.setenv("BINEX_SHELL_ALLOW_ALL", "1")
+        shell = get_builtin("shell_command")
+        # `true` is not in the default allowlist but runs with ALLOW_ALL.
+        result = shell.callable(command="true")
+        assert "not permitted" not in result
+
 
 class TestJsonParse:
     def test_parse_and_extract(self):
