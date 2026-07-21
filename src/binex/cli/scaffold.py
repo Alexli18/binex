@@ -147,7 +147,16 @@ async def health():
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run the {name} agent server")
+    parser.add_argument(
+        "--host", default="127.0.0.1",
+        help="Host to bind (default: 127.0.0.1; use 0.0.0.0 to expose on the network)",
+    )
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind")
+    args = parser.parse_args()
+    uvicorn.run(app, host=args.host, port=args.port)
 '''
 
 
