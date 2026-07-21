@@ -8,6 +8,7 @@ export interface WorkflowNode {
   status?: string;
   patternGroup?: string;
   patternType?: string;
+  foreach?: string; // mapper node — this node fans out at runtime (#77)
 }
 
 export interface WorkflowEdge {
@@ -23,7 +24,10 @@ export interface GraphLayout {
 
 interface ParsedWorkflow {
   name?: string;
-  nodes?: Record<string, { agent: string; depends_on?: string[]; config?: Record<string, unknown> }>;
+  nodes?: Record<
+    string,
+    { agent: string; depends_on?: string[]; config?: Record<string, unknown>; foreach?: string }
+  >;
 }
 
 const elk = new ELK();
@@ -43,6 +47,7 @@ export function parseWorkflowYaml(yamlContent: string): { nodes: WorkflowNode[];
       type,
       patternGroup: config?._pattern_group as string | undefined,
       patternType: config?._pattern_type as string | undefined,
+      foreach: spec.foreach,
     };
   });
 
