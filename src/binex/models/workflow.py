@@ -6,6 +6,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from binex.models.assertion import Assertion
 from binex.models.cost import BudgetConfig, NodeBudget, NodeCostHint
 from binex.models.task import RetryPolicy
 
@@ -115,6 +116,7 @@ class NodeSpec(BaseModel):
     fallbacks: list[str] = Field(default_factory=list)
     routing: dict[str, Any] | None = None
     cao: CaoConfig | None = None
+    assertions: list[Assertion] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _normalize_budget(self) -> NodeSpec:
@@ -180,6 +182,7 @@ class WorkflowSpec(BaseModel):
 
 
 __all__ = [
+    "Assertion",
     "BackEdge",
     "CaoConfig",
     "DefaultsSpec",
