@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+from pathlib import Path
 from typing import Any
 
 import click
@@ -30,7 +31,22 @@ def _get_stores() -> Any:
     return get_stores()
 
 
-@click.command("bisect")
+class BisectGroup(click.Group):
+    """`binex bisect <good> <bad>` (node-level) still works alongside subcommands.
+
+    When the first argument isn't a known subcommand (or an option), it's routed
+    to the default ``runs`` subcommand — preserving the original CLI.
+    """
+
+    def resolve_command(
+        self, ctx: click.Context, args: list[str],
+    ) -> tuple[str | None, click.Command | None, list[str]]:
+        if args and args[0] not in self.commands and not args[0].startswith("-"):
+            args = ["runs", *args]
+        return super().resolve_command(ctx, args)
+
+
+@click.command("runs")
 @click.argument("good_run_id")
 @click.argument("bad_run_id")
 @click.option(
@@ -49,7 +65,7 @@ def _get_stores() -> Any:
     "--rich/--no-rich", "rich_out",
     default=None, help="Rich output (auto-detected)",
 )
-def bisect_cmd(
+def runs_cmd(
     good_run_id: str,
     bad_run_id: str,
     threshold: float,
@@ -282,3 +298,196 @@ def _print_rich(report: Any, show_diff: bool = False) -> None:
     # Footer
     console.print()
     _render_footer_rich(console, report)
+
+
+# ---------------------------------------------------------------------------
+# History bisect (issue #72): find the commit that broke pipeline quality
+# ---------------------------------------------------------------------------
+
+@click.command("history", epilog="""\b
+Examples:
+  binex bisect history -w flow.yaml --good v1.0 --bad HEAD
+  binex bisect history -w flow.yaml --good run_abc --bad run_xyz
+  binex bisect history -w flow.yaml --good abc123 --bad HEAD \\
+      --baseline run_golden --min-similarity 0.9
+""")
+@click.option("-w", "--workflow", "workflow", required=True,
+              type=click.Path(exists=True),
+              help="Workflow file to run at each probed commit")
+@click.option("--good", "good", required=True,
+              help="Known-good commit/ref, or a run ID (resolved to its commit)")
+@click.option("--bad", "bad", required=True,
+              help="Known-bad commit/ref, or a run ID (resolved to its commit)")
+@click.option("--var", multiple=True, help="Variable substitution key=value")
+@click.option("--baseline", default=None,
+              help="Golden run ID for a diff criterion (else assertions only)")
+@click.option("--min-similarity", type=float, default=1.0, show_default=True,
+              help="Content-similarity floor when --baseline is used")
+@click.option("--max-latency-delta-ms", type=float, default=None,
+              help="Latency-growth ceiling when --baseline is used")
+@click.option("--max-cost-delta", type=float, default=None,
+              help="Cost-growth ceiling when --baseline is used")
+@click.option("--json-output", "--json", "json_out", is_flag=True,
+              help="Output as JSON")
+def history_cmd(
+    workflow: str,
+    good: str,
+    bad: str,
+    var: tuple[str, ...],
+    baseline: str | None,
+    min_similarity: float,
+    max_latency_delta_ms: float | None,
+    max_cost_delta: float | None,
+    json_out: bool,
+) -> None:
+    """Binary-search git history for the commit that broke pipeline quality.
+
+    Re-runs the workflow at each probed commit in an isolated git worktree (your
+    working tree is never touched) and judges pass/fail with eval assertions
+    (and an optional baseline diff). Prints the first bad commit.
+    """
+    from binex.bisect_history import BisectError
+    from binex.eval.runner import EvalThresholds
+
+    thresholds = EvalThresholds(
+        min_similarity=min_similarity,
+        max_latency_delta_ms=max_latency_delta_ms,
+        max_cost_delta=max_cost_delta,
+    )
+    try:
+        result = asyncio.run(_run_history(
+            workflow, good, bad, _parse_vars(var), baseline, thresholds,
+        ))
+    except BisectError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
+
+    if json_out:
+        click.echo(json.dumps({
+            "first_bad": result.first_bad,
+            "tested": result.tested,
+            "skipped": result.skipped,
+            "indeterminate": result.indeterminate,
+            "probes": [
+                {"commit": p.commit, "verdict": p.verdict, "detail": p.detail}
+                for p in result.probes
+            ],
+        }, indent=2))
+    else:
+        _print_history(result)
+
+    sys.exit(0 if result.first_bad else 1)
+
+
+def _parse_vars(var_tuples: tuple[str, ...]) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for v in var_tuples:
+        if "=" not in v:
+            raise click.BadParameter(f"Invalid var format: {v} (expected key=value)")
+        key, value = v.split("=", 1)
+        result[key] = value
+    return result
+
+
+async def _resolve_endpoint(ref: str, repo_root: str) -> str:
+    """Resolve a --good/--bad value: a run ID → its stored git_sha, else a git ref."""
+    from binex.bisect_history import resolve_ref
+
+    if ref.startswith("run_"):
+        exec_store, _ = _get_stores()
+        try:
+            run = await exec_store.get_run(ref)
+        finally:
+            await exec_store.close()
+        if run is None:
+            from binex.bisect_history import BisectError
+            raise BisectError(f"run '{ref}' not found")
+        if not getattr(run, "git_sha", None):
+            from binex.bisect_history import BisectError
+            raise BisectError(
+                f"run '{ref}' has no recorded commit (predates git provenance)"
+            )
+        return str(run.git_sha)
+    return resolve_ref(ref, repo_root)
+
+
+async def _run_history(
+    workflow: str, good: str, bad: str,
+    user_vars: dict[str, str], baseline: str | None, thresholds: Any,
+) -> Any:
+    import os
+
+    from binex.bisect_history import (
+        BisectError,
+        bisect_history,
+        is_clean_worktree,
+        list_commits_between,
+        make_git_probe,
+    )
+
+    repo_root = _repo_root_of(os.path.abspath(workflow))
+    if repo_root is None:
+        raise BisectError(f"workflow '{workflow}' is not inside a git repository")
+
+    if not is_clean_worktree(repo_root):
+        click.echo(
+            "Warning: working tree has uncommitted changes; "
+            "bisect tests committed history only.",
+            err=True,
+        )
+
+    good_sha = await _resolve_endpoint(good, repo_root)
+    bad_sha = await _resolve_endpoint(bad, repo_root)
+    workflow_rel = os.path.relpath(os.path.abspath(workflow), repo_root)
+
+    commits = list_commits_between(good_sha, bad_sha, repo_root)
+
+    probe = make_git_probe(
+        repo_root, workflow_rel,
+        user_vars=user_vars, baseline=baseline, thresholds=thresholds,
+        on_probe=lambda c, v, d: click.echo(f"  probe {c[:12]}: {v} — {d}", err=True),
+    )
+    return await bisect_history(commits, probe)
+
+
+def _repo_root_of(path: str) -> str | None:
+    """Return the git top-level directory containing ``path``, or None."""
+    import subprocess
+
+    start = path if Path(path).is_dir() else str(Path(path).parent)
+    try:
+        result = subprocess.run(
+            ["git", "-C", start, "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip() or None
+
+
+def _print_history(result: Any) -> None:
+    """Human-readable history-bisect output."""
+    click.echo(f"Tested {result.tested} commit(s), {len(result.skipped)} skipped.")
+    if result.first_bad:
+        click.echo(f"\n✗ First bad commit: {result.first_bad}")
+        for p in result.probes:
+            if p.commit == result.first_bad:
+                click.echo(f"  {p.detail}")
+                break
+        click.echo("\nTip: run 'binex bisect <good_run> <bad_run>' to locate the "
+                   "offending node within that commit.")
+    elif result.indeterminate:
+        click.echo("\n? Indeterminate — too many commits could not be evaluated "
+                   "(skipped). Narrow the range or check workflow availability.")
+    else:
+        click.echo("\n✓ No bad commit found in range — all probes passed.")
+
+
+bisect_group = BisectGroup(
+    name="bisect",
+    help="Locate a regression: across nodes (default) or across git history.",
+)
+bisect_group.add_command(runs_cmd, "runs")
+bisect_group.add_command(history_cmd, "history")
