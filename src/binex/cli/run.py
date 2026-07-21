@@ -46,10 +46,15 @@ Examples:
               help="Run only from cache; a cache miss fails the node (implies --cache)")
 @click.option("--no-fallback", "no_fallback", is_flag=True,
               help="Disable model fallback chains (for clean model benchmarks)")
+@click.option("--frozen", is_flag=True,
+              help="Fail if the workflow has drifted from its lockfile")
+@click.option("--lockfile", default="binex.lock", show_default=True,
+              help="Lockfile path used with --frozen")
 def run_cmd(
     workflow_file: str, var: tuple[str, ...], json_out: bool, verbose: bool,
     stream_out: bool | None, gateway_url: str | None,
     cache: bool, offline: bool, no_fallback: bool,
+    frozen: bool, lockfile: str,
 ) -> None:
     """Execute a workflow definition."""
     if no_fallback:
@@ -57,6 +62,9 @@ def run_cmd(
         os.environ["BINEX_NO_FALLBACK"] = "1"
     user_vars = _parse_vars(var)
     spec = load_workflow(workflow_file, user_vars=user_vars)
+
+    if frozen:
+        _check_frozen(spec, lockfile)
 
     _warn_var_mismatches(spec, user_vars)
 
@@ -343,6 +351,29 @@ def _show_skipped_nodes(spec: Any, summary: Any, records: Any) -> None:
         for node_id in spec.nodes:
             if node_id not in executed_ids:
                 click.echo(f"  [skipped] {node_id}", err=True)
+
+
+def _check_frozen(spec: Any, lockfile: str) -> None:
+    """Fail the run if the workflow has drifted from its lockfile (issue #69)."""
+    import json
+    from pathlib import Path
+
+    from binex.workflow_spec.freeze import check_drift
+
+    lock_path = Path(lockfile)
+    if not lock_path.exists():
+        click.echo(
+            f"Error: --frozen but lockfile '{lockfile}' not found. "
+            f"Run 'binex freeze {spec.source_path or 'workflow.yaml'}' first.",
+            err=True,
+        )
+        sys.exit(2)
+    drift = check_drift(spec, json.loads(lock_path.read_text()))
+    if drift:
+        click.echo(f"Error: workflow has drifted from {lockfile}:", err=True)
+        for d in drift:
+            click.echo(f"  - {d}", err=True)
+        sys.exit(2)
 
 
 def _parse_vars(var_tuples: tuple[str, ...]) -> dict[str, str]:
