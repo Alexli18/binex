@@ -55,6 +55,7 @@ nav:
     - replay: cli/replay.md
     - resume: cli/resume.md
     - diff: cli/diff.md
+    - freeze: cli/freeze.md
     - artifacts: cli/artifacts.md
     - dev: cli/dev.md
     - doctor: cli/doctor.md
