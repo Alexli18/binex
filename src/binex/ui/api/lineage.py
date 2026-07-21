@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
+from binex.artifacts.binary import is_binary_artifact
 from binex.cli import get_stores
 from binex.stores.backends.filesystem import FilesystemArtifactStore
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
@@ -35,12 +36,20 @@ async def get_lineage(run_id: str) -> JSONResponse:
         for art in artifacts:
             if art.id not in seen_ids:
                 seen_ids.add(art.id)
-                nodes.append({
+                node = {
                     "id": art.id,
                     "type": art.type,
                     "content": art.content,
                     "produced_by": art.lineage.produced_by,
-                })
+                }
+                # Flag binary artifacts so the UI can render a thumbnail (#76).
+                if is_binary_artifact(art):
+                    node["binary"] = True
+                    node["mime"] = art.content.get("mime")
+                    node["blob_url"] = (
+                        f"/api/v1/runs/{run_id}/artifacts/{art.id}/blob"
+                    )
+                nodes.append(node)
 
             # Build edges from derived_from
             if art.lineage.derived_from:
