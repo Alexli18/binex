@@ -402,6 +402,19 @@ async def replay_call_endpoint(
     })
 
 
+@router.get("/{run_id}/files-changed")
+async def get_files_changed(run_id: str) -> JSONResponse:
+    """Per-node file changes from the run's git workspace, if it has one (#75)."""
+    from binex.runtime.workspace import list_node_changes
+
+    changes = list_node_changes(run_id)
+    return JSONResponse({
+        "run_id": run_id,
+        "has_workspace": changes is not None,
+        "nodes": changes or {},
+    })
+
+
 @router.get("/{run_id}/records")
 async def get_records(run_id: str) -> JSONResponse:
     """Get execution records for a workflow run."""

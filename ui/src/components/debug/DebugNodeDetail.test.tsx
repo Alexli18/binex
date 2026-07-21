@@ -64,6 +64,24 @@ describe('DebugNodeDetail', () => {
     expect(onReplay).toHaveBeenCalledWith('test-node');
   });
 
+  it('lists files changed in the workspace when provided (#75)', () => {
+    render(
+      <DebugNodeDetail
+        node={makeNode()}
+        onReplay={vi.fn()}
+        filesChanged={['src/main.py', 'assets/logo.png']}
+      />,
+    );
+    expect(screen.getByText('Files changed (2)')).toBeInTheDocument();
+    expect(screen.getByText('src/main.py')).toBeInTheDocument();
+    expect(screen.getByText('assets/logo.png')).toBeInTheDocument();
+  });
+
+  it('shows no Files-changed section without workspace changes', () => {
+    render(<DebugNodeDetail node={makeNode()} onReplay={vi.fn()} />);
+    expect(screen.queryByText(/Files changed/)).not.toBeInTheDocument();
+  });
+
   it('shows "Replay call" and calls onReplayCall on observed runs', async () => {
     const user = userEvent.setup();
     const onReplayCall = vi.fn();

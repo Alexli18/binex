@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, XCircle, Clock, SkipForward, RotateCcw, ChevronDown, ChevronRight, Terminal } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, SkipForward, RotateCcw, ChevronDown, ChevronRight, Terminal, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DebugArtifactViewer } from './DebugArtifactViewer';
@@ -20,6 +20,8 @@ export interface DebugNodeDetailProps {
   // stateless single-call replay (#74) instead of a from-step node replay.
   observed?: boolean;
   onReplayCall?: (callId: string) => void;
+  // Files this node changed in the run's git workspace (#75), if any.
+  filesChanged?: string[];
 }
 
 export function DebugNodeDetail({
@@ -27,6 +29,7 @@ export function DebugNodeDetail({
   onReplay,
   observed = false,
   onReplayCall,
+  filesChanged,
 }: DebugNodeDetailProps) {
   const isCallReplay = observed && !!onReplayCall;
   if (!node) {
@@ -62,13 +65,19 @@ export function DebugNodeDetail({
             </div>
           </div>
         </div>
-        <NodeDetailContent node={node} />
+        <NodeDetailContent node={node} filesChanged={filesChanged} />
       </div>
     </div>
   );
 }
 
-function NodeDetailContent({ node }: { node: DebugNode }) {
+function NodeDetailContent({
+  node,
+  filesChanged,
+}: {
+  node: DebugNode;
+  filesChanged?: string[];
+}) {
   return (
     <div className="space-y-4">
       {/* Status & timing */}
@@ -150,6 +159,23 @@ function NodeDetailContent({ node }: { node: DebugNode }) {
           artifacts={node.artifacts}
           defaultExpanded={false}
         />
+      )}
+
+      {/* Files changed in the shared workspace (#75) */}
+      {filesChanged && filesChanged.length > 0 && (
+        <div className="border-t border-[#252528] pt-3">
+          <span className="text-sm text-[#4a4a52]">
+            Files changed ({filesChanged.length})
+          </span>
+          <ul className="mt-1 space-y-0.5">
+            {filesChanged.map((f) => (
+              <li key={f} className="flex items-center gap-1.5 text-xs font-mono text-[#80808a]">
+                <FileText size={11} className="shrink-0 text-amber-400" />
+                {f}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

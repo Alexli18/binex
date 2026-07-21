@@ -212,3 +212,22 @@ async def test_rwlock_readers_share() -> None:
 
     await asyncio.gather(*[reader() for _ in range(3)])
     assert peak == 3  # all three read concurrently
+
+
+def test_list_node_changes_reconstructs_from_git(tmp_path: Path) -> None:
+    from binex.runtime.workspace import list_node_changes
+
+    ws = Workspace.create("run_fc", WorkspaceConfig(), base_dir=str(tmp_path))
+    ws.write_file("src/a.py", "x")
+    ws.snapshot("coder")
+    ws.write_file("assets/logo.txt", "L")
+    ws.snapshot("designer")
+
+    changes = list_node_changes("run_fc", base_dir=str(tmp_path))
+    assert changes == {"coder": ["src/a.py"], "designer": ["assets/logo.txt"]}
+
+
+def test_list_node_changes_none_without_workspace(tmp_path: Path) -> None:
+    from binex.runtime.workspace import list_node_changes
+
+    assert list_node_changes("ghost", base_dir=str(tmp_path)) is None
