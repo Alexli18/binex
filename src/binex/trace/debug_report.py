@@ -37,6 +37,8 @@ class DebugReport:
     failed_nodes: int
     duration_ms: int
     nodes: list[NodeReport] = field(default_factory=list)
+    git_sha: str | None = None
+    git_dirty: bool = False
 
 
 def _build_node_reports(
@@ -127,6 +129,8 @@ async def build_debug_report(
         failed_nodes=run.failed_nodes,
         duration_ms=duration_ms,
         nodes=nodes,
+        git_sha=getattr(run, "git_sha", None),
+        git_dirty=getattr(run, "git_dirty", False),
     )
 
 
@@ -154,6 +158,9 @@ def format_debug_report(
     )
     duration_s = report.duration_ms / 1000
     lines.append(f"Duration: {duration_s}s")
+    if report.git_sha:
+        dirty = " (dirty)" if report.git_dirty else ""
+        lines.append(f"Commit:   {report.git_sha[:12]}{dirty}")
     lines.append("")
 
     nodes = _filter_nodes(report.nodes, node_filter, errors_only)
@@ -217,6 +224,8 @@ def format_debug_report_json(report: DebugReport) -> dict[str, Any]:
         "completed_nodes": report.completed_nodes,
         "failed_nodes": report.failed_nodes,
         "duration_ms": report.duration_ms,
+        "git_sha": report.git_sha,
+        "git_dirty": report.git_dirty,
         "nodes": [
             {
                 "node_id": n.node_id,

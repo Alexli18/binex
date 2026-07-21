@@ -10,6 +10,8 @@ binex debug <RUN_ID | latest> [OPTIONS]
 
 Post-mortem inspection of a workflow run. Displays a complete debug report including workflow summary, per-node details (agent, prompt, inputs, outputs, errors), skipped nodes with blocking reasons, and timing information.
 
+When the workflow ran inside a git repository, the report also shows the commit the run executed at (`Commit:`), marked `(dirty)` if the working tree had uncommitted changes. This provenance is recorded in run metadata (`git_sha` / `git_dirty`, also in `--json`) and is the foundation for history bisect — mapping a quality regression back to the commit that caused it.
+
 Use `latest` instead of a run ID to automatically select the most recent run.
 
 ## Arguments
@@ -65,6 +67,7 @@ binex debug abc123 --rich
 Workflow: research-pipeline
 Status:   failed (2/3 completed)
 Duration: 5.0s
+Commit:   a1b2c3d4e5f6 (dirty)
 
 -- planner [completed] 100ms ------
   Agent:  llm://gpt-4
