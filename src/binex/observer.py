@@ -208,6 +208,16 @@ async def flush_observed_run(
         ))
         for i, call in enumerate(calls):
             task_id = f"call_{i:03d}"
+            in_refs: list[str] = []
+            # Persist the raw request so the call can be replayed statelessly (#74).
+            req_art = Artifact(
+                id=f"art_{uuid.uuid4().hex[:12]}", run_id=run_id,
+                type="llm_request",
+                content={"model": call.model, "messages": call.messages},
+                lineage=Lineage(produced_by=task_id),
+            )
+            await art_store.store(req_art)
+            in_refs.append(req_art.id)
             out_refs: list[str] = []
             if call.response_text:
                 art = Artifact(
@@ -221,6 +231,7 @@ async def flush_observed_run(
                 id=f"rec_{uuid.uuid4().hex[:12]}", run_id=run_id, task_id=task_id,
                 agent_id=f"litellm://{call.model}",
                 status=TaskStatus.FAILED if call.error else TaskStatus.COMPLETED,
+                input_artifact_refs=in_refs,
                 output_artifact_refs=out_refs,
                 prompt=_summarize_messages(call.messages),
                 model=call.model, latency_ms=call.latency_ms,

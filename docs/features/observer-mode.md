@@ -56,6 +56,38 @@ observed runs works out of the box.
 install, capture, or the final flush to the store — is swallowed into a log
 warning. A missing usage field falls back to token-based pricing (approximate).
 
+## Single-call replay (#74)
+
+Because each captured call carries its *complete* request (messages, model), any
+one call can be **replayed statelessly** — the framework's memory and context are
+already baked into the captured messages, so nothing needs reconstructing:
+
+```bash
+binex replay <run-id> --call call_002 --model claude-sonnet-4-20250514
+binex replay <run-id> --call call_002 --prompt-file better_prompt.txt
+```
+
+It re-sends the call (optionally swapping the model or replacing the user prompt)
+and shows the original vs. new response side by side — the dominant iteration
+loop ("this agent answered badly → try another prompt/model on the same input"),
+without touching your code. Deliberately bounded:
+
+- **Stops at tool use** — if the replayed model requests a tool call, its name
+  and arguments are shown but **not executed** (tool implementations live in your
+  environment).
+- **No downstream continuation** — the result is a comparison artifact, not fed
+  back into the observed pipeline.
+- **Experimentation spend** — the replay's cost is recorded (`source: replay`)
+  but **excluded from the run's cost total**.
+
+Verify it offline with `--mock-response` (no API key), e.g. after
+`binex observe-demo`:
+
+```bash
+binex replay <obs-run> --call call_000 --model gpt-4o \
+    --mock-response "a different plan"
+```
+
 ## Honest limitations
 
 - **No partial-continuation replay.** Control flow lives in CrewAI's runtime

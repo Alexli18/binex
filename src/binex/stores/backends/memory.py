@@ -171,7 +171,8 @@ class InMemoryExecutionStore:
         )
 
     async def get_run_cost_summary(self, run_id: str) -> RunCostSummary:
-        records = await self.list_costs(run_id)
+        # Replay (#74) is experimentation spend — excluded from aggregation.
+        records = [r for r in await self.list_costs(run_id) if r.source != "replay"]
         total_cost = sum(r.cost for r in records)
         node_costs: dict[str, float] = {}
         for r in records:

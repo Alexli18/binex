@@ -446,11 +446,13 @@ class SqliteExecutionStore:
             ),
         )
         await db.commit()
-        # Update in-memory running totals
-        run_totals = self._node_costs.setdefault(cost_record.run_id, {})
-        run_totals[cost_record.task_id] = (
-            run_totals.get(cost_record.task_id, 0.0) + cost_record.cost
-        )
+        # Update in-memory running totals. Replay (#74) is experimentation spend
+        # and is excluded from run-level aggregation.
+        if cost_record.source != "replay":
+            run_totals = self._node_costs.setdefault(cost_record.run_id, {})
+            run_totals[cost_record.task_id] = (
+                run_totals.get(cost_record.task_id, 0.0) + cost_record.cost
+            )
 
     async def list_costs(self, run_id: str) -> list[CostRecord]:
         db = await self._ensure_initialized()
@@ -543,7 +545,8 @@ class SqliteExecutionStore:
         # Fallback to SQL for runs recorded by other store instances or before restart
         db = await self._ensure_initialized()
         cursor = await db.execute(
-            "SELECT task_id, SUM(cost) FROM cost_records WHERE run_id = ? GROUP BY task_id",
+            "SELECT task_id, SUM(cost) FROM cost_records "
+            "WHERE run_id = ? AND source != 'replay' GROUP BY task_id",
             (run_id,),
         )
         rows = await cursor.fetchall()

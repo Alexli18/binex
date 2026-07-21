@@ -16,6 +16,7 @@ CostSource = Literal[
     "local",
     "subscription_based",
     "cache",
+    "replay",  # experimentation spend (#74) — excluded from run cost aggregation
     "unknown",
 ]
 
