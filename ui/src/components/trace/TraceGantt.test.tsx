@@ -56,7 +56,7 @@ describe('TraceGantt', () => {
     const { container } = render(
       <TraceGantt timeline={entries} totalDuration={2.0} anomalyNodeIds={new Set()} />,
     );
-    const labels = container.querySelectorAll('.font-mono.text-slate-400');
+    const labels = container.querySelectorAll('.font-mono.text-right');
     expect(labels[0]?.textContent).toBe('first');
     expect(labels[1]?.textContent).toBe('second');
   });

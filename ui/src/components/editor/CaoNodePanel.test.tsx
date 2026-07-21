@@ -28,34 +28,31 @@ function makeProps(overrides: Partial<CaoNodePanelProps> = {}): CaoNodePanelProp
 }
 
 describe('CaoNodePanel', () => {
+  // useCAOProfiles hardcodes retry:1, so the error state arrives after the
+  // retry delay (~1s) — give findBy* a longer timeout than the 1s default.
+  const FALLBACK_TIMEOUT = { timeout: 4000 };
+
   it('renders fallback input when server is unavailable', async () => {
     render(<CaoNodePanel {...makeProps()} />, { wrapper: createWrapper() });
-    // Wait for query to fail
-    expect(await screen.findByText(/CAO server unavailable/i)).toBeInTheDocument();
+    // Wait for query to fail (after its retry)
+    expect(
+      await screen.findByText(/CAO server unavailable/i, {}, FALLBACK_TIMEOUT),
+    ).toBeInTheDocument();
     expect(screen.getByPlaceholderText('profile_name.md')).toBeInTheDocument();
   });
 
   it('calls onAgentChange when manual profile is typed', async () => {
     const onAgentChange = vi.fn();
     render(<CaoNodePanel {...makeProps({ onAgentChange })} />, { wrapper: createWrapper() });
-    const input = await screen.findByPlaceholderText('profile_name.md');
+    const input = await screen.findByPlaceholderText(
+      'profile_name.md', {}, FALLBACK_TIMEOUT,
+    );
     fireEvent.change(input, { target: { value: 'my-agent' } });
     expect(onAgentChange).toHaveBeenCalledWith('cao://my-agent');
   });
 
-  it('renders Handoff radio as checked by default', () => {
-    render(<CaoNodePanel {...makeProps()} />, { wrapper: createWrapper() });
-    const handoffRadio = screen.getByLabelText('Handoff');
-    expect(handoffRadio).toBeChecked();
-  });
-
-  it('renders disabled Assign and SendMessage radios', () => {
-    render(<CaoNodePanel {...makeProps()} />, { wrapper: createWrapper() });
-    const assignRadio = screen.getByLabelText('Assign');
-    const sendMessageRadio = screen.getByLabelText('SendMessage');
-    expect(assignRadio).toBeDisabled();
-    expect(sendMessageRadio).toBeDisabled();
-  });
+  // NOTE: the Handoff/Assign/SendMessage mode radios were removed from the panel;
+  // their tests were removed with them.
 
   it('calls onConfigChange for output format change', () => {
     const onConfigChange = vi.fn();

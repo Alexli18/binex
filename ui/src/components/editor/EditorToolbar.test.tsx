@@ -30,7 +30,7 @@ describe('EditorToolbar', () => {
   it('renders Save and Run buttons', () => {
     render(<EditorToolbar {...makeProps()} />);
     expect(screen.getByText('Save')).toBeInTheDocument();
-    expect(screen.getByText('Run')).toBeInTheDocument();
+    expect(screen.getByText('▸ Run')).toBeInTheDocument();
   });
 
   it('shows selected file path', () => {
@@ -50,12 +50,12 @@ describe('EditorToolbar', () => {
 
   it('shows unsaved indicator when dirty', () => {
     render(<EditorToolbar {...makeProps({ isDirty: true })} />);
-    expect(screen.getByText('(unsaved)')).toBeInTheDocument();
+    expect(screen.getByText('unsaved')).toBeInTheDocument();
   });
 
   it('hides unsaved indicator when not dirty', () => {
     render(<EditorToolbar {...makeProps({ isDirty: false })} />);
-    expect(screen.queryByText('(unsaved)')).not.toBeInTheDocument();
+    expect(screen.queryByText('unsaved')).not.toBeInTheDocument();
   });
 
   it('calls onSwitchToVisual when Visual clicked', async () => {
@@ -86,7 +86,7 @@ describe('EditorToolbar', () => {
     const user = userEvent.setup();
     const props = makeProps();
     render(<EditorToolbar {...props} />);
-    await user.click(screen.getByText('Run'));
+    await user.click(screen.getByText('▸ Run'));
     expect(props.onRun).toHaveBeenCalledOnce();
   });
 
@@ -97,17 +97,17 @@ describe('EditorToolbar', () => {
 
   it('disables Run when no content', () => {
     render(<EditorToolbar {...makeProps({ hasContent: false })} />);
-    expect(screen.getByText('Run').closest('button')).toBeDisabled();
+    expect(screen.getByText('▸ Run').closest('button')).toBeDisabled();
   });
 
   it('shows "Saving..." when isSaving', () => {
     render(<EditorToolbar {...makeProps({ isSaving: true })} />);
-    expect(screen.getByText('Saving...')).toBeInTheDocument();
+    expect(screen.getByText('Saving…')).toBeInTheDocument();
   });
 
   it('shows "Starting..." when isRunning', () => {
     render(<EditorToolbar {...makeProps({ isRunning: true })} />);
-    expect(screen.getByText('Starting...')).toBeInTheDocument();
+    expect(screen.getByText('Starting…')).toBeInTheDocument();
   });
 
   it('calls onOpenFiles when Open clicked', async () => {
