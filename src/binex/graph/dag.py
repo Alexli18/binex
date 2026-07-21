@@ -45,6 +45,32 @@ class DAG:
     def nodes(self) -> set[str]:
         return self._nodes
 
+    def add_node(self, node_id: str, depends_on: set[str]) -> None:
+        """Insert a node (with its dependency edges) at runtime — dynamic fan-out (#77).
+
+        The scheduler stays static in shape; this simply makes "more nodes appear".
+        Callers must ensure ``depends_on`` references existing nodes and that no
+        cycle is introduced (fan-out adds only forward edges, so it cannot).
+        """
+        self._nodes.add(node_id)
+        self._forward.setdefault(node_id, set())
+        self._backward.setdefault(node_id, set())
+        for dep in depends_on:
+            self._backward[node_id].add(dep)
+            self._forward.setdefault(dep, set()).add(node_id)
+
+    def rewire_dependents(self, old_dep: str, new_dep: str) -> None:
+        """Redirect every dependent of ``old_dep`` to depend on ``new_dep`` instead.
+
+        Used when a ``foreach`` placeholder is replaced by its aggregator: nodes
+        that depended on the placeholder must now wait for the aggregator.
+        """
+        for dependent in list(self._forward.get(old_dep, set())):
+            self._backward[dependent].discard(old_dep)
+            self._backward[dependent].add(new_dep)
+            self._forward.setdefault(new_dep, set()).add(dependent)
+        self._forward[old_dep] = set()
+
     def dependencies(self, node_id: str) -> set[str]:
         return self._backward.get(node_id, set())
 

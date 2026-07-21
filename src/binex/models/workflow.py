@@ -117,6 +117,27 @@ class NodeSpec(BaseModel):
     routing: dict[str, Any] | None = None
     cao: CaoConfig | None = None
     assertions: list[Assertion] = Field(default_factory=list)
+    # Dynamic fan-out (#77): expand this node at runtime, one worker per item in
+    # the referenced mapper node's array output.
+    foreach: str | None = None
+    max_parallel: int | None = None
+    max_items: int = 100
+    on_item_failure: Literal["continue", "fail_fast"] = "continue"
+    item_key: str | None = None  # JSONPath (e.g. "$.id") for stable item identity
+
+    @field_validator("max_items")
+    @classmethod
+    def _max_items_positive(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError("max_items must be >= 1")
+        return v
+
+    @field_validator("max_parallel")
+    @classmethod
+    def _max_parallel_positive(cls, v: int | None) -> int | None:
+        if v is not None and v < 1:
+            raise ValueError("max_parallel must be >= 1")
+        return v
 
     @model_validator(mode="after")
     def _normalize_budget(self) -> NodeSpec:
@@ -178,6 +199,10 @@ class WorkflowSpec(BaseModel):
         for key, node in self.nodes.items():
             if not node.id:
                 node.id = key
+            # A foreach node implicitly depends on its mapper — it can only expand
+            # once the mapper's array output exists (#77).
+            if node.foreach and node.foreach not in node.depends_on:
+                node.depends_on = [*node.depends_on, node.foreach]
         return self
 
 

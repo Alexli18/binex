@@ -82,6 +82,7 @@ nav:
     - Adapters: architecture/adapters.md
     - Telemetry: architecture/telemetry.md
   - Features:
+    - Dynamic Fan-out (foreach): features/foreach.md
     - Assertions & Eval: features/eval.md
     - Tools & MCP: features/tools-mcp.md
     - CAO Adapter: features/cao-adapter.md

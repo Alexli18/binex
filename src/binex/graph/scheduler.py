@@ -77,6 +77,26 @@ class Scheduler:
         self._skipped.add(node_id)
         self._satisfy(node_id)
 
+    def add_node(self, node_id: str, dep_count: int) -> None:
+        """Register a node added at runtime — dynamic fan-out (#77).
+
+        ``dep_count`` is the number of not-yet-satisfied dependencies; 0 means
+        immediately ready. The DAG must already contain the node's edges so that
+        completing its dependencies unlocks it via :meth:`_satisfy`.
+        """
+        self._pending.add(node_id)
+        self._dep_count[node_id] = dep_count
+        if dep_count == 0:
+            self._ready.add(node_id)
+
+    def satisfy_dependents(self, node_id: str) -> None:
+        """Unlock dependents of ``node_id`` without marking it completed.
+
+        Used for a ``foreach`` worker that failed under ``on_item_failure:
+        continue`` — the failure is recorded, but the aggregator must still run.
+        """
+        self._satisfy(node_id)
+
     def get_execution_count(self, node_id: str) -> int:
         """Return how many times a node has been re-executed (0 = never reset)."""
         return self._execution_count.get(node_id, 0)
