@@ -357,6 +357,51 @@ async def get_run(run_id: str) -> JSONResponse:
         await exec_store.close()
 
 
+class ReplayCallBody(BaseModel):
+    """Optional overrides for replaying a single captured LLM call (#74)."""
+
+    model: str | None = None
+    prompt: str | None = None
+    mock_response: str | None = None
+
+
+@router.post("/{run_id}/calls/{call_id}/replay")
+async def replay_call_endpoint(
+    run_id: str, call_id: str, body: ReplayCallBody | None = None,
+) -> JSONResponse:
+    """Replay one captured LLM call from an observed run (#74).
+
+    Synchronous (a single call), returning the original vs. replay comparison —
+    powers the per-call "Replay" button in the observed-run view.
+    """
+    from binex.replay_call import ReplayError, replay_call
+
+    body = body or ReplayCallBody()
+    try:
+        result = await replay_call(
+            run_id, call_id,
+            model=body.model, prompt=body.prompt,
+            mock_response=body.mock_response,
+        )
+    except ReplayError as exc:
+        return JSONResponse({"error": str(exc)}, status_code=404)
+
+    return JSONResponse({
+        "run_id": result.run_id,
+        "call_id": result.call_id,
+        "original_model": result.original_model,
+        "replay_model": result.replay_model,
+        "original_response": result.original_response,
+        "replay_response": result.replay_response,
+        "changed": result.changed,
+        "cost": result.cost,
+        "tool_requests": [
+            {"name": t.name, "arguments": t.arguments}
+            for t in result.tool_requests
+        ],
+    })
+
+
 @router.get("/{run_id}/records")
 async def get_records(run_id: str) -> JSONResponse:
     """Get execution records for a workflow run."""
