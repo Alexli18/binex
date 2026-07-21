@@ -3,10 +3,18 @@
 ## Synopsis
 
 ```
-binex bisect <GOOD_RUN_ID> <BAD_RUN_ID> [OPTIONS]
+binex bisect <GOOD_RUN_ID> <BAD_RUN_ID> [OPTIONS]   # across nodes (default)
+binex bisect history -w <WORKFLOW> --good <REF> --bad <REF> [OPTIONS]
 ```
 
-## Description
+`binex bisect` finds a regression at two granularities:
+
+- **Across nodes** (default) — given a good and a bad *run*, find the first node where they diverge.
+- **Across git history** (`history`) — given a good and a bad *commit*, find the commit that broke the workflow, then hand off to the node-level bisect to locate the offending node within it.
+
+The bare `binex bisect <good> <bad>` form is unchanged and still routes to the node-level bisect.
+
+## Description (node-level)
 
 Find the divergence point between two runs. Compares runs node-by-node, classifying each as a match, status difference, or content difference. Identifies the first node where the two runs diverge — helping you pinpoint where a regression or behavior change was introduced.
 
@@ -178,9 +186,70 @@ fi
 - Use `--threshold 0.5` for looser comparison when you only care about major changes.
 - Combine with `binex debug` to inspect the divergent node in detail.
 
+## `binex bisect history`
+
+Binary-search git history for the commit that broke pipeline quality — a `git bisect run` for agent workflows.
+
+Binex owns the workflow spec *and* the launch, so given "quality dropped sometime this week" it can walk the commit history, re-run the workflow at each probe commit, and identify the offending commit. Each probe runs in an isolated **git worktree**, so your working tree and `HEAD` are never touched.
+
+### Synopsis
+
+```
+binex bisect history -w <WORKFLOW> --good <REF> --bad <REF> [OPTIONS]
+```
+
+### How it works
+
+1. Resolves `--good` / `--bad` to commits (a git ref, or a **run ID** — resolved to the commit that run recorded, see [`binex debug`](debug.md) `git_sha`).
+2. Lists commits on the good→bad ancestry path.
+3. Binary-searches them: at each probe it checks the commit out in a temporary worktree and runs the workflow **as it existed at that commit**, judging pass/fail with the same criterion as [`binex eval`](eval.md) — the workflow's own assertions, plus an optional `--baseline` diff.
+4. Reports the first bad commit. A commit whose workflow file is missing, or that can't be evaluated, is **skipped** (never falsely blamed).
+
+Node caching ([`binex run --cache`](run.md)) makes this affordable: typically one prompt changed per commit, so only affected nodes re-execute.
+
+### Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `-w, --workflow` | path | required | Workflow file to run at each probed commit |
+| `--good` | ref/run | required | Known-good commit/ref, or a run ID |
+| `--bad` | ref/run | required | Known-bad commit/ref, or a run ID |
+| `--var KEY=VALUE` | string | — | Variable substitution (repeatable) |
+| `--baseline RUN_ID` | string | — | Golden run for a diff criterion (else assertions only) |
+| `--min-similarity` | float | `1.0` | Content-similarity floor when `--baseline` is used |
+| `--max-latency-delta-ms` | float | — | Latency-growth ceiling when `--baseline` is used |
+| `--max-cost-delta` | float | — | Cost-growth ceiling when `--baseline` is used |
+| `--json` | flag | false | Machine-readable output |
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | A bad commit was found |
+| 1 | No bad commit found, or indeterminate (too many commits skipped) |
+| 2 | Setup error (not a repo, unknown ref, bad range) |
+
+### Example
+
+```bash
+binex bisect history -w flow.yaml --good v1.0 --bad HEAD
+```
+
+```
+  probe 858ac92257e9: bad — n1: assertion failed: contains='...'
+  probe 922df37a181c: good — eval passed
+Tested 2 commit(s), 0 skipped.
+
+✗ First bad commit: 858ac92257e978dc65ca9072e6f585aac5824a98
+  n1: assertion failed: contains='...'
+
+Tip: run 'binex bisect <good_run> <bad_run>' to locate the offending node within that commit.
+```
+
 ## See Also
 
+- [binex eval](eval.md) -- the pass/fail criterion used by history bisect
 - [binex diagnose](diagnose.md) -- root-cause analysis for failures
 - [binex diff](diff.md) -- side-by-side run comparison
-- [binex debug](debug.md) -- post-mortem inspection
+- [binex debug](debug.md) -- post-mortem inspection (shows the run's commit)
 - [binex replay](replay.md) -- re-run with modifications
