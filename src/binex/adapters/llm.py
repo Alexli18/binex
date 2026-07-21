@@ -193,6 +193,65 @@ class LLMAdapter:
             "repaired": False, "validation_errors": validation.errors,
         }
 
+    async def _escalate_repair(
+        self,
+        messages: list[dict[str, Any]],
+        kwargs: dict[str, Any],
+        output_schema: dict[str, Any],
+        repair_attempts: int,
+        task: TaskNode,
+        actual_model: str,
+        all_responses: list[Any],
+    ) -> tuple[Any, str, dict[str, Any]] | None:
+        """On repair exhaustion, retry the repair ladder on later chain models.
+
+        Returns (content, model, metadata) from the first model that repairs
+        successfully — or the last model's result if all are exhausted. Returns
+        None when there is nothing further to escalate to. ``BINEX_NO_FALLBACK``
+        disables escalation, like ordinary fallback.
+        """
+        import os
+
+        if os.environ.get("BINEX_NO_FALLBACK"):
+            return None
+        chain = [self._model, *(task.config.get("fallbacks") or [])]
+        try:
+            start = chain.index(actual_model) + 1
+        except ValueError:
+            return None
+        if start >= len(chain):
+            return None
+
+        last: tuple[Any, str, dict[str, Any]] | None = None
+        for model in chain[start:]:
+            kwargs["model"] = model
+            try:
+                response = await self._completion_with_retry(**kwargs)
+            except Exception as exc:
+                # A transport error on an escalation target: skip to the next.
+                if _fallback_reason(exc) is not None:
+                    continue
+                raise
+            all_responses.append(response)
+            content = response.choices[0].message.content
+            content, extra, meta = await self._repair_feedback_loop(
+                messages, kwargs, content, output_schema, repair_attempts,
+            )
+            all_responses.extend(extra)
+            result_meta: dict[str, Any] = {
+                **(meta or {}),
+                "escalated": "schema_repair_exhausted",
+                "escalated_to": model,
+            }
+            logger.warning(
+                "Repair escalation: %s → %s (schema repair exhausted)",
+                actual_model, model,
+            )
+            last = (content, model, result_meta)
+            if not (meta and meta.get("repaired") is False):
+                return last  # this model repaired successfully
+        return last
+
     async def _run_tool_loop(
         self,
         messages: list[dict[str, Any]],
@@ -381,6 +440,21 @@ class LLMAdapter:
                 messages, kwargs, content, output_schema, repair_attempts,
             )
             all_responses.extend(repair_responses)
+
+            # Escalation (#67): repair exhausted on this model, and the node opted
+            # in — promote to the next model in the fallback chain and retry the
+            # repair ladder there. Trigger is "schema repair exhausted", distinct
+            # from the transport-error fallback in _complete_with_fallback.
+            if (
+                repair_metadata and repair_metadata.get("repaired") is False
+                and repair_cfg.get("escalate")
+            ):
+                escalated = await self._escalate_repair(
+                    messages, kwargs, output_schema, repair_attempts,
+                    task, actual_model, all_responses,
+                )
+                if escalated is not None:
+                    content, actual_model, repair_metadata = escalated
 
         metadata: dict[str, Any] = dict(repair_metadata or {})
         metadata["requested_model"] = self._model
