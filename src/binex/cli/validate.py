@@ -83,5 +83,13 @@ def validate_cmd(workflow_file: str, json_out: bool) -> None:
     if errors:
         _output_errors(errors, json_out, show_tip=True)
 
+    # Phase 2b: advisory warnings (non-blocking) — e.g. fallback chains (#66)
+    from binex.workflow_spec.validator import check_fallback_chains
+
+    warnings = check_fallback_chains(spec)
+    if warnings and not json_out:
+        for w in warnings:
+            click.echo(f"Warning: {w}", err=True)
+
     # Phase 3: success summary
     _output_success(spec, json_out)

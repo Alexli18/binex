@@ -23,6 +23,8 @@ class ExecutionRecord(BaseModel):
     output_artifact_refs: list[str] = Field(default_factory=list)
     prompt: str | None = None
     model: str | None = None
+    requested_model: str | None = None  # model the node asked for
+    actual_model: str | None = None     # model that served the response (fallback-aware)
     tool_calls: list[dict[str, Any]] | None = None
     latency_ms: int
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))

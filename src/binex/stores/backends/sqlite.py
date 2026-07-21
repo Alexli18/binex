@@ -78,7 +78,9 @@ class SqliteExecutionStore:
                 timestamp TEXT NOT NULL,
                 trace_id TEXT NOT NULL,
                 error TEXT,
-                trace_events TEXT
+                trace_events TEXT,
+                requested_model TEXT,
+                actual_model TEXT
             );
             CREATE TABLE IF NOT EXISTS cost_records (
                 id TEXT PRIMARY KEY,
@@ -166,6 +168,15 @@ class SqliteExecutionStore:
             await self._db.commit()
         except Exception as exc:
             logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add requested_model / actual_model (fallback chains, #66)
+        for _col in ("requested_model", "actual_model"):
+            try:
+                await self._db.execute(
+                    f"ALTER TABLE execution_records ADD COLUMN {_col} TEXT"
+                )
+                await self._db.commit()
+            except Exception as exc:
+                logger.debug("Migration already applied or failed: %s", exc)
         # Migration: add session_name column to existing cao_sessions table
         try:
             await self._db.execute(
@@ -299,8 +310,8 @@ class SqliteExecutionStore:
             """INSERT INTO execution_records (id, run_id, task_id, parent_task_id,
                agent_id, status, input_artifact_refs, output_artifact_refs,
                prompt, model, tool_calls, latency_ms, timestamp, trace_id, error,
-               trace_events)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               trace_events, requested_model, actual_model)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 execution_record.id,
                 execution_record.run_id,
@@ -320,6 +331,8 @@ class SqliteExecutionStore:
                 json.dumps(execution_record.trace_events)
                 if execution_record.trace_events
                 else None,
+                execution_record.requested_model,
+                execution_record.actual_model,
             ),
         )
         await db.commit()
@@ -526,6 +539,8 @@ class SqliteExecutionStore:
             trace_id=row[13],
             error=row[14],
             trace_events=json.loads(row[15]) if len(row) > 15 and row[15] else None,
+            requested_model=row[16] if len(row) > 16 else None,
+            actual_model=row[17] if len(row) > 17 else None,
         )
 
     # ------------------------------------------------------------------

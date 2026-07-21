@@ -35,6 +35,7 @@ Complete schema reference for Binex workflow files.
 | `budget` | `float` or `NodeBudget` | no | Per-node budget limit (shorthand: `budget: 0.50`, full: `budget: { max_cost: 0.50 }`) |
 | `tools` | `list[str]` | no | Tool URIs available to this node (see [Tools](#tools) below) |
 | `output_schema` | `dict` | no | JSON Schema for validating node output. Failed validation triggers auto-retry |
+| `fallbacks` | `list[str]` | no | Fallback models tried when the primary fails on an infrastructure error (see below) |
 | `cache` | `bool` | no | Reuse this node's cached result when its inputs are unchanged (see below) |
 | `routing` | `dict` | no | Per-node Gateway routing overrides (see below) |
 
@@ -165,6 +166,38 @@ With `--json`, the run output includes budget information:
   "remaining_budget": -0.23
 }
 ```
+
+## Model Fallback Chains
+
+A 40-minute run shouldn't die because of a single `429` or a provider outage.
+`fallbacks` lists models to try, in order, when the primary fails:
+
+```yaml
+nodes:
+  writer:
+    agent: "llm://gpt-4o"
+    outputs: [draft]
+    fallbacks: ["anthropic/claude-sonnet-4-5", "ollama/llama3.1"]
+```
+
+Order: retry the current model per its backoff policy → move to the next model →
+its own retries. Fallback fires **only** on infrastructure/availability errors —
+rate limit (`429`), `5xx`, timeout, model-not-found, and auth (`401`, with a loud
+warning, since the next provider uses a different key). It never fires on a model
+that answered but poorly — that's [auto-repair](#auto-repair)'s job.
+
+**Reproducibility** (silent model swaps would break diff/bisect/eval):
+
+- Each execution records both `requested_model` and `actual_model`.
+- A `node:cache_hit`-style fallback event is emitted (`gpt-4o → claude: rate_limited`)
+  and stored on the artifact's `metadata.fallbacks`.
+- `binex run --no-fallback` disables the chain entirely, so a model benchmark
+  can't be silently contaminated. Also available via `BINEX_NO_FALLBACK=1`.
+- `binex validate` warns if a fallback has a smaller context window than the
+  primary, or lacks function-calling while the node declares tools.
+
+Streaming: if a stream dies mid-emission, the node restarts from scratch on the
+fallback model (no partial splicing).
 
 ## Node Caching
 

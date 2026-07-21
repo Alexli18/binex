@@ -24,6 +24,35 @@ MAX_RETRIES = 3
 RETRY_BACKOFF = 2  # seconds, doubles each attempt
 
 
+def _fallback_reason(exc: Exception) -> str | None:
+    """Classify an exception as a fallback trigger, or None if not retriable.
+
+    Fallback fires on infrastructure/availability failures only — never on a
+    successful-but-bad response (that's repair territory, #65).
+    """
+    reasons = [
+        ("RateLimitError", "rate_limited"),
+        ("Timeout", "timeout"),
+        ("APIConnectionError", "connection_error"),
+        ("InternalServerError", "server_error"),
+        ("ServiceUnavailableError", "server_error"),
+        ("NotFoundError", "model_not_found"),
+        ("AuthenticationError", "auth_error"),
+    ]
+    for cls_name, reason in reasons:
+        exc_type = getattr(litellm, cls_name, None)
+        if exc_type is not None and isinstance(exc, exc_type):
+            return reason
+    status = getattr(exc, "status_code", None)
+    if status == 429:
+        return "rate_limited"
+    if status == 401:
+        return "auth_error"
+    if isinstance(status, int) and 500 <= status < 600:
+        return "server_error"
+    return None
+
+
 class LLMAdapter:
     """Adapter for direct LLM calls without an agent server."""
 
@@ -328,8 +357,10 @@ class LLMAdapter:
             except Exception as exc:
                 logger.warning("Streaming failed, falling back to non-streaming: %s", exc)
 
-        # Non-streaming path (original code)
-        response = await self._completion_with_retry(**kwargs)
+        # Non-streaming path, with model fallback (issue #66).
+        response, actual_model, fallback_events = await self._complete_with_fallback(
+            kwargs, task,
+        )
         message = response.choices[0].message
         all_responses = [response]
 
@@ -351,13 +382,19 @@ class LLMAdapter:
             )
             all_responses.extend(repair_responses)
 
+        metadata: dict[str, Any] = dict(repair_metadata or {})
+        metadata["requested_model"] = self._model
+        metadata["actual_model"] = actual_model
+        if fallback_events:
+            metadata["fallbacks"] = fallback_events
+
         artifacts = [
             Artifact(
                 id=f"art_{uuid.uuid4().hex[:12]}",
                 run_id=task.run_id,
                 type="llm_response",
                 content=content,
-                metadata=repair_metadata,
+                metadata=metadata,
                 lineage=Lineage(
                     produced_by=task.node_id,
                     derived_from=[a.id for a in input_artifacts],
@@ -365,8 +402,50 @@ class LLMAdapter:
             )
         ]
 
-        cost_record = self._accumulate_cost(all_responses, task, self._model)
+        cost_record = self._accumulate_cost(all_responses, task, actual_model)
         return ExecutionResult(artifacts=artifacts, cost=cost_record)
+
+    async def _complete_with_fallback(
+        self, kwargs: dict[str, Any], task: TaskNode,
+    ) -> tuple[Any, str, list[dict[str, str]]]:
+        """Try the primary model then each fallback, on infrastructure errors.
+
+        Returns (response, actual_model, fallback_events). Fallback is triggered
+        only by transport/availability failures (rate limit, 5xx, timeout,
+        model-not-found, auth) — never by a model that answered but poorly (that
+        is auto-repair's job, #65). ``BINEX_NO_FALLBACK`` disables the chain so
+        benchmarks aren't silently contaminated.
+        """
+        import os
+
+        fallbacks: list[str] = (
+            [] if os.environ.get("BINEX_NO_FALLBACK")
+            else list(task.config.get("fallbacks") or [])
+        )
+        models = [self._model, *fallbacks]
+        events: list[dict[str, str]] = []
+        last_exc: Exception | None = None
+
+        for i, model in enumerate(models):
+            kwargs["model"] = model
+            try:
+                return await self._completion_with_retry(**kwargs), model, events
+            except Exception as exc:
+                reason = _fallback_reason(exc)
+                has_next = i + 1 < len(models)
+                if has_next and reason is not None:
+                    nxt = models[i + 1]
+                    events.append({"from": model, "to": nxt, "reason": reason})
+                    warn = f"Model fallback: {model} → {nxt} ({reason})"
+                    if reason == "auth_error":
+                        warn += " — WARNING: auth failure, trying a different provider"
+                    logger.warning(warn)
+                    click.echo(click.style(f"  ⚠ {warn}", fg="yellow"))
+                    last_exc = exc
+                    continue
+                raise
+        # Unreachable: the last model always either returns or re-raises above.
+        raise last_exc if last_exc is not None else RuntimeError("no models to try")
 
     @staticmethod
     async def _completion_with_retry(**kwargs: Any) -> Any:

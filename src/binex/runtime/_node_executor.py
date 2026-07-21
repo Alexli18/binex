@@ -44,6 +44,8 @@ async def record_execution(
     latency_ms: int,
     trace_id: str,
     error: str | None,
+    requested_model: str | None = None,
+    actual_model: str | None = None,
 ) -> None:
     """Create and store an ExecutionRecord."""
     record = ExecutionRecord(
@@ -57,5 +59,8 @@ async def record_execution(
         latency_ms=latency_ms,
         trace_id=trace_id,
         error=error,
+        requested_model=requested_model,
+        actual_model=actual_model,
+        model=actual_model,
     )
     await execution_store.record(record)
