@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
 import uuid
@@ -63,6 +64,9 @@ class Orchestrator:
         self._foreach_groups: dict[str, Any] = {}  # aggregator_id -> ForeachGroup
         self._worker_group: dict[str, Any] = {}     # worker_id -> ForeachGroup
         self._tolerated_failures: set[str] = set()  # continue-worker failures
+        # Shared workspace (#75): per-run git-backed dir + writer serialization.
+        self._workspace: Any = None
+        self._workspace_lock: Any = None
         self._stream = stream
         self._stream_callback = stream_callback
         self._event_callback = event_callback
@@ -111,6 +115,18 @@ class Orchestrator:
         self._tolerated_failures = set()
         run_id = run_id or f"run_{uuid.uuid4().hex[:12]}"
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
+
+        # Shared workspace (#75): materialize a git-backed dir for this run.
+        self._workspace = None
+        self._workspace_lock = None
+        if spec.workspace is not None:
+            from binex.runtime.rwlock import AsyncRWLock
+            from binex.runtime.workspace import Workspace, WorkspaceConfig
+
+            cfg = WorkspaceConfig.from_obj(spec.workspace)
+            if cfg is not None:
+                self._workspace = Workspace.create(run_id, cfg)
+                self._workspace_lock = AsyncRWLock()
 
         # Cap concurrent node execution: workflow field > env > default.
         self._limiter = ConcurrencyLimiter.from_spec(
@@ -257,6 +273,14 @@ class Orchestrator:
                     logger.debug("Failed to close adapter %s", adapter, exc_info=True)
 
         return summary
+
+    def _workspace_access(self, node_spec: NodeSpec) -> Any:
+        """Return the read/write workspace lock for a node, or a no-op context."""
+        if self._workspace_lock is None or node_spec.workspace is None:
+            return contextlib.nullcontext()
+        if node_spec.workspace == "write":
+            return self._workspace_lock.write()
+        return self._workspace_lock.read()
 
     # ------------------------------------------------------------------
     # Dynamic fan-out (#77)
@@ -686,11 +710,19 @@ class Orchestrator:
                 )
                 return
 
-        async with self._limiter.slot(node_spec.agent):
-            succeeded, error_msg, output_artifacts = await self._retry_loop(
-                spec, run_id, node_id, task, input_artifacts, trace_id,
-                node_max, max_retries, retry_policy, node_artifacts,
-            )
+        # Workspace serialization (#75): writers are mutually exclusive, readers
+        # share. Snapshot the workspace after a successful write, inside the lock.
+        async with self._workspace_access(node_spec):
+            async with self._limiter.slot(node_spec.agent):
+                succeeded, error_msg, output_artifacts = await self._retry_loop(
+                    spec, run_id, node_id, task, input_artifacts, trace_id,
+                    node_max, max_retries, retry_policy, node_artifacts,
+                )
+            if (
+                succeeded and self._workspace is not None
+                and node_spec.workspace == "write"
+            ):
+                self._workspace.snapshot(node_id)
 
         # Post-execution assertions (issue #60): a declared contract that blocks
         # the node — and its dependents — when the output/metrics violate it.
@@ -893,8 +925,8 @@ class Orchestrator:
             latency_ms=latency_ms, trace_id=trace_id, error=error_msg,
         )
 
-    @staticmethod
     def _build_task_node(
+        self,
         spec: WorkflowSpec,
         run_id: str,
         node_id: str,
@@ -924,6 +956,8 @@ class Orchestrator:
             config["fallbacks"] = node_spec.fallbacks
         if node_spec.heartbeat_timeout_ms is not None:
             config["heartbeat_timeout_ms"] = node_spec.heartbeat_timeout_ms
+        if self._workspace is not None and node_spec.workspace is not None:
+            config["_workspace_root"] = str(self._workspace.root)
 
         task = TaskNode(
             id=f"{run_id}_{node_id}",

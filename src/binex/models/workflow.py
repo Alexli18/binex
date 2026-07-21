@@ -124,6 +124,8 @@ class NodeSpec(BaseModel):
     max_items: int = 100
     on_item_failure: Literal["continue", "fail_fast"] = "continue"
     item_key: str | None = None  # JSONPath (e.g. "$.id") for stable item identity
+    # Shared workspace access (#75): "write" nodes serialize; "read" nodes parallelize.
+    workspace: Literal["read", "write"] | None = None
 
     @field_validator("max_items")
     @classmethod
@@ -174,6 +176,9 @@ class WorkflowSpec(BaseModel):
     schedule: str | None = None
     concurrency: int | dict[str, int] | None = None
     source_path: str | None = None
+    # Shared git-snapshotted workspace (#75): dict {source, path, ref} or a
+    # local dir path string (shorthand for source=copy).
+    workspace: dict[str, Any] | str | None = None
 
     @field_validator("version")
     @classmethod

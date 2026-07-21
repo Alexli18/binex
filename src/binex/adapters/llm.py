@@ -385,15 +385,27 @@ class LLMAdapter:
         # Tool calling setup
         max_tool_rounds = task.config.get("max_tool_rounds", 10)
         resolved_tools: list[Any] = []
-        if task.tools and max_tool_rounds > 0:
-            resolved_tools = resolve_tools(
-                task.tools,
-                workflow_dir=self._workflow_dir,
-                mcp_manager=self._mcp_manager,
-            )
-            # Expand MCP placeholders to actual tools
-            resolved_tools = await self._expand_mcp_tools(resolved_tools)
-            kwargs["tools"] = [t.to_openai_schema() for t in resolved_tools]
+        if max_tool_rounds > 0:
+            if task.tools:
+                resolved_tools = resolve_tools(
+                    task.tools,
+                    workflow_dir=self._workflow_dir,
+                    mcp_manager=self._mcp_manager,
+                )
+                # Expand MCP placeholders to actual tools
+                resolved_tools = await self._expand_mcp_tools(resolved_tools)
+            # Workspace file tools (#75): jailed to the run's workspace root.
+            ws_root = task.config.get("_workspace_root")
+            if ws_root:
+                from pathlib import Path
+
+                from binex.runtime.workspace import Workspace
+                from binex.runtime.workspace_tools import make_workspace_tools
+                resolved_tools = resolved_tools + make_workspace_tools(
+                    Workspace(run_id="", root=Path(ws_root)),
+                )
+            if resolved_tools:
+                kwargs["tools"] = [t.to_openai_schema() for t in resolved_tools]
 
         # Streaming mode (only for non-tool-calling initial request)
         if stream and not resolved_tools:
