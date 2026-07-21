@@ -64,6 +64,23 @@ describe('DebugNodeDetail', () => {
     expect(onReplay).toHaveBeenCalledWith('test-node');
   });
 
+  it('shows "Replay call" and calls onReplayCall on observed runs', async () => {
+    const user = userEvent.setup();
+    const onReplayCall = vi.fn();
+    const onReplay = vi.fn();
+    render(
+      <DebugNodeDetail
+        node={makeNode()}
+        onReplay={onReplay}
+        observed
+        onReplayCall={onReplayCall}
+      />,
+    );
+    await user.click(screen.getByText('Replay call'));
+    expect(onReplayCall).toHaveBeenCalledWith('test-node');
+    expect(onReplay).not.toHaveBeenCalled();
+  });
+
   it('shows agent info when present', () => {
     render(<DebugNodeDetail node={makeNode({ agent: 'llm://gpt-4' })} onReplay={vi.fn()} />);
     expect(screen.getByText('llm://gpt-4')).toBeInTheDocument();
