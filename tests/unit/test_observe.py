@@ -135,19 +135,35 @@ async def test_flush_all_failed_marks_run_failed() -> None:
         await exec_store.close()
 
 
-def test_observe_context_manager_installs_and_restores_callback() -> None:
+def test_observe_context_manager_wraps_and_restores_litellm() -> None:
     import litellm
 
-    before = list(getattr(litellm, "callbacks", []) or [])
+    before = litellm.completion
     with observe("ctx-run") as cap:
-        assert len(litellm.callbacks) == len(before) + 1
+        # observe() wraps litellm.completion for the duration of the block.
+        assert litellm.completion is not before
         # Simulate a captured call inside the block.
         cap.calls.append(
             CapturedCall("gpt-4o", [{"role": "user", "content": "x"}], "y",
                          1, 1, 0.0, 10),
         )
-    # Callback removed after the block.
-    assert list(litellm.callbacks) == before
+    # Original restored after the block.
+    assert litellm.completion is before
+
+
+def test_observe_captures_direct_litellm_call_via_mock() -> None:
+    """A plain litellm.completion(mock_response=...) inside observe() is captured."""
+    import litellm
+
+    with observe("direct-run") as cap:
+        litellm.completion(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": "hello"}],
+            mock_response="hi there",
+        )
+    assert len(cap.calls) == 1
+    assert cap.calls[0].response_text == "hi there"
+    assert cap.calls[0].model == "gpt-4o-mini"
 
 
 def test_observe_reexported_from_package() -> None:

@@ -29,3 +29,22 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev,rich]"
       - run: python -m pytest tests/ -x -q
+
+  # Observer mode (#73) integrates with the *real* CrewAI library. The core
+  # `test` job above skips those tests (CrewAI isn't in [dev]); this job pins the
+  # supported CrewAI version(s) and runs the newcomer-path integration tests
+  # against each. Keep the matrix in sync with docs/features/observe.md.
+  observe-crewai:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crewai-version: ["0.86.0"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev,rich]" "crewai==${{ matrix.crewai-version }}"
+      - name: Newcomer-path integration tests
+        run: python -m pytest tests/integration/test_observe_crewai_integration.py tests/unit/test_observe_crewai.py -q
