@@ -1,0 +1,61 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "my-web-service"}}
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+            "name": "opentelemetry.instrumentation.fastapi",
+            "version": "0.43b0"
+          },
+          "spans": [
+            {
+              "traceId": "11111111222222223333333344444444",
+              "spanId": "aaaa000000000001",
+              "parentSpanId": "",
+              "name": "POST /api/chat",
+              "startTimeUnixNano": "1700002000000000000",
+              "endTimeUnixNano": "1700002001500000000",
+              "status": {"code": 1},
+              "attributes": [
+                {"key": "http.method", "value": {"stringValue": "POST"}},
+                {"key": "http.route", "value": {"stringValue": "/api/chat"}},
+                {"key": "http.status_code", "value": {"intValue": "200"}}
+              ]
+            },
+            {
+              "traceId": "11111111222222223333333344444444",
+              "spanId": "aaaa000000000002",
+              "parentSpanId": "aaaa000000000001",
+              "name": "db.query",
+              "startTimeUnixNano": "1700002000100000000",
+              "endTimeUnixNano": "1700002000300000000",
+              "status": {"code": 1},
+              "attributes": [
+                {"key": "db.system", "value": {"stringValue": "postgresql"}},
+                {"key": "db.statement", "value": {"stringValue": "SELECT * FROM users WHERE id = $1"}}
+              ]
+            },
+            {
+              "traceId": "11111111222222223333333344444444",
+              "spanId": "aaaa000000000003",
+              "parentSpanId": "aaaa000000000001",
+              "name": "external.http",
+              "startTimeUnixNano": "1700002000500000000",
+              "endTimeUnixNano": "1700002001200000000",
+              "status": {"code": 2, "message": "Downstream timeout"},
+              "attributes": [
+                {"key": "http.url", "value": {"stringValue": "https://api.example.com/v1/data"}},
+                {"key": "net.peer.name", "value": {"stringValue": "api.example.com"}}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

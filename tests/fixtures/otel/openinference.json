@@ -1,0 +1,68 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "arize-phoenix-app"}},
+          {"key": "telemetry.sdk.name", "value": {"stringValue": "opentelemetry"}}
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+            "name": "openinference.instrumentation.langchain",
+            "version": "0.1.28"
+          },
+          "spans": [
+            {
+              "traceId": "deadbeef12345678deadbeef12345678",
+              "spanId": "cafebabe12345678",
+              "parentSpanId": "",
+              "name": "RetrievalQA",
+              "startTimeUnixNano": "1700001000000000000",
+              "endTimeUnixNano": "1700001005000000000",
+              "status": {"code": 1},
+              "attributes": [
+                {
+                  "key": "llm.input_messages",
+                  "value": {"stringValue": "[{\"role\": \"user\", \"content\": \"What is machine learning?\"}]"}
+                },
+                {
+                  "key": "llm.output_messages",
+                  "value": {"stringValue": "[{\"role\": \"assistant\", \"content\": \"Machine learning is a subset of AI.\"}]"}
+                },
+                {"key": "llm.model_name", "value": {"stringValue": "gpt-4o-mini"}},
+                {"key": "llm.token_count.prompt", "value": {"intValue": "10"}},
+                {"key": "llm.token_count.completion", "value": {"intValue": "9"}},
+                {"key": "openinference.span.kind", "value": {"stringValue": "CHAIN"}}
+              ]
+            },
+            {
+              "traceId": "deadbeef12345678deadbeef12345678",
+              "spanId": "deadbeef87654321",
+              "parentSpanId": "cafebabe12345678",
+              "name": "ChatOpenAI",
+              "startTimeUnixNano": "1700001002000000000",
+              "endTimeUnixNano": "1700001004500000000",
+              "status": {"code": 1},
+              "attributes": [
+                {
+                  "key": "llm.input_messages",
+                  "value": {"stringValue": "[{\"role\": \"user\", \"content\": \"What is machine learning?\"}]"}
+                },
+                {
+                  "key": "llm.output_messages",
+                  "value": {"stringValue": "[{\"role\": \"assistant\", \"content\": \"Machine learning is a subset of AI.\"}]"}
+                },
+                {"key": "llm.model_name", "value": {"stringValue": "gpt-4o-mini"}},
+                {"key": "llm.token_count.prompt", "value": {"intValue": "10"}},
+                {"key": "llm.token_count.completion", "value": {"intValue": "9"}},
+                {"key": "openinference.span.kind", "value": {"stringValue": "LLM"}}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

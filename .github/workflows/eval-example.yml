@@ -1,0 +1,25 @@
+name: Eval Regression Suite
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install binex
+        run: pip install -e .
+
+      - name: Run eval suite
+        run: |
+          binex eval run examples/eval/research-eval.yaml \
+            --format github \
+            --strict-baseline
