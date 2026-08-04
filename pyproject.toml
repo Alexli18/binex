@@ -55,6 +55,7 @@ dev = [
     "ruff",
     "mypy",
     "mkdocs-material",
+    "pytest-playwright"
 ]
 rich = ["rich"]
 langchain = ["langchain-core>=0.2"]
