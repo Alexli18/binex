@@ -25,7 +25,7 @@ def test_export_selected_runs(page: Page, export_format: str) -> None:
 
 
 @pytest.mark.xfail(
-    reason="BUG: /api/v1/export has no last_n support — ExportRequest requires run_ids, "
+    reason="BUG #112: /api/v1/export has no last_n support — ExportRequest requires run_ids, "
     "frontend sends {last_n} in 'Last N runs' mode and gets 422",
     strict=True,
 )

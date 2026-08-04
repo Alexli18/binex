@@ -32,9 +32,9 @@ def test_sidebar_group_visible(page: Page, group: str) -> None:
     ],
 )
 def test_sidebar_navigation(
-    page: Page, 
-    link_text: str, 
-    expected_path: str, 
+    page: Page,
+    link_text: str,
+    expected_path: str,
     expected_heading: str
     ) -> None:
     page.goto("/")
