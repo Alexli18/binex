@@ -1,0 +1,34 @@
+# Eval Suite: Research Pipeline Regression Tests
+# ================================================
+# Demonstrates `binex eval` with no API keys required.
+# All agents use local://echo — deterministic, instant, no external calls.
+#
+# Quick start:
+#   binex eval run examples/eval/research-eval.yaml            # first run → no_baseline
+#   binex eval bless examples/eval/research-eval.yaml          # bless baselines
+#   binex eval run examples/eval/research-eval.yaml            # re-run → PASS
+#   binex eval run examples/eval/research-eval.yaml --format github --strict-baseline  # CI
+
+name: research-pipeline-eval
+workflow: research-pipeline.yaml
+
+thresholds:
+  min_similarity: 0.80
+
+cases:
+  - id: quantum-computing
+    inputs:
+      topic: "Research quantum error correction"
+
+  - id: climate-science
+    inputs:
+      topic: "Research climate tipping points"
+    thresholds:
+      min_similarity: 0.70
+
+  - id: ai-safety
+    inputs:
+      topic: "Research AI alignment approaches"
+    asserts:
+      - type: not_contains
+        value: "XYZZY"

@@ -1,0 +1,63 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "partial-trace-service"}}
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {
+            "name": "opentelemetry.instrumentation.openai",
+            "version": "0.25.0"
+          },
+          "spans": [
+            {
+              "traceId": "ffffeeeeddddccccbbbbaaaa99998888",
+              "spanId": "1000000000000001",
+              "parentSpanId": "9999999999999999",
+              "name": "openai.chat.completions",
+              "startTimeUnixNano": "1700003000000000000",
+              "endTimeUnixNano": "1700003001200000000",
+              "status": {"code": 1},
+              "attributes": [
+                {"key": "gen_ai.prompt", "value": {"stringValue": "Summarize this document."}},
+                {"key": "gen_ai.completion", "value": {"stringValue": "This document discusses AI trends."}},
+                {"key": "gen_ai.request.model", "value": {"stringValue": "gpt-4o"}},
+                {"key": "gen_ai.usage.prompt_tokens", "value": {"intValue": "25"}},
+                {"key": "gen_ai.usage.completion_tokens", "value": {"intValue": "8"}}
+              ]
+            },
+            {
+              "traceId": "ffffeeeeddddccccbbbbaaaa99998888",
+              "spanId": "1000000000000002",
+              "parentSpanId": "1000000000000001",
+              "name": "token.counter",
+              "startTimeUnixNano": "1700003000500000000",
+              "endTimeUnixNano": "1700003000800000000",
+              "status": {"code": 1},
+              "attributes": [
+                {"key": "custom.tokens.used", "value": {"intValue": "33"}}
+              ]
+            },
+            {
+              "traceId": "ffffeeeeddddccccbbbbaaaa99998888",
+              "spanId": "1000000000000003",
+              "parentSpanId": "8888888888888888",
+              "name": "orphaned.embedding",
+              "startTimeUnixNano": "1700003000100000000",
+              "endTimeUnixNano": "1700003000400000000",
+              "status": {"code": 1},
+              "attributes": [
+                {"key": "gen_ai.request.model", "value": {"stringValue": "text-embedding-3-small"}},
+                {"key": "gen_ai.usage.prompt_tokens", "value": {"intValue": "15"}},
+                {"key": "gen_ai.usage.completion_tokens", "value": {"intValue": "0"}}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
