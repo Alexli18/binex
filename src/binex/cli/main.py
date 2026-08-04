@@ -10,18 +10,22 @@ from dotenv import load_dotenv
 from binex.cli import BinexGroup
 from binex.cli.artifacts import artifacts_cmd
 from binex.cli.bisect import bisect_cmd
+from binex.cli.collect import collect_cmd
 from binex.cli.cost import cost_group
 from binex.cli.debug import debug_cmd
 from binex.cli.dev import dev_cmd
 from binex.cli.diagnose import diagnose_cmd
 from binex.cli.diff import diff_cmd
 from binex.cli.doctor import doctor_cmd
+from binex.cli.eval_cmd import eval_group
 from binex.cli.explore import explore_cmd
 from binex.cli.export_cmd import export_cmd
 from binex.cli.gateway_cmd import gateway
 from binex.cli.hello import hello_cmd
+from binex.cli.import_cmd import import_group
 from binex.cli.init_cmd import init_cmd
 from binex.cli.list_cmd import list_cmd
+from binex.cli.mcp_cmd import mcp_group
 from binex.cli.plugins_cmd import plugins_group
 from binex.cli.replay import replay_cmd
 from binex.cli.run import cancel_cmd, run_cmd
@@ -84,6 +88,10 @@ cli.add_command(export_cmd, "export")
 cli.add_command(workflow_group, "workflow")
 cli.add_command(ui_cmd, "ui")
 cli.add_command(scheduler_group, "scheduler")
+cli.add_command(collect_cmd, "collect")
+cli.add_command(eval_group, "eval")
+cli.add_command(import_group, "import")
+cli.add_command(mcp_group, "mcp")
 
 
 def main() -> None:

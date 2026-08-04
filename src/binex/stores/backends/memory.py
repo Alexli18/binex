@@ -53,6 +53,8 @@ class InMemoryExecutionStore:
         self._cost_records: list[CostRecord] = []
         self._cao_sessions: dict[str, dict[str, str]] = {}
         self._workflow_snapshots: dict[str, dict[str, Any]] = {}
+        self._eval_baselines: dict[tuple[str, str], str] = {}
+        self._eval_results: dict[str, dict[str, Any]] = {}
 
     async def close(self) -> None:
         pass
@@ -211,6 +213,52 @@ class InMemoryExecutionStore:
 
     async def get_workflow_snapshot(self, content_hash: str) -> dict[str, Any] | None:
         return self._workflow_snapshots.get(content_hash)
+
+    # ------------------------------------------------------------------
+    # Eval baselines and results
+    # ------------------------------------------------------------------
+
+    async def set_baseline(
+        self, suite_name: str, case_id: str, run_id: str,
+    ) -> None:
+        self._eval_baselines[(suite_name, case_id)] = run_id
+
+    async def get_baselines(self, suite_name: str) -> dict[str, str]:
+        return {
+            case_id: run_id
+            for (sname, case_id), run_id in self._eval_baselines.items()
+            if sname == suite_name
+        }
+
+    async def save_eval_result(self, result: Any) -> str:
+        import uuid
+        result_id = "eval_" + uuid.uuid4().hex[:12]
+        payload = result.model_dump_json() if hasattr(result, "model_dump_json") else str(result)
+        suite_name = getattr(result, "suite_name", "")
+        suite_path = getattr(result, "suite_path", None)
+        executed_at = getattr(result, "executed_at", None)
+        if hasattr(executed_at, "isoformat"):
+            executed_at = executed_at.isoformat()
+        self._eval_results[result_id] = {
+            "id": result_id,
+            "suite_name": suite_name,
+            "suite_path": suite_path,
+            "executed_at": executed_at,
+            "payload": payload,
+        }
+        return result_id
+
+    async def list_eval_results(
+        self, limit: int = 50, suite_name: str | None = None,
+    ) -> list[dict[str, Any]]:
+        results = list(self._eval_results.values())
+        if suite_name:
+            results = [r for r in results if r["suite_name"] == suite_name]
+        results.sort(key=lambda r: r.get("executed_at") or "", reverse=True)
+        return results[:limit]
+
+    async def get_eval_result(self, result_id: str) -> dict[str, Any] | None:
+        return self._eval_results.get(result_id)
 
 
 __all__ = [

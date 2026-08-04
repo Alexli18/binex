@@ -78,8 +78,12 @@ nav:
     - Adapters: architecture/adapters.md
     - Telemetry: architecture/telemetry.md
   - Features:
+    - Eval (Regression Testing): eval.md
+    - MCP Server: mcp-server.md
+    - Import from OTel: import.md
     - Tools & MCP: features/tools-mcp.md
     - CAO Adapter: features/cao-adapter.md
+    - Comparisons: comparisons.md
   - Workflows:
     - Format: workflows/format.md
     - Examples: workflows/examples.md
@@ -88,4 +92,5 @@ nav:
   - Contributing:
     - Development: contributing/development.md
     - Testing: contributing/testing.md
+    - OTel Span Mapping: dev/otel-mapping.md
   - Blog: blog/index.md

@@ -19,6 +19,31 @@ from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
 
 
+class ImportedRunError(ValueError):
+    """Raised when an operation is not supported for OTel-imported runs."""
+
+
+def ensure_replayable(run: RunSummary, operation: str = "replay") -> None:
+    """Raise ``ImportedRunError`` if *run* was imported from an external trace.
+
+    This is the single gate applied by all replay/bisect paths (CLI, REST,
+    MCP) so the check is never accidentally omitted.
+
+    Args:
+        run: The run summary to check.
+        operation: Human-readable operation name used in the error message.
+
+    Raises:
+        ImportedRunError: When ``run.source`` indicates an imported run.
+    """
+    if run.source and run.source.startswith("otel"):
+        raise ImportedRunError(
+            f"Run '{run.run_id}' was imported from an external trace and cannot be "
+            f"used for {operation}. "
+            "Replay and bisect require runs that were executed natively by Binex."
+        )
+
+
 class ReplayEngine:
     """Replays a run from a specific step, reusing cached upstream artifacts."""
 
@@ -94,6 +119,8 @@ class ReplayEngine:
         original_run = await self.execution_store.get_run(original_run_id)
         if original_run is None:
             raise ValueError(f"Run '{original_run_id}' not found")
+
+        ensure_replayable(original_run)
 
         if isinstance(workflow, dict):
             spec = WorkflowSpec(**workflow)

@@ -121,6 +121,20 @@ async def _replay_background(
 @router.post("/replay")
 async def replay_run(body: ReplayRequest) -> JSONResponse:
     """Replay a run from a specific step with optional agent swaps."""
+    from binex.runtime.replay import ImportedRunError, ensure_replayable
+
+    # Feature gate: imported runs cannot be replayed
+    exec_store_check, _ = _get_stores()
+    try:
+        run_check = await exec_store_check.get_run(body.run_id)
+        if run_check is not None:
+            try:
+                ensure_replayable(run_check)
+            except ImportedRunError as e:
+                return JSONResponse({"error": str(e)}, status_code=422)
+    finally:
+        await exec_store_check.close()
+
     workflow = Path(body.workflow_path)
     if not workflow.is_absolute():
         workflow = Path.cwd() / workflow

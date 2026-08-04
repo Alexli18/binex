@@ -6,37 +6,18 @@ from pathlib import Path
 from typing import Any
 
 import click
-import yaml  # type: ignore[import-untyped]
+
+from binex.workflow_spec.discovery import get_examples_dir, scan_workflow_details
 
 
 def _find_workflows(directory: Path) -> list[dict[str, Any]]:
     """Scan directory for .yaml/.yml files that look like Binex workflows."""
-    results: list[dict[str, Any]] = []
-    if not directory.is_dir():
-        return results
-    for p in sorted(directory.glob("*.yaml")) + sorted(directory.glob("*.yml")):
-        try:
-            data = yaml.safe_load(p.read_text())
-            if isinstance(data, dict) and "nodes" in data:
-                results.append({
-                    "path": str(p),
-                    "name": data.get("name", p.stem),
-                    "description": data.get("description", ""),
-                    "nodes": len(data.get("nodes", {})),
-                })
-        except Exception:
-            continue
-    return results
+    return scan_workflow_details(directory)
 
 
 def _get_examples_dir() -> Path | None:
     """Locate the bundled examples/ directory."""
-    # Check relative to package root (development mode)
-    pkg_root = Path(__file__).resolve().parent.parent.parent.parent
-    examples = pkg_root / "examples"
-    if examples.is_dir():
-        return examples
-    return None
+    return get_examples_dir()
 
 
 @click.command("list")

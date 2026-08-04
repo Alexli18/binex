@@ -119,5 +119,33 @@ class ExecutionStore(Protocol):
         """Retrieve a workflow snapshot by hash."""
         ...
 
+    # ------------------------------------------------------------------
+    # Eval baselines and results
+    # ------------------------------------------------------------------
+
+    async def set_baseline(
+        self, suite_name: str, case_id: str, run_id: str,
+    ) -> None:
+        """Upsert the blessed baseline run_id for a (suite_name, case_id) pair."""
+        ...
+
+    async def get_baselines(self, suite_name: str) -> dict[str, str]:
+        """Return {case_id: run_id} mapping for all baselines in a suite."""
+        ...
+
+    async def save_eval_result(self, result: Any) -> str:
+        """Persist an EvalResult; returns its generated id."""
+        ...
+
+    async def list_eval_results(
+        self, limit: int = 50, suite_name: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """List recent eval results (summary dicts), newest first."""
+        ...
+
+    async def get_eval_result(self, result_id: str) -> dict[str, Any] | None:
+        """Retrieve a single eval result payload by id."""
+        ...
+
 
 __all__ = ["ExecutionStore"]

@@ -48,6 +48,9 @@ class RunSummary(BaseModel):
     forked_at_step: str | None = None
     workflow_hash: str | None = None
     total_cost: float = 0.0
+    eval_suite_id: str | None = None
+    eval_case_id: str | None = None
+    source: str | None = None
 
 
 __all__ = ["ExecutionRecord", "RunSummary"]

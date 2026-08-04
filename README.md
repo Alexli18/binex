@@ -8,9 +8,9 @@
   </h1>
 
   <p align="center">
-    <strong>Open-source visual orchestrator for AI agent workflows</strong>
+    <strong>Debugger + regression-testing toolkit for AI agent pipelines (local-first)</strong>
     <br>
-    Build, run, debug, and replay multi-agent pipelines — 100% locally.
+    Replay, diff, bisect, and eval multi-agent workflows — 100% on your machine.
   </p>
 
   <p>
@@ -23,12 +23,12 @@
   </p>
 
   <p>
-    <a href="#demo">Demo</a> &middot;
     <a href="#installation">Install</a> &middot;
+    <a href="#debugging">Debug & Replay</a> &middot;
+    <a href="#eval">Eval</a> &middot;
     <a href="#web-ui">Web UI</a> &middot;
-    <a href="#features">Features</a> &middot;
-    <a href="https://alexli18.github.io/binex/">Docs</a> &middot;
-    <a href="https://github.com/Alexli18/binex/issues">Issues</a>
+    <a href="#orchestration">Orchestration</a> &middot;
+    <a href="https://alexli18.github.io/binex/">Docs</a>
   </p>
 </div>
 
@@ -36,23 +36,43 @@
 
 ---
 
-## Demo
+## Installation
 
-### 1. Start in seconds
+> **Requires Python 3.11+**
 
-<div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-start.gif" alt="Quick Start" width="800">
-  <br><sub>Install, run <code>binex ui</code>, and you're building workflows</sub>
-</div>
+```bash
+pip install binex
+binex hello          # zero-config smoke test
+```
 
-### 2. Build & run custom workflows
+Optional extras: `binex[telemetry]` (OTel), `binex[langchain]`, `binex[crewai]`, `binex[autogen]`, `binex[rich]`.
 
-<div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-custom.gif" alt="Custom Workflow" width="800">
-  <br><sub>Drag & drop nodes, configure models, run with human input</sub>
-</div>
+All data is stored locally in `.binex/` — SQLite database + JSON artifact files. No cloud, no telemetry.
 
-### 3. Explore & debug results
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+<a id="debugging"></a>
+
+## Debugging & Replay
+
+Every run stores the full execution trace: inputs, outputs, prompts, costs, timing. Inspect it without re-running anything.
+
+```bash
+binex run examples/simple.yaml          # run a workflow
+binex debug latest                      # per-node inputs/outputs
+binex trace latest                      # Gantt timeline with anomaly detection
+binex replay latest --node planner      # re-run one node with a different model/prompt
+```
+
+Compare two runs to find regressions:
+
+```bash
+binex diff run-abc123 run-def456        # side-by-side artifact diff + cost delta
+binex bisect run-abc123 run-def456      # find the first node where outputs diverged
+binex diagnose latest                   # root-cause failure analysis
+```
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-explore.gif" alt="Explore Results" width="800">
@@ -63,45 +83,37 @@
 
 ---
 
-## What is Binex?
+<a id="eval"></a>
 
-Binex is an **open-source, fully local** runtime for AI agent workflows. No cloud. No telemetry. No vendor lock-in.
+## Eval — Regression Testing for Agent Pipelines
 
-```
-pip install binex
-binex ui
-```
-
-That's it. Browser opens. You're building AI workflows.
-
-### Why Binex?
-
-- **100% local** — your data never leaves your machine
-- **100% open source** — MIT licensed, audit every line
-- **Zero telemetry** — no tracking, no analytics, no surprises
-- **Full debuggability** — every input, output, prompt, and cost is visible
-- **Any model** — OpenAI, Anthropic, Google, Ollama, OpenRouter, DeepSeek, and 40+ more via LiteLLM
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Installation
-
-> **Requires Python 3.11+**
+Write a YAML test suite, bless a baseline, then catch regressions in CI.
 
 ```bash
-pip install binex
+# Run an eval suite
+binex eval run examples/eval/research-eval.yaml
+
+# Approve current outputs as the new baseline
+binex eval bless examples/eval/research-eval.yaml
+
+# Re-run and compare against the baseline
+binex eval run examples/eval/research-eval.yaml
+
+# List all stored baselines
+binex eval baselines
 ```
 
-With extras:
+An eval suite pairs inputs with assertions (contains, JSON path, LLM judge, cost threshold). Use in CI:
+
+```yaml
+# .github/workflows/eval.yml
+- run: binex eval run examples/eval/research-eval.yaml --format github --strict-baseline
+```
+
+Import OTel spans from any agent framework to create test cases from production traces:
 
 ```bash
-pip install binex[langchain]    # LangChain Runnables
-pip install binex[crewai]       # CrewAI Crews
-pip install binex[autogen]      # AutoGen Teams
-pip install binex[telemetry]    # OpenTelemetry tracing
-pip install binex[rich]         # Rich colored CLI output
+binex import otel trace.json
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -110,263 +122,72 @@ pip install binex[rich]         # Rich colored CLI output
 
 ## Web UI
 
-Launch the visual workflow editor:
-
 ```bash
-binex ui
+binex ui        # opens browser automatically; --port 9000 to change
 ```
-
-### Visual Drag & Drop Editor
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-editor.png" alt="Workflow Editor" width="800">
-  <br><sub>Collapsible node sections, tool picker with 10 built-in tools, MCP config, Visual ↔ YAML sync</sub>
-</div>
-
-<br>
-
-6 node types: **LLM Agent**, **Local Script**, **Human Input**, **Human Approve**, **Human Output**, **A2A Agent**
-
-- 20+ preset models including 8 free OpenRouter models
-- Built-in prompt library (Planner, Researcher, Analyzer, Writer, Reviewer, Summarizer)
-- **Tool Picker** — 10 built-in tools, MCP server integration, custom Python tools
-- **Collapsible sections** — Model, Prompt, Tools, Advanced per LLM node
-- **Workflow Settings** panel — configure MCP servers (stdio/HTTP) and cron schedules
-- Switch between Visual and YAML modes — changes sync both ways (including tools & MCP)
-- Real-time cost estimation as you build
-- Custom model input — use any litellm-compatible model
-
-### Dashboard
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-dashboard.png" alt="Runs Dashboard" width="800">
   <br><sub>All runs at a glance — status, cost, duration</sub>
 </div>
 
-### Debugging & Analysis
+<br>
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-debug.png" alt="Debug View" width="380">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-trace.png" alt="Trace Timeline" width="380">
-  <br><sub>Left: Node-by-node debug inspection. Right: Gantt timeline with anomaly detection.</sub>
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-diff.png" alt="Diff View" width="380">
+  <br><sub>Left: per-node debug inspection. Right: side-by-side diff with changed / failed / cost delta filters.</sub>
 </div>
 
-### Run Comparison
+Full parity with CLI: dashboard, visual editor, debug, trace, diff, bisect, lineage, cost charts, eval results, scheduler, gateway, plugins, export, doctor.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## Use Binex from your coding agent
+
+Expose Binex as an MCP server so Claude Code, Cursor, or any MCP-compatible agent can query runs, trigger evals, and inspect artifacts directly:
+
+```bash
+claude mcp add binex -- binex mcp serve
+```
+
+Once added, your agent can call tools like `binex_debug`, `binex_eval_run`, and `binex_diff` without leaving its context.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+<a id="orchestration"></a>
+
+## Orchestration
+
+Binex also runs the workflows it debugs. Define pipelines in YAML, or use the visual editor.
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-diff.png" alt="Diff View" width="800">
-  <br><sub>Side-by-side diff with filtering: changed, failed, cost delta</sub>
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/assets/demo-custom.gif" alt="Custom Workflow" width="800">
+  <br><sub>Drag & drop nodes, configure models, run with human input</sub>
 </div>
 
-### 19 Pages — Full CLI Parity
+<br>
 
-| Category | Pages |
-|----------|-------|
-| **Workflows** | Browse, Visual Editor (with tool picker & MCP config), Scaffold Wizard |
-| **Runs** | Dashboard, RunLive (SSE), RunDetail |
-| **Analysis** | Debug (input/output artifacts), Trace (Gantt timeline), Diagnose (root-cause), Lineage (artifact graph) |
-| **Comparison** | Diff (side-by-side with filter bar, compare with previous run), Bisect (NodeMap, DAG visualization, divergence metrics) |
-| **Costs** | Cost Dashboard (charts), Budget Management |
-| **System** | Doctor (health), Plugins, Gateway, Export, Scheduler (cron) |
+<div align="center">
+  <img src="https://raw.githubusercontent.com/Alexli18/binex/master/screenshots/new-editor.png" alt="Workflow Editor" width="800">
+  <br><sub>Visual editor — drag & drop nodes, tool picker, MCP config, Visual ↔ YAML sync</sub>
+</div>
 
-### Navigation
+### Adapters
 
-Sidebar organized into 4 groups: **Build** (Editor, Scaffold), **Runs** (Dashboard), **Analyze** (Compare, Bisect), **System** (Gateway, Plugins, Doctor). Run-specific pages (Debug, Trace, Diagnose, Lineage, Costs) open from run context.
+`local://` · `llm://` · `a2a://` · `human://input|approve|output` · `cao://` (CLI agents) · `langchain://` · `crewai://` · `autogen://`
 
-### Replay
+Full adapter reference → [docs](https://alexli18.github.io/binex/)
 
-Debug any node → click Replay → swap the model or prompt → re-run just that node. No re-running the entire pipeline.
+### Providers
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+OpenAI · Anthropic · Google Gemini · Ollama · OpenRouter · Groq · Mistral · DeepSeek · Together AI (and 40+ more via LiteLLM)
 
----
-
-## Quickstart
-
-### CLI
-
-```bash
-# Zero-config demo
-binex hello
-```
-
-> **Tip:** Runs a 2-node demo workflow (producer → consumer), no API keys needed.
-
-```bash
-# Run a workflow
-binex run examples/simple.yaml
-```
-
-> **Tip:** Uses your configured LLM provider. Set `OPENAI_API_KEY` or use `ollama` for fully local runs.
-
-```bash
-# Inspect the run
-binex debug latest
-binex trace latest
-```
-
-> **Tip:** `debug` shows per-node inputs/outputs. `trace` shows the execution timeline as a Gantt chart.
-
-### Web UI
-
-```bash
-binex ui
-```
-
-> **Tip:** Opens the browser automatically. Use `--port 9000` to change the port, `--no-browser` to skip auto-open.
-
-### Create a Workflow
-
-```yaml
-name: research-pipeline
-nodes:
-  input:
-    agent: "human://input"
-    outputs: [output]
-
-  planner:
-    agent: "llm://gemini/gemini-2.5-flash"
-    system_prompt: "Break this topic into research questions"
-    tools:
-      - "builtin://web_search"
-      - "builtin://calculator"
-    depends_on: [input]
-    outputs: [output]
-
-  researcher:
-    agent: "llm://openrouter/google/gemma-3-27b-it:free"
-    system_prompt: "Investigate and report findings"
-    tools:
-      - "builtin://fetch_url"
-    depends_on: [planner]
-    outputs: [output]
-
-  output:
-    agent: "human://output"
-    depends_on: [researcher]
-    outputs: [output]
-```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Features
-
-### Agent Adapters
-
-| Prefix | Description |
-|--------|-------------|
-| `local://` | In-process Python callable |
-| `llm://` | LLM via LiteLLM (40+ providers) |
-| `a2a://` | Remote agent via A2A protocol |
-| `human://input` | Free-text input from user |
-| `human://approve` | Approval gate with conditional branching |
-| `human://output` | Display results to user |
-| `builtin://` | 10 built-in tools (calculator, web_search, shell_command, etc.) |
-| `mcp://` | MCP server tools (stdio or HTTP transport) |
-| `python://` | Custom Python function as tool |
-| `langchain://` | LangChain Runnable (plugin) |
-| `crewai://` | CrewAI Crew (plugin) |
-| `autogen://` | AutoGen Team (plugin) |
-
-### CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `binex run` | Execute a workflow |
-| `binex ui` | Launch Web UI |
-| `binex debug` | Post-mortem inspection |
-| `binex trace` | Execution timeline |
-| `binex replay` | Re-run with agent swaps |
-| `binex diff` | Compare two runs |
-| `binex diagnose` | Root-cause failure analysis |
-| `binex bisect` | Find first divergence between two runs |
-| `binex cost show` | Cost breakdown per node |
-| `binex explore` | Interactive TUI dashboard |
-| `binex scaffold` | Generate workflow from DSL |
-| `binex export` | Export to CSV/JSON |
-| `binex doctor` | System health check |
-| `binex hello` | Zero-config demo |
-| `binex list` | List available workflows |
-| `binex start` | Create a new project interactively |
-| `binex init` | Deprecated alias for `binex start` |
-| `binex validate` | Validate workflow YAML |
-| `binex cancel` | Cancel a running workflow |
-| `binex artifacts` | Inspect artifacts |
-| `binex dev` | Local development environment |
-| `binex gateway` | A2A Gateway management |
-| `binex plugins` | Manage adapter plugins |
-| `binex workflow` | Workflow versioning & inspection |
-| `binex scheduler start` | Start cron-based workflow scheduler |
-| `binex scheduler list` | List scheduled workflows |
-| `binex scheduler add/remove` | Register/unregister workflow files |
-
-### Pattern Nodes
-
-9 built-in agentic patterns that expand into sub-DAG pipelines at runtime:
-
-| Pattern | Description |
-|---------|-------------|
-| `critic` | draft → critique → refine (self-improvement loop) |
-| `debate` | pro → con → judge (adversarial reasoning) |
-| `best_of_n` | N parallel candidates → selector |
-| `reflexion` | act → evaluate → reflect (iterative self-reflection) |
-| `scatter` | mapper → N parallel workers → reducer (fan-out/fan-in) |
-| `fsm` | finite state machine with configurable states and terminal |
-| `constitutional` | draft → critique-per-principle → revise |
-| `chain_of_verification` | draft → verify claims → synthesize |
-| `plan_execute` | planner → N executors → aggregator |
-
-```yaml
-nodes:
-  review:
-    pattern: critic
-    model: gpt-4o
-    config:
-      rounds: 2
-    steps:
-      critique:
-        model: gpt-4o          # override per step
-```
-
-### LLM Providers
-
-**OpenAI** &middot; **Anthropic** &middot; **Google Gemini** &middot; **Ollama** &middot; **OpenRouter** &middot; **Groq** &middot; **Mistral** &middot; **DeepSeek** &middot; **Together AI**
-
-### Built With
-
-[![Python][Python-badge]][Python-url]
-[![React][React-badge]][React-url]
-[![FastAPI][FastAPI-badge]][FastAPI-url]
-[![TypeScript][TypeScript-badge]][TypeScript-url]
-[![Tailwind][Tailwind-badge]][Tailwind-url]
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Examples
-
-29 example workflows in `examples/`. Highlights:
-
-| Example | What it demonstrates |
-|---------|---------------------|
-| `simple.yaml` | Minimal two-node pipeline |
-| `diamond.yaml` | Diamond dependency pattern |
-| `fan-out-fan-in.yaml` | Parallel execution with aggregation |
-| `human-in-the-loop.yaml` | Approval gates and conditional branching |
-| `human-feedback.yaml` | Human feedback loop |
-| `conditional-routing.yaml` | Conditional node execution |
-| `multi-provider-demo.yaml` | Multiple LLM providers in one workflow |
-| `ollama-research.yaml` | Full research pipeline with Ollama + OpenRouter |
-| `budget-hard-limit.yaml` | Budget enforcement with hard stop |
-| `budget-per-node.yaml` | Per-node budget allocation |
-| `a2a-multi-agent.yaml` | A2A protocol multi-agent workflow |
-| `langchain-summarizer.yaml` | LangChain Runnable in a pipeline |
-| `crewai-research-crew.yaml` | CrewAI Crew as a workflow node |
-| `autogen-coding-team.yaml` | AutoGen Team for code generation |
-| `mixed-framework-pipeline.yaml` | LangChain + CrewAI + AutoGen in one pipeline |
+Selected examples: `simple.yaml`, `fan-out-fan-in.yaml`, `human-in-the-loop.yaml`, `budget-hard-limit.yaml`, `a2a-multi-agent.yaml`, `mixed-framework-pipeline.yaml`, `eval/research-eval.yaml`. Full list + CLI reference → [docs](https://alexli18.github.io/binex/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -376,24 +197,18 @@ nodes:
 
 ```
 src/binex/
-├── adapters/        # Agent backends (local, LLM, A2A, human, frameworks)
-├── agents/          # Agent definitions and configuration
+├── adapters/        # local, LLM, A2A, human, CAO, framework adapters
 ├── cli/             # Click CLI commands
-├── gateway/         # A2A Gateway server and routing
-├── graph/           # DAG construction + topological scheduling
+├── eval/            # eval engine: loader, runner, assertions, baselines
+├── importers/       # OTel span importer
+├── mcp_server/      # MCP server (binex mcp serve)
 ├── models/          # Pydantic v2 domain models
-├── plugins/         # Plugin registry for custom adapters
-├── prompts/         # 112 built-in prompt templates
-├── registry/        # Provider and adapter registry
-├── runtime/         # Orchestrator, dispatcher, replay engine
-├── patterns/        # PatternExpander + 9 pattern templates
-├── scheduler/       # Cron-based workflow scheduling
+├── runtime/         # orchestrator, dispatcher, replay engine
+├── scheduler/       # cron-based workflow scheduling
 ├── stores/          # SQLite execution + filesystem artifacts
 ├── tools/           # @tool decorator, 10 built-in tools, MCP client
-├── trace/           # Debug, lineage, timeline, diffing
-├── ui/              # FastAPI backend + React frontend
-│   ├── api/         # 32 REST endpoints
-│   └── static/      # Pre-built React app
+├── trace/           # debug, lineage, timeline, diffing
+├── ui/              # FastAPI backend + React frontend (19 pages)
 └── workflow_spec/   # YAML loader + validator
 ```
 
@@ -401,49 +216,9 @@ src/binex/
 
 ---
 
-## Documentation
-
-Full docs at **[alexli18.github.io/binex](https://alexli18.github.io/binex/)**
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
 ## Contributing
 
-Contributions are welcome! If you find this useful:
-
-- **Star the repo** — it takes 1 second and helps more than you know
-- **Open issues** — tell me what's broken or what you need
-- **Submit PRs** — let's build this together
-
-I'm a solo developer building this in the open. Every star, issue, and PR makes a real difference.
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Configuration
-
-Binex can be configured via environment variables:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `BINEX_STORE_PATH` | `.binex` | Directory for SQLite database and artifacts |
-| `BINEX_DEFAULT_DEADLINE_MS` | `120000` | Default node timeout in milliseconds |
-| `BINEX_DEFAULT_MAX_RETRIES` | `1` | Default retry count for failed nodes |
-| `BINEX_DEFAULT_BACKOFF` | `exponential` | Retry backoff strategy (`fixed` or `exponential`) |
-| `BINEX_REGISTRY_URL` | `http://localhost:8000` | Default A2A agent registry URL |
-
-All data is stored in `.binex/` (gitignored by default):
-- `.binex/binex.db` — SQLite database (runs, execution records, cost records)
-- `.binex/artifacts/` — JSON artifact files
+Contributions are welcome. Star the repo, open issues, submit PRs. Fork → branch → PR.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -451,7 +226,7 @@ All data is stored in `.binex/` (gitignored by default):
 
 ## License
 
-Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for details.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

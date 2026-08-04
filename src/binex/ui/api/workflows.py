@@ -9,6 +9,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from binex.ui.api.errors import APIError
+from binex.workflow_spec.discovery import list_workflows as _list_workflows
+from binex.workflow_spec.discovery import resolve_workflow_path as _resolve_workflow_path_svc
 
 router = APIRouter(prefix="/workflows", tags=["workflows"])
 
@@ -18,93 +20,19 @@ def _get_workflows_dir() -> Path:
     return Path.cwd()
 
 
-_EXCLUDED_DIRS = {
-    "node_modules",
-    ".binex",
-    ".git",
-    ".venv",
-    "venv",
-    "__pycache__",
-    "ui",
-    "docker",
-    "src",
-    ".specify",
-    "specs",
-}
-
-
-def _is_workflow_yaml(path: Path) -> bool:
-    """Check if a YAML file looks like a Binex workflow (has 'nodes:' key)."""
-    try:
-        text = path.read_text(errors="ignore")
-        return "\nnodes:" in text or text.startswith("nodes:")
-    except OSError:
-        return False
-
-
-def _scan_workflows(base: Path) -> list[str]:
-    """Scan a directory for workflow YAML files."""
-    workflows = []
-    for p in sorted(base.rglob("*.yaml")):
-        rel = str(p.relative_to(base))
-        if rel.startswith("."):
-            continue
-        top_dir = rel.split("/")[0] if "/" in rel else None
-        if top_dir in _EXCLUDED_DIRS:
-            continue
-        if _is_workflow_yaml(p):
-            workflows.append(rel)
-    return workflows
-
-
-def _get_examples_dir() -> Path | None:
-    """Return the built-in examples directory from the binex package."""
-    try:
-        import binex
-        pkg_root = Path(binex.__file__).resolve().parent.parent.parent
-        examples = pkg_root / "examples"
-        if examples.is_dir():
-            return examples
-    except Exception:
-        pass
-    return None
-
-
 @router.get("")
 async def list_workflows() -> JSONResponse:
     """List workflow YAML files in the working directory.
 
     Falls back to built-in examples if no workflows found in cwd.
     """
-    base = _get_workflows_dir()
-    workflows = _scan_workflows(base)
-
-    # Fallback: include built-in examples if cwd has no workflows
-    if not workflows:
-        examples_dir = _get_examples_dir()
-        if examples_dir:
-            for rel in _scan_workflows(examples_dir):
-                workflows.append(f"examples/{rel}")
-
-    return JSONResponse({"workflows": workflows})
+    result = _list_workflows(base=_get_workflows_dir())
+    return JSONResponse(result)
 
 
 def _resolve_workflow_path(path: str) -> Path | None:
     """Resolve a workflow path, checking cwd first then built-in examples."""
-    base = _get_workflows_dir()
-    resolved = (base / path).resolve()
-    if str(resolved).startswith(str(base.resolve())) and resolved.exists():
-        return resolved
-
-    # Try built-in examples (e.g. path = "examples/simple.yaml")
-    examples_dir = _get_examples_dir()
-    if examples_dir and path.startswith("examples/"):
-        rel = path[len("examples/"):]
-        resolved = (examples_dir / rel).resolve()
-        if str(resolved).startswith(str(examples_dir.resolve())) and resolved.exists():
-            return resolved
-
-    return None
+    return _resolve_workflow_path_svc(path, base=_get_workflows_dir())
 
 
 @router.get("/{path:path}")
