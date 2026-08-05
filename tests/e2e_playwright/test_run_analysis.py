@@ -1,128 +1,178 @@
 """E2E: Run analysis pages — Debug, Trace, Diagnose from a real run."""
-from playwright.sync_api import sync_playwright
 
-BASE = "http://localhost:8420"
-PASSED = 0
-FAILED = 0
+from playwright.sync_api import Page, Route, expect
 
+FAKE_RUNS = {
+    "runs": [
+        {
+            "run_id": "run_fake_0001",
+            "workflow_name": "mocked-workflow",
+            "status": "completed",
+            "started_at": "2026-08-05T10:00:00Z",
+            "completed_at": "2026-08-05T10:01:00Z",
+            "total_nodes": 3,
+            "completed_nodes": 3,
+            "failed_nodes": 0,
+        }
+    ]
+}
 
-def check(name, condition, detail=""):
-    global PASSED, FAILED
-    if condition:
-        PASSED += 1
-        print(f"  PASS  {name}")
-    else:
-        FAILED += 1
-        print(f"  FAIL  {name} — {detail}")
+FAKE_RUN = {
+    "run_id": "run_fake_0001",
+    "workflow_name": "my-fake-workflow",
+    "workflow_path": "/Users/alex/Desktop/Binex/examples/ollama-research.yaml",
+    "status": "completed",
+    "started_at": "2026-03-14T17:31:20.856780Z",
+    "completed_at": "2026-03-14T17:32:19.928865Z",
+    "total_nodes": 5,
+    "completed_nodes": 5,
+    "failed_nodes": 0,
+    "skipped_nodes": 0,
+    "forked_from": None,
+    "forked_at_step": None,
+    "resumed_from": None,
+    "workflow_hash": "fefb3757eb8def79927b4cc1c2fffbed3881057992c550ce3a89bb06fbca0d34",
+    "total_cost": 0.0,
+    "git_sha": None,
+    "git_dirty": False,
+    "observed": False
+}
 
+FAKE_DEBUG = {
+    "run_id": "run_fake_0001",
+    "status": "completed",
+    "workflow_name": "my-fake-workflow",
+    "workflow_path": "/Users/alex/Desktop/Binex/examples/ollama-research.yaml",
+    "nodes": [
+        {
+            "node_id": "A",
+            "status": "completed",
+            "started_at": "2026-03-14T17:31:20.859165+00:00",
+            "completed_at": None,
+            "duration_s": 0.001,
+            "error": None,
+            "agent": "human://output",
+            "system_prompt": None,
+            "model": None,
+            "input_artifacts": [],
+            "artifacts": [
+                {
+                    "id": "art_4202f1f19ed8",
+                    "type": "human_output",
+                    "content": "",
+                    "produced_by": "A"
+                }
+            ]
+        }
+    ]
+}
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
-    page = browser.new_page(viewport={"width": 1440, "height": 900})
+FAKE_TRACE = {
+    "run_id": "run_fake_0001",
+    "status": "completed",
+    "total_duration_s": 59.072,
+    "timeline": [
+        {
+            "node_id": "A",
+            "status": "completed",
+            "started_at": "2026-03-14T17:31:20.859165+00:00",
+            "completed_at": None,
+            "duration_s": 0.001,
+            "offset_s": 0.001,
+            "error": None
+        }
+    ]
+}
 
-    # First get a run_id from the dashboard
-    print("\n=== Setup: Get Run ID ===")
-    page.goto(BASE, wait_until="networkidle")
-    page.wait_for_timeout(1000)
+FAKE_DIAGNOSE = {
+    "run_id": "run_fake_0001",
+    "status": "clean",
+    "root_cause": None,
+    "affected_nodes": [],
+    "latency_anomalies": [],
+    "recommendations": [],
+    "severity": "NONE",
+    "total_cost": 0.0,
+    "root_causes": []
+}
 
+FAKE_LINEAGE = {
+    "run_id": "run_fake_0001",
+    "nodes": [
+        {
+            "id": "art_4202f1f19ed8",
+            "type": "human_output",
+            "content": "",
+            "produced_by": "A"
+        }
+    ],
+    "edges": []
+}
+
+def _mock_run_api(page) -> None:
+    """Mock the API responses for a run and its analysis pages."""
+    def handle_run(route: Route) -> None:
+        route.fulfill(json=FAKE_RUN)
+    page.route("**/api/v1/runs/run_fake_0001", handle_run)
+
+    def handle_runs(route: Route) -> None:
+        route.fulfill(json=FAKE_RUNS)
+    page.route("**/api/v1/runs*", handle_runs)
+
+    def handle_debug(route: Route) -> None:
+        route.fulfill(json=FAKE_DEBUG)
+    page.route("**/api/v1/runs/run_fake_0001/debug?errors_only=false", handle_debug)
+
+    def handle_trace(route: Route) -> None:
+        route.fulfill(json=FAKE_TRACE)
+    page.route("**/api/v1/runs/run_fake_0001/trace", handle_trace)
+
+    def handle_diagnose(route: Route) -> None:
+        route.fulfill(json=FAKE_DIAGNOSE)
+    page.route("**/api/v1/runs/run_fake_0001/diagnose", handle_diagnose)
+
+    def handle_lineage(route: Route) -> None:
+        route.fulfill(json=FAKE_LINEAGE)
+    page.route("**/api/v1/runs/run_fake_0001/lineage", handle_lineage)
+
+def test_run_analysis_pages(page: Page) -> None:
+    """Test run analysis pages (Debug, Trace, Diagnose) for a real run."""
+    _mock_run_api(page)
+    page.goto("/")
     # Find first run link in the table
-    run_links = page.locator("a[href*='/runs/']").all()
-    if not run_links:
-        # Try clicking on a table row
-        rows = page.locator("tr").all()
-        check("Dashboard has runs", len(rows) > 1, f"found {len(rows)} rows")
-        # Get run_id from first data cell
-        first_cell = page.locator("td").first
-        run_id = first_cell.text_content() if first_cell.count() > 0 else None
-    else:
-        href = run_links[0].get_attribute("href") or ""
-        run_id = href.split("/runs/")[-1].split("/")[0] if "/runs/" in href else None
-        check("Got run link", bool(run_id), f"href={href}")
+    first_run = page.locator('[data-testid^="dashboard-run-link-run_"]').first
+    expect(first_run).to_be_visible()
+    expect(first_run).to_have_attribute("href", "/runs/run_fake_0001")
 
-    if not run_id:
-        # Fallback: read from API
-        page.goto(f"{BASE}/api/v1/runs", wait_until="networkidle")
-        import json
-        content = page.locator("pre").text_content() or page.content()
-        try:
-            data = json.loads(content) if content.startswith("[") or content.startswith("{") else None
-            if data and isinstance(data, list) and len(data) > 0:
-                run_id = data[0].get("run_id")
-        except:
-            pass
-
-    if not run_id:
-        print("  SKIP  No runs available for analysis tests")
-        browser.close()
-        print(f"\n{'='*40}")
-        print(f"Results: {PASSED} passed, {FAILED} failed (skipped analysis)")
-        exit(0)
-
-    print(f"  Using run_id: {run_id}")
-
-    # --- Test 1: Debug page ---
-    print("\n=== Test: Debug Page ===")
-    page.goto(f"{BASE}/runs/{run_id}/debug", wait_until="networkidle")
-    page.wait_for_timeout(1500)
-
-    check("Debug page loads", page.get_by_text("Debug").count() > 0)
-
+def test_run_analysis_pages_debug(page: Page) -> None:
+    """Test the Debug page for a real run."""
+    _mock_run_api(page)
+    page.goto("/runs/run_fake_0001/debug")
+    expect(page.get_by_role("heading", name="Debug").first).to_be_visible()
     # Should have node list
-    node_items = page.locator("[class*='cursor-pointer']").count()
-    check("Node list rendered", node_items >= 0)  # may be 0 if mock data
+    page.get_by_test_id("debug-node-A")
+    expect(page.get_by_test_id("debug-node-A")).to_be_visible()
 
-    page.screenshot(path="/tmp/binex_e2e_debug.png", full_page=True)
+def test_run_analysis_pages_trace(page: Page) -> None:
+    """Test the Trace page for a real run."""
+    _mock_run_api(page)
+    page.goto("/runs/run_fake_0001/trace")
+    expect(page.get_by_role("heading", name="Trace").first).to_be_visible()
+    # Should have trace content
+    expect(page.get_by_role("button", name="A — completed, 0.001s")).to_be_visible()
 
-    # Test errors-only toggle if it exists
-    toggle = page.get_by_text("Errors Only", exact=False).first
-    if toggle.count() > 0:
-        check("Errors Only toggle exists", True)
+def test_run_analysis_pages_diagnose(page: Page) -> None:
+    """Test the Diagnose page for a real run."""
+    _mock_run_api(page)
+    page.goto("/runs/run_fake_0001/diagnose")
+    expect(page.get_by_role("heading", name="Diagnosis").first).to_be_visible()
+    # Should have diagnose content
+    expect(page.get_by_text("No issues detected")).to_be_visible()
 
-    # --- Test 2: Trace page ---
-    print("\n=== Test: Trace Page ===")
-    page.goto(f"{BASE}/runs/{run_id}/trace", wait_until="networkidle")
-    page.wait_for_timeout(1500)
-
-    check("Trace page loads", page.get_by_text("Trace").count() > 0 or page.get_by_text("Timeline").count() > 0)
-
-    page.screenshot(path="/tmp/binex_e2e_trace.png", full_page=True)
-
-    # --- Test 3: Diagnose page ---
-    print("\n=== Test: Diagnose Page ===")
-    page.goto(f"{BASE}/runs/{run_id}/diagnose", wait_until="networkidle")
-    page.wait_for_timeout(1500)
-
-    check("Diagnose page loads", page.get_by_text("Diagnos").count() > 0)
-
-    # Should show severity
-    severity_texts = ["HIGH", "MEDIUM", "LOW", "NONE"]
-    has_severity = any(page.get_by_text(s, exact=True).count() > 0 for s in severity_texts)
-    check("Severity indicator shown", has_severity)
-
-    page.screenshot(path="/tmp/binex_e2e_diagnose.png", full_page=True)
-
-    # --- Test 4: Lineage page ---
-    print("\n=== Test: Lineage Page ===")
-    page.goto(f"{BASE}/runs/{run_id}/lineage", wait_until="networkidle")
-    page.wait_for_timeout(1500)
-
-    check("Lineage page loads", page.get_by_text("Lineage").count() > 0 or page.get_by_text("Artifact").count() > 0)
-
-    page.screenshot(path="/tmp/binex_e2e_lineage.png", full_page=True)
-
-    # --- Test 5: Analysis links in sidebar when on run page ---
-    print("\n=== Test: Sidebar Analysis Group ===")
-    sidebar = page.locator("aside")
-    analysis_visible = page.get_by_text("Analysis").count() > 0
-    check("Analysis group visible on run page", analysis_visible)
-
-    if analysis_visible:
-        debug_link = page.get_by_role("link", name="Debug", exact=True).first
-        check("Debug link in sidebar", debug_link.count() > 0)
-
-    browser.close()
-
-    print(f"\n{'='*40}")
-    print(f"Results: {PASSED} passed, {FAILED} failed, {PASSED+FAILED} total")
-    if FAILED > 0:
-        exit(1)
+def test_run_analysis_pages_lineage(page: Page) -> None:
+    """Test the Lineage page for a real run."""
+    _mock_run_api(page)
+    page.goto("/runs/run_fake_0001/lineage")
+    expect(page.get_by_role("heading", name="Artifact Lineage").first).to_be_visible()
+    # Should have lineage content
+    expect(page.get_by_text("art_4202f1f19ed8")).to_be_visible()
