@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from tests.e2e_playwright.pages.export_page import ExportPage
 from tests.e2e_playwright.pages.sidebar import Sidebar
 
 
@@ -14,3 +15,7 @@ def base_url() -> str:
 @pytest.fixture
 def sidebar(page) -> Sidebar:
     return Sidebar(page)
+
+@pytest.fixture
+def export_page(page) -> ExportPage:
+    return ExportPage(page)
