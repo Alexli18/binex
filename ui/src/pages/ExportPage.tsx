@@ -101,6 +101,7 @@ export default function ExportPage() {
                 checked={!useLastN}
                 onChange={() => setUseLastN(false)}
                 className="text-amber-400"
+                data-testid="export-mode-select-runs"
               />
               Select specific runs
             </label>
@@ -110,6 +111,7 @@ export default function ExportPage() {
                 checked={useLastN}
                 onChange={() => setUseLastN(true)}
                 className="text-amber-400"
+                data-testid="export-mode-last-n"
               />
               Last N runs
             </label>
@@ -125,6 +127,7 @@ export default function ExportPage() {
                 value={lastN}
                 onChange={(e) => setLastN(Math.max(1, parseInt(e.target.value) || 1))}
                 className="w-24"
+                data-testid="export-last-n-input"
               />
             </div>
           ) : (
@@ -153,6 +156,7 @@ export default function ExportPage() {
                             onChange={toggleAll}
                             className="rounded border-[#333338] bg-[#131315] text-amber-400"
                             aria-label="Select all runs"
+                            data-testid="export-select-all"
                           />
                         </th>
                         <th className="text-left px-3 py-2 font-medium text-[#80808a]">
@@ -175,6 +179,7 @@ export default function ExportPage() {
                           key={run.run_id}
                           className="hover:bg-[#1a1a1d]/30 cursor-pointer transition-colors"
                           onClick={() => toggleRun(run.run_id)}
+                          data-testid="export-run-row"
                         >
                           <td className="px-3 py-2">
                             <input
@@ -184,6 +189,7 @@ export default function ExportPage() {
                               onClick={(e) => e.stopPropagation()}
                               className="rounded border-[#333338] bg-[#131315] text-amber-400"
                               aria-label={`Select run ${run.run_id}`}
+                              data-testid={`export-run-checkbox-${run.run_id}`}
                             />
                           </td>
                           <td className="px-3 py-2 font-mono text-xs text-[#80808a]">
@@ -232,6 +238,7 @@ export default function ExportPage() {
                   variant={format === f ? 'default' : 'ghost'}
                   size="sm"
                   className={format === f ? '' : 'text-[#80808a] hover:text-[#f0f0f0]'}
+                  data-testid={`export-format-${f}`}
                 >
                   {f.toUpperCase()}
                 </Button>
@@ -246,6 +253,7 @@ export default function ExportPage() {
               checked={includeArtifacts}
               onChange={(e) => setIncludeArtifacts(e.target.checked)}
               className="rounded border-[#333338] bg-[#131315] text-amber-400"
+              data-testid="export-include-artifacts"
             />
             Include artifacts
           </label>
@@ -256,6 +264,7 @@ export default function ExportPage() {
           <Button
             onClick={handleDownload}
             disabled={!canDownload || exportMutation.isPending}
+            data-testid="export-download"
           >
             {exportMutation.isPending ? (
               'Exporting...'
@@ -275,7 +284,7 @@ export default function ExportPage() {
         </div>
 
         {exportMutation.error && (
-          <div className="rounded-card bg-red-900/30 border border-red-700/50 p-3 text-sm text-red-300">
+          <div data-testid="export-error" className="rounded-card bg-red-900/30 border border-red-700/50 p-3 text-sm text-red-300">
             {exportMutation.error.message}
           </div>
         )}

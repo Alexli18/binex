@@ -13,6 +13,7 @@ interface CostBreakdownChartProps {
   data: BreakdownItem[];
   color?: string;
   emptyMessage?: string;
+  testId?: string;
 }
 
 export function CostBreakdownChart({
@@ -20,11 +21,12 @@ export function CostBreakdownChart({
   data,
   color = chartColors.primary,
   emptyMessage = 'No data',
+  testId,
 }: CostBreakdownChartProps) {
   const chartHeight = Math.max(200, data.length * 40);
 
   return (
-    <div className="bg-[#131315] rounded-card border border-[#252528] p-4">
+    <div className="bg-[#131315] rounded-card border border-[#252528] p-4" data-testid={testId}>
       <h2 className="text-sm font-semibold text-[#f0f0f0] mb-4">{title}</h2>
       {data.length === 0 ? (
         <p className="text-[#4a4a52] text-sm text-center py-12">{emptyMessage}</p>

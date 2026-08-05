@@ -132,6 +132,7 @@ function PatternCard({
     <button
       onClick={() => onSelect(pattern)}
       title={dsl}
+      data-testid={`scaffold-pattern-${pattern.name}`}
       className={`group text-left border border-[#252528] ${colors.border} border-l-2 rounded-lg p-4
         bg-[#1a1a1d]/50 hover:bg-[#1a1a1d] hover:border-[#333338]
         transition-all duration-150`}
@@ -244,6 +245,7 @@ export default function Scaffold() {
           {TAB_CONFIG.map(({ mode: m, label, icon: Icon }) => (
             <button
               key={m}
+              data-testid={`scaffold-tab-${m}`}
               onClick={() => setMode(m)}
               className={`flex items-center gap-2 px-4 py-2 text-sm rounded-md transition-colors ${
                 mode === m
@@ -272,12 +274,14 @@ export default function Scaffold() {
                   onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
                   placeholder='e.g. "A -> B, C -> D"'
                   className="flex-1 font-mono"
+                  data-testid="scaffold-dsl-input"
                 />
                 <Button
                   onClick={handleGenerate}
                   disabled={!expression.trim() || scaffold.isPending}
                   size="sm"
                   className="bg-amber-500 hover:bg-amber-600"
+                  data-testid="scaffold-generate-btn"
                 >
                   {scaffold.isPending ? (
                     'Generating...'
@@ -295,7 +299,7 @@ export default function Scaffold() {
             </div>
 
             {scaffold.error && (
-              <div className="rounded-md bg-red-900/30 border border-red-700/50 p-3 text-sm text-red-300">
+              <div data-testid="scaffold-error" className="rounded-md bg-red-900/30 border border-red-700/50 p-3 text-sm text-red-300">
                 {scaffold.error.message}
               </div>
             )}
@@ -312,6 +316,7 @@ export default function Scaffold() {
                       variant="outline"
                       size="sm"
                       className="h-7 text-xs"
+                      data-testid="scaffold-copy-btn"
                     >
                       {copied ? <Check size={12} className="mr-1" /> : <Copy size={12} className="mr-1" />}
                       {copied ? 'Copied' : 'Copy'}
@@ -320,12 +325,13 @@ export default function Scaffold() {
                       onClick={() => handleOpenInEditor(generatedYaml)}
                       size="sm"
                       className="h-7 text-xs"
+                      data-testid="scaffold-open-editor-btn"
                     >
                       Open in Editor
                     </Button>
                   </div>
                 </div>
-                <pre className="p-4 text-xs text-[#80808a] whitespace-pre-wrap font-mono overflow-x-auto max-h-96 overflow-y-auto bg-[#131315]">
+                <pre data-testid="scaffold-yaml-output" className="p-4 text-xs text-[#80808a] whitespace-pre-wrap font-mono overflow-x-auto max-h-96 overflow-y-auto bg-[#131315]">
                   {generatedYaml}
                 </pre>
               </div>
@@ -398,6 +404,7 @@ export default function Scaffold() {
                   onClick={() => handleOpenInEditor(BLANK_YAML)}
                   size="sm"
                   className="h-7 text-xs"
+                  data-testid="scaffold-blank-open-editor-btn"
                 >
                   Open in Editor
                 </Button>

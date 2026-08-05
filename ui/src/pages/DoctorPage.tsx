@@ -64,6 +64,7 @@ export default function DoctorPage() {
             disabled={isFetching}
             variant="outline"
             size="sm"
+            data-testid="doctor-refresh-btn"
           >
             <RefreshCw size={14} className={isFetching ? 'animate-spin mr-1.5' : 'mr-1.5'} />
             Refresh
@@ -75,6 +76,7 @@ export default function DoctorPage() {
         {/* Summary banner */}
         {checks.length > 0 && (
           <div
+            data-testid="doctor-summary"
             className={`rounded-card border p-3 text-sm mb-6 ${
               allOk
                 ? 'bg-emerald-900/20 border-emerald-700/30 text-emerald-300'
@@ -101,6 +103,7 @@ export default function DoctorPage() {
               return (
                 <div
                   key={check.name}
+                  data-testid={`doctor-check-${check.name}`}
                   className={`rounded-card border p-4 ${cfg.bg}`}
                 >
                   <div className="flex items-start gap-3">

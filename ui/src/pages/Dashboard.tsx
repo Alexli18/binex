@@ -88,7 +88,7 @@ export default function Dashboard() {
               <DollarSign className="w-3.5 h-3.5 mr-1.5" />
               Costs
             </Button>
-            <Button data-tour="new-run" onClick={() => setShowNewRun(true)} size="sm" className="bg-amber-500 hover:bg-amber-400 text-black border-0">
+            <Button data-testid="dashboard-new-run-btn" data-tour="new-run" onClick={() => setShowNewRun(true)} size="sm" className="bg-amber-500 hover:bg-amber-400 text-black border-0">
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               New Run
             </Button>
@@ -124,7 +124,7 @@ export default function Dashboard() {
       {/* Filters */}
       <div className="flex items-center gap-3 mb-5">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[148px] h-8 text-xs border-[#252528] bg-[#131315]" aria-label="Filter by status">
+          <SelectTrigger className="w-[148px] h-8 text-xs border-[#252528] bg-[#131315]" aria-label="Filter by status" data-testid="dashboard-status-filter">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -145,6 +145,7 @@ export default function Dashboard() {
             placeholder="Search runs or workflows..."
             className="pl-8 h-8 text-xs border-[#252528] bg-[#131315] placeholder:text-[#4a4a52]"
             aria-label="Search by run ID or workflow name"
+            data-testid="dashboard-search-input"
           />
         </div>
 
@@ -153,6 +154,7 @@ export default function Dashboard() {
           size="sm"
           onClick={() => navigate('/export')}
           className="h-8 text-xs text-[#80808a] border-[#252528] hover:border-[#333338] hover:text-[#80808a] ml-auto"
+          data-testid="dashboard-export-btn"
         >
           <Download className="w-3.5 h-3.5 mr-1.5" />
           Export
@@ -198,7 +200,7 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="rounded-lg border border-[#252528] overflow-hidden">
-          <table className="min-w-full text-xs">
+          <table className="min-w-full text-xs" data-testid="dashboard-runs-table">
             <thead>
               <tr className="border-b border-[#252528]">
                 <th className="text-left px-4 py-2.5 font-medium text-[#4a4a52]">Run ID</th>
@@ -214,12 +216,14 @@ export default function Dashboard() {
               {filteredRuns.map((run) => (
                 <tr
                   key={run.run_id}
+                  data-testid="dashboard-run-row"
                   className="hover:bg-[#1a1a1d]/30 transition-colors cursor-pointer"
                   onClick={() => navigate(`/runs/${run.run_id}`)}
                 >
                   <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
                     <Link
                       to={`/runs/${run.run_id}`}
+                      data-testid={`dashboard-run-link-${run.run_id}`}
                       className="text-amber-400 hover:text-amber-300 font-mono transition-colors"
                     >
                       {run.run_id.slice(0, 8)}
@@ -245,6 +249,7 @@ export default function Dashboard() {
                     {run.status === 'failed' && (
                       <Link
                         to={`/runs/${run.run_id}/debug`}
+                        data-testid={`dashboard-debug-link-${run.run_id}`}
                         className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-red-800/60 text-red-400 hover:bg-red-900/20 transition-colors"
                       >
                         <Bug size={11} />

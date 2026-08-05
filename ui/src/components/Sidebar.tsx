@@ -77,7 +77,7 @@ function NavGroupSection({ group, collapsed }: { group: NavGroup; collapsed: boo
   return (
     <div style={{ marginBottom: 4 }}>
       {!collapsed && (
-        <div style={{
+        <div data-testid={`sidebar-group-${group.label.toLowerCase()}`} style={{
           padding: "6px 14px 3px",
           fontSize: 9,
           color: "#4a4a52",
@@ -94,6 +94,7 @@ function NavGroupSection({ group, collapsed }: { group: NavGroup; collapsed: boo
             <NavLink
               to={item.path}
               end={item.path === "/"}
+              data-testid={`sidebar-link-${item.label.toLowerCase()}`}
               data-tour={TOUR_ANCHORS[item.path]}
               title={collapsed ? item.label : undefined}
               style={({ isActive }) => ({
@@ -149,7 +150,7 @@ export default function Sidebar() {
   const w = collapsed ? 40 : 200;
 
   return (
-    <aside data-tour="sidebar" style={{
+    <aside data-testid="sidebar" data-tour="sidebar" style={{
       width: w,
       minWidth: w,
       height: "100vh",
@@ -196,6 +197,7 @@ export default function Sidebar() {
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
+          data-testid="sidebar-collapse"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           style={{
             background: "none",

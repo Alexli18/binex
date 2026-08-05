@@ -85,10 +85,10 @@ export default function DebugPage() {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-[#80808a]">{data?.status}</span>
-          <Link to={`/runs/${runId}/trace`} className="text-xs text-amber-400 hover:text-amber-300">
+          <Link to={`/runs/${runId}/trace`} data-testid="debug-trace-link" className="text-xs text-amber-400 hover:text-amber-300">
             View Trace
           </Link>
-          <Link to={`/runs/${runId}/diagnose`} className="text-xs text-amber-400 hover:text-amber-300">
+          <Link to={`/runs/${runId}/diagnose`} data-testid="debug-diagnose-link" className="text-xs text-amber-400 hover:text-amber-300">
             Diagnose
           </Link>
         </div>

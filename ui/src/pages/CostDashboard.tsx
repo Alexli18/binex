@@ -82,17 +82,18 @@ export default function CostDashboard() {
               variant="outline"
               size="sm"
               onClick={() => navigate('/export')}
+              data-testid="cost-export-csv"
             >
               <Download className="w-3.5 h-3.5 mr-1.5" />
               Export CSV
             </Button>
             <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-[100px]" aria-label="Select period">
+              <SelectTrigger className="w-[100px]" aria-label="Select period" data-testid="cost-period-select">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {PERIODS.map((p) => (
-                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                  <SelectItem key={p} value={p} data-testid={`cost-period-option-${p}`}>{p}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -108,20 +109,24 @@ export default function CostDashboard() {
             label="Total Cost"
             value={`$${(costData?.total_cost ?? 0).toFixed(2)}`}
             ariaLabel={`Total cost: $${(costData?.total_cost ?? 0).toFixed(2)} for last ${period}`}
+            testId="cost-kpi-total"
           />
           <KPICard
             icon={TrendingUp}
             label="Avg per Run"
             value={`$${(costData?.avg_per_run ?? 0).toFixed(4)}`}
+            testId="cost-kpi-avg-per-run"
           />
           <KPICard
             icon={Activity}
             label="Total Runs"
             value={String(costData?.run_count ?? 0)}
+            testId="cost-kpi-total-runs"
           />
           <KPICard
             icon={Shield}
             label="Budget Used"
+            testId="cost-kpi-budget-used"
             value={budgetLimit && budgetLimit > 0 ? `${budgetUsed.toFixed(0)}%` : 'N/A'}
             subtitle={budgetLimit && budgetLimit > 0 ? undefined : 'Not configured'}
           >
@@ -142,7 +147,7 @@ export default function CostDashboard() {
         </div>
 
         {/* Cost Trend */}
-        <div className="bg-[#131315] rounded-card border border-[#252528]/60 p-4">
+        <div className="bg-[#131315] rounded-card border border-[#252528]/60 p-4" data-testid="cost-trend-section">
           <h2 className="text-sm font-semibold text-[#f0f0f0] mb-4">Cost Trend</h2>
           {costQuery.isLoading ? (
             <div className="h-[300px] bg-[#1a1a1d] rounded animate-pulse" />
@@ -154,12 +159,14 @@ export default function CostDashboard() {
         {/* Breakdown Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <CostBreakdownChart
+            testId="cost-by-model-section"
             title="Cost by Model"
             data={(costData?.cost_by_model ?? []).map((m) => ({ name: m.model, cost: m.cost }))}
             color={chartColors.primary}
             emptyMessage="No model cost data"
           />
           <CostBreakdownChart
+            testId="cost-by-node-section"
             title="Cost by Node"
             data={(costData?.cost_by_node ?? []).map((n) => ({ name: n.node_id, cost: n.cost }))}
             color={chartColors.secondary}
@@ -168,7 +175,7 @@ export default function CostDashboard() {
         </div>
 
         {/* Runs Table */}
-        <div>
+        <div data-testid="cost-runs-section">
           <h2 className="text-sm font-semibold text-[#f0f0f0] mb-3">Runs by Cost</h2>
           {runsLoading ? (
             <LoadingState message="Loading runs..." variant="inline" />

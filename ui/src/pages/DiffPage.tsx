@@ -105,7 +105,7 @@ export default function DiffPage() {
             <div className="flex-1 w-full">
               <label className="block text-sm font-medium text-[#80808a] mb-1">Run A</label>
               <Select value={runA} onValueChange={setRunA}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" data-testid="diff-run-a-select">
                   <SelectValue placeholder="Select a run..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -126,7 +126,7 @@ export default function DiffPage() {
             <div className="flex-1 w-full">
               <label className="block text-sm font-medium text-[#80808a] mb-1">Run B</label>
               <Select value={runB} onValueChange={setRunB}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" data-testid="diff-run-b-select">
                   <SelectValue placeholder="Select a run..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -146,6 +146,7 @@ export default function DiffPage() {
               onClick={handleCompare}
               disabled={!runA || !runB || diff.isPending}
               size="sm"
+              data-testid="diff-compare-btn"
             >
               {diff.isPending ? 'Comparing...' : 'Compare'}
             </Button>
@@ -154,7 +155,7 @@ export default function DiffPage() {
 
         {/* Error */}
         {diff.isError && (
-          <div className={`${statusColors.failed.bg} border ${statusColors.failed.border} rounded-card p-4 flex items-center gap-2`}>
+          <div data-testid="diff-error" className={`${statusColors.failed.bg} border ${statusColors.failed.border} rounded-card p-4 flex items-center gap-2`}>
             <AlertCircle className={`w-5 h-5 ${statusColors.failed.text} flex-shrink-0`} />
             <p className={`${statusColors.failed.text} text-sm`}>{diff.error.message}</p>
           </div>
@@ -169,7 +170,7 @@ export default function DiffPage() {
                 { label: 'Run A', data: diff.data.run_a },
                 { label: 'Run B', data: diff.data.run_b },
               ].map(({ label, data }) => (
-                <div key={label} className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
+                <div key={label} data-testid={`diff-summary-${label.toLowerCase().replace(' ', '-')}`} className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-bold text-[#80808a]">{label}</h3>
                     <StatusBadge status={data.status} />
@@ -207,6 +208,7 @@ export default function DiffPage() {
                   ]).map(({ key, label }) => (
                     <button
                       key={key}
+                      data-testid={`diff-filter-${key}`}
                       onClick={() => setFilter(key)}
                       className={cn(
                         'px-3.5 py-1.5 text-xs font-medium transition-colors',
@@ -250,6 +252,7 @@ export default function DiffPage() {
                         return (
                           <React.Fragment key={nd.node_id}>
                           <tr
+                            data-testid={`diff-node-row-${nd.node_id}`}
                             className={`${statusDiffers ? 'bg-red-900/20' : ''} hover:bg-[#1a1a1d]/30`}
                           >
                             <td className="px-4 py-2 font-mono text-xs text-[#f0f0f0]">{nd.node_id}</td>

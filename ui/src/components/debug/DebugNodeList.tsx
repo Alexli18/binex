@@ -64,6 +64,7 @@ export function DebugNodeList({
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="pl-8"
+            data-testid="debug-node-filter-input"
           />
         </div>
         <label className="flex items-center gap-2 text-xs text-[#80808a] cursor-pointer">
@@ -72,6 +73,7 @@ export function DebugNodeList({
             checked={errorsOnly}
             onChange={(e) => onErrorsOnlyChange(e.target.checked)}
             className="rounded border-[#333338] bg-[#131315] text-amber-400 focus:ring-amber-500 focus:ring-offset-0"
+            data-testid="debug-errors-only-toggle"
           />
           Errors only
         </label>
@@ -86,6 +88,7 @@ export function DebugNodeList({
             {filteredNodes.map((node) => (
               <li key={node.node_id}>
                 <button
+                  data-testid={`debug-node-${node.node_id}`}
                   onClick={() =>
                     onSelectNode(
                       selectedNodeId === node.node_id ? null : node.node_id,

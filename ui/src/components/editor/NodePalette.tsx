@@ -67,6 +67,7 @@ export function NodePalette() {
       <div
         key={nt.type}
         draggable
+        data-testid={`palette-node-${nt.type}`}
         onDragStart={(e) => onDragStart(e, nt)}
         title={nt.description}
         style={{
@@ -89,7 +90,7 @@ export function NodePalette() {
   };
 
   return (
-    <div style={{
+    <div data-testid="node-palette" style={{
       display: "flex", flexDirection: "column", gap: 0,
       borderRight: "1px solid #252528",
       background: "#131315",
