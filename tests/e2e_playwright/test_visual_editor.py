@@ -1,6 +1,9 @@
 """E2E: Visual Editor — mode toggle, drag & drop, scaffold flow."""
 
+import pytest
 from playwright.sync_api import Page, expect
+
+pytestmark = pytest.mark.e2e
 
 
 def test_editor_mode_toggle_visual(page: Page) -> None:

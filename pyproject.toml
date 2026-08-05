@@ -99,5 +99,8 @@ mypy_path = "src"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-addopts = "--ignore=tests/e2e_playwright"
+addopts = "-m 'not e2e' --strict-markers"
 timeout = 30
+markers = [
+    "e2e: end-to-end browser tests (require the UI server running on :8420)",
+]

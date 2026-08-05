@@ -5,6 +5,8 @@ import re
 import pytest
 from playwright.sync_api import Page, expect
 
+pytestmark = pytest.mark.e2e
+
 
 @pytest.mark.parametrize("export_format", ["CSV", "JSON"])
 def test_export_selected_runs(page: Page, export_format: str) -> None:

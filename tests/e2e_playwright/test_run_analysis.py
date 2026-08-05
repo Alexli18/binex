@@ -1,6 +1,9 @@
 """E2E: Run analysis pages — Debug, Trace, Diagnose from a real run."""
 
+import pytest
 from playwright.sync_api import Page, Route, expect
+
+pytestmark = pytest.mark.e2e
 
 FAKE_RUNS = {
     "runs": [

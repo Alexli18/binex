@@ -1,6 +1,9 @@
 """E2E: System pages — Doctor, Plugins, Gateway."""
 
+import pytest
 from playwright.sync_api import Page, expect
+
+pytestmark = pytest.mark.e2e
 
 
 def test_system_page_doctor(page: Page) -> None:

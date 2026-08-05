@@ -5,6 +5,8 @@ import re
 import pytest
 from playwright.sync_api import Page, expect
 
+pytestmark = pytest.mark.e2e
+
 
 def test_sidebar_renders(page: Page) -> None:
     page.goto("/")

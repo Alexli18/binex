@@ -4,6 +4,8 @@ import pytest
 import yaml
 from playwright.sync_api import Page, expect
 
+pytestmark = pytest.mark.e2e
+
 
 def test_scaffold_flow_dsl(page: Page) -> None:
     page.goto("/scaffold")

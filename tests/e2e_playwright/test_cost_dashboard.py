@@ -2,6 +2,8 @@
 import pytest
 from playwright.sync_api import Page, expect
 
+pytestmark = pytest.mark.e2e
+
 
 @pytest.mark.parametrize("period", ["24h", "7d", "30d", "all"])
 def test_cost_dashboard(page: Page, period: str) -> None:
