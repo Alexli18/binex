@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import json
+
 import pytest
 
 from binex.eval.asserts import evaluate_asserts
-from binex.eval.models import AssertResult, EvalAssert, EvalCase
+from binex.eval.models import EvalAssert, EvalCase
 from binex.models.artifact import Artifact, Lineage
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -96,7 +96,9 @@ async def test_contains_fail():
 async def test_not_contains_pass():
     es, ats = InMemoryExecutionStore(), InMemoryArtifactStore()
     await _setup_run(es, ats, content="hello world")
-    case = EvalCase(id="c", asserts=[EvalAssert(type="not_contains", value="error", node="worker")])
+    case = EvalCase(
+        id="c", asserts=[EvalAssert(type="not_contains", value="error", node="worker")],
+    )
     results = await evaluate_asserts(case, "run_test", es, ats)
     assert results[0].status == "passed"
 
@@ -105,7 +107,9 @@ async def test_not_contains_pass():
 async def test_not_contains_fail():
     es, ats = InMemoryExecutionStore(), InMemoryArtifactStore()
     await _setup_run(es, ats, content="fatal error occurred")
-    case = EvalCase(id="c", asserts=[EvalAssert(type="not_contains", value="error", node="worker")])
+    case = EvalCase(
+        id="c", asserts=[EvalAssert(type="not_contains", value="error", node="worker")],
+    )
     results = await evaluate_asserts(case, "run_test", es, ats)
     assert results[0].status == "failed"
 
@@ -140,7 +144,9 @@ async def test_regex_fail():
 async def test_json_path_exists_pass():
     es, ats = InMemoryExecutionStore(), InMemoryArtifactStore()
     await _setup_run(es, ats, content=json.dumps({"questions": ["q1", "q2"]}))
-    case = EvalCase(id="c", asserts=[EvalAssert(type="json_path", path="$.questions", node="worker")])
+    case = EvalCase(
+        id="c", asserts=[EvalAssert(type="json_path", path="$.questions", node="worker")],
+    )
     results = await evaluate_asserts(case, "run_test", es, ats)
     assert results[0].status == "passed"
 
@@ -149,7 +155,9 @@ async def test_json_path_exists_pass():
 async def test_json_path_exists_fail():
     es, ats = InMemoryExecutionStore(), InMemoryArtifactStore()
     await _setup_run(es, ats, content=json.dumps({"other": "value"}))
-    case = EvalCase(id="c", asserts=[EvalAssert(type="json_path", path="$.questions", node="worker")])
+    case = EvalCase(
+        id="c", asserts=[EvalAssert(type="json_path", path="$.questions", node="worker")],
+    )
     results = await evaluate_asserts(case, "run_test", es, ats)
     assert results[0].status == "failed"
 
@@ -158,7 +166,10 @@ async def test_json_path_exists_fail():
 async def test_json_path_not_exists_pass():
     es, ats = InMemoryExecutionStore(), InMemoryArtifactStore()
     await _setup_run(es, ats, content=json.dumps({"other": "x"}))
-    case = EvalCase(id="c", asserts=[EvalAssert(type="json_path", path="$.questions", exists=False, node="worker")])
+    case = EvalCase(
+        id="c",
+        asserts=[EvalAssert(type="json_path", path="$.questions", exists=False, node="worker")],
+    )
     results = await evaluate_asserts(case, "run_test", es, ats)
     assert results[0].status == "passed"
 
@@ -198,7 +209,9 @@ async def art_store_store(ats, art_id, run_id, produced_by, content):
 async def test_node_not_found_is_error():
     es, ats = InMemoryExecutionStore(), InMemoryArtifactStore()
     await _setup_run(es, ats, node_id="worker", content="hi")
-    case = EvalCase(id="c", asserts=[EvalAssert(type="contains", value="hi", node="nonexistent_node")])
+    case = EvalCase(
+        id="c", asserts=[EvalAssert(type="contains", value="hi", node="nonexistent_node")],
+    )
     results = await evaluate_asserts(case, "run_test", es, ats)
     assert results[0].status == "error"
     assert "nonexistent_node" in results[0].reason

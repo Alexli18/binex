@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from binex.importers.otel import OtelImportResult, convert_trace, import_from_file, parse_otlp_json
+from binex.importers.otel import convert_trace, import_from_file, parse_otlp_json
 from binex.models.task import TaskStatus
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 
@@ -104,7 +104,8 @@ class TestRunSummaryDerivation:
         rs = _resource_spans("plain-spans.json")
         result = convert_trace(rs)
         # Root span name is "POST /api/chat"
-        assert "post" in result.run_summary.workflow_name.lower() or result.run_summary.workflow_name == "my-web-service"
+        wf_name = result.run_summary.workflow_name
+        assert "post" in wf_name.lower() or wf_name == "my-web-service"
 
     def test_started_at_earliest_span(self):
         rs = _resource_spans("langchain-openllmetry.json")
@@ -252,7 +253,10 @@ class TestNodeIdSanitization:
                 "attributes": [],
             },
         ]
-        rs = [{"resource": {"attributes": []}, "scopeSpans": [{"scope": {"name": ""}, "spans": spans}]}]
+        rs = [{
+            "resource": {"attributes": []},
+            "scopeSpans": [{"scope": {"name": ""}, "spans": spans}],
+        }]
         result = convert_trace(rs)
         task_ids = {r.task_id for r in result.records}
         assert "chatopenai" in task_ids

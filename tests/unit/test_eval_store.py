@@ -12,7 +12,6 @@ from binex.models.execution import RunSummary
 from binex.stores.backends.memory import InMemoryExecutionStore
 from binex.stores.backends.sqlite import SqliteExecutionStore
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

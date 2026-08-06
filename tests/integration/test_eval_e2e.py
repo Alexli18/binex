@@ -139,7 +139,7 @@ async def test_eval_result_persisted(suite_file: Path):
     """EvalResult should be saved to the store after run_suite."""
     es, ats = InMemoryExecutionStore(), InMemoryArtifactStore()
     suite = load_suite(suite_file)
-    result = await run_suite(suite, exec_store=es, art_store=ats)
+    await run_suite(suite, exec_store=es, art_store=ats)
 
     # Should be persisted
     rows = await es.list_eval_results()

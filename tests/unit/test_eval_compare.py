@@ -11,7 +11,6 @@ from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -154,7 +153,9 @@ async def test_graceful_when_baseline_run_missing_from_store():
     es, ats = InMemoryExecutionStore(), InMemoryArtifactStore()
     await _populate(es, ats, "current_run", "hello")
     case = EvalCase(id="c1")
-    result = await compare_case(case, "current_run", "nonexistent_baseline", EvalThresholds(), es, ats)
+    result = await compare_case(
+        case, "current_run", "nonexistent_baseline", EvalThresholds(), es, ats,
+    )
     assert result.verdict == "fail"
     assert result.error is not None
     assert "nonexistent_baseline" in result.error

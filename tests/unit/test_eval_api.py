@@ -13,7 +13,6 @@ from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutio
 
 
 def _make_result(suite_name: str = "my-suite", result_id: str = "eval_abc123") -> dict:
-    from datetime import UTC, datetime
     r = EvalResult(
         suite_name=suite_name,
         suite_path="/path/suite.yaml",
@@ -43,8 +42,9 @@ def _make_result(suite_name: str = "my-suite", result_id: str = "eval_abc123") -
 
 @pytest.fixture
 def client():
-    from binex.ui.api.eval import router
     from fastapi import FastAPI
+
+    from binex.ui.api.eval import router
     app = FastAPI()
     app.include_router(router, prefix="/api/v1")
     es = InMemoryExecutionStore()

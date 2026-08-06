@@ -14,28 +14,25 @@ Coverage:
 
 from __future__ import annotations
 
-import uuid
-from datetime import UTC, datetime
-from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
+# The module under test
+from binex.mcp_server import tools as mcp_tools
 from binex.models.artifact import Artifact, Lineage
 from binex.models.cost import CostRecord
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 
-# The module under test
-from binex.mcp_server import tools as mcp_tools
-
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _run(run_id: str = "run-001", workflow_name: str = "my-workflow", source: str | None = None) -> RunSummary:
+def _run(
+    run_id: str = "run-001", workflow_name: str = "my-workflow", source: str | None = None,
+) -> RunSummary:
     return RunSummary(
         run_id=run_id,
         workflow_name=workflow_name,
@@ -47,7 +44,9 @@ def _run(run_id: str = "run-001", workflow_name: str = "my-workflow", source: st
     )
 
 
-def _record(run_id: str, task_id: str, status: TaskStatus = TaskStatus.COMPLETED) -> ExecutionRecord:
+def _record(
+    run_id: str, task_id: str, status: TaskStatus = TaskStatus.COMPLETED,
+) -> ExecutionRecord:
     return ExecutionRecord(
         id=f"{run_id}-{task_id}",
         run_id=run_id,
@@ -62,7 +61,9 @@ def _record(run_id: str, task_id: str, status: TaskStatus = TaskStatus.COMPLETED
     )
 
 
-def _artifact(art_id: str, run_id: str, produced_by: str = "node-a", content: str = "result") -> Artifact:
+def _artifact(
+    art_id: str, run_id: str, produced_by: str = "node-a", content: str = "result",
+) -> Artifact:
     return Artifact(
         id=art_id,
         run_id=run_id,
@@ -83,7 +84,9 @@ async def _populated_stores(
     await exec_store.create_run(run)
 
     rec = _record(run_id=run_id, task_id="node-a")
-    art = _artifact(art_id=f"{run_id}_node-a_out", run_id=run_id, produced_by="node-a", content="hello world")
+    art = _artifact(
+        art_id=f"{run_id}_node-a_out", run_id=run_id, produced_by="node-a", content="hello world",
+    )
     rec.output_artifact_refs.append(art.id)
     await exec_store.record(rec)
     await art_store.store(art)
@@ -189,7 +192,9 @@ class TestDebugNode:
     @pytest.mark.asyncio
     async def test_existing_node(self):
         exec_store, art_store = await _populated_stores("run-003")
-        result = await mcp_tools.debug_node(exec_store, art_store, run_id="run-003", node_id="node-a")
+        result = await mcp_tools.debug_node(
+            exec_store, art_store, run_id="run-003", node_id="node-a",
+        )
         assert result["node_id"] == "node-a"
         assert result["status"] == "completed"
         assert result["latency_ms"] == 100
@@ -205,13 +210,17 @@ class TestDebugNode:
     @pytest.mark.asyncio
     async def test_missing_node_returns_not_found(self):
         exec_store, art_store = await _populated_stores("run-004")
-        result = await mcp_tools.debug_node(exec_store, art_store, run_id="run-004", node_id="ghost-node")
+        result = await mcp_tools.debug_node(
+            exec_store, art_store, run_id="run-004", node_id="ghost-node",
+        )
         assert result["code"] == "not_found"
 
     @pytest.mark.asyncio
     async def test_output_artifact_content_included(self):
         exec_store, art_store = await _populated_stores("run-005")
-        result = await mcp_tools.debug_node(exec_store, art_store, run_id="run-005", node_id="node-a")
+        result = await mcp_tools.debug_node(
+            exec_store, art_store, run_id="run-005", node_id="node-a",
+        )
         assert result["outputs"][0]["content"] == "hello world"
 
     @pytest.mark.asyncio
@@ -226,7 +235,9 @@ class TestDebugNode:
             model="gpt-4o",
         )
         await exec_store.record_cost(cost_rec)
-        result = await mcp_tools.debug_node(exec_store, art_store, run_id="run-006", node_id="node-a")
+        result = await mcp_tools.debug_node(
+            exec_store, art_store, run_id="run-006", node_id="node-a",
+        )
         assert result["cost"] == pytest.approx(0.02)
 
     @pytest.mark.asyncio
@@ -238,7 +249,9 @@ class TestDebugNode:
         rec = _record(run_id="run-err", task_id="bad-node", status=TaskStatus.FAILED)
         rec.error = "LLM timeout"
         await exec_store.record(rec)
-        result = await mcp_tools.debug_node(exec_store, art_store, run_id="run-err", node_id="bad-node")
+        result = await mcp_tools.debug_node(
+            exec_store, art_store, run_id="run-err", node_id="bad-node",
+        )
         assert result["status"] == "failed"
         assert result["error"] == "LLM timeout"
 
@@ -313,7 +326,11 @@ class TestTruncation:
         await exec_store.record(rec)
         await art_store.store(art)
 
-        result = await mcp_tools.debug_node(exec_store, art_store, run_id="run-trunc", node_id="node-trunc")
+        result = await mcp_tools.debug_node(
+
+            exec_store, art_store, run_id="run-trunc", node_id="node-trunc",
+
+        )
         output_content = result["outputs"][0]["content"]
         # Must be truncated
         assert len(output_content) < 5000
@@ -333,7 +350,11 @@ class TestTruncation:
         await exec_store.record(rec)
         await art_store.store(art)
 
-        result = await mcp_tools.debug_node(exec_store, art_store, run_id="run-exact", node_id="node-exact")
+        result = await mcp_tools.debug_node(
+
+            exec_store, art_store, run_id="run-exact", node_id="node-exact",
+
+        )
         assert "truncated" not in result["outputs"][0]["content"]
         assert len(result["outputs"][0]["content"]) == 4000
 
@@ -376,20 +397,6 @@ class TestDiagnoseRun:
     @pytest.mark.asyncio
     async def test_existing_run_calls_diagnose(self):
         exec_store, art_store = await _populated_stores("run-diag")
-        # Patch the internal trace.diagnose module
-        mock_report = {"summary": "ok", "issues": []}
-        with patch("binex.mcp_server.tools.diagnose_run") as mock_fn:
-            # We test the wrapper, so call it and patch the internal call
-            pass
-
-        # Direct test: diagnose should succeed and not raise
-        with patch("binex.trace.diagnose.diagnose_run") as mock_diag, \
-             patch("binex.trace.diagnose.report_to_dict", return_value={"summary": "all good", "issues": []}):
-            mock_diag.return_value = object()  # any truthy
-            # Use AsyncMock for async function
-            mock_diag_async = AsyncMock(return_value=object())
-            with patch("binex.mcp_server.tools.diagnose_run.__wrapped__", create=True):
-                pass
 
         # Just verify no crash on a valid run — full diagnose may depend on internals
         try:
@@ -410,7 +417,9 @@ class TestDiffRuns:
         exec_store = InMemoryExecutionStore()
         art_store = InMemoryArtifactStore()
         await exec_store.create_run(_run("run-b"))
-        result = await mcp_tools.diff_runs(exec_store, art_store, run_id_a="ghost", run_id_b="run-b")
+        result = await mcp_tools.diff_runs(
+            exec_store, art_store, run_id_a="ghost", run_id_b="run-b",
+        )
         assert result["code"] == "not_found"
         assert "ghost" in result["error"]
 
@@ -419,7 +428,9 @@ class TestDiffRuns:
         exec_store = InMemoryExecutionStore()
         art_store = InMemoryArtifactStore()
         await exec_store.create_run(_run("run-a"))
-        result = await mcp_tools.diff_runs(exec_store, art_store, run_id_a="run-a", run_id_b="ghost")
+        result = await mcp_tools.diff_runs(
+            exec_store, art_store, run_id_a="run-a", run_id_b="ghost",
+        )
         assert result["code"] == "not_found"
         assert "ghost" in result["error"]
 
@@ -489,8 +500,8 @@ class TestReplayNode:
         from binex.mcp_server.tools import _apply_node_prompt_override
         with pytest.raises((ValueError, Exception)):
             # non-existent node must raise ValueError
-            from unittest.mock import MagicMock as MM
-            spec2 = MM()
+            from unittest.mock import MagicMock
+            spec2 = MagicMock()
             spec2.nodes = {}
             spec2.model_dump.return_value = {"nodes": {}, "name": "t"}
             _apply_node_prompt_override(spec2, "missing-node", "prompt")
@@ -529,7 +540,9 @@ cases:
         art_store = InMemoryArtifactStore()
 
         mock_result = MagicMock()
-        mock_result.model_dump.return_value = {"suite_name": "test-suite", "passed": 0, "failed": 0}
+        mock_result.model_dump.return_value = {
+            "suite_name": "test-suite", "passed": 0, "failed": 0,
+        }
 
         with patch("binex.eval.loader.load_suite") as mock_load, \
              patch("binex.eval.runner.run_suite", new_callable=AsyncMock) as mock_run:
@@ -541,7 +554,6 @@ cases:
 
 # Need to import MagicMock at module level
 from unittest.mock import MagicMock  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # _truncate_dict_strings helper
@@ -632,6 +644,8 @@ class TestRunWorkflow:
         workflow_file.write_text("not: a: valid: workflow: yaml: {{{{")
         exec_store = InMemoryExecutionStore()
         art_store = InMemoryArtifactStore()
-        with patch("binex.workflow_spec.discovery.resolve_workflow_path", return_value=workflow_file):
+        with patch(
+            "binex.workflow_spec.discovery.resolve_workflow_path", return_value=workflow_file,
+        ):
             result = await mcp_tools.run_workflow(exec_store, art_store, path=str(workflow_file))
         assert result["code"] in ("invalid_input", "execution_error")

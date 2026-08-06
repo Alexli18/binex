@@ -9,8 +9,7 @@ Tests:
 from __future__ import annotations
 
 import asyncio
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -20,7 +19,6 @@ from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
 from binex.runtime.replay import ImportedRunError, ensure_replayable
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -153,7 +151,7 @@ class TestCliReplayGate:
 
 class TestCliBisectGate:
     def test_bisect_with_otel_run_exits_nonzero(self):
-        from binex.cli.bisect import bisect_cmd
+        from binex.cli.bisect import runs_cmd
 
         runner = CliRunner()
         exec_store = InMemoryExecutionStore()
@@ -164,7 +162,7 @@ class TestCliBisectGate:
 
         with patch("binex.cli.bisect._get_stores", return_value=(exec_store, art_store)):
             result = runner.invoke(
-                bisect_cmd,
+                runs_cmd,
                 ["otel-bisect-001", "native-bisect-001"],
                 catch_exceptions=False,
             )
@@ -308,12 +306,15 @@ class TestOtelRunsWorkWithDebugTools:
 class TestCliImportOtel:
     def test_import_otel_success(self, tmp_path):
         import json
+
         from binex.cli.import_cmd import import_otel
 
         # Write a minimal OTLP JSON fixture
         fixture = {
             "resourceSpans": [{
-                "resource": {"attributes": [{"key": "service.name", "value": {"stringValue": "test-svc"}}]},
+                "resource": {
+                    "attributes": [{"key": "service.name", "value": {"stringValue": "test-svc"}}],
+                },
                 "scopeSpans": [{"scope": {"name": "test"}, "spans": [{
                     "traceId": "aaaa" * 8,
                     "spanId": "bbbb" * 4,
@@ -341,6 +342,7 @@ class TestCliImportOtel:
 
     def test_import_otel_json_flag(self, tmp_path):
         import json
+
         from binex.cli.import_cmd import import_otel
 
         fixture = {

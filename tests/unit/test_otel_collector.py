@@ -6,7 +6,6 @@ Uses httpx AsyncClient against the FastAPI app directly (no real port needed).
 
 from __future__ import annotations
 
-import asyncio
 import json
 from pathlib import Path
 
@@ -186,7 +185,8 @@ class TestProtobufGate:
         # Should be 415 (Unsupported Media Type) with hint
         assert resp.status_code == 415
         body = resp.json()
-        assert "protobuf" in body["detail"].lower() or "opentelemetry-proto" in body["detail"].lower()
+        detail = body["detail"].lower()
+        assert "protobuf" in detail or "opentelemetry-proto" in detail
 
     @pytest.mark.asyncio
     async def test_json_content_type_always_works(self):
@@ -240,7 +240,6 @@ class TestFinalization:
         from binex.importers.otel import convert_trace
 
         exec_store = InMemoryExecutionStore()
-        art_store = InMemoryArtifactStore()
 
         fixture = _load_fixture("langchain-openllmetry.json")
         resource_spans = fixture["resourceSpans"]
@@ -289,7 +288,8 @@ class TestFinalization:
 
         exec_store = InMemoryExecutionStore()
         art_store = InMemoryArtifactStore()
-        app = _make_app(exec_store, art_store, quiet_period=9999.0)  # long period, no auto-finalize
+        # long period, no auto-finalize
+        app = _make_app(exec_store, art_store, quiet_period=9999.0)
 
         payload = _load_fixture("langchain-openllmetry.json")
 

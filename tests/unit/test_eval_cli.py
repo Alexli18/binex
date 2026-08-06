@@ -64,7 +64,10 @@ class TestEvalRunCommand:
         runner = CliRunner()
         es, ats = _make_stores()
         with patch("binex.cli.eval_cmd._get_stores", return_value=(es, ats)):
-            with patch("binex.cli.eval_cmd.run_suite", new=AsyncMock(return_value=_make_result("pass"))):
+            with patch(
+                "binex.cli.eval_cmd.run_suite",
+                new=AsyncMock(return_value=_make_result("pass")),
+            ):
                 result = runner.invoke(eval_group, ["run", str(suite_file)])
         assert result.exit_code == 0
 
@@ -72,7 +75,10 @@ class TestEvalRunCommand:
         runner = CliRunner()
         es, ats = _make_stores()
         with patch("binex.cli.eval_cmd._get_stores", return_value=(es, ats)):
-            with patch("binex.cli.eval_cmd.run_suite", new=AsyncMock(return_value=_make_result("fail"))):
+            with patch(
+                "binex.cli.eval_cmd.run_suite",
+                new=AsyncMock(return_value=_make_result("fail")),
+            ):
                 result = runner.invoke(eval_group, ["run", str(suite_file)])
         assert result.exit_code == 1
 
@@ -80,7 +86,10 @@ class TestEvalRunCommand:
         runner = CliRunner()
         es, ats = _make_stores()
         with patch("binex.cli.eval_cmd._get_stores", return_value=(es, ats)):
-            with patch("binex.cli.eval_cmd.run_suite", new=AsyncMock(return_value=_make_result("no_baseline"))):
+            with patch(
+                "binex.cli.eval_cmd.run_suite",
+                new=AsyncMock(return_value=_make_result("no_baseline")),
+            ):
                 result = runner.invoke(eval_group, ["run", str(suite_file)])
         assert result.exit_code == 0
 
@@ -88,7 +97,10 @@ class TestEvalRunCommand:
         runner = CliRunner()
         es, ats = _make_stores()
         with patch("binex.cli.eval_cmd._get_stores", return_value=(es, ats)):
-            with patch("binex.cli.eval_cmd.run_suite", new=AsyncMock(return_value=_make_result("no_baseline"))):
+            with patch(
+                "binex.cli.eval_cmd.run_suite",
+                new=AsyncMock(return_value=_make_result("no_baseline")),
+            ):
                 result = runner.invoke(eval_group, ["run", str(suite_file), "--strict-baseline"])
         assert result.exit_code == 1
 
@@ -96,7 +108,10 @@ class TestEvalRunCommand:
         runner = CliRunner()
         es, ats = _make_stores()
         with patch("binex.cli.eval_cmd._get_stores", return_value=(es, ats)):
-            with patch("binex.cli.eval_cmd.run_suite", new=AsyncMock(return_value=_make_result("pass"))):
+            with patch(
+                "binex.cli.eval_cmd.run_suite",
+                new=AsyncMock(return_value=_make_result("pass")),
+            ):
                 result = runner.invoke(eval_group, ["run", str(suite_file), "--json"])
         assert result.exit_code == 0
         data = json.loads(result.output)
@@ -106,7 +121,10 @@ class TestEvalRunCommand:
         runner = CliRunner()
         es, ats = _make_stores()
         with patch("binex.cli.eval_cmd._get_stores", return_value=(es, ats)):
-            with patch("binex.cli.eval_cmd.run_suite", new=AsyncMock(return_value=_make_result("fail"))):
+            with patch(
+                "binex.cli.eval_cmd.run_suite",
+                new=AsyncMock(return_value=_make_result("fail")),
+            ):
                 result = runner.invoke(eval_group, ["run", str(suite_file), "--format", "github"])
         assert "::error" in result.output
 
@@ -114,7 +132,10 @@ class TestEvalRunCommand:
         runner = CliRunner()
         es, ats = _make_stores()
         with patch("binex.cli.eval_cmd._get_stores", return_value=(es, ats)):
-            with patch("binex.cli.eval_cmd.run_suite", new=AsyncMock(return_value=_make_result("no_baseline"))):
+            with patch(
+                "binex.cli.eval_cmd.run_suite",
+                new=AsyncMock(return_value=_make_result("no_baseline")),
+            ):
                 result = runner.invoke(eval_group, ["run", str(suite_file), "--format", "github"])
         assert "::warning" in result.output
 
