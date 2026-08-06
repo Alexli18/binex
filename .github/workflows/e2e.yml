@@ -50,7 +50,12 @@ jobs:
           exit 1
 
       - name: Run E2E Playwright tests
-        run: pytest -m e2e -n auto --screenshot=only-on-failure --video=retain-on-failure --tracing=retain-on-failure
+        # --timeout-method=thread: the default signal method can deadlock
+        # xdist workers when SIGALRM lands inside Playwright's sync greenlet;
+        # thread kills the wedged worker instead of hanging the whole run.
+        # 120s budget absorbs cold chromium startup on shared CI vCPUs.
+        # No --video: traces already include a screencast, video doubles load.
+        run: pytest -m e2e -n auto --timeout=120 --timeout-method=thread --screenshot=only-on-failure --tracing=retain-on-failure
 
       - name: Upload Playwright artifacts
         uses: actions/upload-artifact@v4
