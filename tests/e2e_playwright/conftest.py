@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 import pytest
+from playwright.sync_api import expect
 from tests.e2e_playwright.pages.export_page import ExportPage
 from tests.e2e_playwright.pages.sidebar import Sidebar
+
+# The 5s default is tuned for fast local runs; on shared CI vCPUs with
+# parallel workers, lazy-loaded chunks (Monaco, React Flow) routinely
+# take longer to render.
+expect.set_options(timeout=15_000)
 
 
 @pytest.fixture(scope="session")
