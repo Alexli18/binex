@@ -89,9 +89,13 @@ nav:
     - Binary Artifacts: features/binary-artifacts.md
     - Workspace: features/workspace.md
     - Dynamic Fan-out (foreach): features/foreach.md
-    - Assertions & Eval: features/eval.md
+    - Assertions & Golden Runs: features/eval.md
+    - Eval Suites: eval.md
+    - MCP Server: mcp-server.md
+    - Import from OTel: import.md
     - Tools & MCP: features/tools-mcp.md
     - CAO Adapter: features/cao-adapter.md
+    - Comparisons: comparisons.md
   - Workflows:
     - Format: workflows/format.md
     - Examples: workflows/examples.md
@@ -100,4 +104,5 @@ nav:
   - Contributing:
     - Development: contributing/development.md
     - Testing: contributing/testing.md
+    - OTel Span Mapping: dev/otel-mapping.md
   - Blog: blog/index.md

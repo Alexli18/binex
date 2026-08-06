@@ -141,6 +141,22 @@ class SqliteExecutionStore:
                 ON cost_records (run_id, task_id, cost);
             CREATE INDEX IF NOT EXISTS idx_cao_sessions_status
                 ON cao_sessions (status);
+            CREATE TABLE IF NOT EXISTS eval_baselines (
+                suite_name TEXT NOT NULL,
+                case_id    TEXT NOT NULL,
+                run_id     TEXT NOT NULL,
+                blessed_at TEXT NOT NULL,
+                PRIMARY KEY (suite_name, case_id)
+            );
+            CREATE TABLE IF NOT EXISTS eval_results (
+                id          TEXT PRIMARY KEY,
+                suite_name  TEXT NOT NULL,
+                suite_path  TEXT,
+                executed_at TEXT NOT NULL,
+                payload     TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_eval_results_suite
+                ON eval_results (suite_name);
         """)
         # Migration: add total_cost column to existing runs table
         try:
@@ -224,6 +240,24 @@ class SqliteExecutionStore:
             await self._db.commit()
         except Exception as exc:
             logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add eval_suite_id column to existing runs table
+        try:
+            await self._db.execute("ALTER TABLE runs ADD COLUMN eval_suite_id TEXT")
+            await self._db.commit()
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add eval_case_id column to existing runs table
+        try:
+            await self._db.execute("ALTER TABLE runs ADD COLUMN eval_case_id TEXT")
+            await self._db.commit()
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
+        # Migration: add source column to existing runs table
+        try:
+            await self._db.execute("ALTER TABLE runs ADD COLUMN source TEXT")
+            await self._db.commit()
+        except Exception as exc:
+            logger.debug("Migration already applied or failed: %s", exc)
         await self._db.commit()
 
         # Must be set before the orphan check below: mark_cao_sessions_orphaned
@@ -260,8 +294,8 @@ class SqliteExecutionStore:
                completed_at, total_nodes, completed_nodes, failed_nodes,
                skipped_nodes, forked_from, forked_at_step, total_cost,
                workflow_path, workflow_hash, resumed_from, git_sha, git_dirty,
-               observed)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               observed, eval_suite_id, eval_case_id, source)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 run_summary.run_id,
                 run_summary.workflow_name,
@@ -281,6 +315,9 @@ class SqliteExecutionStore:
                 run_summary.git_sha,
                 int(run_summary.git_dirty),
                 int(run_summary.observed),
+                run_summary.eval_suite_id,
+                run_summary.eval_case_id,
+                run_summary.source,
             ),
         )
         await db.commit()
@@ -303,7 +340,8 @@ class SqliteExecutionStore:
                completed_at=?, total_nodes=?, completed_nodes=?, failed_nodes=?,
                skipped_nodes=?, forked_from=?, forked_at_step=?, total_cost=?,
                workflow_path=?, workflow_hash=?, resumed_from=?,
-               git_sha=?, git_dirty=?, observed=?
+               git_sha=?, git_dirty=?, observed=?, eval_suite_id=?,
+               eval_case_id=?, source=?
                WHERE run_id=?""",
             (
                 run_summary.workflow_name,
@@ -323,6 +361,9 @@ class SqliteExecutionStore:
                 run_summary.git_sha,
                 int(run_summary.git_dirty),
                 int(run_summary.observed),
+                run_summary.eval_suite_id,
+                run_summary.eval_case_id,
+                run_summary.source,
                 run_summary.run_id,
             ),
         )
@@ -332,7 +373,8 @@ class SqliteExecutionStore:
         "SELECT run_id, workflow_name, status, started_at, completed_at,"
         " total_nodes, completed_nodes, failed_nodes, skipped_nodes,"
         " forked_from, forked_at_step, total_cost, workflow_path,"
-        " workflow_hash, resumed_from, git_sha, git_dirty, observed FROM runs"
+        " workflow_hash, resumed_from, git_sha, git_dirty, observed,"
+        " eval_suite_id, eval_case_id, source FROM runs"
     )
 
     async def list_runs(
@@ -427,6 +469,9 @@ class SqliteExecutionStore:
             git_sha=row[15] if len(row) > 15 and row[15] is not None else None,
             git_dirty=bool(row[16]) if len(row) > 16 and row[16] is not None else False,
             observed=bool(row[17]) if len(row) > 17 and row[17] is not None else False,
+            eval_suite_id=row[18] if len(row) > 18 and row[18] is not None else None,
+            eval_case_id=row[19] if len(row) > 19 and row[19] is not None else None,
+            source=row[20] if len(row) > 20 and row[20] is not None else None,
         )
 
     async def record_cost(self, cost_record: CostRecord) -> None:
@@ -768,6 +813,106 @@ class SqliteExecutionStore:
             )
         await db.commit()
         return cursor.rowcount if cursor.rowcount is not None else 0
+
+
+    # ------------------------------------------------------------------
+    # Eval baselines and results
+    # ------------------------------------------------------------------
+
+    async def set_baseline(
+        self, suite_name: str, case_id: str, run_id: str,
+    ) -> None:
+        """Upsert blessed baseline for (suite_name, case_id)."""
+        db = await self._ensure_initialized()
+        await db.execute(
+            """INSERT INTO eval_baselines (suite_name, case_id, run_id, blessed_at)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(suite_name, case_id) DO UPDATE
+               SET run_id = excluded.run_id, blessed_at = excluded.blessed_at""",
+            (suite_name, case_id, run_id, datetime.now(UTC).isoformat()),
+        )
+        await db.commit()
+
+    async def get_baselines(self, suite_name: str) -> dict[str, str]:
+        """Return {case_id: run_id} for all baselines in a suite."""
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
+            "SELECT case_id, run_id FROM eval_baselines WHERE suite_name = ?",
+            (suite_name,),
+        )
+        rows = await cursor.fetchall()
+        return {row[0]: row[1] for row in rows}
+
+    async def save_eval_result(self, result: Any) -> str:
+        """Persist an EvalResult model instance; returns its generated id."""
+        import uuid
+        result_id = "eval_" + uuid.uuid4().hex[:12]
+        db = await self._ensure_initialized()
+        if hasattr(result, "model_dump_json"):
+            payload = result.model_dump_json()
+        else:
+            payload = json.dumps(result)
+        suite_name = getattr(result, "suite_name", "")
+        suite_path = getattr(result, "suite_path", None)
+        executed_at = getattr(result, "executed_at", datetime.now(UTC))
+        if hasattr(executed_at, "isoformat"):
+            executed_at = executed_at.isoformat()
+        await db.execute(
+            """INSERT INTO eval_results (id, suite_name, suite_path, executed_at, payload)
+               VALUES (?, ?, ?, ?, ?)""",
+            (result_id, suite_name, suite_path, executed_at, payload),
+        )
+        await db.commit()
+        return result_id
+
+    async def list_eval_results(
+        self, limit: int = 50, suite_name: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """List recent eval results (summary dicts), newest first."""
+        db = await self._ensure_initialized()
+        if suite_name:
+            cursor = await db.execute(
+                "SELECT id, suite_name, suite_path, executed_at, payload "
+                "FROM eval_results WHERE suite_name = ? "
+                "ORDER BY executed_at DESC LIMIT ?",
+                (suite_name, limit),
+            )
+        else:
+            cursor = await db.execute(
+                "SELECT id, suite_name, suite_path, executed_at, payload "
+                "FROM eval_results ORDER BY executed_at DESC LIMIT ?",
+                (limit,),
+            )
+        rows = await cursor.fetchall()
+        return [
+            {
+                "id": row[0],
+                "suite_name": row[1],
+                "suite_path": row[2],
+                "executed_at": row[3],
+                "payload": json.loads(row[4]),
+            }
+            for row in rows
+        ]
+
+    async def get_eval_result(self, result_id: str) -> dict[str, Any] | None:
+        """Retrieve a single eval result payload by id."""
+        db = await self._ensure_initialized()
+        cursor = await db.execute(
+            "SELECT id, suite_name, suite_path, executed_at, payload "
+            "FROM eval_results WHERE id = ?",
+            (result_id,),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            return None
+        return {
+            "id": row[0],
+            "suite_name": row[1],
+            "suite_path": row[2],
+            "executed_at": row[3],
+            "payload": json.loads(row[4]),
+        }
 
 
 __all__ = ["SqliteExecutionStore"]

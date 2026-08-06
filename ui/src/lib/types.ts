@@ -10,6 +10,7 @@ export interface RunSummary {
   total_cost: number;
   started_at: string;
   completed_at: string | null;
+  source?: string | null;
 }
 
 export interface ExecutionRecord {

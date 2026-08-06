@@ -35,8 +35,19 @@ class BisectRequest(BaseModel):
 @router.post("")
 async def bisect_runs(body: BisectRequest) -> JSONResponse:
     """Find the first node where two runs diverge."""
+    from binex.runtime.replay import ImportedRunError, ensure_replayable
+
     exec_store, art_store = _get_stores()
     try:
+        # Feature gate: neither run may be an imported run
+        for run_id in (body.good_run, body.bad_run):
+            run = await exec_store.get_run(run_id)
+            if run is not None:
+                try:
+                    ensure_replayable(run, operation="bisect")
+                except ImportedRunError as e:
+                    return JSONResponse({"error": str(e)}, status_code=422)
+
         from binex.trace.bisect import bisect_report
 
         try:

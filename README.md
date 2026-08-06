@@ -346,6 +346,35 @@ nodes:
 | `binex scheduler start` | Start cron-based workflow scheduler |
 | `binex scheduler list` | List scheduled workflows |
 | `binex scheduler add/remove` | Register/unregister workflow files |
+| `binex eval run` | Run an eval suite against blessed baselines |
+| `binex eval bless` | Approve current outputs as the new baseline |
+| `binex eval golden` | Run a workflow and gate on assertions / a golden run |
+| `binex import otel` | Import an OTLP/JSON trace as a Binex run |
+| `binex collect` | Live OTLP/JSON collector endpoint |
+| `binex mcp serve` | Expose Binex as an MCP server |
+
+### Eval — Regression Testing for Agent Pipelines
+
+Write a YAML test suite, bless a baseline, then catch regressions in CI:
+
+```bash
+binex eval run examples/eval/research-eval.yaml      # run an eval suite
+binex eval bless examples/eval/research-eval.yaml    # approve outputs as the baseline
+binex eval golden workflow.yaml --baseline run_abc   # gate one workflow on a golden run
+```
+
+A suite pairs inputs with assertions (contains, regex, JSON path, LLM judge). In CI, add
+`binex eval run suite.yaml --format github --strict-baseline`. You can also import
+production traces from any agent framework as runs: `binex import otel trace.json`.
+
+### Use Binex from Your Coding Agent
+
+```bash
+claude mcp add binex -- binex mcp serve
+```
+
+Exposes runs, evals, and artifacts as MCP tools (`binex_debug`, `binex_eval_run`,
+`binex_diff`) for Claude Code, Cursor, or any MCP-compatible agent.
 
 ### Pattern Nodes
 

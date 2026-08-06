@@ -11,6 +11,7 @@ from binex.cli import BinexGroup
 from binex.cli.artifacts import artifacts_cmd
 from binex.cli.bisect import bisect_group
 from binex.cli.clean import clean_group
+from binex.cli.collect import collect_cmd
 from binex.cli.cost import cost_group
 from binex.cli.debug import debug_cmd
 from binex.cli.dev import dev_cmd
@@ -23,8 +24,10 @@ from binex.cli.export_cmd import export_cmd
 from binex.cli.freeze import freeze_cmd
 from binex.cli.gateway_cmd import gateway
 from binex.cli.hello import hello_cmd
+from binex.cli.import_cmd import import_group
 from binex.cli.init_cmd import init_cmd
 from binex.cli.list_cmd import list_cmd
+from binex.cli.mcp_cmd import mcp_group
 from binex.cli.observe_demo import observe_demo_cmd
 from binex.cli.plugins_cmd import plugins_group
 from binex.cli.replay import replay_cmd
@@ -72,7 +75,6 @@ cli.add_command(replay_cmd, "replay")
 cli.add_command(resume_cmd, "resume")
 cli.add_command(debug_cmd, "debug")
 cli.add_command(diff_cmd, "diff")
-cli.add_command(eval_group, "eval")
 cli.add_command(freeze_cmd, "freeze")
 cli.add_command(hello_cmd, "hello")
 cli.add_command(dev_cmd, "dev")
@@ -94,6 +96,10 @@ cli.add_command(export_cmd, "export")
 cli.add_command(workflow_group, "workflow")
 cli.add_command(ui_cmd, "ui")
 cli.add_command(scheduler_group, "scheduler")
+cli.add_command(collect_cmd, "collect")
+cli.add_command(eval_group, "eval")
+cli.add_command(import_group, "import")
+cli.add_command(mcp_group, "mcp")
 
 
 def main() -> None:

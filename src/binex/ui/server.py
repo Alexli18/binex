@@ -23,6 +23,9 @@ from binex.ui.api.diagnose import router as diagnose_router
 from binex.ui.api.diff import router as diff_router
 from binex.ui.api.errors import APIError
 from binex.ui.api.estimate import router as estimate_router
+
+# replay endpoint is now in runs.py (POST /runs/replay)
+from binex.ui.api.eval import router as eval_router
 from binex.ui.api.events import router as events_router
 from binex.ui.api.export import router as export_router
 from binex.ui.api.gateway import router as gateway_router
@@ -30,8 +33,6 @@ from binex.ui.api.lineage import router as lineage_router
 from binex.ui.api.prompt_templates import router as prompt_templates_router
 from binex.ui.api.prompts import router as prompts_router
 from binex.ui.api.providers import router as providers_router
-
-# replay endpoint is now in runs.py (POST /runs/replay)
 from binex.ui.api.runs import router as runs_router
 from binex.ui.api.scaffold import router as scaffold_router
 from binex.ui.api.scheduler import router as scheduler_router
@@ -110,6 +111,7 @@ def create_app(*, dev: bool = False) -> FastAPI:
     # --- Routers ---
     app.include_router(artifacts_router, prefix="/api/v1")
     app.include_router(bisect_router, prefix="/api/v1")
+    app.include_router(eval_router, prefix="/api/v1")
     app.include_router(cao_router, prefix="/api/v1")
     app.include_router(cost_dashboard_router, prefix="/api/v1")
     app.include_router(costs_router, prefix="/api/v1")

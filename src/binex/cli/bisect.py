@@ -24,6 +24,7 @@ from binex.cli.bisect_format import (
     _render_footer_rich,
     _render_verdict_rich,
 )
+from binex.runtime.replay import ImportedRunError, ensure_replayable
 
 
 def _get_stores() -> Any:
@@ -80,6 +81,9 @@ def runs_cmd(
         report = asyncio.run(
             _run_bisect(good_run_id, bad_run_id, threshold),
         )
+    except ImportedRunError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(2)
     except ValueError as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
@@ -103,6 +107,10 @@ async def _run_bisect(
 
     exec_store, art_store = _get_stores()
     try:
+        for run_id in (good_run_id, bad_run_id):
+            run = await exec_store.get_run(run_id)
+            if run is not None:
+                ensure_replayable(run, operation="bisect")
         return await bisect_report(
             exec_store, art_store,
             good_run_id, bad_run_id, threshold,

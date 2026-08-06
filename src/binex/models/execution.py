@@ -54,6 +54,9 @@ class RunSummary(BaseModel):
     git_sha: str | None = None      # commit the workflow ran at (for history bisect, #72)
     git_dirty: bool = False         # working tree had uncommitted changes at run time
     observed: bool = False          # captured via observe() rather than orchestrated (#73)
+    eval_suite_id: str | None = None  # eval suite that produced this run (020)
+    eval_case_id: str | None = None   # eval case within the suite (020)
+    source: str | None = None         # "otel-import" for imported runs; None for native
 
 
 __all__ = ["ExecutionRecord", "RunSummary"]
