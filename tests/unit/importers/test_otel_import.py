@@ -15,7 +15,7 @@ from binex.importers.otel import convert_trace, import_from_file, parse_otlp_jso
 from binex.models.task import TaskStatus
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 
-FIXTURES = Path(__file__).parent.parent / "fixtures" / "otel"
+FIXTURES = Path(__file__).parents[2] / "fixtures" / "otel"
 
 
 # ---------------------------------------------------------------------------

@@ -14,7 +14,7 @@ import pytest
 from binex.importers.collector import TraceBuffer, create_collector_app
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 
-FIXTURES = Path(__file__).parent.parent / "fixtures" / "otel"
+FIXTURES = Path(__file__).parents[2] / "fixtures" / "otel"
 
 
 # ---------------------------------------------------------------------------
