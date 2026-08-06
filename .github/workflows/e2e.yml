@@ -3,6 +3,12 @@ name: E2E Playwright Tests
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master]
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   e2e:
@@ -19,7 +25,6 @@ jobs:
       - name: Install Python deps
         run: |
           pip install -e ".[dev,rich]"
-          pip install playwright httpx
           playwright install --with-deps chromium
 
       - name: Build frontend
@@ -35,9 +40,24 @@ jobs:
           import uvicorn
           from binex.ui.server import create_app
           uvicorn.run(create_app(), host='127.0.0.1', port=8420, log_level='warning')
-          " &
-          sleep 3
-          curl -sf http://127.0.0.1:8420/api/v1/health || exit 1
+          " > server.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8420/api/v1/health && exit 0
+            sleep 1
+          done
+          echo "Server did not become healthy in 30s" >&2
+          exit 1
 
       - name: Run E2E Playwright tests
-        run: python tests/e2e_playwright/run_all.py
+        run: pytest -m e2e -n auto --screenshot=only-on-failure --video=retain-on-failure --tracing=retain-on-failure
+
+      - name: Upload Playwright artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-artifacts
+          path: |
+            test-results/
+            server.log
+          if-no-files-found: ignore
+          retention-days: 7
