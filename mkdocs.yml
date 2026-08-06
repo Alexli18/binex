@@ -105,4 +105,5 @@ nav:
     - Development: contributing/development.md
     - Testing: contributing/testing.md
     - OTel Span Mapping: dev/otel-mapping.md
+    - Loop Container UI Design: dev/loop-container-design.md
   - Blog: blog/index.md
