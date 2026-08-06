@@ -1,0 +1,26 @@
+ID,Title,Priority,Status,Notes
+TC-UI-001,All 13 routes render with expected heading,P0,DONE,parametrized over 13 routes incl. 404
+TC-UI-002,Sidebar renders with all groups,P0,DONE,
+TC-UI-003,Sidebar group links visible,P1,DONE,
+TC-UI-004,Navigation between pages via sidebar,P0,DONE,
+TC-UI-005,Sidebar collapse/expand,P2,DONE,
+TC-UI-006,Active nav item highlighted,P2,DONE,
+TC-UI-007,Scaffold from DSL string,P0,DONE,
+TC-UI-008,Scaffold from predefined template,P1,DONE,
+TC-UI-009,Scaffold blank workflow,P1,DONE,
+TC-UI-010,Editor visual mode toggle,P0,DONE,
+TC-UI-011,Editor YAML mode toggle,P0,DONE,
+TC-UI-012,Scaffold to Editor handoff flow,P1,DONE,
+TC-UI-013,Save As modal,P1,DONE,
+TC-UI-014,RunDetail page renders for seeded run,P0,DONE,
+TC-UI-015,Debug tab,P1,DONE,
+TC-UI-016,Trace tab,P1,DONE,
+TC-UI-017,Diagnose tab,P1,DONE,
+TC-UI-018,Lineage tab,P1,DONE,
+TC-UI-019,Diff + Bisect pages,P1,DONE,
+TC-UI-020,Cost Dashboard,P1,DONE,
+TC-UI-021,System: Doctor,P1,DONE,
+TC-UI-022,System: Plugins,P2,DONE,
+TC-UI-023,System: Gateway,P2,DONE,
+TC-UI-024,Export selected runs CSV+JSON,P0,DONE,parametrized over 2 formats
+TC-UI-025,Export Last N runs mode,P0,DONE,found BUG #112; fixed in PR #114

@@ -3,6 +3,7 @@
 Run with server already started: python scripts/demo/demo_live_research_run.py
 """
 import time
+
 from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:8420"
@@ -180,4 +181,7 @@ with sync_playwright() as p:
     browser.close()
 
     print(f"\n✅ Demo recorded: {video_path}")
-    print(f"Convert: ffmpeg -i '{video_path}' -c:v libx264 -preset fast -crf 22 /tmp/binex_demo/live_research_run.mp4")
+    print(
+        f"Convert: ffmpeg -i '{video_path}' -c:v libx264 -preset fast "
+        "-crf 22 /tmp/binex_demo/live_research_run.mp4"
+    )

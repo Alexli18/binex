@@ -5,6 +5,7 @@ Run with server started from a CLEAN directory:
 Then: python scripts/demo/demo_new_user.py
 """
 import time
+
 from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:8420"
@@ -300,4 +301,7 @@ with sync_playwright() as p:
     browser.close()
 
     print(f"\n✅ Demo recorded: {video_path}")
-    print(f"Convert: ffmpeg -i '{video_path}' -c:v libx264 -preset fast -crf 22 /tmp/binex_demo_fresh/new_user_demo.mp4")
+    print(
+        f"Convert: ffmpeg -i '{video_path}' -c:v libx264 -preset fast "
+        "-crf 22 /tmp/binex_demo_fresh/new_user_demo.mp4"
+    )

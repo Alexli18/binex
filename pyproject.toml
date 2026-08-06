@@ -57,7 +57,8 @@ dev = [
     "mkdocs-material",
     "pytest-playwright",
     "pytest-xdist",
-    "respx"
+    "respx",
+    "pre-commit"
 ]
 rich = ["rich"]
 langchain = ["langchain-core>=0.2"]
