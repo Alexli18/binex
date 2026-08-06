@@ -64,6 +64,63 @@ QA tests follow a structured plan and are organized by phase:
 | `test_qa_phase5a_security.py` | Security, E2E | 22 |
 | `test_qa_phase5b_remaining.py` | Registry, trace, workflow, models | 21 |
 
+## E2E Tests (Playwright)
+
+Browser tests live in `tests/e2e_playwright/` and are marked `e2e`.
+
+### Prerequisite: a running UI server
+
+E2E tests expect the web UI on `http://localhost:8420`:
+
+```bash
+./scripts/build-ui.sh                  # build the frontend (once, or after frontend changes)
+binex ui --port 8420 --no-browser      # start the server
+```
+
+### Running
+
+```bash
+pytest -m e2e            # all e2e tests
+pytest -m e2e -n auto    # in parallel (pytest-xdist)
+```
+
+Plain `pytest tests/` does **not** run them: `pyproject.toml` sets `addopts = "-m 'not e2e'"`, so the marker is excluded by default. Passing `-m e2e` on the command line overrides it.
+
+### Debugging a failure
+
+Collect artifacts on failure (screenshots, video, trace go to `test-results/`):
+
+```bash
+pytest -m e2e --screenshot=only-on-failure --video=retain-on-failure --tracing=retain-on-failure
+playwright show-trace test-results/<test-dir>/trace.zip
+```
+
+In CI the same artifacts are uploaded as `playwright-artifacts` on failure — download the zip and open the trace locally with `show-trace`.
+
+Other useful modes:
+
+```bash
+pytest -m e2e -k test_name --headed    # watch the browser
+PWDEBUG=1 pytest -m e2e -k test_name   # Playwright Inspector, step-by-step
+```
+
+### Page objects (`tests/e2e_playwright/pages/`)
+
+- `sidebar.py` — `Sidebar` + `SidebarLink`/`SidebarGroup` enums
+- `export_page.py` — `ExportPage` + `ExportFormat` enum
+
+Fixtures `sidebar` and `export_page` are provided by `tests/e2e_playwright/conftest.py`. Three POM rules:
+
+1. Selectors (`get_by_test_id`, roles) live only in page objects — no raw selectors in tests.
+2. Page objects expose actions and `Locator`s, never assertions — checks belong in tests.
+3. Use enums instead of strings for finite sets (sidebar links, export formats).
+
+`conftest.py` also injects `TOUR_DISMISSED_STATE` as `storage_state` so the onboarding tour never overlays elements under test.
+
+### Known xfail
+
+`test_export.py` marks the "last N runs" export mode as `xfail` — BUG [#112](https://github.com/Alexli18/binex/issues/112): `/api/v1/export` requires `run_ids` and has no `last_n` support.
+
 ## Async Test Configuration
 
 All async tests are auto-detected. The `pyproject.toml` sets:
