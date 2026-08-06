@@ -35,6 +35,11 @@ jobs:
           npm run build
           cp -r dist ../src/binex/ui/static
 
+      - name: Seed store with a demo run
+        # export tests select an existing run; binex hello runs the offline
+        # local://echo demo workflow and leaves one completed run in .binex/
+        run: binex hello
+
       - name: Start server
         run: |
           python -c "
