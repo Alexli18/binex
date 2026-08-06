@@ -117,10 +117,6 @@ Fixtures `sidebar` and `export_page` are provided by `tests/e2e_playwright/conft
 
 `conftest.py` also injects `TOUR_DISMISSED_STATE` as `storage_state` so the onboarding tour never overlays elements under test.
 
-### Known xfail
-
-`test_export.py` marks the "last N runs" export mode as `xfail` — BUG [#112](https://github.com/Alexli18/binex/issues/112): `/api/v1/export` requires `run_ids` and has no `last_n` support.
-
 ## Async Test Configuration
 
 All async tests are auto-detected. The `pyproject.toml` sets:

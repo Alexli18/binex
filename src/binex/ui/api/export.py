@@ -29,9 +29,13 @@ def _get_stores() -> tuple[
 
 
 class ExportRequest(BaseModel):
-    """Request body for data export."""
+    """Request body for data export.
 
-    run_ids: list[str]
+    Exactly one of ``run_ids`` or ``last_n`` must be provided.
+    """
+
+    run_ids: list[str] | None = None
+    last_n: int | None = None
     format: str = "json"  # "json" or "csv"
     include_artifacts: bool = False
 
@@ -66,7 +70,16 @@ def _write_csv(rows: list[dict[str, Any]]) -> str:
 @router.post("", response_model=None)
 async def export_data(body: ExportRequest) -> StreamingResponse | JSONResponse:
     """Export run data as JSON or CSV (zip)."""
-    if not body.run_ids:
+    if (body.run_ids is None) == (body.last_n is None):
+        return JSONResponse(
+            {"error": "Provide exactly one of run_ids or last_n"},
+            status_code=422,
+        )
+
+    if body.last_n is not None and body.last_n < 1:
+        return JSONResponse({"error": "last_n must be >= 1"}, status_code=422)
+
+    if body.run_ids is not None and not body.run_ids:
         return JSONResponse({"error": "run_ids must not be empty"}, status_code=422)
 
     if body.format not in ("json", "csv"):
@@ -77,12 +90,21 @@ async def export_data(body: ExportRequest) -> StreamingResponse | JSONResponse:
 
     exec_store, artifact_store = _get_stores()
     try:
+        if body.last_n is not None:
+            # list_runs() guarantees no ordering (bare SELECT in sqlite,
+            # insertion order in memory) — sort here, newest first.
+            all_runs = await exec_store.list_runs()
+            all_runs.sort(key=lambda r: r.started_at, reverse=True)
+            run_ids = [r.run_id for r in all_runs[: body.last_n]]
+        else:
+            run_ids = body.run_ids or []
+
         runs = []
         all_records = []
         all_costs = []
         not_found = []
 
-        for run_id in body.run_ids:
+        for run_id in run_ids:
             run = await exec_store.get_run(run_id)
             if run is None:
                 not_found.append(run_id)
@@ -94,8 +116,9 @@ async def export_data(body: ExportRequest) -> StreamingResponse | JSONResponse:
             all_costs.extend(costs)
 
         if not runs:
+            detail = f": {', '.join(not_found)}" if not_found else ""
             return JSONResponse(
-                {"error": f"No runs found: {', '.join(not_found)}"},
+                {"error": f"No runs found{detail}"},
                 status_code=404,
             )
 
