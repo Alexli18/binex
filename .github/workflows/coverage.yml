@@ -1,0 +1,35 @@
+name: Coverage
+
+# Separate workflow (not a job inside ci.yml) so it gets its own status
+# badge in the README: green = the suite covers >= the gate.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev,rich]"
+      # Gate at 80: measured 82% on 2026-08 (see docs/contributing/testing.md);
+      # 2 points of headroom absorb boundary-module churn without turning the
+      # gate into noise. Raise deliberately, never lower silently.
+      - name: Run suite with coverage gate
+        run: >
+          python -m pytest tests/unit tests/integration -q
+          --cov=binex --cov-report=term --cov-report=xml
+          --cov-fail-under=80
+      - name: Upload coverage.xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          retention-days: 14
