@@ -204,13 +204,13 @@ binex ui
   <br><sub>Side-by-side diff with filtering: changed, failed, cost delta</sub>
 </div>
 
-### 19 Pages — Full CLI Parity
+### 20 Pages — Full CLI Parity
 
 | Category | Pages |
 |----------|-------|
 | **Workflows** | Browse, Visual Editor (with tool picker & MCP config), Scaffold Wizard |
 | **Runs** | Dashboard, RunLive (SSE), RunDetail |
-| **Analysis** | Debug (input/output artifacts), Trace (Gantt timeline), Diagnose (root-cause), Lineage (artifact graph) |
+| **Analysis** | Debug (input/output artifacts), Trace (Gantt timeline), Diagnose (root-cause), Lineage (artifact graph), Eval (suite results & baselines) |
 | **Comparison** | Diff (side-by-side with filter bar, compare with previous run), Bisect (NodeMap, DAG visualization, divergence metrics) |
 | **Costs** | Cost Dashboard (charts), Budget Management |
 | **System** | Doctor (health), Plugins, Gateway, Export, Scheduler (cron) |

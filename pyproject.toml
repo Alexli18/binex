@@ -55,6 +55,7 @@ dev = [
     "ruff",
     "mypy",
     "mkdocs-material",
+    "mkdocs-glightbox",
     "pytest-playwright",
     "pytest-xdist",
     "respx",

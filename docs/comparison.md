@@ -1,5 +1,8 @@
 # Binex vs. LangGraph, CrewAI & AutoGen
 
+> Looking for observability and orchestration tools instead? See
+> [Binex vs. LangSmith, Langfuse, n8n & Langflow](comparisons.md).
+
 "Why Binex over LangGraph / CrewAI / AutoGen?" — the honest answer is that they
 solve *different* problems. The other three are frameworks for **building** agent
 systems. Binex is a **debuggable runtime** for them: its whole reason for
