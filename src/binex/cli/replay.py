@@ -11,6 +11,7 @@ import click
 
 from binex.cli import get_stores
 from binex.models.execution import RunSummary
+from binex.runtime.replay import ImportedRunError
 
 
 @click.command("replay", epilog="""\b
@@ -63,6 +64,9 @@ def replay_cmd(
 
     try:
         summary = asyncio.run(_run_replay(run_id, from_step, workflow, agent_swaps))
+    except ImportedRunError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(2)
     except ValueError as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)

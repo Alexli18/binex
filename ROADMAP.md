@@ -23,10 +23,19 @@
 - [x] Export runs to CSV / JSON for analysis
 - [x] Webhook notifications on run completion / failure / budget exceeded
 
-## v1.0 — Production Ready
+## Active Track — Debugger & Regression Testing
 
-- [x] Web UI for execution visualization and timeline
+- [x] Web UI — visual workflow editor and run dashboard
+- [x] Built-in tools + MCP client (10 built-in tools, stdio/HTTP MCP servers)
+- [x] Loop container nodes — iterative execution with exit conditions
+- [x] CAO adapter — CLI Agent Orchestrator integration
+- [~] `binex eval` — regression testing suites, baselines, verdicts, CI annotations (in progress)
+- [~] `binex mcp serve` — MCP tool server for coding agents (Claude Code, Cursor) (in progress)
+- [~] `binex import otel` — import OpenTelemetry traces from LangChain / LlamaIndex (in progress)
+
+## Deferred
+
 - [ ] Distributed execution across multiple runtimes
 - [ ] Workflow templates marketplace
 - [ ] Role-based access control for shared deployments
-- [ ] Helm chart for Kubernetes deployment
+- [ ] Helm chart / Kubernetes deployment

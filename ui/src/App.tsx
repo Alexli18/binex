@@ -24,6 +24,7 @@ import GatewayPage from './pages/GatewayPage';
 import PromptLibrary from './pages/PromptLibrary';
 import CostDashboard from './pages/CostDashboard';
 import SchedulerPage from './pages/SchedulerPage';
+import { EvalPage } from './pages/EvalPage';
 import NotFound from './pages/NotFound';
 import LatestRunRedirect from './pages/LatestRunRedirect';
 
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="/costs" element={<CostDashboard />} />
           <Route path="/diff" element={<DiffPage />} />
           <Route path="/bisect" element={<BisectPage />} />
+          <Route path="/eval" element={<EvalPage />} />
           <Route path="/export" element={<ExportPage />} />
           <Route path="/scheduler" element={<SchedulerPage />} />
           <Route path="/system/doctor" element={<DoctorPage />} />

@@ -12,6 +12,7 @@ import {
   DollarSign,
   GitCompare,
   GitBranch,
+  FlaskConical,
   type LucideIcon,
 } from "lucide-react";
 
@@ -47,6 +48,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Compare", path: "/diff",    icon: GitCompare },
       { label: "Costs",   path: "/costs",   icon: DollarSign },
       { label: "Bisect",  path: "/bisect",  icon: GitBranch },
+      { label: "Eval",    path: "/eval",    icon: FlaskConical },
     ],
   },
   {

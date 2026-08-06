@@ -179,6 +179,14 @@ export default function RunDetail() {
         <span className="text-sm font-medium text-[#f0f0f0]">{run.workflow_name}</span>
         <span className="font-mono text-xs text-[#4a4a52]">{run.run_id.slice(0, 8)}</span>
         <StatusBadge status={run.status} />
+        {run.source === 'otel-import' && (
+          <span
+            title="This run was imported from an external OpenTelemetry trace. Replay and bisect are not available."
+            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-900/40 text-blue-300 border border-blue-700/50"
+          >
+            imported
+          </span>
+        )}
         <div className="flex-1" />
         {/* Summary stats inline */}
         <span className="text-xs text-[#80808a]">{run.completed_nodes}/{run.total_nodes} nodes</span>

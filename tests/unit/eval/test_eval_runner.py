@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from binex.eval.runner import EvalReport, EvalThresholds, check_divergences
+from binex.eval.golden import EvalReport, EvalThresholds, check_divergences
 
 
 def _diff(similarity: float = 1.0, latency: float = 0.0, cost: float = 0.0,
