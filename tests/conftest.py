@@ -2,7 +2,64 @@
 
 from __future__ import annotations
 
+import threading
+import time
+
 import pytest
+
+from binex.stores.backends.sqlite import SqliteExecutionStore
+
+_seen_aiosqlite_threads: set[int] = set()
+
+
+def _live_aiosqlite_threads() -> set[int]:
+    import aiosqlite
+
+    return {
+        t.ident
+        for t in threading.enumerate()
+        if isinstance(t, aiosqlite.Connection) and t.is_alive() and t.ident is not None
+    }
+
+
+@pytest.fixture(autouse=True)
+def _no_leaked_aiosqlite_connections():
+    """Fail any test that leaves a live aiosqlite worker thread behind.
+
+    An unclosed SqliteExecutionStore keeps a non-daemon aiosqlite.Connection
+    thread alive, which silently hangs interpreter shutdown after the whole
+    suite has passed. This guard turns that into an explicit failure naming
+    the offending test. Use the `sqlite_store` fixture (or try/finally with
+    `await store.close()`) to avoid it.
+    """
+    yield
+    leaked = _live_aiosqlite_threads() - _seen_aiosqlite_threads
+    if leaked:
+        # close() joins the worker thread, but give a short grace period for
+        # the join to land before declaring a leak.
+        time.sleep(0.05)
+        leaked = _live_aiosqlite_threads() - _seen_aiosqlite_threads
+    if leaked:
+        # Remember them so only the first offending test fails, not everyone after.
+        _seen_aiosqlite_threads.update(leaked)
+        pytest.fail(
+            f"{len(leaked)} aiosqlite connection thread(s) leaked by this test — "
+            "a SqliteExecutionStore was not closed (await store.close(), "
+            "or use the sqlite_store fixture)"
+        )
+
+
+@pytest.fixture
+async def sqlite_store(tmp_path):
+    """SqliteExecutionStore backed by a temp file, closed on teardown.
+
+    Prefer this over instantiating SqliteExecutionStore directly: an unclosed
+    store leaves a live aiosqlite worker thread that hangs interpreter exit.
+    """
+    store = SqliteExecutionStore(str(tmp_path / "test.db"))
+    await store.initialize()
+    yield store
+    await store.close()
 
 
 @pytest.fixture
