@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from binex.plugins import PluginMetadata, PluginRegistry
-
+from binex.plugins import PluginRegistry
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -64,7 +62,9 @@ class TestDiscover:
         ep.load.assert_not_called()
 
     def test_stores_metadata_correctly(self):
-        ep = _make_entry_point("myplugin", "my_pkg:MyPlugin", pkg="binex-myplugin", version="2.3.0")
+        ep = _make_entry_point(
+            "myplugin", "my_pkg:MyPlugin", pkg="binex-myplugin", version="2.3.0"
+        )
         registry = PluginRegistry()
 
         with patch("binex.plugins.entry_points", return_value=[ep]):
@@ -252,7 +252,7 @@ class TestResolveInline:
         # dataclass has no create_adapter()
         with pytest.raises(ValueError, match="missing create_adapter\\(\\) method"):
             registry.resolve_inline(
-                f"{__name__}.PluginMetadata", "x://y", {},
+                "binex.plugins.PluginMetadata", "x://y", {},
             )
 
     def test_error_on_missing_module(self):
@@ -324,7 +324,10 @@ class TestConflictDetection:
         registry = PluginRegistry()
 
         with patch("binex.plugins.entry_points", return_value=[ep]):
-            with pytest.raises(ValueError, match="cannot use prefix 'llm'.*reserved for the built-in llm adapter"):
+            with pytest.raises(
+                ValueError,
+                match="cannot use prefix 'llm'.*reserved for the built-in llm adapter",
+            ):
                 registry.discover()
 
     def test_two_plugins_same_prefix_raises(self):

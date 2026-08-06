@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
-import pytest
 from click.testing import CliRunner
 
 from binex.cli.debug import debug_cmd
@@ -117,7 +116,10 @@ def test_debug_not_found():
         result = runner.invoke(debug_cmd, ["nonexistent"])
 
     assert result.exit_code != 0
-    assert "not found" in result.output.lower() or "not found" in (result.output + (result.stderr_bytes or b"").decode()).lower()
+    assert (
+        "not found" in result.output.lower()
+        or "not found" in (result.output + (result.stderr_bytes or b"").decode()).lower()
+    )
 
 
 # --- T022: test_debug_node_filter ---
@@ -135,8 +137,8 @@ def test_debug_node_filter():
     assert "step_a" in result.output
     # step_b should not appear in node sections
     lines = result.output.split("\n")
-    node_lines = [l for l in lines if l.startswith("-- ")]
-    assert all("step_b" not in l for l in node_lines)
+    node_lines = [line for line in lines if line.startswith("-- ")]
+    assert all("step_b" not in line for line in node_lines)
 
 
 # --- T023: test_debug_errors_only ---
@@ -202,8 +204,8 @@ def test_debug_errors_only():
     assert "step_b" in result.output
     assert "Connection timeout" in result.output
     lines = result.output.split("\n")
-    node_lines = [l for l in lines if l.startswith("-- ")]
-    assert all("step_a" not in l for l in node_lines)
+    node_lines = [line for line in lines if line.startswith("-- ")]
+    assert all("step_a" not in line for line in node_lines)
 
 
 # --- T035: test_debug_json ---

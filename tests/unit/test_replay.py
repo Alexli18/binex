@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
+from binex.adapters.local import LocalPythonAdapter
 from binex.models.artifact import Artifact, Lineage
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
-from binex.adapters.local import LocalPythonAdapter
 from binex.runtime.dispatcher import Dispatcher
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 
@@ -189,7 +189,7 @@ async def test_replay_caches_upstream_artifacts(
     assert len(cached_records) == 1
     assert cached_records[0].status == TaskStatus.COMPLETED
     # Cached record should reference original artifacts
-    assert cached_records[0].output_artifact_refs == [f"art_a_run_original"]
+    assert cached_records[0].output_artifact_refs == ["art_a_run_original"]
 
 
 @pytest.mark.asyncio

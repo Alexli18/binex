@@ -1,5 +1,7 @@
 import pytest
+
 from binex.patterns.models import PatternSpec, StepConfig
+
 
 class TestStepConfig:
     def test_minimal(self):

@@ -60,12 +60,17 @@ class TestLLMAdapterConfig:
             max_tokens=1024,
         )
 
-        from binex.models.artifact import Artifact, Lineage
         from binex.models.task import TaskNode
 
-        task = TaskNode(id="t1", run_id="r1", node_id="n1", agent="llm://gpt-4o", system_prompt="test")
+        task = TaskNode(
+            id="t1", run_id="r1", node_id="n1", agent="llm://gpt-4o", system_prompt="test"
+        )
 
-        with patch("binex.adapters.llm.litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock:
+        with patch(
+            "binex.adapters.llm.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=mock_response,
+        ) as mock:
             await adapter.execute(task, [], "trace-1")
 
         kwargs = mock.call_args[1]
@@ -83,12 +88,21 @@ class TestLLMAdapterConfig:
 
         adapter = LLMAdapter(model="ollama/llama3.2")
 
-        from binex.models.artifact import Lineage
         from binex.models.task import TaskNode
 
-        task = TaskNode(id="t1", run_id="r1", node_id="n1", agent="llm://ollama/llama3.2", system_prompt="test")
+        task = TaskNode(
+            id="t1",
+            run_id="r1",
+            node_id="n1",
+            agent="llm://ollama/llama3.2",
+            system_prompt="test",
+        )
 
-        with patch("binex.adapters.llm.litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock:
+        with patch(
+            "binex.adapters.llm.litellm.acompletion",
+            new_callable=AsyncMock,
+            return_value=mock_response,
+        ) as mock:
             await adapter.execute(task, [], "trace-1")
 
         kwargs = mock.call_args[1]

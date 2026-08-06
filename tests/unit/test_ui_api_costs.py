@@ -55,7 +55,9 @@ def _make_cost_record(
 @pytest.mark.asyncio
 async def test_get_costs(client, stores):
     exec_store, art_store = stores
-    await exec_store.record_cost(_make_cost_record("run-1", "llm_node", 0.0512, "gpt-4", id="cost-1"))
+    await exec_store.record_cost(
+        _make_cost_record("run-1", "llm_node", 0.0512, "gpt-4", id="cost-1")
+    )
     await exec_store.record_cost(
         _make_cost_record("run-1", "summary_node", 0.01, "gpt-3.5-turbo", id="cost-2")
     )

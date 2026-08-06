@@ -7,12 +7,19 @@ from click.testing import CliRunner
 
 from binex.cli.start import (
     _step_mode_topology,
+    build_custom_workflow,
     start_cmd,
+)
+from binex.cli.start_config import (
+    _configure_advanced_params,
+    _configure_back_edge,
+    _configure_node,
 )
 from binex.cli.start_templates import (
     _get_bundled_prompt_list,
     _select_prompt,
 )
+from binex.cli.start_ui import _preview_yaml
 
 
 class TestStepModeTopology:
@@ -128,8 +135,6 @@ class TestPromptSelection:
         assert result == "file://prompts/gen-researcher.md"
 
 
-from binex.cli.start_config import _configure_advanced_params
-
 
 class TestAdvancedParams:
     """Optional advanced parameter configuration."""
@@ -156,8 +161,6 @@ class TestAdvancedParams:
         result = _configure_advanced_params(input_fn=lambda prompt: next(inputs))
         assert result == {}
 
-
-from binex.cli.start_config import _configure_back_edge
 
 
 class TestConfigureBackEdge:
@@ -193,8 +196,6 @@ class TestConfigureBackEdge:
         )
         assert result["max_iterations"] == 3
 
-
-from binex.cli.start_config import _configure_node
 
 
 class TestConfigureNode:
@@ -284,8 +285,6 @@ class TestConfigureNode:
         assert "rejected" in config["back_edge"]["when"]
 
 
-from binex.cli.start import build_custom_workflow
-
 
 class TestBuildCustomWorkflow:
     """Generate YAML from per-node config dicts."""
@@ -357,8 +356,6 @@ class TestBuildCustomWorkflow:
         assert "null" not in yaml_str
         assert "None" not in yaml_str
 
-
-from binex.cli.start_ui import _preview_yaml
 
 
 class TestPreviewYaml:

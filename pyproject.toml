@@ -92,6 +92,11 @@ line-length = 99
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
+[tool.ruff.lint.per-file-ignores]
+# Tests keep QA-plan case IDs in class names (TestAGT003_...) and the
+# MockClient-style capitalisation idiom for patched classes.
+"tests/**" = ["N801", "N806"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true

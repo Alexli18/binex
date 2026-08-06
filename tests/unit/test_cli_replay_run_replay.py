@@ -72,7 +72,12 @@ class TestRunReplayLLMAgent:
             "planner": NodeSpec(
                 agent="llm://gpt-4o",
                 outputs=["plan"],
-                config={"temperature": 0.3, "api_base": "http://proxy:4000", "api_key": "sk-test", "max_tokens": 1024},
+                config={
+                    "temperature": 0.3,
+                    "api_base": "http://proxy:4000",
+                    "api_key": "sk-test",
+                    "max_tokens": 1024,
+                },
             ),
         })
         summary = _make_summary()

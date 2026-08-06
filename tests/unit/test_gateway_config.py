@@ -19,7 +19,6 @@ from binex.gateway.config import (
     load_gateway_config,
 )
 
-
 # ── Model defaults ──────────────────────────────────────────────────
 
 class TestGatewayConfigDefaults:

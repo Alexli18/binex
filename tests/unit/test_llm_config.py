@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from binex.agents.common.llm_config import LLMConfig
 from binex.agents.common.llm_client import LLMClient
+from binex.agents.common.llm_config import LLMConfig
 
 
 class TestLLMConfig:
@@ -59,7 +59,9 @@ class TestLLMClient:
         mock_response.choices = [AsyncMock()]
         mock_response.choices[0].message.content = "Hello world"
 
-        with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock_llm:
+        with patch(
+            "litellm.acompletion", new_callable=AsyncMock, return_value=mock_response
+        ) as mock_llm:
             result = await client.complete("Say hello")
             assert result == "Hello world"
             mock_llm.assert_called_once()
@@ -73,7 +75,9 @@ class TestLLMClient:
         mock_response.choices = [AsyncMock()]
         mock_response.choices[0].message.content = "response"
 
-        with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock_llm:
+        with patch(
+            "litellm.acompletion", new_callable=AsyncMock, return_value=mock_response
+        ) as mock_llm:
             await client.complete("prompt", system="You are helpful")
             messages = mock_llm.call_args[1]["messages"]
             assert messages[0]["role"] == "system"
@@ -85,7 +89,9 @@ class TestLLMClient:
         mock_response.choices = [AsyncMock()]
         mock_response.choices[0].message.content = '{"key": "value"}'
 
-        with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock_llm:
+        with patch(
+            "litellm.acompletion", new_callable=AsyncMock, return_value=mock_response
+        ) as mock_llm:
             result = await client.complete_json("Give me JSON")
             assert result == '{"key": "value"}'
             messages = mock_llm.call_args[1]["messages"]

@@ -6,11 +6,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from binex.adapters.langchain_adapter import LangChainPlugin
-from binex.adapters.crewai_adapter import CrewAIPlugin
 from binex.adapters.autogen_adapter import AutoGenPlugin
+from binex.adapters.crewai_adapter import CrewAIPlugin
+from binex.adapters.langchain_adapter import LangChainPlugin
 from binex.plugins import PluginRegistry
-
 
 # ---------------------------------------------------------------------------
 # Helpers

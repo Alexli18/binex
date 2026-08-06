@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock
-
 import pytest
 
 from binex.adapters.local import LocalPythonAdapter
 from binex.models.artifact import Artifact, Lineage
-from binex.models.task import RetryPolicy, TaskNode, TaskStatus
+from binex.models.task import RetryPolicy, TaskNode
 from binex.runtime.dispatcher import Dispatcher
 
 

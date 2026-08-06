@@ -166,7 +166,14 @@ class TestReplayCmdOutputFormat:
         ):
             result = runner.invoke(
                 cli,
-                ["replay", "run_orig_abc", "--from", "step_x", "--workflow", "examples/simple.yaml"],
+                [
+                    "replay",
+                    "run_orig_abc",
+                    "--from",
+                    "step_x",
+                    "--workflow",
+                    "examples/simple.yaml",
+                ],
             )
 
         assert "Replay Run ID: run_replay_999" in result.output

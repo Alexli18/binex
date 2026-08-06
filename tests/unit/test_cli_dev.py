@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
 
-from binex.cli.dev import dev_cmd, _find_compose_file
+from binex.cli.dev import _find_compose_file, dev_cmd
 
 
 class TestFindComposeFile:

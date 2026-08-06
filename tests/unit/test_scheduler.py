@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
 from binex.models.workflow import WorkflowSpec

@@ -140,5 +140,5 @@ async def test_format_lineage_tree_uses_indentation(
     # Root should not be indented, children should be
     assert len(lines) >= 2
     # At least one child line should have indentation or tree characters
-    child_lines = [l for l in lines[1:] if l.strip()]
-    assert any("art_query" in l for l in child_lines)
+    child_lines = [line for line in lines[1:] if line.strip()]
+    assert any("art_query" in line for line in child_lines)

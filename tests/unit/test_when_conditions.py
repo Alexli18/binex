@@ -1,4 +1,5 @@
-"""Tests for when-condition support: scheduler skipping, condition parsing, orchestrator integration, validation."""
+"""Tests for when-condition support: scheduler skipping, condition parsing,
+orchestrator integration, validation."""
 
 from __future__ import annotations
 
@@ -14,7 +15,6 @@ from binex.runtime.back_edge import evaluate_when
 from binex.runtime.orchestrator import Orchestrator
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 from binex.workflow_spec.validator import validate_workflow
-
 
 # ---------------------------------------------------------------------------
 # Helpers

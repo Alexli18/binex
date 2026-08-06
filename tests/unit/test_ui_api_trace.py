@@ -75,15 +75,27 @@ def _make_record(
 async def test_trace_basic(client, stores):
     exec_store, art_store = stores
     start = datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC)
-    await exec_store.create_run(_make_run(started_at=start, completed_at=start + timedelta(seconds=10)))
+    await exec_store.create_run(
+        _make_run(started_at=start, completed_at=start + timedelta(seconds=10))
+    )
     # timestamp = end time (when record was created), offset = end - duration - run_start
     # node_a: started at +1s, ran for 2s, ended at +3s
     await exec_store.record(
-        _make_record(task_id="node_a", latency_ms=2000, timestamp=start + timedelta(seconds=3), rec_id="r1"),
+        _make_record(
+            task_id="node_a",
+            latency_ms=2000,
+            timestamp=start + timedelta(seconds=3),
+            rec_id="r1",
+        ),
     )
     # node_b: started at +4s, ran for 3s, ended at +7s
     await exec_store.record(
-        _make_record(task_id="node_b", latency_ms=3000, timestamp=start + timedelta(seconds=7), rec_id="r2"),
+        _make_record(
+            task_id="node_b",
+            latency_ms=3000,
+            timestamp=start + timedelta(seconds=7),
+            rec_id="r2",
+        ),
     )
 
     with patch("binex.ui.api.trace._get_stores", return_value=(exec_store, art_store)):
@@ -110,17 +122,34 @@ async def test_trace_basic(client, stores):
 async def test_trace_anomalies(client, stores):
     exec_store, art_store = stores
     start = datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC)
-    await exec_store.create_run(_make_run(started_at=start, completed_at=start + timedelta(seconds=20)))
+    await exec_store.create_run(
+        _make_run(started_at=start, completed_at=start + timedelta(seconds=20))
+    )
 
     # Two normal nodes (1s each) and one slow node (10s) — ratio = 10/1 = 10x > 2x threshold
     await exec_store.record(
-        _make_record(task_id="fast_a", latency_ms=1000, timestamp=start + timedelta(seconds=1), rec_id="r1"),
+        _make_record(
+            task_id="fast_a",
+            latency_ms=1000,
+            timestamp=start + timedelta(seconds=1),
+            rec_id="r1",
+        ),
     )
     await exec_store.record(
-        _make_record(task_id="fast_b", latency_ms=1000, timestamp=start + timedelta(seconds=2), rec_id="r2"),
+        _make_record(
+            task_id="fast_b",
+            latency_ms=1000,
+            timestamp=start + timedelta(seconds=2),
+            rec_id="r2",
+        ),
     )
     await exec_store.record(
-        _make_record(task_id="slow_c", latency_ms=10000, timestamp=start + timedelta(seconds=3), rec_id="r3"),
+        _make_record(
+            task_id="slow_c",
+            latency_ms=10000,
+            timestamp=start + timedelta(seconds=3),
+            rec_id="r3",
+        ),
     )
 
     with patch("binex.ui.api.trace._get_stores", return_value=(exec_store, art_store)):
@@ -164,13 +193,19 @@ async def test_trace_no_anomalies_when_similar_durations(client, stores):
     """No anomalies when all nodes have similar durations."""
     exec_store, art_store = stores
     start = datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC)
-    await exec_store.create_run(_make_run(started_at=start, completed_at=start + timedelta(seconds=5)))
+    await exec_store.create_run(
+        _make_run(started_at=start, completed_at=start + timedelta(seconds=5))
+    )
 
     await exec_store.record(
-        _make_record(task_id="a", latency_ms=1000, timestamp=start + timedelta(seconds=1), rec_id="r1"),
+        _make_record(
+            task_id="a", latency_ms=1000, timestamp=start + timedelta(seconds=1), rec_id="r1"
+        ),
     )
     await exec_store.record(
-        _make_record(task_id="b", latency_ms=1200, timestamp=start + timedelta(seconds=2), rec_id="r2"),
+        _make_record(
+            task_id="b", latency_ms=1200, timestamp=start + timedelta(seconds=2), rec_id="r2"
+        ),
     )
 
     with patch("binex.ui.api.trace._get_stores", return_value=(exec_store, art_store)):

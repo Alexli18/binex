@@ -227,7 +227,10 @@ class TestLoadWorkflowFilePrompt:
 
         workflow_yaml = tmp_path / "workflow.yaml"
         workflow_yaml.write_text(
-            'name: test-workflow\nnodes:\n  researcher:\n    agent: llm://openai/gpt-4\n    system_prompt: "file://prompts/researcher.md"\n    outputs: [result]\n'
+            "name: test-workflow\nnodes:\n  researcher:\n"
+            "    agent: llm://openai/gpt-4\n"
+            '    system_prompt: "file://prompts/researcher.md"\n'
+            "    outputs: [result]\n"
         )
 
         from binex.workflow_spec.loader import load_workflow

@@ -12,7 +12,6 @@ from binex.models.task import TaskStatus
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 from binex.trace.debug_report import (
     DebugReport,
-    NodeReport,
     build_debug_report,
     format_debug_report,
 )
@@ -183,7 +182,8 @@ async def test_report_contains_failed_node():
 
 @pytest.mark.asyncio
 async def test_report_contains_skipped_node():
-    """Skipped nodes inferred from total_nodes minus recorded; blocked_by contains failed node IDs."""
+    """Skipped nodes inferred from total_nodes minus recorded; blocked_by contains
+    failed node IDs."""
     run = _run_summary(status="failed", total=3, completed=1, failed=1)
     records = [
         _record("step_a"),
@@ -300,8 +300,8 @@ async def test_format_plain_text_errors_only():
     # step_a is completed so should be filtered out from node sections
     # but header still mentions the workflow
     lines = output.split("\n")
-    node_lines = [l for l in lines if l.startswith("-- ")]
-    assert all("step_a" not in l for l in node_lines)
+    node_lines = [line for line in lines if line.startswith("-- ")]
+    assert all("step_a" not in line for line in node_lines)
 
 
 # --- T034: test_format_json ---

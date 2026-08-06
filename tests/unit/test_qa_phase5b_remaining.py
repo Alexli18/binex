@@ -12,7 +12,6 @@ Coverage gap analysis:
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -21,14 +20,13 @@ from pydantic import ValidationError
 from binex.models.agent import AgentHealth, AgentInfo
 from binex.models.artifact import Artifact, Lineage
 from binex.models.execution import ExecutionRecord, RunSummary
-from binex.models.task import RetryPolicy, TaskStatus
+from binex.models.task import TaskStatus
 from binex.models.workflow import NodeSpec, WorkflowSpec
 from binex.registry.app import app, registry_state
 from binex.stores.backends.memory import InMemoryArtifactStore
 from binex.trace.lineage import build_lineage_tree
 from binex.workflow_spec.loader import load_workflow_from_string
 from binex.workflow_spec.validator import validate_workflow
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from binex.models.workflow import BackEdge, NodeSpec, WorkflowSpec
+from binex.models.workflow import BackEdge, NodeSpec
 
 
 class TestBackEdgeModel:

@@ -30,7 +30,9 @@ def _orch(text: str) -> Orchestrator:
         artifact_store=InMemoryArtifactStore(),
         execution_store=InMemoryExecutionStore(),
     )
-    orch.dispatcher.register_adapter("local://echo", LocalPythonAdapter(handler=_make_handler(text)))
+    orch.dispatcher.register_adapter(
+        "local://echo", LocalPythonAdapter(handler=_make_handler(text))
+    )
     return orch
 
 

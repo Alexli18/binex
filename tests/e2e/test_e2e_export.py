@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import csv
 import json
-from pathlib import Path
 
 import pytest
 
 from tests.e2e.conftest import extract_run_id, run_binex, write_workflow
-
 
 SIMPLE_WORKFLOW = """\
 name: export-test

@@ -9,7 +9,6 @@ from httpx import ASGITransport, AsyncClient
 
 from binex.models.artifact import Artifact, Lineage
 
-
 # ---------------------------------------------------------------------------
 # Researcher
 # ---------------------------------------------------------------------------

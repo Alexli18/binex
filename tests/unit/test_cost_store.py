@@ -1,4 +1,5 @@
-"""Comprehensive tests for cost storage methods in SqliteExecutionStore and InMemoryExecutionStore."""
+"""Comprehensive tests for cost storage methods in SqliteExecutionStore and
+InMemoryExecutionStore."""
 
 from __future__ import annotations
 
@@ -13,7 +14,6 @@ from binex.models.cost import CostRecord, RunCostSummary
 from binex.models.execution import RunSummary
 from binex.stores.backends.memory import InMemoryExecutionStore
 from binex.stores.backends.sqlite import SqliteExecutionStore
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -363,7 +363,9 @@ class TestMemoryGetRunCostSummary:
         assert summary.total_cost == pytest.approx(0.10)
 
     @pytest.mark.asyncio
-    async def test_summary_returns_run_cost_summary_type(self, memory_store: InMemoryExecutionStore):
+    async def test_summary_returns_run_cost_summary_type(
+        self, memory_store: InMemoryExecutionStore
+    ):
         summary = await memory_store.get_run_cost_summary("any")
         assert isinstance(summary, RunCostSummary)
 

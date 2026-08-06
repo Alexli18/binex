@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -13,7 +12,6 @@ from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
 from binex.models.cost import ExecutionResult
 from binex.models.task import TaskNode
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -106,7 +104,9 @@ class TestAutoGenAdapterInvoke:
         adapter = AutoGenAdapter("mod.Agent", {})
         obj = MagicMock(spec=["run"])
         obj.run.return_value = "sync result"
-        with patch("asyncio.to_thread", new_callable=AsyncMock, return_value="sync result") as mock_thread:
+        with patch(
+            "asyncio.to_thread", new_callable=AsyncMock, return_value="sync result"
+        ) as mock_thread:
             result = await adapter._invoke(obj, "task input")
         mock_thread.assert_awaited_once_with(obj.run, task="task input")
         assert result == "sync result"
@@ -202,7 +202,7 @@ class TestAutoGenAdapterExecute:
         fake_module.Agent = fake_obj
 
         with patch("importlib.import_module", return_value=fake_module):
-            result = await adapter.execute(task, [a1, a2], "trace-1")
+            await adapter.execute(task, [a1, a2], "trace-1")
 
         # a_run should have been called with dict input
         call_kwargs = fake_obj.a_run.call_args

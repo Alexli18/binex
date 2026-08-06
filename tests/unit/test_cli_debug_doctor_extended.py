@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import subprocess
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import httpx
-import pytest
 from click.testing import CliRunner
 
 from binex.cli.debug import debug_cmd

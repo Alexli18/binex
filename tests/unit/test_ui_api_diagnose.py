@@ -33,7 +33,9 @@ async def client(app):
         yield c
 
 
-def _make_run(run_id: str = "run-1", status: str = "failed", total_cost: float = 0.42) -> RunSummary:
+def _make_run(
+    run_id: str = "run-1", status: str = "failed", total_cost: float = 0.42
+) -> RunSummary:
     return RunSummary(
         run_id=run_id,
         workflow_name="test-workflow",

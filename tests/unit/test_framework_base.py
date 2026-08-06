@@ -12,7 +12,6 @@ from binex.models.artifact import Artifact, Lineage
 from binex.models.cost import ExecutionResult
 from binex.models.task import TaskNode
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

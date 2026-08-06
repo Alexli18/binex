@@ -16,7 +16,6 @@ from binex.models.cost import (
 )
 from binex.models.workflow import NodeSpec, WorkflowSpec
 
-
 # ---------------------------------------------------------------------------
 # CostRecord
 # ---------------------------------------------------------------------------

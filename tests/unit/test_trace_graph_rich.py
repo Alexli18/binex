@@ -5,14 +5,14 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime
 
-import pytest
-
 from binex.models.execution import ExecutionRecord
 from binex.models.task import TaskStatus
 from binex.trace.trace_rich import format_trace_graph_rich
 
 
-def _make_record(task_id: str, status: str = "completed", latency_ms: int = 1000) -> ExecutionRecord:
+def _make_record(
+    task_id: str, status: str = "completed", latency_ms: int = 1000
+) -> ExecutionRecord:
     return ExecutionRecord(
         id=f"rec_{task_id}",
         run_id="run_001",

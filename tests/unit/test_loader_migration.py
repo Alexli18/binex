@@ -3,7 +3,6 @@
 import pytest
 
 from binex.workflow_spec.loader import load_workflow_from_string
-from binex.workflow_spec.migrations import UnsupportedVersionError
 
 
 def test_loader_applies_migrations():

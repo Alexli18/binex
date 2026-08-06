@@ -1,14 +1,16 @@
 import pytest
+
+from binex.models.workflow import NodeSpec, WorkflowSpec
 from binex.patterns.models import PatternSpec, StepConfig
+from binex.patterns.templates.best_of_n import expand_best_of_n
+from binex.patterns.templates.chain_of_verification import expand_chain_of_verification
+from binex.patterns.templates.constitutional import expand_constitutional
 from binex.patterns.templates.critic import expand_critic
 from binex.patterns.templates.debate import expand_debate
-from binex.patterns.templates.best_of_n import expand_best_of_n
+from binex.patterns.templates.fsm import expand_fsm
+from binex.patterns.templates.plan_execute import expand_plan_execute
 from binex.patterns.templates.reflexion import expand_reflexion
 from binex.patterns.templates.scatter import expand_scatter
-from binex.patterns.templates.fsm import expand_fsm
-from binex.patterns.templates.constitutional import expand_constitutional
-from binex.patterns.templates.chain_of_verification import expand_chain_of_verification
-from binex.patterns.templates.plan_execute import expand_plan_execute
 
 
 class TestCriticExpansion:
@@ -172,7 +174,9 @@ class TestReflexionExpansion:
         assert ("rx.actor", "rx.reflector") in edges
 
     def test_back_edge(self):
-        spec = PatternSpec(id="rx", pattern="reflexion", model="llm://m", config={"max_iterations": 5})
+        spec = PatternSpec(
+            id="rx", pattern="reflexion", model="llm://m", config={"max_iterations": 5}
+        )
         nodes, edges, back_edges = expand_reflexion(spec)
         assert len(back_edges) == 1
         be = back_edges[0]
@@ -242,7 +246,13 @@ class TestScatterExpansion:
             assert n.config.get("_pattern_type") == "scatter"
 
     def test_external_depends_wired_to_entry(self):
-        spec = PatternSpec(id="s", pattern="scatter", model="llm://m", config={"max_workers": 2}, depends_on=["up"])
+        spec = PatternSpec(
+            id="s",
+            pattern="scatter",
+            model="llm://m",
+            config={"max_workers": 2},
+            depends_on=["up"],
+        )
         nodes, _, _ = expand_scatter(spec)
         mapper = next(n for n in nodes if n.id == "s.mapper")
         assert "up" in mapper.depends_on
@@ -257,20 +267,32 @@ class TestFSMExpansion:
         assert ids == {"f.start", "f.end"}
 
     def test_custom_states(self):
-        spec = PatternSpec(id="f", pattern="fsm", model="llm://m", config={"states": ["idle", "active", "done"]})
+        spec = PatternSpec(
+            id="f",
+            pattern="fsm",
+            model="llm://m",
+            config={"states": ["idle", "active", "done"]},
+        )
         nodes, edges, back_edges = expand_fsm(spec)
         assert len(nodes) == 3
         ids = {n.id for n in nodes}
         assert ids == {"f.idle", "f.active", "f.done"}
 
     def test_edge_wiring(self):
-        spec = PatternSpec(id="f", pattern="fsm", model="llm://m", config={"states": ["a", "b", "c"]})
+        spec = PatternSpec(
+            id="f", pattern="fsm", model="llm://m", config={"states": ["a", "b", "c"]}
+        )
         nodes, edges, back_edges = expand_fsm(spec)
         assert ("f.a", "f.b") in edges
         assert ("f.b", "f.c") in edges
 
     def test_back_edges(self):
-        spec = PatternSpec(id="f", pattern="fsm", model="llm://m", config={"states": ["a", "b", "c"], "max_iterations": 5})
+        spec = PatternSpec(
+            id="f",
+            pattern="fsm",
+            model="llm://m",
+            config={"states": ["a", "b", "c"], "max_iterations": 5},
+        )
         nodes, edges, back_edges = expand_fsm(spec)
         assert len(back_edges) == 2  # b->a and c->a
         targets = {be["node_id"] for be in back_edges}
@@ -373,7 +395,9 @@ class TestChainOfVerificationExpansion:
             assert n.config.get("_pattern_type") == "chain_of_verification"
 
     def test_external_depends_wired_to_entry(self):
-        spec = PatternSpec(id="cv", pattern="chain_of_verification", model="llm://m", depends_on=["up"])
+        spec = PatternSpec(
+            id="cv", pattern="chain_of_verification", model="llm://m", depends_on=["up"]
+        )
         nodes, _, _ = expand_chain_of_verification(spec)
         gen = next(n for n in nodes if n.id == "cv.generate")
         assert "up" in gen.depends_on
@@ -394,7 +418,9 @@ class TestPlanExecuteExpansion:
         assert ("pe.executor", "pe.verifier") in edges
 
     def test_back_edge(self):
-        spec = PatternSpec(id="pe", pattern="plan_execute", model="llm://m", config={"max_iterations": 5})
+        spec = PatternSpec(
+            id="pe", pattern="plan_execute", model="llm://m", config={"max_iterations": 5}
+        )
         nodes, edges, back_edges = expand_plan_execute(spec)
         assert len(back_edges) == 1
         be = back_edges[0]
@@ -433,27 +459,21 @@ class TestPlanExecuteExpansion:
 class TestExpandPatterns:
     """Integration tests for expand_patterns() at WorkflowSpec level."""
 
-    def _make_spec(self, nodes_raw: dict) -> "WorkflowSpec":
-        from binex.models.workflow import WorkflowSpec
-        import yaml, textwrap
+    def _make_spec(self, nodes_raw: dict) -> WorkflowSpec:
         # Build minimal WorkflowSpec from node dicts
         nodes = {}
         for node_id, cfg in nodes_raw.items():
-            from binex.models.workflow import NodeSpec
             nodes[node_id] = NodeSpec(**cfg)
         return WorkflowSpec(version="1.0", name="test", nodes=nodes)
 
     def _pattern_node(self, pattern: str, depends_on: list[str] | None = None):
-        from binex.models.workflow import NodeSpec
         return NodeSpec(agent="llm://m", pattern=pattern, outputs=[], depends_on=depends_on or [])
 
     def _regular_node(self, depends_on: list[str] | None = None):
-        from binex.models.workflow import NodeSpec
         return NodeSpec(agent="llm://m", outputs=[], depends_on=depends_on or [])
 
     def test_single_pattern_expands(self):
         from binex.patterns.expander import expand_patterns
-        from binex.models.workflow import WorkflowSpec
         spec = WorkflowSpec(
             version="1.0", name="t",
             nodes={"a": self._pattern_node("critic")},
@@ -466,7 +486,6 @@ class TestExpandPatterns:
     def test_chained_patterns_rewired(self):
         """Pattern B depends on pattern A — B's entry must depend on A's exit, not 'a'."""
         from binex.patterns.expander import expand_patterns
-        from binex.models.workflow import WorkflowSpec
         spec = WorkflowSpec(
             version="1.0", name="t",
             nodes={
@@ -489,7 +508,6 @@ class TestExpandPatterns:
     def test_regular_node_after_pattern_rewired(self):
         """A regular node depending on a pattern should depend on the exit node."""
         from binex.patterns.expander import expand_patterns
-        from binex.models.workflow import WorkflowSpec
         spec = WorkflowSpec(
             version="1.0", name="t",
             nodes={
@@ -506,7 +524,17 @@ class TestExpandPatterns:
 class TestTemplateRegistry:
     def test_all_patterns_registered(self):
         from binex.patterns.templates import TEMPLATE_REGISTRY
-        expected = {"critic", "debate", "best_of_n", "reflexion", "scatter", "fsm", "constitutional", "chain_of_verification", "plan_execute"}
+        expected = {
+            "critic",
+            "debate",
+            "best_of_n",
+            "reflexion",
+            "scatter",
+            "fsm",
+            "constitutional",
+            "chain_of_verification",
+            "plan_execute",
+        }
         assert set(TEMPLATE_REGISTRY.keys()) == expected
 
     def test_expand_pattern_dispatches(self):

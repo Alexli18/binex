@@ -5,7 +5,6 @@ import pytest
 
 from binex.workflow_spec.loader import load_workflow_from_string
 
-
 VALID_YAML = """
 name: test
 nodes:
