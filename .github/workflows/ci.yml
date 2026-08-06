@@ -47,4 +47,4 @@ jobs:
           python-version: "3.11"
       - run: pip install -e ".[dev,rich]" "crewai==${{ matrix.crewai-version }}"
       - name: Newcomer-path integration tests
-        run: python -m pytest tests/integration/test_observe_crewai_integration.py tests/unit/test_observe_crewai.py -q
+        run: python -m pytest tests/integration/test_observe_crewai_integration.py tests/unit/adapters/test_observe_crewai.py -q
