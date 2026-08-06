@@ -299,4 +299,59 @@ To run tests with coverage:
 python -m pytest tests/ --cov=src/binex --cov-report=term-missing
 ```
 
-The current test suite achieves approximately 96% code coverage.
+The unit + integration suite currently covers ~82% of `src/binex` (measured
+2026-08, `--cov=binex` over `tests/unit tests/integration`). Not every
+uncovered line is a gap — see the next section.
+
+## Conscious Testing Boundaries
+
+Some zeros and low percentages in the coverage report are decisions, not
+neglect. The guiding rule: **the boundary runs through the terminal, not
+through the file** — pure logic inside a boundary module is extracted into a
+function and unit-tested; only the genuinely interactive or environment-bound
+layer stays untested. If you touch one of these modules and find separable
+logic, pull it out and test it rather than widening the boundary.
+
+**Interactive TUI screens** — covered by manual QA scenarios plus smoke runs,
+not unit tests. A unit test over a mocked `click.getchar()` loop asserts the
+mock, not the terminal, and gives false confidence:
+
+- `cli/explore_ui.py`, `cli/explore_actions.py`, `cli/explore_replay.py`,
+  and the interactive loops of `cli/explore.py` (the `binex explore` dashboard)
+- `cli/start_ui.py` and the prompt chains in `cli/start_constructor.py` /
+  `cli/start_config.py` (the `binex start` wizard) — their computable steps
+  are already covered via scaffold/template tests
+- the live-render wrapper in `cli/run_progress.py` (rich `Live` table)
+- the `_render_*` functions of `trace/diff_rich.py` (its pure helpers —
+  delta formatting, error-change detection, row building — are unit-tested)
+- rich panel styling in `cli/trace.py` (the event-grouping logic is tested)
+
+**Launchers and entry points** — wrappers whose only behavior is starting
+something else; a test would assert "the wrapper calls the library":
+
+- `cli/collect.py` (uvicorn launcher for the OTel collector)
+- `mcp_server/server.py::run_server()` (stdio transport is FastMCP's code,
+  exercised only by a real MCP client; tool registration and delegation ARE
+  unit-tested)
+- `binex/__main__.py` (two-line delegation to `cli.main`)
+- `scheduler/engine.py::start()` (signal handlers + sleep loop; `_tick`,
+  rescan/skip logic and `_run_workflow` are unit-tested)
+
+**Transport-only branches** — reachable only through a real network client:
+
+- the `CancelledError` branch of the SSE generator in `ui/api/events.py`
+  (client disconnect)
+
+**Environment-gated paths** — dead in the default test environment because an
+optional dependency is absent; not dead in the matrix:
+
+- `telemetry.py` OTel emission paths (require the `telemetry` extra)
+- protobuf decode paths in `importers/collector.py` (require
+  `opentelemetry-proto`; the 415 gate is tested)
+- `observe_crewai.py` attribution paths — covered by the dedicated
+  `observe-crewai` CI job that installs `crewai`; only a local-environment
+  boundary
+
+Anything not listed here is expected to be tested; a new zero in the coverage
+report is either a bug in the test setup or a candidate for this list — with
+its one-sentence justification written down, not silently accepted.
