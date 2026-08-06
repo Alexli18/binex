@@ -213,7 +213,7 @@ def make_git_probe(
     A commit whose workflow file is missing, or that errors during setup, is
     reported ``skip`` (cannot evaluate) rather than falsely blamed.
     """
-    from binex.eval.runner import EvalError, run_eval
+    from binex.eval.golden import EvalError, run_eval
 
     async def _probe(commit: str) -> tuple[Verdict, str]:
         try:

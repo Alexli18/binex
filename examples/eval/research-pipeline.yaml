@@ -1,0 +1,29 @@
+# Research Pipeline (deterministic, local:// only — no API keys)
+# Used by the eval suite example to demonstrate regression testing.
+
+name: research-pipeline
+description: "Deterministic 3-node research pipeline for eval examples"
+
+nodes:
+  planner:
+    agent: "local://echo"
+    system_prompt: "Plan the research"
+    inputs:
+      topic: "${user.topic}"
+    outputs: [plan]
+
+  researcher:
+    agent: "local://echo"
+    system_prompt: "Research the topic and produce findings"
+    inputs:
+      plan: "${planner.plan}"
+    outputs: [findings]
+    depends_on: [planner]
+
+  summarizer:
+    agent: "local://echo"
+    system_prompt: "Summarize the findings"
+    inputs:
+      findings: "${researcher.findings}"
+    outputs: [summary]
+    depends_on: [researcher]

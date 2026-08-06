@@ -347,7 +347,7 @@ def history_cmd(
     (and an optional baseline diff). Prints the first bad commit.
     """
     from binex.bisect_history import BisectError
-    from binex.eval.runner import EvalThresholds
+    from binex.eval.golden import EvalThresholds
 
     thresholds = EvalThresholds(
         min_similarity=min_similarity,

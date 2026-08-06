@@ -17,7 +17,7 @@ from binex.cli.dev import dev_cmd
 from binex.cli.diagnose import diagnose_cmd
 from binex.cli.diff import diff_cmd
 from binex.cli.doctor import doctor_cmd
-from binex.cli.eval_cmd import eval_cmd
+from binex.cli.eval_cmd import eval_group
 from binex.cli.explore import explore_cmd
 from binex.cli.export_cmd import export_cmd
 from binex.cli.freeze import freeze_cmd
@@ -72,7 +72,7 @@ cli.add_command(replay_cmd, "replay")
 cli.add_command(resume_cmd, "resume")
 cli.add_command(debug_cmd, "debug")
 cli.add_command(diff_cmd, "diff")
-cli.add_command(eval_cmd, "eval")
+cli.add_command(eval_group, "eval")
 cli.add_command(freeze_cmd, "freeze")
 cli.add_command(hello_cmd, "hello")
 cli.add_command(dev_cmd, "dev")
