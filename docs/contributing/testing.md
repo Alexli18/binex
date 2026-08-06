@@ -13,7 +13,7 @@ The suite contains ~870 tests across ~75 unit test files and 1 integration test 
 Run a specific test file:
 
 ```bash
-python -m pytest tests/unit/test_qa_phase4_core.py
+python -m pytest tests/unit/qa/test_qa_phase4_core.py
 ```
 
 Run tests matching a keyword:
