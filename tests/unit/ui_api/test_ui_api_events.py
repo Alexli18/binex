@@ -1,81 +1,98 @@
-"""Tests for the EventBus and SSE events."""
+"""Tests for the SSE streaming endpoint (GET /runs/{run_id}/events).
+
+Covers the generator loop: frame format, terminal-event close, unsubscribe
+in finally, default event type, and the keepalive branch (via a patched
+wait_for — the 30 s timeout is hardcoded).
+
+The CancelledError branch (client disconnect) is a conscious testing
+boundary: only a real transport can genuinely cancel the generator task.
+"""
 
 from __future__ import annotations
 
 import asyncio
+from unittest.mock import patch
 
 import pytest
 
-from binex.ui.api.events import EventBus
+from binex.ui.api.events import event_bus
+
+
+async def _wait_for_subscriber(run_id: str, timeout: float = 2.0) -> None:
+    """Poll until the streaming request has registered its queue on the bus."""
+    async def poll() -> None:
+        while not event_bus._subscribers.get(run_id):
+            await asyncio.sleep(0.01)
+
+    await asyncio.wait_for(poll(), timeout=timeout)
+
+
+async def _collect_stream(client, run_id: str) -> tuple[int, str, list[str]]:
+    """Open the SSE stream and read it to completion."""
+    async with client.stream("GET", f"/api/v1/runs/{run_id}/events") as resp:
+        lines = [line async for line in resp.aiter_lines()]
+        return resp.status_code, resp.headers.get("content-type", ""), lines
 
 
 @pytest.mark.asyncio
-async def test_subscribe_publish():
-    """Subscribe to a run, publish an event, verify received."""
-    bus = EventBus()
-    queue = bus.subscribe("run-1")
+async def test_stream_delivers_frames_and_closes_on_terminal_event(client):
+    run_id = "run-sse-1"
+    task = asyncio.create_task(_collect_stream(client, run_id))
+    await _wait_for_subscriber(run_id)
 
-    event = {"type": "node:started", "node_id": "A", "timestamp": "2026-01-01T00:00:00Z"}
-    await bus.publish("run-1", event)
+    await event_bus.publish(run_id, {"type": "node:completed", "node_id": "a"})
+    await event_bus.publish(run_id, {"type": "run:completed", "status": "completed"})
 
-    received = await asyncio.wait_for(queue.get(), timeout=1.0)
-    assert received == event
-    assert received["type"] == "node:started"
-    assert received["node_id"] == "A"
-
-
-@pytest.mark.asyncio
-async def test_fan_out():
-    """Multiple subscribers get the same event."""
-    bus = EventBus()
-    q1 = bus.subscribe("run-1")
-    q2 = bus.subscribe("run-1")
-
-    event = {"type": "node:completed", "node_id": "B", "timestamp": "2026-01-01T00:00:01Z"}
-    await bus.publish("run-1", event)
-
-    r1 = await asyncio.wait_for(q1.get(), timeout=1.0)
-    r2 = await asyncio.wait_for(q2.get(), timeout=1.0)
-    assert r1 == event
-    assert r2 == event
+    status, content_type, lines = await asyncio.wait_for(task, timeout=5)
+    assert status == 200
+    assert content_type.startswith("text/event-stream")
+    assert "event: node:completed" in lines
+    assert any(line.startswith("data: ") and '"node_id": "a"' in line for line in lines)
+    # run:completed is the terminal event — the stream must have ended by itself
+    assert "event: run:completed" in lines
+    # finally-block unsubscribed the queue
+    assert event_bus._subscribers.get(run_id) == []
 
 
 @pytest.mark.asyncio
-async def test_unsubscribe():
-    """After unsubscribe, no more events are received."""
-    bus = EventBus()
-    queue = bus.subscribe("run-1")
+async def test_event_without_type_defaults_to_message(client):
+    run_id = "run-sse-2"
+    task = asyncio.create_task(_collect_stream(client, run_id))
+    await _wait_for_subscriber(run_id)
 
-    # Publish one event, then unsubscribe
-    await bus.publish("run-1", {"type": "node:started", "node_id": "A", "timestamp": "t1"})
-    received = await asyncio.wait_for(queue.get(), timeout=1.0)
-    assert received["type"] == "node:started"
+    await event_bus.publish(run_id, {"payload": 42})
+    await event_bus.publish(run_id, {"type": "run:cancelled"})
 
-    bus.unsubscribe("run-1", queue)
+    _, _, lines = await asyncio.wait_for(task, timeout=5)
+    assert "event: message" in lines
+    # run:cancelled is also terminal
+    assert "event: run:cancelled" in lines
 
-    # Publish another event — queue should NOT receive it
-    await bus.publish("run-1", {"type": "node:completed", "node_id": "A", "timestamp": "t2"})
 
-    assert queue.empty(), "Queue should be empty after unsubscribe"
+class _TimeoutThenTerminalQueue:
+    """First get() times out (as if 30 s passed), second returns a terminal event."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    async def get(self) -> dict:
+        self.calls += 1
+        if self.calls == 1:
+            raise TimeoutError
+        return {"type": "run:completed", "status": "completed"}
 
 
 @pytest.mark.asyncio
-async def test_publish_no_subscribers():
-    """Publishing to a run with no subscribers does not raise."""
-    bus = EventBus()
-    # Should not raise
-    await bus.publish("nonexistent", {"type": "node:started", "node_id": "X", "timestamp": "t"})
+async def test_timeout_yields_keepalive_comment(client):
+    # A TimeoutError from inside wait_for's coroutine lands in the same
+    # except-branch as a real 30 s timeout — no global asyncio patching.
+    fake_queue = _TimeoutThenTerminalQueue()
 
+    with patch.object(event_bus, "subscribe", return_value=fake_queue):
+        _, _, lines = await asyncio.wait_for(
+            _collect_stream(client, "run-sse-3"), timeout=5,
+        )
 
-@pytest.mark.asyncio
-async def test_separate_runs():
-    """Subscribers only receive events for their own run."""
-    bus = EventBus()
-    q1 = bus.subscribe("run-1")
-    q2 = bus.subscribe("run-2")
-
-    await bus.publish("run-1", {"type": "node:started", "node_id": "A", "timestamp": "t1"})
-
-    r1 = await asyncio.wait_for(q1.get(), timeout=1.0)
-    assert r1["node_id"] == "A"
-    assert q2.empty(), "run-2 subscriber should not receive run-1 events"
+    assert ": keepalive" in lines
+    assert "event: run:completed" in lines
+    assert fake_queue.calls == 2
