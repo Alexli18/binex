@@ -1,9 +1,10 @@
-# Binex E2E Test Plan
+# Binex E2E Test Plan (Runtime Layer)
 
-**Version**: E2E v1
-**Branch**: 007-budget-cost-tracking
-**Baseline**: 1204 tests (unit + integration)
+**Version**: E2E v1 — completed 2026-03; all 31 cases DONE
+**Branch**: 007-budget-cost-tracking (merged)
+**Baseline at the time**: 1204 tests; **current total**: 2970 (2026-08-06)
 **Date**: 2026-03-10
+**See also**: `QA-UI-E2E-TEST-PLAN.md` — browser-layer (Playwright) plan
 
 ## Scope
 

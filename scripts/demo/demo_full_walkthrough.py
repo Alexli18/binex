@@ -4,6 +4,7 @@ Run with server already started: python scripts/demo/demo_full_walkthrough.py
 Records WebM video to /tmp/binex_demo/
 """
 import time
+
 from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:8420"
@@ -54,7 +55,11 @@ with sync_playwright() as p:
         slow(2000)
 
     # Hover over palette items
-    for label in ["LLM Agent", "Local Script", "Human Approve", "Human Input", "Human Output", "A2A Agent"]:
+    labels = [
+        "LLM Agent", "Local Script", "Human Approve",
+        "Human Input", "Human Output", "A2A Agent",
+    ]
+    for label in labels:
         item = page.get_by_text(label, exact=True).first
         if item.count() > 0:
             item.hover()
@@ -164,4 +169,7 @@ with sync_playwright() as p:
     browser.close()
 
     print(f"\n✅ Demo recorded: {video_path}")
-    print(f"Convert to MP4: ffmpeg -i '{video_path}' -c:v libx264 -preset fast -crf 22 /tmp/binex_demo/full_walkthrough.mp4")
+    print(
+        f"Convert to MP4: ffmpeg -i '{video_path}' -c:v libx264 -preset fast "
+        "-crf 22 /tmp/binex_demo/full_walkthrough.mp4"
+    )

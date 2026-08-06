@@ -117,6 +117,13 @@ Fixtures `sidebar` and `export_page` are provided by `tests/e2e_playwright/conft
 
 `conftest.py` also injects `TOUR_DISMISSED_STATE` as `storage_state` so the onboarding tour never overlays elements under test.
 
+### Arrange-Act-Assert
+
+Tests follow the Arrange-Act-Assert structure: set up state, perform the
+action under test, verify the outcome. The three phases are separated by
+a blank line — no comments needed; the whitespace *is* the annotation.
+`test_export.py` is the reference example.
+
 ## Async Test Configuration
 
 All async tests are auto-detected. The `pyproject.toml` sets:
