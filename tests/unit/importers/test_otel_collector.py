@@ -6,6 +6,7 @@ Uses httpx AsyncClient against the FastAPI app directly (no real port needed).
 
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 
@@ -371,3 +372,100 @@ class TestMultipleTraces:
         data = health.json()
         # Two distinct trace IDs → two separate buffers
         assert data["pending_traces"] == 2
+
+
+# ---------------------------------------------------------------------------
+# Finalisation (background watcher)
+#
+# httpx.ASGITransport does not run ASGI lifespan, so the `_watch_buffers`
+# task never starts in the tests above — we enter the app's lifespan
+# context manually here.
+#
+# Conscious testing boundaries: the protobuf decode success/parse-error
+# paths require `opentelemetry-proto` (the `telemetry` extra), absent in
+# the test environment — only the 415 gate is covered.
+# ---------------------------------------------------------------------------
+
+
+async def _wait_for_run(exec_store, timeout: float = 3.0):
+    """Poll the store until the finaliser has written a run."""
+    async def poll():
+        while True:
+            runs = await exec_store.list_runs()
+            if runs:
+                return runs
+            await asyncio.sleep(0.02)
+
+    return await asyncio.wait_for(poll(), timeout=timeout)
+
+
+class TestFinalisation:
+    @pytest.mark.asyncio
+    async def test_quiet_period_finalises_into_store(self):
+        """Root span + quiet period → converted run lands in the store."""
+        from httpx import ASGITransport, AsyncClient
+
+        exec_store = InMemoryExecutionStore()
+        art_store = InMemoryArtifactStore()
+        app = _make_app(exec_store, art_store, quiet_period=0.05)
+
+        payload = _load_fixture("langchain-openllmetry.json")
+
+        async with app.router.lifespan_context(app):
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                await client.post("/v1/traces", json=payload)
+                runs = await _wait_for_run(exec_store)
+
+        assert len(runs) == 1
+        assert runs[0].source == "otel-import"
+        assert runs[0].status != "partial"
+        records = await exec_store.list_records(runs[0].run_id)
+        assert len(records) == 2  # both fixture spans converted
+
+    @pytest.mark.asyncio
+    async def test_hard_timeout_finalises_partial(self):
+        """No quiet finalisation possible → hard timeout forces 'partial'."""
+        from httpx import ASGITransport, AsyncClient
+
+        exec_store = InMemoryExecutionStore()
+        art_store = InMemoryArtifactStore()
+        # quiet_period effectively unreachable; hard timeout fires first
+        app = _make_app(
+            exec_store, art_store, quiet_period=9999.0, hard_timeout=0.15,
+        )
+
+        payload = _load_fixture("langchain-openllmetry.json")
+
+        async with app.router.lifespan_context(app):
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                await client.post("/v1/traces", json=payload)
+                runs = await _wait_for_run(exec_store)
+
+        assert runs[0].status == "partial"
+        assert runs[0].source == "otel-collector-partial"
+
+    @pytest.mark.asyncio
+    async def test_finalised_trace_reflected_in_health(self):
+        from httpx import ASGITransport, AsyncClient
+
+        exec_store = InMemoryExecutionStore()
+        art_store = InMemoryArtifactStore()
+        app = _make_app(exec_store, art_store, quiet_period=0.05)
+
+        payload = _load_fixture("langchain-openllmetry.json")
+
+        async with app.router.lifespan_context(app):
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                await client.post("/v1/traces", json=payload)
+                await _wait_for_run(exec_store)
+                health = await client.get("/health")
+
+        data = health.json()
+        assert data["finalized_traces"] == 1
+        assert data["pending_traces"] == 0
