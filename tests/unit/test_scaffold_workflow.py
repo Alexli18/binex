@@ -8,8 +8,8 @@ from unittest.mock import patch
 import yaml
 from click.testing import CliRunner
 
-from binex.cli.main import cli
 from binex.cli.dsl_parser import parse_dsl
+from binex.cli.main import cli
 from binex.cli.scaffold import _interactive_node_config
 
 
@@ -75,7 +75,15 @@ class TestScaffoldWorkflowPattern:
         with runner.isolated_filesystem():
             result = runner.invoke(
                 cli,
-                ["scaffold", "workflow", "--pattern", "diamond", "--no-interactive", "--name", "d.yaml"],
+                [
+                    "scaffold",
+                    "workflow",
+                    "--pattern",
+                    "diamond",
+                    "--no-interactive",
+                    "--name",
+                    "d.yaml",
+                ],
             )
             assert result.exit_code == 0, result.output
             data = yaml.safe_load(Path("d.yaml").read_text())
@@ -98,7 +106,15 @@ class TestScaffoldWorkflowEnv:
         with runner.isolated_filesystem():
             result = runner.invoke(
                 cli,
-                ["scaffold", "workflow", "--no-interactive", "--env", "--name", "w.yaml", "A -> B"],
+                [
+                    "scaffold",
+                    "workflow",
+                    "--no-interactive",
+                    "--env",
+                    "--name",
+                    "w.yaml",
+                    "A -> B",
+                ],
             )
             assert result.exit_code == 0, result.output
             assert Path(".env.example").exists()

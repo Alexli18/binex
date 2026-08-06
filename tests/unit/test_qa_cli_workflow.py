@@ -24,7 +24,7 @@ from binex.cli.run import _parse_vars
 from binex.models.artifact import Artifact, Lineage
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 from binex.trace.lineage import build_lineage_tree
-from binex.workflow_spec.loader import load_workflow, load_workflow_from_string
+from binex.workflow_spec.loader import load_workflow_from_string
 from binex.workflow_spec.validator import validate_workflow
 
 
@@ -169,7 +169,9 @@ class TestCLI006ReplayAgentSwaps:
         assert result.exit_code == 0
         # Verify the agent_swaps dict was passed correctly
         call_args = mock_run.call_args
-        agent_swaps_arg = call_args[0][3] if len(call_args[0]) > 3 else call_args.kwargs.get("agent_swaps")
+        agent_swaps_arg = (
+            call_args[0][3] if len(call_args[0]) > 3 else call_args.kwargs.get("agent_swaps")
+        )
         if agent_swaps_arg is None:
             # Positional args: run_id, from_step, workflow_path, agent_swaps
             agent_swaps_arg = call_args[0][3]

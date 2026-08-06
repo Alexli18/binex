@@ -462,12 +462,12 @@ class TestOrchestratorSetsNodeBudget:
 class TestCostShowNodeBudget:
     def test_text_output_shows_node_budget(self):
         """cost show should display per-node budget info."""
-        import json as json_mod
         from unittest.mock import AsyncMock
+
+        from click.testing import CliRunner
 
         from binex.cli.cost import cost_show_cmd
         from binex.models.cost import RunCostSummary
-        from click.testing import CliRunner
 
         mock_summary = RunCostSummary(
             run_id="run_1",
@@ -507,9 +507,10 @@ class TestCostShowNodeBudget:
         import json as json_mod
         from unittest.mock import AsyncMock
 
+        from click.testing import CliRunner
+
         from binex.cli.cost import cost_show_cmd
         from binex.models.cost import RunCostSummary
-        from click.testing import CliRunner
 
         mock_summary = RunCostSummary(
             run_id="run_1",

@@ -36,6 +36,11 @@ class SqliteExecutionStore:
 
     async def initialize(self) -> None:
         import os
+        if self._db is not None:
+            # Idempotent re-init: close the old connection or its aiosqlite
+            # worker thread leaks and blocks interpreter shutdown.
+            await self._db.close()
+            self._db = None
         os.makedirs(os.path.dirname(self._db_path) or ".", exist_ok=True)
         self._db = await aiosqlite.connect(self._db_path)
         # WAL lets the Web UI read run data while the orchestrator writes,
@@ -221,6 +226,11 @@ class SqliteExecutionStore:
             logger.debug("Migration already applied or failed: %s", exc)
         await self._db.commit()
 
+        # Must be set before the orphan check below: mark_cao_sessions_orphaned
+        # goes through _ensure_initialized, which would otherwise re-enter
+        # initialize() recursively, leaking one connection per iteration.
+        self._initialized = True
+
         # Auto-orphan any active CAO sessions from previous crashed runs
         try:
             cursor = await self._db.execute(
@@ -236,8 +246,6 @@ class SqliteExecutionStore:
                 )
         except Exception as exc:
             logger.debug("CAO session orphan check failed: %s", exc)
-
-        self._initialized = True
 
     async def close(self) -> None:
         if self._db:

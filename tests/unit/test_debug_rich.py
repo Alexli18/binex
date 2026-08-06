@@ -5,7 +5,6 @@ from __future__ import annotations
 from io import StringIO
 from unittest.mock import patch
 
-import pytest
 from rich.console import Console
 
 from binex.trace.debug_report import DebugReport, NodeReport
@@ -79,5 +78,5 @@ def test_rich_format_errors_only():
     # It may appear in the header summary but not as a separate node section
     lines = output.split("\n")
     # Check that step_a doesn't appear in any panel title
-    panel_lines = [l for l in lines if "step_a" in l and "completed" in l]
+    panel_lines = [line for line in lines if "step_a" in line and "completed" in line]
     assert len(panel_lines) == 0

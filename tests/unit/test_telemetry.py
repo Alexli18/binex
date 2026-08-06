@@ -2,8 +2,6 @@
 
 from unittest.mock import patch
 
-import pytest
-
 
 def test_get_tracer_returns_noop_when_otel_not_installed():
     """When opentelemetry is not installed, get_tracer returns a no-op tracer."""

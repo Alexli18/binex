@@ -28,13 +28,12 @@ from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import RetryPolicy, TaskNode, TaskStatus
-from binex.models.workflow import DefaultsSpec, NodeSpec, WorkflowSpec
+from binex.models.workflow import NodeSpec, WorkflowSpec
 from binex.runtime.dispatcher import Dispatcher
 from binex.runtime.orchestrator import Orchestrator
 from binex.stores.backends.filesystem import FilesystemArtifactStore
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 from binex.stores.backends.sqlite import SqliteExecutionStore
-
 
 # ---------------------------------------------------------------------------
 # Helpers

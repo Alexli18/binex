@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import tempfile
-from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from pydantic import ValidationError
 
 from binex.adapters.llm import LLMAdapter
 from binex.adapters.local import LocalPythonAdapter
@@ -16,12 +14,11 @@ from binex.graph.dag import DAG
 from binex.models.artifact import Artifact, Lineage
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import RetryPolicy, TaskNode, TaskStatus
-from binex.models.workflow import NodeSpec, WorkflowSpec
+from binex.models.workflow import WorkflowSpec
 from binex.runtime.dispatcher import Dispatcher, _backoff_delay
 from binex.stores import create_execution_store
 from binex.stores.backends.filesystem import FilesystemArtifactStore
 from binex.workflow_spec.loader import load_workflow_from_string
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -754,6 +751,7 @@ class TestDebugRichFallback:
     def test_rich_import_error_exits_cleanly(self) -> None:
         """Simulate ImportError on 'from binex.trace.debug_rich import ...'."""
         from click.testing import CliRunner
+
         from binex.cli.debug import debug_cmd
 
         runner = CliRunner()

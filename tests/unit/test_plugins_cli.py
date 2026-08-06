@@ -17,7 +17,9 @@ def _make_entry_point(name: str, value: str, *, pkg: str = "binex-fake", version
     ep.dist = MagicMock()
     ep.dist.name = pkg
     ep.dist.version = version
-    ep.load.return_value = type("FakePlugin", (), {"prefix": name, "create_adapter": lambda s, u, c: None})
+    ep.load.return_value = type(
+        "FakePlugin", (), {"prefix": name, "create_adapter": lambda s, u, c: None}
+    )
     return ep
 
 
@@ -27,13 +29,17 @@ def _make_entry_point(name: str, value: str, *, pkg: str = "binex-fake", version
 
 class TestPluginsList:
     def test_shows_builtins_and_installed_plugins(self):
-        ep = _make_entry_point("langchain", "binex_langchain:LC", pkg="binex-langchain", version="0.1.0")
         runner = CliRunner()
         with patch("binex.cli.plugins_cmd.PluginRegistry.discover") as mock_discover, \
              patch("binex.cli.plugins_cmd.PluginRegistry.all_plugins") as mock_all:
             mock_discover.return_value = []
             mock_all.return_value = [
-                {"prefix": "langchain", "name": "langchain", "package_name": "binex-langchain", "version": "0.1.0"},
+                {
+                    "prefix": "langchain",
+                    "name": "langchain",
+                    "package_name": "binex-langchain",
+                    "version": "0.1.0",
+                },
             ]
             result = runner.invoke(cli, ["plugins", "list"])
 
@@ -60,7 +66,12 @@ class TestPluginsList:
         with patch("binex.cli.plugins_cmd.PluginRegistry.discover"), \
              patch("binex.cli.plugins_cmd.PluginRegistry.all_plugins") as mock_all:
             mock_all.return_value = [
-                {"prefix": "langchain", "name": "langchain", "package_name": "binex-langchain", "version": "0.1.0"},
+                {
+                    "prefix": "langchain",
+                    "name": "langchain",
+                    "package_name": "binex-langchain",
+                    "version": "0.1.0",
+                },
             ]
             result = runner.invoke(cli, ["plugins", "list", "--json"])
 
@@ -119,7 +130,12 @@ class TestPluginsCheck:
         with patch("binex.cli.plugins_cmd.PluginRegistry.discover"), \
              patch("binex.cli.plugins_cmd.PluginRegistry.all_plugins") as mock_all:
             mock_all.return_value = [
-                {"prefix": "langchain", "name": "langchain", "package_name": "binex-langchain", "version": "0.1.0"},
+                {
+                    "prefix": "langchain",
+                    "name": "langchain",
+                    "package_name": "binex-langchain",
+                    "version": "0.1.0",
+                },
             ]
             result = runner.invoke(cli, ["plugins", "check", str(wf)])
 

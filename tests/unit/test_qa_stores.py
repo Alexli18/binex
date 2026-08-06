@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import os
-import tempfile
 
 import pytest
 
@@ -21,7 +20,6 @@ from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
 from binex.stores.backends.filesystem import FilesystemArtifactStore
 from binex.stores.backends.sqlite import SqliteExecutionStore
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -15,7 +15,6 @@ from binex.models.artifact import Artifact, Lineage
 from binex.models.task import RetryPolicy, TaskNode, TaskStatus
 from binex.models.workflow import NodeSpec
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

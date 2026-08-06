@@ -26,7 +26,6 @@ from binex.cli.ui import (
     status_text,
 )
 
-
 # ── Constants ────────────────────────────────────────────────────────────────
 
 class TestConstants:

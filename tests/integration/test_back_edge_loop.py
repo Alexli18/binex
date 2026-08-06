@@ -37,7 +37,7 @@ async def _generate_handler(task: TaskNode, inputs: list[Artifact]) -> list[Arti
 async def _output_handler(task: TaskNode, inputs: list[Artifact]) -> list[Artifact]:
     return [
         Artifact(
-            id=f"art_output",
+            id="art_output",
             run_id=task.run_id,
             type="result",
             content=f"final: {inputs[0].content}" if inputs else "empty",

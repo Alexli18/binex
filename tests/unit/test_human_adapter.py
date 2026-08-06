@@ -5,8 +5,6 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import patch
 
-import pytest
-
 from binex.adapters.human import HumanApprovalAdapter, HumanInputAdapter
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage

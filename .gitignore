@@ -30,6 +30,7 @@ docs/team/
 .specify/
 .claude/
 specs/
+test-results/
 
 # Web UI
 src/binex/ui/static/*

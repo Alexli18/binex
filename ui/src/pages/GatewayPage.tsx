@@ -60,6 +60,7 @@ export default function GatewayPage() {
             disabled={isFetching}
             variant="outline"
             size="sm"
+            data-testid="gateway-refresh-btn"
           >
             <RefreshCw size={14} className={isFetching ? 'animate-spin mr-1.5' : 'mr-1.5'} />
             Refresh
@@ -70,7 +71,7 @@ export default function GatewayPage() {
       <div className="mt-6 flex flex-col gap-6 max-w-4xl">
         {/* Status + Action */}
         {isOnline ? (
-          <div className="rounded-lg border p-6 bg-green-900/20 border-green-700/30">
+          <div data-testid="gateway-status-online" className="rounded-lg border p-6 bg-green-900/20 border-green-700/30">
             <div className="flex items-center gap-4">
               <div className="w-4 h-4 rounded-full bg-green-400 shadow-lg shadow-green-400/50" />
               <div>
@@ -89,7 +90,7 @@ export default function GatewayPage() {
         ) : (
           <div className="space-y-4">
             {/* Status banner with Start button */}
-            <div className="rounded-lg border p-6 bg-[#1a1a1d]/50 border-[#252528]">
+            <div data-testid="gateway-status-offline" className="rounded-lg border p-6 bg-[#1a1a1d]/50 border-[#252528]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-4 h-4 rounded-full bg-[#4a4a52]" />
@@ -99,6 +100,7 @@ export default function GatewayPage() {
                   size="sm"
                   onClick={() => startMut.mutate()}
                   disabled={startMut.isPending}
+                  data-testid="gateway-start-btn"
                 >
                   <Play className="w-3.5 h-3.5 mr-1.5" />
                   Start Gateway
@@ -180,7 +182,7 @@ export default function GatewayPage() {
 
         {/* Agent table */}
         {isOnline && agents.length > 0 && (
-          <div className="border border-[#252528] rounded-lg bg-[#1a1a1d]/50 overflow-hidden">
+          <div data-testid="gateway-agents-table" className="border border-[#252528] rounded-lg bg-[#1a1a1d]/50 overflow-hidden">
             <div className="px-4 py-3 border-b border-[#252528]">
               <h3 className="text-sm font-medium text-[#80808a]">
                 Registered Agents
@@ -207,6 +209,7 @@ export default function GatewayPage() {
                 {agents.map((agent) => (
                   <tr
                     key={agent.name}
+                    data-testid={`gateway-agent-row-${agent.name}`}
                     className="hover:bg-[#1a1a1d]/30 transition-colors"
                   >
                     <td className="px-4 py-3 font-medium text-[#f0f0f0]">

@@ -74,6 +74,7 @@ export default function DiagnosePage() {
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold">Diagnosis</h1>
           <span
+            data-testid="diagnose-severity-badge"
             className={`px-2.5 py-0.5 rounded text-xs font-medium border ${colors.badge}`}
           >
             {severity}

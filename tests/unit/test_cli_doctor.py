@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
 
-from binex.cli.doctor import doctor_cmd, _check_binary, _check_docker_running, _check_http_service, _check_store_backend
+from binex.cli.doctor import (
+    _check_binary,
+    _check_docker_running,
+    _check_http_service,
+    _check_store_backend,
+    doctor_cmd,
+)
 
 
 class TestCheckBinary:

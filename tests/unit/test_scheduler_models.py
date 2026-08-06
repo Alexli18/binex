@@ -9,7 +9,6 @@ from binex.models.workflow import WorkflowSpec
 from binex.scheduler.models import HistoryEntry, ScheduledWorkflow, SchedulerState
 from binex.workflow_spec.validator import validate_workflow
 
-
 # --- WorkflowSpec.schedule field ---
 
 

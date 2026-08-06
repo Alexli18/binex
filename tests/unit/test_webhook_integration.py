@@ -10,7 +10,6 @@ import yaml
 
 from binex.models.workflow import WebhookConfig, WorkflowSpec
 
-
 # ---- US5: WebhookConfig parsing ----
 
 
@@ -190,8 +189,9 @@ class TestWebhookOnFailure:
 
         sender = WebhookSender(url="https://example.com/hook")
 
-        import httpx
         from unittest.mock import MagicMock
+
+        import httpx
 
         mock_response = MagicMock()
         mock_response.raise_for_status = MagicMock(

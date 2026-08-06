@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import json
 
-from .conftest import extract_run_id, run_binex, write_workflow
-
+from .conftest import run_binex, write_workflow
 
 # =============================================================================
 # Category 1: binex plugins list (TC-E2E-P01 — TC-E2E-P05)

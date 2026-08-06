@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import textwrap
 from types import SimpleNamespace
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -19,7 +17,6 @@ from binex.tools import (
     resolve_tools,
     tool,
 )
-
 
 # ---------------------------------------------------------------------------
 # TestToolDecorator
@@ -210,7 +207,9 @@ class TestToolCallLoop:
         msg1.model_dump.return_value = {
             "role": "assistant",
             "content": None,
-            "tool_calls": [{"id": "tc_1", "function": {"name": "calc", "arguments": '{"expr":"2+2"}'}}],
+            "tool_calls": [
+                {"id": "tc_1", "function": {"name": "calc", "arguments": '{"expr":"2+2"}'}}
+            ],
         }
 
         msg2 = MagicMock()
@@ -236,7 +235,9 @@ class TestToolCallLoop:
              patch("binex.adapters.llm.resolve_tools", return_value=[calc_tool]):
             mock_litellm.acompletion = AsyncMock(side_effect=[resp1, resp2])
 
-            task = self._make_task(tools=["python://mytools.calc"], system_prompt="You are a calculator")
+            task = self._make_task(
+                tools=["python://mytools.calc"], system_prompt="You are a calculator"
+            )
             result = await adapter.execute(task, [], "trace1")
 
         arts = result.artifacts
@@ -256,7 +257,9 @@ class TestToolCallLoop:
             msg.content = None
             msg.model_dump.return_value = {
                 "role": "assistant", "content": None,
-                "tool_calls": [{"id": tc_id, "function": {"name": name, "arguments": json.dumps(args)}}],
+                "tool_calls": [
+                    {"id": tc_id, "function": {"name": name, "arguments": json.dumps(args)}}
+                ],
             }
             resp = MagicMock()
             resp.choices = [SimpleNamespace(message=msg)]

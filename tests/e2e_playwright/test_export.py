@@ -1,50 +1,30 @@
-"""E2E: Export page — format toggle, run selection."""
-from playwright.sync_api import sync_playwright
-
-BASE = "http://localhost:8420"
-PASSED = 0
-FAILED = 0
+"""E2E: Export page — run selection, format toggle, file download."""
 
 
-def check(name, condition, detail=""):
-    global PASSED, FAILED
-    if condition:
-        PASSED += 1
-        print(f"  PASS  {name}")
-    else:
-        FAILED += 1
-        print(f"  FAIL  {name} — {detail}")
+import pytest
+from playwright.sync_api import expect
+from tests.e2e_playwright.pages.export_page import ExportFormat, ExportPage
+
+pytestmark = pytest.mark.e2e
 
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
-    page = browser.new_page(viewport={"width": 1440, "height": 900})
+@pytest.mark.parametrize("export_format", [ExportFormat.CSV, ExportFormat.JSON])
+def test_export_selected_runs(export_page: ExportPage, export_format: ExportFormat) -> None:
+    export_page.goto()
+    expect(export_page.heading_locator).to_be_visible()
+    export_page.select_first_run()
+    download = export_page.download(export_format)
+    assert download.suggested_filename == f"binex-export.{export_format.name.lower()}"
+    assert download.path().stat().st_size > 0
 
-    print("\n=== Test: Export Page ===")
-    page.goto(f"{BASE}/export", wait_until="networkidle")
-    page.wait_for_timeout(1000)
 
-    check("Export page loads", page.get_by_text("Export").count() > 0)
-
-    # Format buttons
-    csv_btn = page.get_by_role("button", name="CSV").first
-    json_btn = page.get_by_role("button", name="JSON").first
-    check("CSV button exists", csv_btn.count() > 0)
-    check("JSON button exists", json_btn.count() > 0)
-
-    # Include artifacts checkbox
-    checkbox = page.locator("input[type='checkbox']").first
-    check("Include artifacts checkbox", checkbox.count() > 0)
-
-    # Download button
-    download_btn = page.get_by_role("button", name="Download").first
-    check("Download button exists", download_btn.count() > 0)
-
-    page.screenshot(path="/tmp/binex_e2e_export.png", full_page=True)
-
-    browser.close()
-
-    print(f"\n{'='*40}")
-    print(f"Results: {PASSED} passed, {FAILED} failed, {PASSED+FAILED} total")
-    if FAILED > 0:
-        exit(1)
+@pytest.mark.xfail(
+    reason="BUG #112: /api/v1/export has no last_n support — ExportRequest requires run_ids, "
+    "frontend sends {last_n} in 'Last N runs' mode and gets 422",
+    strict=True,
+)
+def test_export_last_n(export_page: ExportPage) -> None:
+    export_page.goto()
+    export_page.select_export_mode_last_n(1)
+    download = export_page.download(ExportFormat.JSON, timeout=3_000)
+    assert download.path().stat().st_size > 0

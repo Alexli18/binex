@@ -1,6 +1,6 @@
 """Integration test — full run with OTEL mocked."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 

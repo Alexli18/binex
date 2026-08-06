@@ -75,7 +75,7 @@ function NodeMap({
   if (nodes.length === 0) return null;
 
   return (
-    <div className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
+    <div data-testid="bisect-node-map" className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
       <h4 className="text-sm font-bold text-[#80808a] mb-4">Node Map</h4>
       <div className="space-y-0">
         {nodes.map((node, i) => {
@@ -89,6 +89,7 @@ function NodeMap({
           return (
             <div key={node.node_id}>
               <button
+                data-testid={`bisect-node-${node.node_id}`}
                 onClick={() => setExpandedNode(isExpanded ? null : node.node_id)}
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-md text-left transition-colors hover:bg-[#1a1a1d]/30 ${
                   isDivergence ? 'ring-2 ring-red-400/60 bg-red-500/5' : ''
@@ -277,7 +278,7 @@ function BisectDAG({
   if (nodes.length === 0) return null;
 
   return (
-    <div className="bg-[#1a1a1d] border border-[#252528] rounded-card overflow-hidden" style={{ height: 300 }}>
+    <div data-testid="bisect-dag" className="bg-[#1a1a1d] border border-[#252528] rounded-card overflow-hidden" style={{ height: 300 }}>
       <div className="px-4 py-2 border-b border-[#252528]/50">
         <h4 className="text-sm font-bold text-[#80808a]">Workflow DAG</h4>
       </div>
@@ -335,7 +336,7 @@ export default function BisectPage() {
             <div className="flex-1">
               <label className="block text-sm font-medium text-[#80808a] mb-1">Good Run</label>
               <Select value={goodRun} onValueChange={setGoodRun}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" data-testid="bisect-good-run-select">
                   <SelectValue placeholder="Select a run..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -354,7 +355,7 @@ export default function BisectPage() {
             <div className="flex-1">
               <label className="block text-sm font-medium text-[#80808a] mb-1">Bad Run</label>
               <Select value={badRun} onValueChange={setBadRun}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" data-testid="bisect-bad-run-select">
                   <SelectValue placeholder="Select a run..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -384,6 +385,7 @@ export default function BisectPage() {
               value={threshold}
               onChange={(e) => setThreshold(parseFloat(e.target.value))}
               className="w-full accent-amber-500"
+              data-testid="bisect-threshold-slider"
             />
             <div className="flex justify-between text-xs text-[#4a4a52] mt-1">
               <span>0.10</span>
@@ -396,6 +398,7 @@ export default function BisectPage() {
             disabled={!goodRun || !badRun || bisect.isPending}
             size="sm"
             className="self-start"
+            data-testid="bisect-find-btn"
           >
             {bisect.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {bisect.isPending ? 'Finding Divergence...' : 'Find Divergence'}
@@ -405,7 +408,7 @@ export default function BisectPage() {
 
       {/* Error */}
       {bisect.isError && (
-        <div className={`${statusColors.failed.bg} border ${statusColors.failed.border} rounded-card p-4 flex items-center gap-2`}>
+        <div data-testid="bisect-error" className={`${statusColors.failed.bg} border ${statusColors.failed.border} rounded-card p-4 flex items-center gap-2`}>
           <AlertCircle className={`w-5 h-5 ${statusColors.failed.text} flex-shrink-0`} />
           <p className={`${statusColors.failed.text} text-sm`}>{bisect.error.message}</p>
         </div>
@@ -418,7 +421,7 @@ export default function BisectPage() {
           {bisect.data.divergence_node ? (
             <>
               {/* Divergence found */}
-              <div className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
+              <div data-testid="bisect-divergence-result" className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4">
                 <div className="flex items-center gap-3 mb-4">
                   <AlertCircle className="w-5 h-5 text-red-400" />
                   <span className="text-sm font-bold text-[#f0f0f0]">
@@ -519,7 +522,7 @@ export default function BisectPage() {
             </>
           ) : (
             /* No divergence found */
-            <div className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4 flex items-center gap-3">
+            <div data-testid="bisect-no-divergence" className="bg-[#1a1a1d] border border-[#252528] rounded-card p-4 flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-green-400" />
               <span className="inline-flex items-center px-2.5 py-1 rounded text-sm font-medium bg-green-900/50 text-green-300 border border-green-700">
                 No divergence found

@@ -14,7 +14,6 @@ from click.testing import CliRunner
 from binex.cli.dev import _run_compose, _wait_for_health, dev_cmd
 from binex.cli.main import cli
 
-
 # ---------------------------------------------------------------------------
 # dev.py — _run_compose
 # ---------------------------------------------------------------------------
@@ -159,7 +158,11 @@ async def test_run_diff_calls_close():
 
     with (
         patch("binex.cli.diff.get_stores", return_value=(mock_exec, mock_art)),
-        patch("binex.trace.diff.diff_runs", new_callable=AsyncMock, return_value=mock_diff_result) as mock_diff_runs,
+        patch(
+            "binex.trace.diff.diff_runs",
+            new_callable=AsyncMock,
+            return_value=mock_diff_result,
+        ) as mock_diff_runs,
     ):
         result = await _run_diff("run-a", "run-b")
 

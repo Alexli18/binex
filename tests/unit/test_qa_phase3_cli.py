@@ -12,12 +12,10 @@ import textwrap
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from click.testing import CliRunner
 
 from binex.cli.main import cli
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -212,7 +210,7 @@ class TestDevDown:
             patch("binex.cli.dev._run_compose") as mock_compose,
         ):
             runner = CliRunner()
-            result = runner.invoke(dev_cmd, [])
+            runner.invoke(dev_cmd, [])
 
         # After KeyboardInterrupt, _run_compose should be called with "down"
         mock_compose.assert_called_once_with(compose_file, "down")
@@ -342,10 +340,11 @@ class TestDebugPlainWorkflowName:
     """TC-CLI-017 supplement: plain output includes workflow name."""
 
     def test_debug_plain_shows_workflow_name(self):
+        from datetime import UTC, datetime
+
         from binex.cli.debug import debug_cmd
         from binex.models.execution import ExecutionRecord, RunSummary
         from binex.models.task import TaskStatus
-        from datetime import UTC, datetime
 
         exec_store = InMemoryExecutionStore()
         art_store = InMemoryArtifactStore()
@@ -387,10 +386,11 @@ class TestDebugJsonStructure:
     """TC-CLI-018 supplement: JSON output has run_id, workflow, status, nodes."""
 
     def test_debug_json_structure(self):
+        from datetime import UTC, datetime
+
         from binex.cli.debug import debug_cmd
         from binex.models.execution import ExecutionRecord, RunSummary
         from binex.models.task import TaskStatus
-        from datetime import UTC, datetime
 
         exec_store = InMemoryExecutionStore()
         art_store = InMemoryArtifactStore()
@@ -437,10 +437,11 @@ class TestDebugErrorsNoFailures:
     """TC-CLI-019 supplement: --errors with all-success run shows no node sections."""
 
     def test_debug_errors_no_failures(self):
+        from datetime import UTC, datetime
+
         from binex.cli.debug import debug_cmd
         from binex.models.execution import ExecutionRecord, RunSummary
         from binex.models.task import TaskStatus
-        from datetime import UTC, datetime
 
         exec_store = InMemoryExecutionStore()
         art_store = InMemoryArtifactStore()
@@ -473,7 +474,7 @@ class TestDebugErrorsNoFailures:
         assert result.exit_code == 0
         # With --errors and no failures, node sections should be absent
         lines = result.output.split("\n")
-        node_lines = [l for l in lines if l.startswith("-- ")]
+        node_lines = [line for line in lines if line.startswith("-- ")]
         assert len(node_lines) == 0
 
 
@@ -485,10 +486,11 @@ class TestDebugNodeFilterNonexistent:
     """TC-CLI-020 supplement: --node with unknown node name."""
 
     def test_debug_node_nonexistent(self):
+        from datetime import UTC, datetime
+
         from binex.cli.debug import debug_cmd
         from binex.models.execution import ExecutionRecord, RunSummary
         from binex.models.task import TaskStatus
-        from datetime import UTC, datetime
 
         exec_store = InMemoryExecutionStore()
         art_store = InMemoryArtifactStore()
@@ -521,8 +523,8 @@ class TestDebugNodeFilterNonexistent:
         assert result.exit_code == 0
         # Should not show step_a since we're filtering for nonexistent_node
         lines = result.output.split("\n")
-        node_lines = [l for l in lines if l.startswith("-- ")]
-        assert all("step_a" not in l for l in node_lines)
+        node_lines = [line for line in lines if line.startswith("-- ")]
+        assert all("step_a" not in line for line in node_lines)
 
 
 # ---------------------------------------------------------------------------
@@ -533,8 +535,9 @@ class TestCancelStoreState:
     """TC-CLI-022 supplement: cancel updates run status in store."""
 
     def test_cancel_updates_status_to_cancelled(self):
-        from binex.models.execution import RunSummary
         from datetime import UTC, datetime
+
+        from binex.models.execution import RunSummary
 
         exec_store = InMemoryExecutionStore()
 

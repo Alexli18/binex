@@ -7,8 +7,6 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-import pytest
-
 from binex.models.artifact import Artifact, Lineage
 from binex.models.cost import CostRecord
 from binex.models.execution import ExecutionRecord, RunSummary

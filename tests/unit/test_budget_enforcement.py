@@ -13,7 +13,6 @@ from binex.models.workflow import NodeSpec, WorkflowSpec
 from binex.runtime.orchestrator import Orchestrator
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 
-
 # ---------------------------------------------------------------------------
 # Helper: mock adapter that returns a fixed cost per execution
 # ---------------------------------------------------------------------------

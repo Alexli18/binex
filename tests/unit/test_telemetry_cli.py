@@ -6,7 +6,7 @@ from unittest.mock import patch
 def test_main_calls_init_telemetry():
     """main() should call init_telemetry() before cli()."""
     with patch("binex.cli.main.init_telemetry") as mock_init, \
-         patch("binex.cli.main.cli") as mock_cli:
+         patch("binex.cli.main.cli"):
         from binex.cli.main import main
 
         try:

@@ -5,8 +5,6 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-import pytest
-
 from binex.scheduler.models import HISTORY_MAX, HistoryEntry, SchedulerState
 from binex.scheduler.state import (
     load_state,

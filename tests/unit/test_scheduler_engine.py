@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-import asyncio
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 import yaml
 
 from binex.scheduler.models import ScheduledWorkflow, SchedulerState
-
 
 # --- scan_directory tests ---
 

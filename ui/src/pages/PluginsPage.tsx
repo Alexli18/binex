@@ -106,7 +106,7 @@ function CaoAdapterCard() {
         CLI Agent Orchestrator (1)
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-lg border border-[#252528] bg-[#1a1a1d]/50 p-4">
+        <div data-testid="plugins-adapter-cao" className="rounded-lg border border-[#252528] bg-[#1a1a1d]/50 p-4">
           <div className="flex items-start gap-3 mb-3">
             <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
               <TerminalSquare size={16} className="text-orange-400" />
@@ -140,6 +140,7 @@ function CaoAdapterCard() {
             </div>
             <button
               onClick={handleToggle}
+              data-testid="plugins-cao-toggle-btn"
               disabled={loading}
               className={`text-xs px-3 py-1 rounded border transition-colors disabled:opacity-50 ${
                 isOnline
@@ -192,7 +193,7 @@ export default function PluginsPage() {
         title="Plugins & Adapters"
         description="Extend workflows with built-in and third-party agent adapters"
         actions={
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} data-testid="plugins-refresh-btn">
             <RefreshCw size={14} className={isFetching ? 'animate-spin mr-1.5' : 'mr-1.5'} />
             Refresh
           </Button>
@@ -209,6 +210,7 @@ export default function PluginsPage() {
             {BUILTIN_ADAPTERS.map((adapter) => (
               <div
                 key={adapter.prefix}
+                data-testid={`plugins-adapter-${adapter.prefix}`}
                 className="rounded-lg border border-[#252528] bg-[#1a1a1d]/50 p-4"
               >
                 <div className="flex items-start gap-3 mb-3">
@@ -244,6 +246,7 @@ export default function PluginsPage() {
               {externalPlugins.map((plugin) => (
                 <div
                   key={plugin.name}
+                  data-testid={`plugins-adapter-${plugin.name}`}
                   className="rounded-lg border border-[#252528] bg-[#1a1a1d]/50 p-4"
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -273,6 +276,7 @@ export default function PluginsPage() {
         <div className="rounded-lg border border-[#252528] bg-[#1a1a1d]/50 overflow-hidden">
           <button
             onClick={() => setShowCreateGuide(!showCreateGuide)}
+            data-testid="plugins-create-guide-toggle"
             className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[#1a1a1d]/30 transition-colors"
           >
             <div className="flex items-center gap-2">

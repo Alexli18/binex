@@ -84,7 +84,16 @@ def test_replay_json_output(runner: CliRunner):
     with patch("binex.cli.replay._run_replay", new_callable=AsyncMock) as mock_run:
         mock_run.return_value = mock_summary
         result = runner.invoke(
-            cli, ["replay", "run_original", "--from", "b", "--workflow", "examples/simple.yaml", "--json"]
+            cli,
+            [
+                "replay",
+                "run_original",
+                "--from",
+                "b",
+                "--workflow",
+                "examples/simple.yaml",
+                "--json",
+            ],
         )
 
     assert result.exit_code == 0

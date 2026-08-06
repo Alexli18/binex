@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
 import ast
+import asyncio
 import inspect
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -17,7 +17,6 @@ from binex.models.artifact import Artifact, Lineage
 from binex.models.task import RetryPolicy, TaskNode
 from binex.runtime.dispatcher import Dispatcher
 from binex.workflow_spec.loader import load_workflow_from_string
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -284,8 +283,8 @@ class TestOrchestratorMissingArtifactInterpolation:
 
     def test_interpolation_referencing_unknown_node_detected(self) -> None:
         """Validator catches ${nonexistent.output} references."""
+        from binex.models.workflow import NodeSpec, WorkflowSpec
         from binex.workflow_spec.validator import validate_workflow
-        from binex.models.workflow import WorkflowSpec, NodeSpec
 
         # Arrange — node_b references a node that does not exist
         spec = WorkflowSpec(
@@ -313,8 +312,8 @@ class TestOrchestratorMissingArtifactInterpolation:
 
     def test_interpolation_referencing_unknown_output_detected(self) -> None:
         """Validator catches ${node_a.bogus_output} when output is not declared."""
+        from binex.models.workflow import NodeSpec, WorkflowSpec
         from binex.workflow_spec.validator import validate_workflow
-        from binex.models.workflow import WorkflowSpec, NodeSpec
 
         spec = WorkflowSpec(
             name="test-bad-output-ref",

@@ -12,7 +12,6 @@ from binex.stores.backends.filesystem import FilesystemArtifactStore
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 from binex.stores.backends.sqlite import SqliteExecutionStore
 
-
 # --- create_artifact_store ---
 
 

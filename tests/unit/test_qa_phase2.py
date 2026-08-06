@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -20,9 +20,7 @@ from binex.agents.common.llm_config import LLMConfig
 from binex.agents.planner.agent import PlannerAgent
 from binex.agents.researcher.agent import ResearcherAgent
 from binex.agents.summarizer.agent import SummarizerAgent
-from binex.agents.validator.agent import ValidatorAgent
 from binex.models.artifact import Artifact, Lineage
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -48,7 +46,7 @@ class TestAGT003_PlannerLLMTimeout:
 
     async def test_planner_propagates_timeout_error(self) -> None:
         client = AsyncMock()
-        client.complete_json = AsyncMock(side_effect=asyncio.TimeoutError("LLM timeout"))
+        client.complete_json = AsyncMock(side_effect=TimeoutError("LLM timeout"))
         agent = PlannerAgent(client=client)
 
         with pytest.raises(asyncio.TimeoutError):
@@ -68,7 +66,7 @@ class TestAGT005_ResearcherLLMFailure:
 
     async def test_researcher_propagates_timeout(self) -> None:
         client = AsyncMock()
-        client.complete_json = AsyncMock(side_effect=asyncio.TimeoutError())
+        client.complete_json = AsyncMock(side_effect=TimeoutError())
         agent = ResearcherAgent(client=client)
 
         with pytest.raises(asyncio.TimeoutError):
@@ -149,7 +147,9 @@ class TestAGT012_LLMClientConfigValidation:
         mock_resp.choices = [AsyncMock()]
         mock_resp.choices[0].message.content = "ok"
 
-        with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_resp) as mock_llm:
+        with patch(
+            "litellm.acompletion", new_callable=AsyncMock, return_value=mock_resp
+        ) as mock_llm:
             await client.complete("hello")
             assert mock_llm.call_args[1]["model"] == ""
 
@@ -162,7 +162,9 @@ class TestAGT012_LLMClientConfigValidation:
         mock_resp.choices = [AsyncMock()]
         mock_resp.choices[0].message.content = "ok"
 
-        with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_resp) as mock_llm:
+        with patch(
+            "litellm.acompletion", new_callable=AsyncMock, return_value=mock_resp
+        ) as mock_llm:
             await client.complete("prompt")
             kwargs = mock_llm.call_args[1]
             assert "api_base" not in kwargs
@@ -275,11 +277,8 @@ class TestAGT014_MalformedExecutePayload:
 
     async def test_planner_missing_keys_uses_defaults(self) -> None:
         """Empty dict payload should not crash; agent uses defaults."""
-        from binex.agents.planner import app as planner_app_mod
-
         mock_client = AsyncMock()
         mock_client.complete_json = AsyncMock(return_value='["subtask"]')
-        original = planner_app_mod.app
         import binex.agents.planner.app as pmod
 
         saved = pmod._agent
@@ -315,7 +314,10 @@ class TestCFG003_DotenvLoadedByCLI:
     def test_load_dotenv_called_before_cli(self) -> None:
         """Ensure ordering: load_dotenv before cli."""
         call_order = []
-        with patch("binex.cli.main.load_dotenv", side_effect=lambda: call_order.append("dotenv")), \
+        with patch(
+                 "binex.cli.main.load_dotenv",
+                 side_effect=lambda: call_order.append("dotenv"),
+             ), \
              patch("binex.cli.main.cli", side_effect=lambda: call_order.append("cli")):
             from binex.cli.main import main
             main()

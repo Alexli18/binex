@@ -51,6 +51,7 @@ export function EditorToolbar({
       {/* Open */}
       <button
         onClick={onOpenFiles}
+        data-testid="editor-open-btn"
         style={{
           display: "flex", alignItems: "center", gap: 6,
           background: "none", border: "none", cursor: "pointer",
@@ -84,6 +85,7 @@ export function EditorToolbar({
       }}>
         <button
           onClick={onSwitchToYaml}
+          data-testid="editor-mode-yaml"
           aria-pressed={mode === "yaml"}
           style={{
             padding: "5px 12px", fontSize: 10, fontFamily: "inherit",
@@ -98,6 +100,7 @@ export function EditorToolbar({
         </button>
         <button
           onClick={onSwitchToVisual}
+          data-testid="editor-mode-visual"
           aria-pressed={mode === "visual"}
           style={{
             padding: "5px 12px", fontSize: 10, fontFamily: "inherit",
@@ -114,6 +117,7 @@ export function EditorToolbar({
       {onOpenSettings && (
         <button
           onClick={onOpenSettings}
+          data-testid="editor-settings-btn"
           title="Workflow Settings"
           style={{
             background: "none", border: "none", cursor: "pointer",
@@ -129,6 +133,7 @@ export function EditorToolbar({
       {/* Save */}
       <button
         onClick={onSave}
+        data-testid="editor-save-btn"
         disabled={(!selectedPath && !hasContent) || (!!selectedPath && !isDirty) || isSaving}
         style={{
           padding: "5px 14px", fontSize: 10, fontFamily: "inherit",
@@ -153,6 +158,7 @@ export function EditorToolbar({
       {/* Run */}
       <button
         onClick={onRun}
+        data-testid="editor-run-btn"
         disabled={!hasContent || isRunning}
         style={{
           padding: "5px 14px", fontSize: 10, fontFamily: "inherit",

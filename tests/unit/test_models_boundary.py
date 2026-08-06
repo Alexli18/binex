@@ -11,7 +11,6 @@ from pydantic import ValidationError
 from binex.models.task import RetryPolicy, TaskStatus
 from binex.models.workflow import NodeSpec, WorkflowSpec
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -122,7 +121,9 @@ class TestTaskStatusStateMachine:
         transitions = TaskStatus.valid_transitions()
         assert TaskStatus.REQUESTED in transitions[TaskStatus.FAILED]
 
-    @pytest.mark.parametrize("terminal", [TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.TIMED_OUT])
+    @pytest.mark.parametrize(
+        "terminal", [TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.TIMED_OUT]
+    )
     def test_terminal_states_have_no_transitions(self, terminal):
         transitions = TaskStatus.valid_transitions()
         assert transitions[terminal] == set(), f"{terminal} should be terminal"
@@ -220,7 +221,9 @@ class TestNodeSpecEdgeCases:
         assert node.deadline_ms is None
 
     def test_unicode_system_prompt_name(self):
-        node = NodeSpec(agent="llm://gpt-4", outputs=["r"], system_prompt="recherche-avancée-日本語")
+        node = NodeSpec(
+            agent="llm://gpt-4", outputs=["r"], system_prompt="recherche-avancée-日本語"
+        )
         assert "日本語" in node.system_prompt
 
     def test_depends_on_self_reference(self):

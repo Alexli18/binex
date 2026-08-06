@@ -12,7 +12,6 @@ from binex.models.artifact import Artifact, Lineage
 from binex.models.task import RetryPolicy, TaskNode
 from binex.runtime.dispatcher import Dispatcher, _backoff_delay
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

@@ -45,7 +45,7 @@ async def test_dispatch_creates_node_span():
             inputs={},
             config={},
         )
-        result = await dispatcher.dispatch(task, [], "trace_1")
+        await dispatcher.dispatch(task, [], "trace_1")
 
     mock_tracer.start_as_current_span.assert_called_once()
     call_name = mock_tracer.start_as_current_span.call_args[0][0]

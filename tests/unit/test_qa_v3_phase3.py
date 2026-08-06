@@ -14,12 +14,13 @@ from io import StringIO
 from unittest.mock import patch
 
 import pytest
-from rich.console import Console
 from click.testing import CliRunner
+from rich.console import Console
 
 from binex.adapters.human import HumanApprovalAdapter, HumanInputAdapter
 from binex.cli.debug import debug_cmd
 from binex.cli.hello import hello_cmd
+from binex.cli.ui import STATUS_CONFIG
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
 from binex.models.execution import ExecutionRecord, RunSummary
@@ -32,7 +33,6 @@ from binex.trace.debug_report import (
     format_debug_report,
     format_debug_report_json,
 )
-from binex.cli.ui import STATUS_CONFIG
 from binex.trace.debug_rich import format_debug_report_rich
 
 # ===========================================================================

@@ -223,7 +223,9 @@ async def test_diff_both_missing(client, stores):
     exec_store, art_store = stores
 
     with patch("binex.ui.api.diff._get_stores", return_value=(exec_store, art_store)):
-        resp = await client.post("/api/v1/diff", json={"run_a": "missing", "run_b": "also-missing"})
+        resp = await client.post(
+            "/api/v1/diff", json={"run_a": "missing", "run_b": "also-missing"}
+        )
 
     assert resp.status_code == 404
 

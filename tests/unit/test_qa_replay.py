@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import pytest
 
+from binex.adapters.local import LocalPythonAdapter
 from binex.models.artifact import Artifact, Lineage
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
-from binex.adapters.local import LocalPythonAdapter
 from binex.runtime.dispatcher import Dispatcher
 from binex.runtime.replay import ReplayEngine
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore

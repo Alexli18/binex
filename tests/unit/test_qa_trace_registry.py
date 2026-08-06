@@ -313,7 +313,8 @@ def test_rich_format_unicode_error_message_no_crash() -> None:
     """Rich formatter handles Unicode and special characters in error messages."""
     # Arrange
     unicode_error = (
-        "Error: \u2018connection refused\u2019 \u2014 server \u00e9\u00e8\u00ea returned \u2603\ufe0f "
+        "Error: \u2018connection refused\u2019 \u2014 server \u00e9\u00e8\u00ea "
+        "returned \u2603\ufe0f "
         "\u2705 \u274c \u26a0\ufe0f null-byte:\x00 tab:\t newline:\n"
     )
     report = DebugReport(
@@ -378,7 +379,12 @@ def test_rich_format_empty_error_string() -> None:
 def test_rich_format_multiline_error() -> None:
     """Rich formatter handles multi-line error messages readably."""
     # Arrange
-    multiline_error = "Traceback (most recent call last):\n  File \"run.py\", line 42\n    raise RuntimeError(\"boom\")\nRuntimeError: boom"
+    multiline_error = (
+        "Traceback (most recent call last):\n"
+        "  File \"run.py\", line 42\n"
+        "    raise RuntimeError(\"boom\")\n"
+        "RuntimeError: boom"
+    )
     report = DebugReport(
         run_id="run-multiline",
         workflow_name="wf",

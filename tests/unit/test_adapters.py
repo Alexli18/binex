@@ -6,10 +6,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from binex.adapters.base import AgentAdapter
-from binex.adapters.local import LocalPythonAdapter
-from binex.adapters.llm import LLMAdapter
 from binex.adapters.a2a import A2AAgentAdapter
+from binex.adapters.llm import LLMAdapter
+from binex.adapters.local import LocalPythonAdapter
 from binex.models.agent import AgentHealth
 from binex.models.artifact import Artifact, Lineage
 from binex.models.task import TaskNode
@@ -70,8 +69,20 @@ async def test_local_adapter_execute() -> None:
 async def test_local_adapter_multiple_outputs() -> None:
     async def handler(task: TaskNode, inputs: list[Artifact]) -> list[Artifact]:
         return [
-            Artifact(id="out-1", run_id=task.run_id, type="a", content="1", lineage=Lineage(produced_by=task.node_id)),
-            Artifact(id="out-2", run_id=task.run_id, type="b", content="2", lineage=Lineage(produced_by=task.node_id)),
+            Artifact(
+                id="out-1",
+                run_id=task.run_id,
+                type="a",
+                content="1",
+                lineage=Lineage(produced_by=task.node_id),
+            ),
+            Artifact(
+                id="out-2",
+                run_id=task.run_id,
+                type="b",
+                content="2",
+                lineage=Lineage(produced_by=task.node_id),
+            ),
         ]
 
     adapter = LocalPythonAdapter(handler=handler)
@@ -104,7 +115,11 @@ async def test_llm_adapter_execute() -> None:
     task = _make_task(system_prompt="summarize")
     inputs = [_make_artifact(content="input data")]
 
-    with patch("binex.adapters.llm.litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
+    with patch(
+        "binex.adapters.llm.litellm.acompletion",
+        new_callable=AsyncMock,
+        return_value=mock_response,
+    ):
         result = await adapter.execute(task, inputs, "trace-1")
 
     arts = result.artifacts
@@ -129,7 +144,11 @@ async def test_llm_adapter_with_config_params() -> None:
     )
     task = _make_task(system_prompt="plan")
 
-    with patch("binex.adapters.llm.litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock_llm:
+    with patch(
+        "binex.adapters.llm.litellm.acompletion",
+        new_callable=AsyncMock,
+        return_value=mock_response,
+    ) as mock_llm:
         await adapter.execute(task, [], "trace-1")
 
     call_kwargs = mock_llm.call_args[1]
@@ -150,7 +169,11 @@ async def test_llm_adapter_without_optional_params() -> None:
     adapter = LLMAdapter(model="gpt-4")
     task = _make_task(system_prompt="test")
 
-    with patch("binex.adapters.llm.litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock_llm:
+    with patch(
+        "binex.adapters.llm.litellm.acompletion",
+        new_callable=AsyncMock,
+        return_value=mock_response,
+    ) as mock_llm:
         await adapter.execute(task, [], "trace-1")
 
     call_kwargs = mock_llm.call_args[1]

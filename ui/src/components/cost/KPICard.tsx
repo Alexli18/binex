@@ -7,18 +7,19 @@ interface KPICardProps {
   value: string;
   subtitle?: string;
   ariaLabel?: string;
+  testId?: string;
   children?: React.ReactNode;
 }
 
-export function KPICard({ icon: Icon, label, value, subtitle, ariaLabel, children }: KPICardProps) {
+export function KPICard({ icon: Icon, label, value, subtitle, ariaLabel, testId, children }: KPICardProps) {
   return (
-    <Card className="bg-[#131315] border-[#252528]/60" aria-label={ariaLabel}>
+    <Card className="bg-[#131315] border-[#252528]/60" aria-label={ariaLabel} data-testid={testId}>
       <CardContent className="p-4">
         <div className="flex items-center gap-2 text-[#4a4a52] text-sm mb-1">
           <Icon className="w-4 h-4" />
           {label}
         </div>
-        <p className="text-2xl font-semibold text-[#f0f0f0] font-mono">{value}</p>
+        <p className="text-2xl font-semibold text-[#f0f0f0] font-mono" data-testid={testId ? `${testId}-value` : undefined}>{value}</p>
         {subtitle && <p className="text-xs text-[#4a4a52] mt-0.5">{subtitle}</p>}
         {children}
       </CardContent>

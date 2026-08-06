@@ -9,9 +9,7 @@ from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
 from binex.models.artifact import Artifact, Lineage
 from binex.models.workflow import BackEdge, NodeSpec, WorkflowSpec
-from binex.runtime.back_edge import evaluate_back_edge, evaluate_when
-from binex.runtime.orchestrator import Orchestrator
-from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
+from binex.runtime.back_edge import evaluate_back_edge
 
 
 def _make_spec_with_back_edge(max_iter: int = 3) -> WorkflowSpec:

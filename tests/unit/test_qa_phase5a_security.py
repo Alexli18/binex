@@ -11,25 +11,22 @@ Covers test cases NOT already present in existing QA test files:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import httpx
 import pytest
 
 from binex.adapters.a2a import A2AAgentAdapter
 from binex.adapters.local import LocalPythonAdapter
 from binex.models.artifact import Artifact, Lineage
-from binex.models.task import RetryPolicy, TaskNode
+from binex.models.task import TaskNode
 from binex.runtime.orchestrator import Orchestrator
 from binex.stores.backends.filesystem import FilesystemArtifactStore
 from binex.stores.backends.memory import InMemoryArtifactStore, InMemoryExecutionStore
 from binex.workflow_spec.loader import load_workflow_from_string
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -418,7 +415,6 @@ class TestAllExampleYAMLsStrict:
     def test_all_examples_load_as_workflow_spec(self) -> None:
         """Every example YAML must load into a valid WorkflowSpec via the loader."""
         # Some examples reference ${env.*} vars; provide dummy values
-        import os
         # Provide dummy values for all ${env.*} vars used in examples
         env_patch = {
             "API_KEY": "test-key",
@@ -452,7 +448,6 @@ class TestAllExampleYAMLsStrict:
 
     def test_all_examples_have_valid_agent_prefixes(self) -> None:
         """Every node agent must use a known prefix (local://, llm://, a2a://, human://)."""
-        import os
         env_patch = {
             "API_KEY": "test-key",
             "API_ENDPOINT": "http://localhost:4000",
