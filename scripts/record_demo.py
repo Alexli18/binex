@@ -1,5 +1,6 @@
 """Record a demo video of Binex Web UI — full walkthrough."""
 import time
+
 from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:8420"

@@ -25,4 +25,7 @@ with sync_playwright() as p:
     browser.close()
 
     print(f"\n✅ Video saved: {video_path}")
-    print(f"Convert: ffmpeg -i '{video_path}' -c:v libx264 -preset fast -crf 22 /tmp/binex_demo_session/demo.mp4")
+    print(
+        f"Convert: ffmpeg -i '{video_path}' -c:v libx264 -preset fast "
+        "-crf 22 /tmp/binex_demo_session/demo.mp4"
+    )

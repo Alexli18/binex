@@ -13,7 +13,9 @@ def test_export_selected_runs(export_page: ExportPage, export_format: ExportForm
     export_page.goto()
     expect(export_page.heading_locator).to_be_visible()
     export_page.select_first_run()
+
     download = export_page.download(export_format)
+
     assert download.suggested_filename == f"binex-export.{export_format.name.lower()}"
     assert download.path().stat().st_size > 0
 
@@ -21,5 +23,7 @@ def test_export_selected_runs(export_page: ExportPage, export_format: ExportForm
 def test_export_last_n(export_page: ExportPage) -> None:
     export_page.goto()
     export_page.select_export_mode_last_n(1)
+
     download = export_page.download(ExportFormat.JSON, timeout=3_000)
+
     assert download.path().stat().st_size > 0

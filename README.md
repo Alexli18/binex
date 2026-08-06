@@ -18,6 +18,7 @@
     <a href="https://pypi.org/project/binex/"><img src="https://img.shields.io/pypi/pyversions/binex?style=flat-square" alt="Python"></a>
     <a href="https://github.com/Alexli18/binex/blob/master/LICENSE"><img src="https://img.shields.io/github/license/Alexli18/binex?style=flat-square" alt="License"></a>
     <a href="https://github.com/Alexli18/binex/actions"><img src="https://img.shields.io/github/actions/workflow/status/Alexli18/binex/ci.yml?style=flat-square&label=CI" alt="CI"></a>
+    <a href="https://github.com/Alexli18/binex/actions/workflows/e2e.yml"><img src="https://img.shields.io/github/actions/workflow/status/Alexli18/binex/e2e.yml?style=flat-square&label=E2E" alt="E2E"></a>
     <a href="https://alexli18.github.io/binex/"><img src="https://img.shields.io/badge/docs-online-blue?style=flat-square" alt="Docs"></a>
     <a href="https://github.com/Alexli18/binex/stargazers"><img src="https://img.shields.io/github/stars/Alexli18/binex?style=flat-square" alt="Stars"></a>
   </p>

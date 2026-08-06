@@ -56,7 +56,9 @@ dev = [
     "mypy",
     "mkdocs-material",
     "pytest-playwright",
-    "pytest-xdist"
+    "pytest-xdist",
+    "respx",
+    "pre-commit"
 ]
 rich = ["rich"]
 langchain = ["langchain-core>=0.2"]
