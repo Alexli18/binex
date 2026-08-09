@@ -1,0 +1,30 @@
+name: Nightly
+
+# Full nightly sweep: the complete test suite on every supported Python,
+# plus the browser E2E suite. Catches drift that per-PR runs miss
+# (dependency resolution changes, flaky-under-load tests) and keeps a
+# daily signal even on quiet days.
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # 03:00 UTC daily
+  workflow_dispatch: {}
+
+jobs:
+  full-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev,rich]"
+      - run: python -m pytest tests/ -q
+
+  e2e:
+    uses: ./.github/workflows/e2e.yml
