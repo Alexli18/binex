@@ -18,7 +18,17 @@ jobs:
       - name: Install binex
         run: pip install -e .
 
-      - name: Run eval suite
+      # CI is stateless, so no blessed baselines can pre-exist. Establish
+      # them in-run: execute the suite once, bless it, then do the strict
+      # run. The pipeline is deterministic (local://echo), so the second
+      # run must match its own baseline — this exercises the run, bless,
+      # and baseline-compare paths end to end.
+      - name: Establish baselines
+        run: |
+          binex eval run examples/eval/research-eval.yaml
+          binex eval bless examples/eval/research-eval.yaml
+
+      - name: Run eval suite against baselines
         run: |
           binex eval run examples/eval/research-eval.yaml \
             --format github \
