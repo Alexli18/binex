@@ -57,6 +57,7 @@ dev = [
     "mkdocs-material",
     "pytest-playwright",
     "pytest-xdist",
+    "pytest-cov",
     "respx",
     "pre-commit"
 ]
