@@ -1,5 +1,8 @@
 # Comparisons
 
+> Comparing against agent *frameworks*? See
+> [Binex vs. LangGraph, CrewAI & AutoGen](comparison.md).
+
 Binex occupies a specific niche: a **local-first, debuggable runtime** for AI agent pipelines. This page compares it honestly to four tools that appear in the same conversation — LangSmith, Langfuse, n8n, and Langflow. The goal is to help you decide which tool fits your situation, not to sell you on Binex.
 
 ---

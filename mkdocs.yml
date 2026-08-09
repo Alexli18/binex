@@ -42,7 +42,7 @@ nav:
   - Home: index.md
   - Demo: demo.md
   - Quickstart: quickstart.md
-  - Comparison: comparison.md
+  - vs LangGraph / CrewAI / AutoGen: comparison.md
   - Guides:
     - Debugging & Observability: guides/debugging.md
   - Concepts:
@@ -95,7 +95,7 @@ nav:
     - Import from OTel: import.md
     - Tools & MCP: features/tools-mcp.md
     - CAO Adapter: features/cao-adapter.md
-    - Comparisons: comparisons.md
+    - vs LangSmith / Langfuse / n8n: comparisons.md
   - Workflows:
     - Format: workflows/format.md
     - Examples: workflows/examples.md
