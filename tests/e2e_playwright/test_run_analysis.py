@@ -2,6 +2,7 @@
 
 import pytest
 from playwright.sync_api import Page, Route, expect
+from tests.e2e_playwright.pages.dashboard_page import DashboardPage
 
 pytestmark = pytest.mark.e2e
 
@@ -138,12 +139,12 @@ def _mock_run_api(page) -> None:
         route.fulfill(json=FAKE_LINEAGE)
     page.route("**/api/v1/runs/run_fake_0001/lineage", handle_lineage)
 
-def test_run_analysis_pages(page: Page) -> None:
+def test_run_analysis_pages(page: Page, dashboard_page: DashboardPage) -> None:
     """Test run analysis pages (Debug, Trace, Diagnose) for a real run."""
     _mock_run_api(page)
-    page.goto("/")
+    dashboard_page.goto()
     # Find first run link in the table
-    first_run = page.locator('[data-testid^="dashboard-run-link-run_"]').first
+    first_run = dashboard_page.first_run_link()
     expect(first_run).to_be_visible()
     expect(first_run).to_have_attribute("href", "/runs/run_fake_0001")
 
