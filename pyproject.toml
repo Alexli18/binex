@@ -38,7 +38,7 @@ dependencies = [
     "jsonschema>=4.0",
     "jsonpath-ng>=1.8",
     "croniter>=1.3",
-    "mcp>=1.0",
+    "mcp>=1.0,<2",  # 2.0.0 removed mcp.server.fastmcp (binex.mcp_server.server depends on it)
 ]
 
 [project.urls]
