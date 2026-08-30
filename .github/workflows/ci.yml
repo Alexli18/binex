@@ -30,6 +30,26 @@ jobs:
       - run: pip install -e ".[dev,rich]"
       - run: python -m pytest tests/ -x -q
 
+  # The frontend unit suite (vitest). It existed but was never run in CI, so a
+  # broken reactflow mock sat failing on master unnoticed. Node version matches
+  # e2e.yml. Type errors fail the job too — tsc is what catches a component
+  # reading a field the API does not send.
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+
   # Observer mode (#73) integrates with the *real* CrewAI library. The core
   # `test` job above skips those tests (CrewAI isn't in [dev]); this job pins the
   # supported CrewAI version(s) and runs the newcomer-path integration tests
