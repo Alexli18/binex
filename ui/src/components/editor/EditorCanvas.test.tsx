@@ -2,8 +2,12 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { EditorCanvas, type EditorCanvasProps } from './EditorCanvas';
 
-// Mock ReactFlow — it requires browser APIs not available in jsdom
-vi.mock('reactflow', () => {
+// Partially mock ReactFlow: only the components that need browser APIs jsdom
+// lacks are replaced. Everything else (MarkerType, BackgroundVariant, Position,
+// …) comes from the real module, so adding a new import to EditorCanvas does
+// not silently break this file the way an exhaustive hand-written mock did.
+vi.mock('reactflow', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('reactflow')>();
   const ReactFlowProvider = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
   const useReactFlow = () => ({ screenToFlowPosition: vi.fn(() => ({ x: 0, y: 0 })) });
   const addEdge = vi.fn((conn: unknown, edges: unknown[]) => [...edges, conn]);
@@ -16,7 +20,13 @@ vi.mock('reactflow', () => {
   );
   const Background = () => <div data-testid="rf-background" />;
   const Controls = () => <div data-testid="rf-controls" />;
-  return { default: ReactFlow, ReactFlowProvider, useReactFlow, addEdge, Background, Controls };
+  // MiniMap reads the zustand store, which the stubbed provider does not set up.
+  const MiniMap = () => <div data-testid="rf-minimap" />;
+  return {
+    ...actual,
+    default: ReactFlow, ReactFlowProvider, useReactFlow, addEdge,
+    Background, Controls, MiniMap,
+  };
 });
 
 vi.mock('./NodePalette', () => ({
