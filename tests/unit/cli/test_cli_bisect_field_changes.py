@@ -84,3 +84,22 @@ def test_diff_flag_shows_the_field_lines(runner: CliRunner):
 
     assert result.exit_code == 0
     assert "decision" in result.output
+
+
+def test_json_carries_structured_field_changes(runner: CliRunner):
+    """Consistent with `binex diff --json`: structured, not a rendered line."""
+    import json
+
+    stores = asyncio.run(_structured_runs())
+
+    result = _run_bisect(runner, stores, "--json")
+
+    node = json.loads(result.output)["node_map"][0]
+    assert node["field_changes"] == [
+        {
+            "path": "decision",
+            "before": "approved",
+            "after": "rejected",
+            "kind": "changed",
+        },
+    ]

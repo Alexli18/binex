@@ -37,6 +37,10 @@ class NodeComparison:
     # Judge summary when --semantic was used, e.g. "cosmetic only (reworded
     # /reformatted, same substance)". None when the node was never judged.
     semantic_verdict: str | None = None
+    # Structured per-field differences when the outputs were compared
+    # field-wise. None for text content, [] when structurally identical.
+    # `content_diff` holds the same information rendered for a terminal.
+    field_changes: list[Any] | None = None
 
 
 @dataclass

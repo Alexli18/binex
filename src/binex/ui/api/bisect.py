@@ -24,6 +24,19 @@ def _get_stores() -> tuple[
     return get_stores()
 
 
+def _field_changes(nc: Any | None) -> list[dict[str, Any]] | None:
+    """Serialize a node's per-field differences.
+
+    None means the outputs were compared as text and there is no per-field
+    detail; an empty list means structured content that is identical.
+    """
+    from dataclasses import asdict
+
+    if nc is None or nc.field_changes is None:
+        return None
+    return [asdict(c) for c in nc.field_changes]
+
+
 class BisectRequest(BaseModel):
     """Request body for bisecting two runs."""
 
@@ -92,6 +105,8 @@ async def bisect_runs(body: BisectRequest) -> JSONResponse:
                 "good_output": None,
                 "bad_output": None,
                 "diff": diff_text,
+                "field_changes": _field_changes(nc_match),
+                "semantic_reason": dp.semantic_reason,
             }
 
         # Add node_map for full per-node comparison data
@@ -104,6 +119,8 @@ async def bisect_runs(body: BisectRequest) -> JSONResponse:
                 "similarity": nc.similarity,
                 "latency_good_ms": nc.latency_good_ms,
                 "latency_bad_ms": nc.latency_bad_ms,
+                "field_changes": _field_changes(nc),
+                "semantic_verdict": nc.semantic_verdict,
             }
             for nc in report.node_map
         ]

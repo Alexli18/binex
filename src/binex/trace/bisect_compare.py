@@ -162,6 +162,7 @@ async def _compare_node(
         latency_bad_ms=bad_rec.latency_ms if bad_rec else None,
         content_diff=node_diff,
         semantic_verdict=summary,
+        field_changes=changes,
     )
 
 

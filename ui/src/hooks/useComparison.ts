@@ -55,6 +55,10 @@ export interface BisectDetails {
   good_output: string | null;
   bad_output: string | null;
   diff: string | null;
+  /** null when the outputs were compared as text; see NodeDiff.field_changes. */
+  field_changes?: FieldChange[] | null;
+  /** Judge summary when the bisect ran with a semantic judge. */
+  semantic_reason?: string | null;
   latency_good_ms?: number | null;
   latency_bad_ms?: number | null;
   cost_good?: number | null;
@@ -70,6 +74,10 @@ export interface BisectNodeStatus {
   latency_good_ms: number | null;
   latency_bad_ms: number | null;
   content_diff: string | null;
+  /** null for text content, [] when structured content is identical. */
+  field_changes?: FieldChange[] | null;
+  /** Judge summary, or "not judged (downstream of divergence)". */
+  semantic_verdict?: string | null;
 }
 
 export interface BisectResult {

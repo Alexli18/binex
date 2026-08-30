@@ -1,6 +1,7 @@
 """Bisect report serialization — convert dataclasses to dicts."""
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import Any
 
 from binex.trace.bisect import BisectReport, DivergencePoint
@@ -66,6 +67,12 @@ def bisect_report_to_dict(report: BisectReport) -> dict[str, Any]:
             "latency_bad_ms": nc.latency_bad_ms,
             "content_diff": nc.content_diff,
             "semantic_verdict": nc.semantic_verdict,
+            # Structured counterpart of content_diff — same information, but a
+            # consumer does not have to parse a rendered line back apart.
+            "field_changes": (
+                [asdict(c) for c in nc.field_changes]
+                if nc.field_changes is not None else None
+            ),
         }
         for nc in report.node_map
     ]

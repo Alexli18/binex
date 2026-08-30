@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { AlertCircle, AlertTriangle, CheckCircle2, XCircle, HelpCircle, Loader2, ChevronDown } from 'lucide-react';
 import { ArtifactDiff } from '@/components/common/ArtifactDiff';
+import { FieldChanges } from '@/components/common/FieldChanges';
 import { statusColors, colors as tokenColors, chartColors } from '@/lib/design-tokens';
 import ReactFlow, { type Node, type Edge } from 'reactflow';
 import { BisectNode } from '../components/dag/BisectNode';
@@ -492,11 +493,33 @@ export default function BisectPage() {
                       )}
                     </div>
 
-                    {bisect.data.details.diff && (
-                      <div>
-                        <span className="text-[#4a4a52] text-sm block mb-2">Output Diff</span>
-                        <ArtifactDiff diff={bisect.data.details.diff} />
+                    {bisect.data.details.semantic_reason && (
+                      <div data-testid="bisect-semantic-reason">
+                        <span className="text-[#4a4a52] text-sm block mb-1">Judge</span>
+                        <p className="text-xs text-amber-400">
+                          {bisect.data.details.semantic_reason}
+                        </p>
                       </div>
+                    )}
+
+                    {/* Structured output knows which field moved; text only has
+                        a line diff. */}
+                    {bisect.data.details.field_changes ? (
+                      bisect.data.details.field_changes.length > 0 && (
+                        <div>
+                          <span className="text-[#4a4a52] text-sm block mb-2">
+                            Changed Fields
+                          </span>
+                          <FieldChanges changes={bisect.data.details.field_changes} />
+                        </div>
+                      )
+                    ) : (
+                      bisect.data.details.diff && (
+                        <div>
+                          <span className="text-[#4a4a52] text-sm block mb-2">Output Diff</span>
+                          <ArtifactDiff diff={bisect.data.details.diff} />
+                        </div>
+                      )
                     )}
                   </div>
                 )}
