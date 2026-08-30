@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
+from binex.adapters.base import BUILTIN_AGENT_PREFIXES
 from binex.adapters.local import LocalPythonAdapter
 from binex.models.artifact import Artifact, Lineage
 from binex.models.task import TaskNode
@@ -236,6 +238,41 @@ def _register_cao_adapter(
     )
 
 
+def _builtin_registrars(
+    dispatcher: Dispatcher,
+    *,
+    workflow_dir: str | None,
+    mcp_manager: Any | None,
+    web_mode: bool,
+    gateway_url: str | None,
+    session_store: Any | None,
+    event_callback: Any | None,
+) -> dict[str, Callable[[str, NodeSpec], None]]:
+    """Map each built-in URI prefix to the call that registers its adapter.
+
+    Keys must stay in sync with :data:`BUILTIN_AGENT_PREFIXES` — a prefix
+    dispatched here but not reserved there could be claimed by a plugin and
+    then silently shadowed. ``test_dispatch_chain_covers_every_builtin_prefix``
+    pins that.
+    """
+    return {
+        "local": lambda agent, node: _register_local_adapter(dispatcher, agent),
+        "llm": lambda agent, node: _register_llm_adapter(
+            dispatcher, agent, node, workflow_dir, mcp_manager,
+        ),
+        "human": lambda agent, node: _register_human_adapter(
+            dispatcher, agent, web_mode,
+        ),
+        "a2a": lambda agent, node: _register_a2a_adapter(
+            dispatcher, agent, node, gateway_url,
+        ),
+        "cao": lambda agent, node: _register_cao_adapter(
+            dispatcher, agent, node, session_store, event_callback,
+            web_mode=web_mode,
+        ),
+    }
+
+
 def _register_plugin_adapter(
     dispatcher: Dispatcher,
     agent: str,
@@ -255,7 +292,7 @@ def _register_plugin_adapter(
     if adapter is not None:
         dispatcher.register_adapter(agent, adapter)
     else:
-        available = ["local://", "llm://", "human://", "a2a://", "cao://"]
+        available = [f"{p}://" for p in sorted(BUILTIN_AGENT_PREFIXES)]
         if plugin_registry is not None:
             for p in plugin_registry.all_plugins():
                 available.append(f"{p['prefix']}://")
@@ -300,24 +337,25 @@ def register_workflow_adapters(
     # Store on dispatcher for lifecycle management (orchestrator calls close)
     dispatcher._mcp_manager = mcp_manager  # type: ignore[attr-defined]
 
+    registrars = _builtin_registrars(
+        dispatcher,
+        workflow_dir=workflow_dir,
+        mcp_manager=mcp_manager,
+        web_mode=web_mode,
+        gateway_url=gateway_url,
+        session_store=session_store,
+        event_callback=event_callback,
+    )
+
     for node in spec.nodes.values():
         agent = agent_swaps.get(node.id, node.agent) if agent_swaps else node.agent
 
         if agent in dispatcher._adapters:
             continue
 
-        if agent.startswith("local://"):
-            _register_local_adapter(dispatcher, agent)
-        elif agent.startswith("llm://"):
-            _register_llm_adapter(dispatcher, agent, node, workflow_dir, mcp_manager)
-        elif agent.startswith("human://"):
-            _register_human_adapter(dispatcher, agent, web_mode)
-        elif agent.startswith("a2a://"):
-            _register_a2a_adapter(dispatcher, agent, node, gateway_url)
-        elif agent.startswith("cao://"):
-            _register_cao_adapter(
-                dispatcher, agent, node, session_store,
-                event_callback, web_mode=web_mode,
-            )
+        prefix = agent.split("://")[0] if "://" in agent else None
+        register = registrars.get(prefix) if prefix else None
+        if register is not None:
+            register(agent, node)
         else:
             _register_plugin_adapter(dispatcher, agent, node, plugin_registry)

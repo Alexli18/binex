@@ -238,3 +238,32 @@ async def test_resume_per_node_drift_reruns_changed_node(
     # b changed -> only a is cacheable; b, c, d re-run.
     assert result.cached_nodes == 1
     assert result.resumed_nodes == 3
+
+
+@pytest.mark.asyncio
+async def test_resume_does_not_rerun_on_resolved_user_var(
+    exec_store, art_store, tmp_path,
+):
+    """A ``${user.x}`` binding must not look like a changed node definition.
+
+    The parent's snapshot holds the substituted value while the workflow file
+    still holds the template, so a naive comparison re-runs (and re-pays for)
+    every node of a parameterised workflow.
+    """
+    on_disk = _diamond_workflow()
+    on_disk["nodes"]["a"]["inputs"] = {"seed": "${user.topic}"}
+    wf_path = _write_workflow(tmp_path, on_disk)
+
+    resolved = _diamond_workflow()
+    resolved["nodes"]["a"]["inputs"] = {"seed": "quantum computing"}
+    wf_hash = await exec_store.store_workflow_snapshot(
+        yaml.dump(resolved, sort_keys=True), version=1,
+    )
+    await _seed_partial_run(
+        exec_store, art_store, wf_path, workflow_hash=wf_hash,
+    )
+
+    result = await _engine(exec_store, art_store).resume("run_parent")
+
+    # Same as the no-drift baseline: a and b stay cached.
+    assert result.cached_nodes == 2

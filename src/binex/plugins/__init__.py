@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from importlib.metadata import EntryPoint, entry_points
 from typing import Any, Protocol, runtime_checkable
 
+from binex.adapters.base import BUILTIN_AGENT_PREFIXES
+
 
 @runtime_checkable
 class PluginFactory(Protocol):
@@ -31,7 +33,7 @@ class PluginMetadata:
 class PluginRegistry:
     """Central registry for discovered and loaded plugins."""
 
-    _builtin_prefixes: frozenset[str] = frozenset({"local", "llm", "human", "a2a"})
+    _builtin_prefixes: frozenset[str] = BUILTIN_AGENT_PREFIXES
 
     def __init__(self) -> None:
         self._plugins: dict[str, PluginMetadata] = {}

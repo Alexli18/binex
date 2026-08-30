@@ -371,6 +371,7 @@ async def replay_node(
     node_id: str,
     model: str | None = None,
     prompt: str | None = None,
+    allow_drift: bool = False,
 ) -> dict[str, Any]:
     """Replay a single node, with optional model and prompt overrides."""
     from binex.mcp_server.tools import _apply_node_prompt_override, _load_workflow_for_replay
@@ -405,10 +406,12 @@ async def replay_node(
     if model is not None:
         agent_swaps[node_id] = f"llm://{model}"
 
+    # Imported outside the try so the except clause below can always name it.
+    from binex.runtime.replay import ReplayEngine, WorkflowDriftError
+
     try:
         from binex.cli.adapter_registry import register_workflow_adapters
         from binex.plugins import PluginRegistry
-        from binex.runtime.replay import ReplayEngine
 
         plugin_registry = PluginRegistry()
         plugin_registry.discover()
@@ -427,7 +430,10 @@ async def replay_node(
             workflow=spec,
             from_step=node_id,
             agent_swaps=agent_swaps,
+            allow_drift=allow_drift,
         )
+    except WorkflowDriftError as exc:
+        return {"error": str(exc), "code": "workflow_drift"}
     except Exception as exc:
         return {"error": str(exc), "code": "execution_error"}
 
