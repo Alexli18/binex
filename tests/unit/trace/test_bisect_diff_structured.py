@@ -126,6 +126,35 @@ class TestDiff:
         assert result["summary"]["changed_nodes"] == 0
 
     @pytest.mark.asyncio
+    async def test_identical_structure_offers_no_diff_to_render(self):
+        """`artifact_diff` drives the UI's "changed" affordance.
+
+        Falling back to a text diff of the stringified mappings would put the
+        false positive straight back: reordered keys differ as text.
+        """
+        exec_store, art_store = await _two_runs(
+            {"revenue": 12, "costs": 3},
+            {"costs": 3, "revenue": 12},
+        )
+
+        result = await diff_runs(exec_store, art_store, "good", "bad")
+
+        assert result["steps"][0]["artifact_diff"] is None
+
+    @pytest.mark.asyncio
+    async def test_changed_field_diff_is_the_field_lines(self):
+        exec_store, art_store = await _two_runs(
+            {"decision": "approved"}, {"decision": "rejected"},
+        )
+
+        result = await diff_runs(exec_store, art_store, "good", "bad")
+
+        artifact_diff = result["steps"][0]["artifact_diff"]
+        assert artifact_diff is not None
+        assert "decision" in artifact_diff
+        assert "@@" not in artifact_diff  # not a unified diff
+
+    @pytest.mark.asyncio
     async def test_changed_field_is_listed(self):
         exec_store, art_store = await _two_runs(
             {"is_safe": True, "score": 0.91},
@@ -136,9 +165,25 @@ class TestDiff:
 
         step = result["steps"][0]
         assert step["content_similarity"] < 1.0
-        assert len(step["field_changes"]) == 1
-        assert "is_safe" in step["field_changes"][0]
+        assert step["field_changes"] == [
+            {"path": "is_safe", "before": True, "after": False, "kind": "changed"},
+        ]
         assert result["summary"]["changed_nodes"] == 1
+
+    @pytest.mark.asyncio
+    async def test_field_changes_are_structured_not_prerendered(self):
+        """Consumers (jq, the web UI) must not have to re-parse a rendered line."""
+        exec_store, art_store = await _two_runs(
+            {"totals": {"q1": 10}}, {"totals": {"q1": 99}},
+        )
+
+        result = await diff_runs(exec_store, art_store, "good", "bad")
+
+        change = result["steps"][0]["field_changes"][0]
+        assert change["path"] == "totals.q1"
+        assert change["before"] == 10
+        assert change["after"] == 99
+        assert change["kind"] == "changed"
 
     @pytest.mark.asyncio
     async def test_field_changes_absent_for_text_content(self):

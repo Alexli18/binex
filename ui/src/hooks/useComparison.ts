@@ -1,6 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../lib/api';
 
+/** One differing leaf between two structured artifact contents. */
+export interface FieldChange {
+  path: string;
+  before: unknown;
+  after: unknown;
+  kind: 'changed' | 'added' | 'removed';
+}
+
 export interface NodeDiff {
   node_id: string;
   status_a: string;
@@ -11,6 +19,12 @@ export interface NodeDiff {
   cost_b: number | null;
   artifact_diff: string | null;
   content_similarity?: number | null;
+  /**
+   * null when the artifacts were compared as text (no per-field detail),
+   * [] when structured content is identical, one entry per changed field
+   * otherwise.
+   */
+  field_changes?: FieldChange[] | null;
   agent_changed?: boolean;
   error_a?: string | null;
   error_b?: string | null;

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import difflib
+from dataclasses import asdict
 from typing import Any
 
 from binex.stores.artifact_store import ArtifactStore
@@ -75,10 +76,17 @@ async def _compare_single_task(
         await get_artifact_contents(art_store, refs_a),
         await get_artifact_contents(art_store, refs_b),
     )
-    field_changes = [c.render() for c in changes] if changes is not None else None
+    # Structured, so consumers (jq, the web UI) need not parse a rendered line.
+    field_changes = (
+        [asdict(c) for c in changes] if changes is not None else None
+    )
 
-    if changes:
-        artifact_diff = "\n".join(field_changes or [])
+    if changes is not None:
+        # Structured comparison is authoritative: the field lines are the whole
+        # story, and no changes means nothing to render. Falling back to a text
+        # diff here would reinstate the false positive — reordered keys differ
+        # as text while being the same mapping.
+        artifact_diff = "\n".join(c.render() for c in changes) or None
     else:
         artifact_diff = _build_unified_diff(
             content_a or "", content_b or "", run_id_a, run_id_b, task_id,
