@@ -38,7 +38,48 @@ Similarity is the fraction of leaf paths (union of both sides) that are unchange
 !!! warning "The text ratio is a weak signal on LLM output"
     It measures how many *characters* moved, which is close to orthogonal to whether the meaning changed — and on the highest-stakes cases it is anti-correlated. Rewording moves many characters while preserving meaning (scores ~0.44, flagged); inserting a single "not" inverts the meaning while moving almost nothing (scores ~0.98, passed). The effect worsens with length: the same `12% -> 21%` edit scores `0.982` in a short artifact and `0.999` in a 1 300-character one.
 
-    No threshold separates these two error classes — they sit on opposite sides of it. For prose, prefer [`binex diff --semantic`](diff.md), which asks a model narrow questions about structure and facts instead of counting characters. Emitting structured output (JSON) from your nodes is the cheaper fix: it puts them on the field-wise path above, which is exact and free.
+    No threshold separates these two error classes — they sit on opposite sides of it. Use `--semantic` (below) for prose. Emitting structured output (JSON) from your nodes is the cheaper fix: it puts them on the field-wise path above, which is exact and free.
+
+Nodes are walked in **dependency order**, recovered from the artifact references in the execution records, so "the first divergence" means the upstream-most one. Fan-out siblings are ordered by node id — completion order is a race, and tie-breaking on it would make the reported root cause flip between siblings from one run to the next.
+
+## `--semantic` — let a model decide text nodes
+
+```bash
+binex bisect run_good run_bad --semantic
+```
+
+Every text node whose output differs at all goes to a judge running at temperature 0 with a narrow rubric: did the **structure** change, did the **facts** change, or only the **tone/format**? Only the first two count as a divergence. With `--semantic`, `--threshold` no longer decides text nodes — the judge does, at any similarity.
+
+Structured content never reaches the judge; the field-wise comparison already answers exactly and for free.
+
+The walk stops at the first meaningful divergence. Nodes after it are consequences rather than causes, so they are not judged and are marked `not judged (downstream of divergence)`.
+
+The same hiring pipeline, with and without the flag:
+
+```text
+$ binex bisect good bad
+├── draft        ⚠ changed   ← root cause      # a reword — false positive
+└── review       ✓ ok                          # "not" inserted — missed
+
+$ binex bisect good bad --semantic
+⚠ Node "review" output slightly changed
+  Judge: meaningful change: facts
+├── draft        ✓ ok                          # judge: cosmetic
+└── review       ⚠ changed   ← root cause      # the real regression
+```
+
+Cost is estimated and confirmed before any call — Binex spending your tokens is never silent:
+
+```text
+Semantic bisect: up to 2 judge call(s) on 'gpt-4o-mini', ~714 tokens,
+estimated cost ~$0.0003. The walk stops at the first meaningful divergence,
+so it may use fewer.
+Proceed? [y/N]:
+```
+
+Use `--yes` to skip the prompt (CI), `--semantic-model` to pick a model (default: `BINEX_JUDGE_MODEL`). The notice goes to stderr, so `--json` stays machine-readable.
+
+If the judge cannot be reached, the node falls back to the similarity threshold rather than silently passing, and the JSON records `could not analyze (...)`.
 
 ## Arguments
 
@@ -51,7 +92,10 @@ Similarity is the fraction of leaf paths (union of both sides) that are unchange
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `--threshold` | `float` | `0.9` | Content similarity threshold (0.0-1.0). Nodes with similarity below this are flagged as `content_diff` |
+| `--threshold` | `float` | `0.9` | Content similarity threshold (0.0-1.0). Nodes with similarity below this are flagged as `content_diff`. Ignored for text nodes when `--semantic` is used |
+| `--semantic` | flag | false | Let a model decide text nodes instead of the threshold. Cost is estimated and confirmed first |
+| `--semantic-model` | `string` | `BINEX_JUDGE_MODEL` | Model used by `--semantic` |
+| `--yes` / `-y` | flag | false | Skip the `--semantic` cost-confirmation prompt |
 | `--diff` | flag | false | Show full unified diffs instead of content preview |
 | `--json` | flag | false | Output as JSON |
 | `--rich / --no-rich` | flag | auto | Rich formatted output (auto-detected if `rich` is installed) |
