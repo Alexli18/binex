@@ -84,6 +84,11 @@ detects it **per node**:
 - A **topology change** (a depended-on node removed) → resume is **refused**
   unless you pass `--force`.
 
+`${user.*}` inputs are excluded from this comparison. They are substituted at
+load time, so the parent's stored snapshot holds the resolved value while the
+workflow file still holds the template — that difference is a run parameter,
+not a definition change, and must not force a re-run.
+
 ## `--from` — force re-execution
 
 ```bash

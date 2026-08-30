@@ -8,7 +8,23 @@ Run the full suite:
 python -m pytest tests/
 ```
 
-The suite contains ~870 tests across ~75 unit test files and 1 integration test file.
+The Python suite collects **3315 tests** across 260 test files. 53 of them are marked `e2e` and deselected by default (`addopts = "-m 'not e2e'"`); see [E2E Tests](#e2e-tests-playwright).
+
+## Frontend tests (vitest)
+
+The React app has its own unit suite — 175 tests across 27 files — plus a type check:
+
+```bash
+cd ui
+npm ci
+npx tsc --noEmit    # type errors are failures too
+npx vitest run
+```
+
+Both run in CI (the `frontend` job in `ci.yml`, Node 20). They were not wired into CI until 2026-08 — a broken `reactflow` mock had been failing on `master` unnoticed for that reason. If you add a frontend test, check it runs here before pushing.
+
+!!! tip "Mock reactflow partially, never exhaustively"
+    `reactflow` needs browser APIs jsdom lacks, so its components have to be stubbed — but an exhaustive hand-written mock breaks the moment a component imports one more export. Use `vi.mock('reactflow', async (importOriginal) => ({ ...await importOriginal(), /* stubs */ }))` and override only the components that touch the DOM or the zustand store (`ReactFlow`, `ReactFlowProvider`, `Background`, `Controls`, `MiniMap`). Enums like `MarkerType` and `BackgroundVariant` then stay real. See `ui/src/components/editor/EditorCanvas.test.tsx`.
 
 Run a specific test file:
 

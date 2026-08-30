@@ -11,7 +11,7 @@ import click
 
 from binex.cli import get_stores
 from binex.models.execution import RunSummary
-from binex.runtime.replay import ImportedRunError
+from binex.runtime.replay import ImportedRunError, WorkflowDriftError
 
 
 @click.command("replay", epilog="""\b
@@ -35,11 +35,16 @@ Examples:
     default=None, help="Workflow file (resolved from run metadata if omitted)",
 )
 @click.option("--agent", multiple=True, help="Swap agent: node=agent")
+@click.option(
+    "--allow-drift", "allow_drift", is_flag=True,
+    help="Reuse cached upstream output even if those nodes changed since the run",
+)
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
 def replay_cmd(
     run_id: str, from_step: str | None, call_id: str | None,
     model: str | None, prompt_file: str | None, mock_response: str | None,
-    workflow: str | None, agent: tuple[str, ...], json_out: bool,
+    workflow: str | None, agent: tuple[str, ...], allow_drift: bool,
+    json_out: bool,
 ) -> None:
     """Replay a run from a step, or a single captured call from an observed run."""
     if call_id is not None:
@@ -63,8 +68,10 @@ def replay_cmd(
     agent_swaps = _parse_agent_swaps(agent)
 
     try:
-        summary = asyncio.run(_run_replay(run_id, from_step, workflow, agent_swaps))
-    except ImportedRunError as e:
+        summary = asyncio.run(_run_replay(
+            run_id, from_step, workflow, agent_swaps, allow_drift=allow_drift,
+        ))
+    except (ImportedRunError, WorkflowDriftError) as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(2)
     except ValueError as e:
@@ -163,6 +170,8 @@ async def _run_replay(
     from_step: str,
     workflow_path: str,
     agent_swaps: dict[str, str],
+    *,
+    allow_drift: bool = False,
 ) -> RunSummary:
     from binex.cli.adapter_registry import register_workflow_adapters
     from binex.runtime.replay import ReplayEngine
@@ -193,6 +202,7 @@ async def _run_replay(
             workflow=spec,
             from_step=from_step,
             agent_swaps=agent_swaps,
+            allow_drift=allow_drift,
         )
     finally:
         await execution_store.close()

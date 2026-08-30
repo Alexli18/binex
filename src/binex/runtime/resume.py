@@ -10,8 +10,6 @@ are re-executed. See issue #54 for the full design.
 from __future__ import annotations
 
 import asyncio
-import hashlib
-import json
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -23,10 +21,10 @@ from binex.graph.scheduler import Scheduler
 from binex.models.artifact import Artifact
 from binex.models.execution import RunSummary
 from binex.models.task import TaskStatus
-from binex.models.workflow import NodeSpec, WorkflowSpec
+from binex.models.workflow import WorkflowSpec
 from binex.runtime.back_edge import evaluate_when
 from binex.runtime.budget import check_batch_budget, skip_all_remaining
-from binex.runtime.replay import ReplayEngine
+from binex.runtime.replay import ReplayEngine, node_definition_changed
 
 # Node statuses whose output can be reused (cached) on resume. Skipped nodes
 # leave no execution record, so they fall through to re-run and are re-evaluated
@@ -50,23 +48,16 @@ class ResumeResult:
     warnings: list[str] = field(default_factory=list)
 
 
-def _node_hash(node: NodeSpec) -> str:
-    """Stable hash of a node's definition, for per-node drift detection.
+def _drifted(node_id: str, spec: WorkflowSpec, parent_spec: WorkflowSpec) -> bool:
+    """True if *node_id*'s definition differs from the parent run's snapshot.
 
-    Includes the fields that determine a node's output: agent, prompt, inputs,
-    config, tools, and its dependency edges. A change to any of these
-    invalidates the cached artifact for that node.
+    A node missing from either side counts as drifted — it was added or removed,
+    so there is no cached result to trust.
     """
-    payload = {
-        "agent": node.agent,
-        "system_prompt": node.system_prompt,
-        "inputs": node.inputs,
-        "config": node.config,
-        "tools": node.tools,
-        "depends_on": sorted(node.depends_on),
-    }
-    blob = json.dumps(payload, sort_keys=True, default=str)
-    return hashlib.sha256(blob.encode()).hexdigest()
+    current, stored = spec.nodes.get(node_id), parent_spec.nodes.get(node_id)
+    if current is None or stored is None:
+        return True
+    return node_definition_changed(current, stored)
 
 
 class ResumeEngine(ReplayEngine):
@@ -188,18 +179,14 @@ class ResumeEngine(ReplayEngine):
         from_node: str | None,
     ) -> set[str]:
         """Partition nodes into cached (reused) vs re-run, by status + drift."""
-        parent_hashes = await self._parent_node_hashes(parent)
-        cur_hashes = {nid: _node_hash(n) for nid, n in spec.nodes.items()}
+        parent_spec = await self.snapshot_spec(parent)
 
         cached: set[str] = set()
         for nid in topo:  # topological order → upstream decided before downstream
             if status_by_node.get(nid) not in _CACHEABLE:
                 continue
             # Per-node drift: a changed definition must be re-run.
-            if (
-                parent_hashes is not None
-                and parent_hashes.get(nid) != cur_hashes.get(nid)
-            ):
+            if parent_spec is not None and _drifted(nid, spec, parent_spec):
                 continue
             # A node can only be cached if its entire upstream is cached.
             if not dag.dependencies(nid).issubset(cached):
@@ -213,24 +200,6 @@ class ResumeEngine(ReplayEngine):
             cached -= {from_node} | dag.descendants(from_node)
 
         return cached
-
-    async def _parent_node_hashes(
-        self, parent: RunSummary,
-    ) -> dict[str, str] | None:
-        """Per-node hashes of the parent's workflow snapshot, or None if absent."""
-        if not parent.workflow_hash:
-            return None
-        snapshot = await self.execution_store.get_workflow_snapshot(
-            parent.workflow_hash,
-        )
-        if not snapshot or "content" not in snapshot:
-            return None
-        try:
-            data = yaml.safe_load(snapshot["content"])
-            parent_spec = WorkflowSpec(**data)
-        except Exception:
-            return None
-        return {nid: _node_hash(n) for nid, n in parent_spec.nodes.items()}
 
     # ------------------------------------------------------------------
     # Execution
