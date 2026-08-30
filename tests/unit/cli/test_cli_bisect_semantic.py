@@ -26,6 +26,19 @@ def runner() -> CliRunner:
     return CliRunner()
 
 
+def _separated_runner() -> CliRunner:
+    """A CliRunner that keeps stdout and stderr apart.
+
+    click < 8.2 merges the two unless ``mix_stderr=False``; 8.2 removed the
+    parameter and always separates them. ``click`` is unpinned, so both have to
+    work — CI resolves a newer one than a typical dev environment.
+    """
+    try:
+        return CliRunner(mix_stderr=False)
+    except TypeError:  # click >= 8.2 — already separated
+        return CliRunner()
+
+
 async def _prose_runs():
     """One text node whose wording differs — 0.44 similarity, same meaning."""
     exec_store = InMemoryExecutionStore()
@@ -148,7 +161,7 @@ def test_json_output_carries_the_verdict():
 
     stores = asyncio.run(_prose_runs())
     # Separate streams: the cost notice must not land in the JSON payload.
-    runner = CliRunner(mix_stderr=False)
+    runner = _separated_runner()
 
     result = _invoke(runner, stores, "--semantic", "--yes", "--json")
 
@@ -172,7 +185,7 @@ def test_divergence_json_carries_the_reason():
     async def _judge(a, b):
         return facts_changed
 
-    runner = CliRunner(mix_stderr=False)
+    runner = _separated_runner()
     result = _invoke(runner, stores, "--semantic", "--yes", "--json", judge=_judge)
 
     payload = json.loads(result.stdout)
