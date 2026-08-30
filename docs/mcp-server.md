@@ -139,12 +139,16 @@ Parameters:
   node_id         Node to replay
   model           Optional LLM model override (e.g. "openai/gpt-4o-mini")
   prompt          Optional system_prompt override for this node
+  allow_drift     Reuse cached upstream output even if those nodes changed
 ```
 
 Returns `{"new_run_id", "status", "node_output"}`.
 
 !!! note
     Replay is disabled for runs imported from external traces (`source="otel-import"`). The tool returns `{"error": "...", "code": "unsupported"}` in that case.
+
+!!! warning "Workflow drift"
+    If a node whose output would be reused from cache has changed in the workflow file since the original run, the tool returns `{"error": "...", "code": "workflow_drift"}` rather than replaying against a stale cache. Retry with `allow_drift=True` to accept the cached output, or replay from an earlier node. See [`binex replay`](cli/replay.md#workflow-drift).
 
 #### `eval_run`
 

@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import uuid
 from datetime import UTC, datetime
 from typing import Any
+
+import yaml  # type: ignore[import-untyped]
 
 from binex.graph.dag import DAG
 from binex.graph.scheduler import Scheduler
 from binex.models.artifact import Artifact
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskNode, TaskStatus
-from binex.models.workflow import WorkflowSpec
+from binex.models.workflow import NodeSpec, WorkflowSpec
 from binex.runtime._node_executor import collect_input_artifacts, now_ms, record_execution
 from binex.runtime.dispatcher import Dispatcher
 from binex.stores.artifact_store import ArtifactStore
@@ -21,6 +24,74 @@ from binex.stores.execution_store import ExecutionStore
 
 class ImportedRunError(ValueError):
     """Raised when an operation is not supported for OTel-imported runs."""
+
+
+class WorkflowDriftError(ValueError):
+    """Raised when a node replay would cache has changed since the original run.
+
+    Replay reuses every node before ``from_step`` verbatim. If one of those node
+    definitions was edited in the workflow file since the original run, its
+    cached artifact is stale relative to the file — the replay would silently mix
+    old outputs with a new workflow. Callers that accept that pass ``allow_drift``.
+    """
+
+    def __init__(self, drifted: list[str], original_run_id: str) -> None:
+        self.drifted = drifted
+        self.original_run_id = original_run_id
+        names = ", ".join(f"'{n}'" for n in drifted)
+        plural = "s" if len(drifted) > 1 else ""
+        super().__init__(
+            f"Cached upstream node{plural} {names} changed since run "
+            f"'{original_run_id}' (agent, prompt, inputs, config, tools, or "
+            f"dependencies). The cached output is stale relative to the workflow "
+            f"file. Replay from an earlier step to re-execute the changed "
+            f"node{plural}, or pass --allow-drift to reuse the cached output "
+            f"knowingly."
+        )
+
+
+# ``${user.x}`` placeholders are substituted at load time, so a stored snapshot
+# holds the resolved value while the workflow file still holds the template.
+_USER_VAR_RE = re.compile(r"\$\{user\.[^}]*\}")
+
+
+def _comparable_inputs(
+    current: dict[str, Any], stored: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Drop input keys the current spec binds from a ``${user.*}`` variable.
+
+    Those keys hold a template in the workflow file and the substituted value in
+    a stored snapshot — comparing them would report drift for every run that
+    used ``--var``. The binding is a run parameter, not a node definition, and
+    replay does not re-supply variables, so it is excluded from the comparison.
+    Every other key (literals, ``${node.*}`` references) is compared normally.
+    """
+    unbound = {
+        key for key, value in current.items()
+        if isinstance(value, str) and _USER_VAR_RE.search(value)
+    }
+    return (
+        {k: v for k, v in current.items() if k not in unbound},
+        {k: v for k, v in stored.items() if k not in unbound},
+    )
+
+
+def node_definition_changed(current: NodeSpec, stored: NodeSpec) -> bool:
+    """True if *current* differs from the *stored* (snapshotted) definition.
+
+    Compares the fields that determine a node's output, tolerating only the
+    load-time ``${user.*}`` substitution described in :func:`_comparable_inputs`.
+    """
+    if (
+        current.agent != stored.agent
+        or current.system_prompt != stored.system_prompt
+        or current.config != stored.config
+        or current.tools != stored.tools
+        or sorted(current.depends_on) != sorted(stored.depends_on)
+    ):
+        return True
+    cur_inputs, stored_inputs = _comparable_inputs(current.inputs, stored.inputs)
+    return cur_inputs != stored_inputs
 
 
 def ensure_replayable(run: RunSummary, operation: str = "replay") -> None:
@@ -105,16 +176,61 @@ class ReplayEngine:
             )
             await self.execution_store.record(cached_record)
 
+    async def snapshot_spec(self, run: RunSummary) -> WorkflowSpec | None:
+        """The workflow spec *run* was executed with, or None if unavailable.
+
+        None means "cannot verify" — runs recorded before snapshots existed, or
+        a snapshot that no longer parses. Drift checking is skipped rather than
+        turned into a hard failure for those.
+        """
+        if not run.workflow_hash:
+            return None
+        snapshot = await self.execution_store.get_workflow_snapshot(
+            run.workflow_hash,
+        )
+        if not snapshot or "content" not in snapshot:
+            return None
+        try:
+            return WorkflowSpec(**yaml.safe_load(snapshot["content"]))
+        except Exception:
+            return None
+
+    async def _check_upstream_drift(
+        self,
+        original_run: RunSummary,
+        spec: WorkflowSpec,
+        cached_steps: set[str],
+    ) -> None:
+        """Raise WorkflowDriftError if any node replay would cache has changed.
+
+        Only *cached* nodes are checked: nodes at or after ``from_step`` are
+        re-executed, so changing them is the point of replaying.
+        """
+        original_spec = await self.snapshot_spec(original_run)
+        if original_spec is None:
+            return
+
+        drifted = [
+            nid for nid in sorted(cached_steps)
+            if nid in spec.nodes and nid in original_spec.nodes
+            and node_definition_changed(spec.nodes[nid], original_spec.nodes[nid])
+        ]
+        if drifted:
+            raise WorkflowDriftError(drifted, original_run.run_id)
+
     async def _validate_replay_params(
         self,
         original_run_id: str,
         workflow: dict[str, Any] | WorkflowSpec,
         from_step: str,
+        allow_drift: bool = False,
     ) -> tuple[WorkflowSpec, DAG, list[str], set[str], set[str]]:
         """Validate replay parameters and compute step partitions.
 
         Returns (spec, dag, topo_order, cached_steps, re_execute_steps).
-        Raises ValueError if the original run or from_step is not found.
+        Raises ValueError if the original run or from_step is not found, and
+        WorkflowDriftError if a cached node's definition changed (unless
+        *allow_drift*).
         """
         original_run = await self.execution_store.get_run(original_run_id)
         if original_run is None:
@@ -136,6 +252,9 @@ class ReplayEngine:
         from_index = topo_order.index(from_step)
         cached_steps = set(topo_order[:from_index])
         re_execute_steps = set(topo_order[from_index:])
+
+        if not allow_drift:
+            await self._check_upstream_drift(original_run, spec, cached_steps)
 
         return spec, dag, topo_order, cached_steps, re_execute_steps
 
@@ -167,11 +286,12 @@ class ReplayEngine:
         workflow: dict[str, Any] | WorkflowSpec,
         from_step: str,
         agent_swaps: dict[str, str] | None = None,
+        allow_drift: bool = False,
     ) -> RunSummary:
         """Create a new immutable run, caching steps before from_step."""
         spec, dag, topo_order, cached_steps, re_execute_steps = (
             await self._validate_replay_params(
-                original_run_id, workflow, from_step,
+                original_run_id, workflow, from_step, allow_drift=allow_drift,
             )
         )
         agent_swaps = agent_swaps or {}
@@ -179,10 +299,17 @@ class ReplayEngine:
         run_id = f"run_{uuid.uuid4().hex[:12]}"
         trace_id = f"trace_{uuid.uuid4().hex[:12]}"
 
+        # Snapshot the workflow so this replay is itself drift-checkable later.
+        workflow_hash = await self.execution_store.store_workflow_snapshot(
+            yaml.dump(spec.model_dump(exclude={"source_path"}), sort_keys=True),
+            version=spec.version,
+        )
+
         summary = RunSummary(
             run_id=run_id,
             workflow_name=spec.name,
             workflow_path=spec.source_path,
+            workflow_hash=workflow_hash,
             status="running",
             total_nodes=len(spec.nodes),
             forked_from=original_run_id,

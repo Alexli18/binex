@@ -9,6 +9,15 @@ from binex.models.artifact import Artifact
 from binex.models.cost import ExecutionResult
 from binex.models.task import TaskNode
 
+# Agent URI schemes handled by built-in adapters. Single source of truth: the
+# dispatch table in `cli.adapter_registry` and the prefixes `PluginRegistry`
+# reserves from plugins are both derived from this. They used to be separate
+# literal lists and drifted — `cao` was dispatched but not reserved, so a plugin
+# could claim `cao://` and be silently shadowed.
+BUILTIN_AGENT_PREFIXES: frozenset[str] = frozenset(
+    {"local", "llm", "human", "a2a", "cao"}
+)
+
 
 class AgentAdapter(Protocol):
     """Protocol for agent execution backends."""

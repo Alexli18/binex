@@ -264,6 +264,7 @@ class ReplayRequest(BaseModel):
     from_step: str
     workflow_path: str
     agent_swaps: dict[str, str] = {}
+    allow_drift: bool = False
 
 
 @router.post("/replay")
@@ -273,7 +274,7 @@ async def replay_run(body: ReplayRequest) -> JSONResponse:
 
     from binex.cli.adapter_registry import register_workflow_adapters
     from binex.plugins import PluginRegistry
-    from binex.runtime.replay import ReplayEngine
+    from binex.runtime.replay import ReplayEngine, WorkflowDriftError
     from binex.workflow_spec.loader import load_workflow_from_string
 
     workflow = Path(body.workflow_path)
@@ -317,6 +318,7 @@ async def replay_run(body: ReplayRequest) -> JSONResponse:
             workflow=spec,
             from_step=body.from_step,
             agent_swaps=body.agent_swaps,
+            allow_drift=body.allow_drift,
         )
         return JSONResponse(
             {"run_id": summary.run_id, "status": summary.status},
@@ -324,6 +326,9 @@ async def replay_run(body: ReplayRequest) -> JSONResponse:
         )
     except APIError:
         raise
+    except WorkflowDriftError as exc:
+        # A conflict, not a failure: the caller can retry with allow_drift.
+        raise APIError(409, "workflow_drift", str(exc)) from exc
     except Exception as exc:
         logger.exception("Replay failed")
         raise APIError(

@@ -18,7 +18,31 @@ The replayed run is stored as a new run with its own `run_id`, linked to the ori
 
 Supported agent prefixes: `local://`, `llm://`, `a2a://`, `human://input`, `human://approve`.
 
-Exits `0` on success, `1` on failure.
+Exits `0` on success, `1` on failure, `2` when the run cannot be replayed (imported trace, or workflow drift — see below).
+
+## Workflow drift
+
+Replay reuses the cached output of every node before `--from`. If one of those node definitions changed in the workflow file since the original run, its cached artifact is stale relative to the file, and the replay would silently mix old outputs with a new workflow.
+
+Binex compares each cached node against the workflow snapshot stored with the original run and refuses to replay if any of them changed:
+
+```text
+Error: Cached upstream node 'producer' changed since run 'run_a1b2c3d4'
+(agent, prompt, inputs, config, tools, or dependencies). The cached output is
+stale relative to the workflow file. Replay from an earlier step to re-execute
+the changed node, or pass --allow-drift to reuse the cached output knowingly.
+```
+
+Two ways forward:
+
+- **Replay from an earlier step** so the changed node is re-executed rather than cached.
+- **Pass `--allow-drift`** to accept the stale cache deliberately — useful when the edit is cosmetic (a comment, a reordered key) or when you specifically want the old upstream output.
+
+Notes:
+
+- Changes to the node named in `--from`, or to anything downstream of it, are never drift — those nodes are re-executed, which is the point of replaying.
+- `${user.*}` inputs are excluded from the comparison. They are resolved at load time, so the snapshot holds the substituted value while the file still holds the template; that difference is a run parameter, not a definition change.
+- Runs recorded before workflow snapshots existed have nothing to compare against. Replay proceeds without a drift check rather than failing.
 
 ## Options
 
@@ -28,6 +52,7 @@ Exits `0` on success, `1` on failure.
 | `--from` | `string` (required) | Step/node ID to re-execute from. All nodes from this step onward are replayed. |
 | `--workflow` | `Path` (required, must exist) | Workflow YAML file |
 | `--agent` | `node=agent` (repeatable) | Swap the agent for a specific node. Can be specified multiple times. |
+| `--allow-drift` | flag | Reuse cached upstream output even if those nodes changed since the original run |
 | `--json-output` / `--json` | flag | Output as JSON |
 
 ## Basic Example
