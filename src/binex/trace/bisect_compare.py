@@ -5,7 +5,12 @@ import difflib
 from typing import Any
 
 from binex.stores.artifact_store import ArtifactStore
-from binex.trace._compare import content_similarity, get_artifact_content
+from binex.trace._compare import (
+    FieldChange,
+    compare_contents,
+    get_artifact_content,
+    get_artifact_contents,
+)
 from binex.trace.bisect import DivergencePoint, NodeComparison
 
 
@@ -55,13 +60,13 @@ async def _check_content_divergence(
     if good_status != "completed" or not good_rec or not bad_rec:
         return None
 
-    content_a = await get_artifact_content(art_store, good_rec.output_artifact_refs)
-    content_b = await get_artifact_content(art_store, bad_rec.output_artifact_refs)
+    content_a = await get_artifact_contents(art_store, good_rec.output_artifact_refs)
+    content_b = await get_artifact_contents(art_store, bad_rec.output_artifact_refs)
 
     if content_a is None or content_b is None:
         return None
 
-    similarity = content_similarity(content_a, content_b)
+    similarity, _changes = compare_contents(content_a, content_b)
     if similarity < threshold:
         upstream = _get_upstream(task_id, good_by_task, bad_by_task)
         return DivergencePoint(
@@ -88,12 +93,12 @@ async def _compare_node(
 
     comp_status = _determine_comp_status(good_rec, bad_rec, g_status, b_status)
 
-    similarity, comp_status, ca, cb = await _check_content_similarity(
+    similarity, comp_status, changes = await _check_content_similarity(
         art_store, comp_status, g_status, good_rec, bad_rec, threshold,
     )
 
     node_diff = await _generate_content_diff(
-        art_store, comp_status, good_rec, bad_rec, ca, cb,
+        art_store, comp_status, good_rec, bad_rec, changes,
     )
 
     return NodeComparison(
@@ -129,23 +134,25 @@ async def _check_content_similarity(
     good_rec: Any,
     bad_rec: Any,
     threshold: float,
-) -> tuple[float | None, str, str | None, str | None]:
+) -> tuple[float | None, str, list[FieldChange] | None]:
     """Check content similarity for matched-completed nodes.
 
-    Returns (similarity, possibly-updated comp_status, content_a, content_b).
+    Returns (similarity, possibly-updated comp_status, field changes). The
+    changes are None when the contents were compared as text rather than
+    field-wise — there is no per-field detail to report in that case.
     """
     if comp_status != "match" or g_status != "completed" or not good_rec or not bad_rec:
-        return None, comp_status, None, None
+        return None, comp_status, None
 
-    ca = await get_artifact_content(art_store, good_rec.output_artifact_refs)
-    cb = await get_artifact_content(art_store, bad_rec.output_artifact_refs)
+    ca = await get_artifact_contents(art_store, good_rec.output_artifact_refs)
+    cb = await get_artifact_contents(art_store, bad_rec.output_artifact_refs)
     if ca is None or cb is None:
-        return None, comp_status, ca, cb
+        return None, comp_status, None
 
-    similarity = content_similarity(ca, cb)
+    similarity, changes = compare_contents(ca, cb)
     if similarity < threshold:
-        return similarity, "content_diff", ca, cb
-    return round(similarity, 4), comp_status, ca, cb
+        return similarity, "content_diff", changes
+    return round(similarity, 4), comp_status, changes
 
 
 async def _generate_content_diff(
@@ -153,17 +160,21 @@ async def _generate_content_diff(
     comp_status: str,
     good_rec: Any,
     bad_rec: Any,
-    ca: str | None,
-    cb: str | None,
+    changes: list[FieldChange] | None,
 ) -> list[str] | None:
-    """Generate unified diff for nodes that differ."""
+    """Describe how two nodes' outputs differ.
+
+    Structured content yields one line per changed field ("which field moved");
+    text content falls back to a unified diff.
+    """
     if comp_status not in ("content_diff", "status_diff"):
         return None
 
-    if ca is None and good_rec:
-        ca = await get_artifact_content(art_store, good_rec.output_artifact_refs)
-    if cb is None and bad_rec:
-        cb = await get_artifact_content(art_store, bad_rec.output_artifact_refs)
+    if changes:
+        return [c.render() for c in changes]
+
+    ca = await get_artifact_content(art_store, good_rec.output_artifact_refs) if good_rec else None
+    cb = await get_artifact_content(art_store, bad_rec.output_artifact_refs) if bad_rec else None
 
     if ca is None and cb is None:
         return None

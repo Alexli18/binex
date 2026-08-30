@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { ArrowRight, AlertCircle } from 'lucide-react';
 import { ArtifactDiff } from '@/components/common/ArtifactDiff';
+import { FieldChanges } from '@/components/common/FieldChanges';
 import { cn } from '@/lib/utils';
 import { statusColors } from '@/lib/design-tokens';
 import type { NodeDiff } from '../hooks/useComparison';
@@ -300,7 +301,13 @@ export default function DiffPage() {
                           {hasDiff && expandedDiffs.has(nd.node_id) && (
                             <tr>
                               <td colSpan={8} className="px-4 py-3 bg-[#1a1a1d]/50">
-                                <ArtifactDiff diff={nd.artifact_diff!} />
+                                {/* Structured content knows which field moved;
+                                    text content only has a line diff. */}
+                                {nd.field_changes ? (
+                                  <FieldChanges changes={nd.field_changes} />
+                                ) : (
+                                  <ArtifactDiff diff={nd.artifact_diff!} />
+                                )}
                               </td>
                             </tr>
                           )}

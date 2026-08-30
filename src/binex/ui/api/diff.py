@@ -54,6 +54,10 @@ def _reshape_for_frontend(result: dict[str, Any], run_id_a: str, run_id_b: str) 
             "cost_a": step.get("cost_a", 0.0),
             "cost_b": step.get("cost_b", 0.0),
             "artifact_diff": step.get("artifact_diff"),
+            "content_similarity": step.get("content_similarity"),
+            # None for text content (no per-field detail), [] when structured
+            # content is identical, one rendered line per changed field otherwise.
+            "field_changes": step.get("field_changes"),
         }
         for step in result["steps"]
     ]

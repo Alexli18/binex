@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import difflib
+from dataclasses import asdict
 from typing import Any
 
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
-from binex.trace._compare import content_similarity, get_artifact_content
+from binex.trace._compare import (
+    compare_contents,
+    get_artifact_content,
+    get_artifact_contents,
+)
 
 
 def _compute_summary(steps: list[dict[str, Any]]) -> dict[str, Any]:
@@ -64,11 +69,28 @@ async def _compare_single_task(
     artifacts_changed = await _artifacts_differ(art_store, refs_a, refs_b)
     content_a = await get_artifact_content(art_store, refs_a)
     content_b = await get_artifact_content(art_store, refs_b)
-    similarity = content_similarity(content_a, content_b)
 
-    artifact_diff = _build_unified_diff(
-        content_a or "", content_b or "", run_id_a, run_id_b, task_id,
+    # Compare with structure intact where it exists; `changes` is None when the
+    # contents were compared as text and there is no field-level detail.
+    similarity, changes = compare_contents(
+        await get_artifact_contents(art_store, refs_a),
+        await get_artifact_contents(art_store, refs_b),
     )
+    # Structured, so consumers (jq, the web UI) need not parse a rendered line.
+    field_changes = (
+        [asdict(c) for c in changes] if changes is not None else None
+    )
+
+    if changes is not None:
+        # Structured comparison is authoritative: the field lines are the whole
+        # story, and no changes means nothing to render. Falling back to a text
+        # diff here would reinstate the false positive — reordered keys differ
+        # as text while being the same mapping.
+        artifact_diff = "\n".join(c.render() for c in changes) or None
+    else:
+        artifact_diff = _build_unified_diff(
+            content_a or "", content_b or "", run_id_a, run_id_b, task_id,
+        )
 
     return {
         "task_id": task_id,
@@ -86,6 +108,7 @@ async def _compare_single_task(
         "content_a": content_a,
         "content_b": content_b,
         "content_similarity": similarity,
+        "field_changes": field_changes,
         "cost_a": cost_a,
         "cost_b": cost_b,
         "artifact_diff": artifact_diff,

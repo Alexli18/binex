@@ -18,7 +18,27 @@ The bare `binex bisect <good> <bad>` form is unchanged and still routes to the n
 
 Find the divergence point between two runs. Compares runs node-by-node, classifying each as a match, status difference, or content difference. Identifies the first node where the two runs diverge — helping you pinpoint where a regression or behavior change was introduced.
 
-The comparison uses content similarity (via `difflib.SequenceMatcher`) to detect subtle output differences even when both nodes completed successfully.
+### What counts as a difference
+
+Status is compared first and exactly: a node that failed in one run and completed in the other is always the divergence, with no text involved.
+
+For nodes that completed in both runs, the comparison depends on the shape of the artifact content:
+
+**Structured content** (a mapping or list — the usual shape of `Artifact.content`) is compared **field by field**. Reordering keys is not a difference; a changed, added, or removed field is, and the output names it:
+
+```text
+└── reviewer     ⚠ changed    1200ms → 1200ms  ← root cause
+   └── decision: 'approved' -> 'rejected'
+```
+
+Similarity is the fraction of leaf paths (union of both sides) that are unchanged, so `--threshold` still applies: two of three fields equal gives `0.667`.
+
+**Text content** falls back to a character-level ratio (`difflib.SequenceMatcher`).
+
+!!! warning "The text ratio is a weak signal on LLM output"
+    It measures how many *characters* moved, which is close to orthogonal to whether the meaning changed — and on the highest-stakes cases it is anti-correlated. Rewording moves many characters while preserving meaning (scores ~0.44, flagged); inserting a single "not" inverts the meaning while moving almost nothing (scores ~0.98, passed). The effect worsens with length: the same `12% -> 21%` edit scores `0.982` in a short artifact and `0.999` in a 1 300-character one.
+
+    No threshold separates these two error classes — they sit on opposite sides of it. For prose, prefer [`binex diff --semantic`](diff.md), which asks a model narrow questions about structure and facts instead of counting characters. Emitting structured output (JSON) from your nodes is the cheaper fix: it puts them on the field-wise path above, which is exact and free.
 
 ## Arguments
 
@@ -140,6 +160,8 @@ The rich output includes:
 | `match` | Same status and content similarity above threshold |
 | `content_diff` | Same status but content similarity below threshold |
 | `status_diff` | Different execution status (e.g., completed vs failed) |
+
+For a `content_diff`, the `content_diff` field of the node entry holds one line per changed field when the content was structured (`decision: 'approved' -> 'rejected'`), or unified-diff lines when it was text.
 
 ## Use Cases
 
