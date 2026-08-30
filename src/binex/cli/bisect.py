@@ -66,6 +66,18 @@ class BisectGroup(click.Group):
     "--rich/--no-rich", "rich_out",
     default=None, help="Rich output (auto-detected)",
 )
+@click.option(
+    "--semantic", is_flag=True,
+    help="Let a model decide text nodes instead of the similarity threshold",
+)
+@click.option(
+    "--semantic-model", default=None,
+    help="Model for --semantic (default: BINEX_JUDGE_MODEL or a cheap default)",
+)
+@click.option(
+    "--yes", "-y", "assume_yes", is_flag=True,
+    help="Skip the cost-confirmation prompt for --semantic",
+)
 def runs_cmd(
     good_run_id: str,
     bad_run_id: str,
@@ -73,13 +85,20 @@ def runs_cmd(
     json_out: bool,
     show_diff: bool,
     rich_out: bool | None,
+    semantic: bool,
+    semantic_model: str | None,
+    assume_yes: bool,
 ) -> None:
     """Find the first node where two runs diverge."""
     if rich_out is None:
         rich_out = has_rich()
     try:
         report = asyncio.run(
-            _run_bisect(good_run_id, bad_run_id, threshold),
+            _run_bisect(
+                good_run_id, bad_run_id, threshold,
+                semantic=semantic, semantic_model=semantic_model,
+                assume_yes=assume_yes,
+            ),
         )
     except ImportedRunError as e:
         click.echo(f"Error: {e}", err=True)
@@ -100,8 +119,51 @@ def runs_cmd(
         _print_plain(report, show_diff)
 
 
+async def _resolve_semantic_judge(
+    exec_store: Any, art_store: Any,
+    good_run_id: str, bad_run_id: str,
+    model: str | None, assume_yes: bool,
+) -> Any | None:
+    """Estimate the cost, confirm, and build the judge. None = run without one.
+
+    The estimate is an upper bound: the walk stops at the first meaningful
+    divergence, so fewer calls than quoted is the normal case.
+    """
+    from binex.eval.judge import resolve_judge_model
+    from binex.trace.bisect import semantic_candidates
+    from binex.trace.semantic_judge import estimate_cost, make_semantic_judge
+
+    resolved = resolve_judge_model(model)
+    pairs = await semantic_candidates(
+        exec_store, art_store, good_run_id, bad_run_id,
+    )
+    if not pairs:
+        click.echo(
+            "No differing text nodes to analyze semantically.", err=True,
+        )
+        return None
+
+    est = estimate_cost(pairs, resolved)
+    cost_str = f"~${est.cost:.4f}" if est.cost is not None else "unknown (unpriced model)"
+    # Always shown (on stderr) — Binex spending tokens is never silent.
+    click.echo(
+        f"Semantic bisect: up to {est.calls} judge call(s) on '{resolved}', "
+        f"~{est.total_tokens} tokens, estimated cost {cost_str}. "
+        f"The walk stops at the first meaningful divergence, so it may use fewer.",
+        err=True,
+    )
+    if not assume_yes and not click.confirm("Proceed?", default=False, err=True):
+        click.echo("Skipped semantic analysis.", err=True)
+        return None
+    return make_semantic_judge(resolved)
+
+
 async def _run_bisect(
     good_run_id: str, bad_run_id: str, threshold: float,
+    *,
+    semantic: bool = False,
+    semantic_model: str | None = None,
+    assume_yes: bool = False,
 ) -> Any:
     from binex.trace.bisect import bisect_report
 
@@ -111,9 +173,18 @@ async def _run_bisect(
             run = await exec_store.get_run(run_id)
             if run is not None:
                 ensure_replayable(run, operation="bisect")
+
+        judge = None
+        if semantic:
+            judge = await _resolve_semantic_judge(
+                exec_store, art_store, good_run_id, bad_run_id,
+                semantic_model, assume_yes,
+            )
+
         return await bisect_report(
             exec_store, art_store,
             good_run_id, bad_run_id, threshold,
+            semantic_judge=judge,
         )
     finally:
         await exec_store.close()
@@ -147,6 +218,9 @@ def _verdict_plain(dp: Any, report: Any) -> None:
     else:
         desc = _describe_change(dp.similarity)
         click.echo(f"\u26a0 Node \"{dp.node_id}\" output {desc}")
+        if dp.semantic_reason:
+            # With --semantic the ratio is not what decided this \u2014 say what did.
+            click.echo(f"  Judge: {dp.semantic_reason}")
 
 
 def _node_marker_plain(nc: Any, dp: Any, downstream_set: set[str]) -> str:

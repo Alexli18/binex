@@ -207,6 +207,9 @@ def _render_verdict_rich(console: Any, report: Any, dp: Any) -> None:
             f"[yellow bold]\u26a0 Node \"{dp.node_id}\" "
             f"output {desc}[/yellow bold]"
         )
+        if dp.semantic_reason:
+            # With --semantic the ratio is not what decided this \u2014 say what did.
+            lines += f"\n  Judge: {dp.semantic_reason}"
         console.print(make_panel(lines, title="Verdict"))
 
 

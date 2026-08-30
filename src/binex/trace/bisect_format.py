@@ -27,6 +27,7 @@ def divergence_to_dict(
             "good_status": divergence.good_status,
             "bad_status": divergence.bad_status,
             "upstream_context": divergence.upstream_context,
+            "semantic_reason": divergence.semantic_reason,
         }
     return result
 
@@ -51,6 +52,7 @@ def bisect_report_to_dict(report: BisectReport) -> dict[str, Any]:
             "good_status": dp.good_status,
             "bad_status": dp.bad_status,
             "upstream_context": dp.upstream_context,
+            "semantic_reason": dp.semantic_reason,
         }
 
     result["node_map"] = [
@@ -63,6 +65,7 @@ def bisect_report_to_dict(report: BisectReport) -> dict[str, Any]:
             "latency_good_ms": nc.latency_good_ms,
             "latency_bad_ms": nc.latency_bad_ms,
             "content_diff": nc.content_diff,
+            "semantic_verdict": nc.semantic_verdict,
         }
         for nc in report.node_map
     ]
