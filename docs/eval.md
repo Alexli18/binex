@@ -64,6 +64,26 @@ cases:
 
 `no_baseline` counts as success (exit 0) unless `--strict-baseline` is set.
 
+### How `min_similarity` is measured
+
+The threshold compares the candidate run against its baseline with the same engine as [`binex diff`](cli/diff.md), so it follows the shape of each node's output:
+
+- **Structured output** (a mapping or list) is compared **field by field**: similarity is the fraction of leaf fields that are unchanged. Reordering keys is not a difference.
+- **Text output** uses a character-level `difflib` ratio.
+
+!!! warning "This changed — re-check thresholds tuned before 2026-08"
+    Structured output used to be stringified and scored character-wise, which is close to orthogonal to whether anything meaningful changed. Measured on the same inputs:
+
+    | Case | Old | New |
+    |---|---:|---:|
+    | Reordered keys, same mapping | 0.6304 | 1.0000 |
+    | One field of ten changed | 0.9858 | 0.9000 |
+    | One field changed, long text field alongside | 0.9991 | 0.5000 |
+
+    The first row removes false failures: a strict suite no longer breaks because a model emitted the same JSON with keys in another order. The other two are the reason to re-check your numbers — a real regression that a character ratio diluted to 0.99 now scores proportionally, so a suite with `min_similarity: 0.95` that used to pass on a changed field will now fail. That is the intended behaviour, but it is a behaviour change: review suite thresholds and re-bless baselines where the new score is correct.
+
+    Text-output thresholds are unaffected.
+
 ## CLI Commands
 
 ### `binex eval run <suite.yaml>`
