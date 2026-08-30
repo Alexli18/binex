@@ -238,6 +238,12 @@ def _print_node_diff_rich(console: Any, nc: Any, cont: str, show_diff: bool) -> 
             console.print(f"{cont}{formatted}")
     else:
         good_lines, bad_lines = _extract_preview(nc.content_diff)
+        if not good_lines and not bad_lines:
+            # Field-change lines carry no unified-diff markers \u2014 they are
+            # already one readable line per changed field.
+            for line in nc.content_diff:
+                console.print(f"{cont}\u2514\u2500\u2500 [yellow]{line}[/yellow]")
+            return
         if good_lines:
             preview = _content_preview("\n".join(good_lines), 100)
             console.print(

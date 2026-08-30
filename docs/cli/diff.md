@@ -160,6 +160,8 @@ $ binex diff run_a1b2c3d4 run_e5f6a7b8 --json
       "agent_b": "local://fetch",
       "agent_changed": false,
       "artifacts_changed": false,
+      "content_similarity": 1.0,
+      "field_changes": [],
       "error_a": null,
       "error_b": null
     },
@@ -209,6 +211,11 @@ $ binex diff run_a1b2c3d4 run_e5f6a7b8 --json
 }
 ```
 
+Two fields describe *how* a node's output changed (shown on `fetch_data` above; every step carries them):
+
+- `content_similarity` — for structured content (a mapping or list, the usual shape of `Artifact.content`), the fraction of leaf fields that are unchanged, so reordering keys scores `1.0`. For text content, a character-level `difflib` ratio.
+- `field_changes` — one rendered line per changed field, e.g. `["decision: 'approved' -> 'rejected'"]`. It is `[]` when structured content is identical and `null` when the content was text and there is no field-level detail to give.
+
 You can extract specific fields with `jq`:
 
 ```bash
@@ -217,6 +224,11 @@ binex diff run_a1b2c3d4 run_e5f6a7b8 --json | jq '.steps[] | select(.status_chan
 
 # Show only nodes where artifacts differ
 binex diff run_a1b2c3d4 run_e5f6a7b8 --json | jq '.steps[] | select(.artifacts_changed) | .task_id'
+
+# Show which fields changed, per node
+binex diff run_a1b2c3d4 run_e5f6a7b8 --json \
+  | jq '.steps[] | select(.field_changes != null and (.field_changes | length > 0))
+        | {task_id, field_changes}'
 ```
 
 ## Error Handling

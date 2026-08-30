@@ -110,6 +110,12 @@ def _print_diff_preview_plain(nc: Any, cont: str, show_diff: bool) -> None:
             click.echo(f"{cont}{line}")
     else:
         good_lines, bad_lines = _extract_preview(nc.content_diff)
+        if not good_lines and not bad_lines:
+            # Field-change lines carry no unified-diff markers — they are
+            # already one readable line per changed field.
+            for line in nc.content_diff:
+                click.echo(f"{cont}└── {line}")
+            return
         if good_lines:
             preview = _content_preview("\n".join(good_lines), 100)
             click.echo(
