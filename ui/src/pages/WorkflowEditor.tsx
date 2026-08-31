@@ -10,6 +10,7 @@ import { WorkflowEditorProvider } from '@/components/editor/WorkflowEditorContex
 import { WorkflowSettingsPanel, type McpServerConfig } from '@/components/editor/WorkflowSettingsPanel';
 import { useWorkflows, useWorkflow, useSaveWorkflow } from '../hooks/useWorkflows';
 import { useCreateRun } from '../hooks/useRuns';
+import { shouldAutoSelectFirstWorkflow } from '@/lib/editor-autoselect';
 import { parseWorkflowYaml, type WorkflowNode, type WorkflowEdge } from '../lib/yaml-to-graph';
 import { graphToYaml } from '../lib/graph-to-yaml';
 import { api } from '../lib/api';
@@ -163,7 +164,9 @@ export default function WorkflowEditor() {
   const saveMutation = useSaveWorkflow();
   const createRun = useCreateRun();
 
-  const [content, setContent] = useState('');
+  // Seeded on the first render, not in an effect: the workflow list can
+  // arrive before effects run, and the auto-select guard below reads this.
+  const [content, setContent] = useState(initialContent ?? '');
   const [originalContent, setOriginalContent] = useState('');
   const [mode, setMode] = useState<EditorMode>('yaml');
   const [graphNodes, setGraphNodes] = useState<WorkflowNode[]>([]);
@@ -225,12 +228,12 @@ export default function WorkflowEditor() {
     }
   }, [fileParam]);
 
-  // Auto-select first workflow when no file is specified
+  // Auto-select first workflow when the editor has nothing to show
   useEffect(() => {
-    if (!fileParam && !selectedPath && workflows && workflows.length > 0) {
-      setSelectedPath(workflows[0]);
+    if (shouldAutoSelectFirstWorkflow({ fileParam, selectedPath, content, workflows })) {
+      setSelectedPath(workflows![0]);
     }
-  }, [workflows, selectedPath, fileParam]);
+  }, [workflows, selectedPath, fileParam, content]);
 
   // Accept initialContent from Scaffold page
   useEffect(() => {
