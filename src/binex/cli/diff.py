@@ -107,20 +107,9 @@ def _do_semantic(
 
 
 def _semantic_to_json(verdicts: dict[str, Any]) -> list[dict[str, Any]]:
-    return [
-        {
-            "node_id": v.node_id,
-            "meaningful": v.meaningful,
-            "summary": v.summary,
-            "error": v.error,
-            "questions": [
-                {"key": q.key, "changed": q.changed,
-                 "confidence": q.confidence, "reason": q.reason}
-                for q in v.questions
-            ],
-        }
-        for v in verdicts.values()
-    ]
+    from binex.trace.semantic_diff import verdicts_to_json
+
+    return verdicts_to_json(verdicts)
 
 
 def _print_semantic(verdicts: dict[str, Any]) -> None:
