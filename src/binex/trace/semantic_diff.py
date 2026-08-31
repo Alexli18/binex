@@ -133,6 +133,29 @@ async def analyze_diff(
     return verdicts
 
 
+def verdicts_to_json(
+    verdicts: dict[str, NodeSemanticVerdict],
+) -> list[dict[str, Any]]:
+    """Serialize judge verdicts for `--json` and the Web UI.
+
+    Shared so the CLI and the API cannot drift into two different shapes.
+    """
+    return [
+        {
+            "node_id": v.node_id,
+            "meaningful": v.meaningful,
+            "summary": v.summary,
+            "error": v.error,
+            "questions": [
+                {"key": q.key, "changed": q.changed,
+                 "confidence": q.confidence, "reason": q.reason}
+                for q in v.questions
+            ],
+        }
+        for v in verdicts.values()
+    ]
+
+
 __all__ = [
     "QUESTIONS",
     "NodeSemanticVerdict",
@@ -141,4 +164,5 @@ __all__ = [
     "analyze_diff",
     "analyze_pair",
     "changed_pairs",
+    "verdicts_to_json",
 ]

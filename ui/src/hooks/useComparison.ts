@@ -1,6 +1,32 @@
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../lib/api';
 
+/** Pre-flight cost of a semantic analysis, before any model call is made. */
+export interface SemanticEstimate {
+  calls: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  /** null when the model has no published pricing — render as "unknown". */
+  cost: number | null;
+  model: string;
+  nodes: string[];
+}
+
+/** One node's judge verdict from `diff --semantic`. */
+export interface SemanticVerdict {
+  node_id: string;
+  meaningful: boolean;
+  summary: string;
+  error: string | null;
+  questions: {
+    key: string;
+    changed: boolean;
+    confidence: string;
+    reason: string;
+  }[];
+}
+
 /** One differing leaf between two structured artifact contents. */
 export interface FieldChange {
   path: string;
@@ -41,6 +67,8 @@ export interface DiffResult {
   run_a: DiffRunSummary;
   run_b: DiffRunSummary;
   node_diffs: NodeDiff[];
+  /** Present only when the request asked for semantic analysis. */
+  semantic?: SemanticVerdict[] | null;
   summary?: {
     total_changed: number;
     total_failed: number;
@@ -92,13 +120,39 @@ export interface BisectResult {
 }
 
 export function useDiff() {
-  return useMutation<DiffResult, Error, { run_a: string; run_b: string }>({
+  return useMutation<
+    DiffResult,
+    Error,
+    { run_a: string; run_b: string; semantic?: boolean; semantic_model?: string }
+  >({
     mutationFn: (body) => api.post<DiffResult>('/diff', body),
   });
 }
 
 export function useBisect() {
-  return useMutation<BisectResult, Error, { good_run: string; bad_run: string; threshold?: number }>({
+  return useMutation<
+    BisectResult,
+    Error,
+    {
+      good_run: string;
+      bad_run: string;
+      threshold?: number;
+      semantic?: boolean;
+      semantic_model?: string;
+    }
+  >({
     mutationFn: (body) => api.post<BisectResult>('/bisect', body),
+  });
+}
+
+/**
+ * Pre-flight cost of a semantic analysis.
+ *
+ * Fetched and shown before anything runs — semantic analysis spends the user's
+ * tokens, and the browser must not bypass the confirmation the CLI enforces.
+ */
+export function useSemanticEstimate(kind: 'diff' | 'bisect') {
+  return useMutation<SemanticEstimate, Error, Record<string, string>>({
+    mutationFn: (body) => api.post<SemanticEstimate>(`/${kind}/estimate`, body),
   });
 }

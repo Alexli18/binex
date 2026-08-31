@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useRuns } from '../hooks/useRuns';
-import { useBisect } from '../hooks/useComparison';
+import { useBisect, useSemanticEstimate } from '../hooks/useComparison';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageShell } from '@/components/layout/PageShell';
@@ -12,6 +12,7 @@ import {
 import { AlertCircle, AlertTriangle, CheckCircle2, XCircle, HelpCircle, Loader2, ChevronDown } from 'lucide-react';
 import { ArtifactDiff } from '@/components/common/ArtifactDiff';
 import { FieldChanges } from '@/components/common/FieldChanges';
+import { SemanticConfirm } from '@/components/common/SemanticConfirm';
 import { statusColors, colors as tokenColors, chartColors } from '@/lib/design-tokens';
 import ReactFlow, { type Node, type Edge } from 'reactflow';
 import { BisectNode } from '../components/dag/BisectNode';
@@ -308,11 +309,26 @@ export default function BisectPage() {
   const [goodRun, setGoodRun] = useState('');
   const [badRun, setBadRun] = useState('');
   const [threshold, setThreshold] = useState(0.9);
+  const [semantic, setSemantic] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const estimate = useSemanticEstimate('bisect');
 
   const handleBisect = () => {
-    if (goodRun && badRun) {
-      bisect.mutate({ good_run: goodRun, bad_run: badRun, threshold });
+    if (!goodRun || !badRun) return;
+    if (semantic) {
+      // Never run the judge before the user has seen what it costs.
+      setConfirmOpen(true);
+      estimate.mutate({ good_run: goodRun, bad_run: badRun });
+      return;
     }
+    bisect.mutate({ good_run: goodRun, bad_run: badRun, threshold });
+  };
+
+  const runSemanticBisect = () => {
+    setConfirmOpen(false);
+    bisect.mutate({
+      good_run: goodRun, bad_run: badRun, threshold, semantic: true,
+    });
   };
 
   const similarityPercent = bisect.data?.similarity != null
@@ -394,6 +410,22 @@ export default function BisectPage() {
             </div>
           </div>
 
+          {/* Semantic analysis spends the user's tokens, so it is opt-in and
+              always goes through the cost confirmation below. */}
+          <label className="flex items-center gap-2 text-xs text-[#80808a] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={semantic}
+              onChange={(e) => setSemantic(e.target.checked)}
+              className="accent-amber-500"
+              data-testid="bisect-semantic-toggle"
+            />
+            <span>
+              Semantic — let a model decide text nodes instead of the threshold
+              <span className="text-[#4a4a52]"> (uses your tokens)</span>
+            </span>
+          </label>
+
           <Button
             onClick={handleBisect}
             disabled={!goodRun || !badRun || bisect.isPending}
@@ -406,6 +438,14 @@ export default function BisectPage() {
           </Button>
         </div>
       </div>
+
+      <SemanticConfirm
+        open={confirmOpen}
+        estimate={estimate.data ?? null}
+        loading={estimate.isPending}
+        onConfirm={runSemanticBisect}
+        onCancel={() => setConfirmOpen(false)}
+      />
 
       {/* Error */}
       {bisect.isError && (

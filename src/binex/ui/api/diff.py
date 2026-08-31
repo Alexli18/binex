@@ -34,6 +34,46 @@ class DiffRequest(BaseModel):
 
     run_a: str
     run_b: str
+    # Opt-in: asks a judge whether each changed text node changed *meaningfully*,
+    # and spends the caller's tokens doing it. The UI shows /diff/estimate first
+    # and gets an explicit confirmation — the browser must not bypass the cost
+    # prompt the CLI enforces.
+    semantic: bool = False
+    semantic_model: str | None = None
+
+
+class DiffEstimateRequest(BaseModel):
+    """Request body for a pre-flight semantic-analysis cost estimate."""
+
+    run_a: str
+    run_b: str
+    semantic_model: str | None = None
+
+
+@router.post("/estimate")
+async def estimate_semantic(body: DiffEstimateRequest) -> JSONResponse:
+    """How much a semantic diff of these two runs would cost.
+
+    Only nodes whose text content actually differs are counted: identical
+    outputs and structured content are settled without a model.
+    """
+    from binex.eval.judge import resolve_judge_model
+    from binex.trace.diff import diff_runs as core_diff_runs
+    from binex.trace.semantic_diff import changed_pairs
+    from binex.ui.api.bisect import _estimate_payload
+
+    exec_store, art_store = _get_stores()
+    try:
+        try:
+            result = await core_diff_runs(
+                exec_store, art_store, body.run_a, body.run_b,
+            )
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=404)
+        model = resolve_judge_model(body.semantic_model)
+        return JSONResponse(_estimate_payload(changed_pairs(result), model))
+    finally:
+        await exec_store.close()
 
 
 def _reshape_for_frontend(result: dict[str, Any], run_id_a: str, run_id_b: str) -> dict[str, Any]:
@@ -89,6 +129,16 @@ async def diff_runs(body: DiffRequest) -> JSONResponse:
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=404)
 
-        return JSONResponse(_reshape_for_frontend(result, body.run_a, body.run_b))
+        payload = _reshape_for_frontend(result, body.run_a, body.run_b)
+
+        if body.semantic:
+            from binex.eval.judge import resolve_judge_model
+            from binex.trace.semantic_diff import analyze_diff, verdicts_to_json
+            from binex.trace.semantic_judge import make_semantic_judge
+
+            judge = make_semantic_judge(resolve_judge_model(body.semantic_model))
+            payload["semantic"] = verdicts_to_json(await analyze_diff(result, judge))
+
+        return JSONResponse(payload)
     finally:
         await exec_store.close()

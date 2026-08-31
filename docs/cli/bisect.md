@@ -81,6 +81,12 @@ Use `--yes` to skip the prompt (CI), `--semantic-model` to pick a model (default
 
 If the judge cannot be reached, the node falls back to the similarity threshold rather than silently passing, and the JSON records `could not analyze (...)`.
 
+### In the Web UI
+
+The Bisect page has a **Semantic** checkbox carrying the same guarantee as the CLI: ticking it starts nothing. The page first calls `POST /api/v1/bisect/estimate` and shows the judge calls, model, token count and dollar cost in a dialog; the analysis runs only on an explicit **Run analysis**, and cancelling costs nothing. Structured nodes never appear in the count — they are compared field-wise, exactly and for free.
+
+The judge's reason is shown on its own line in the divergence details (`Judge — meaningful change: facts`), which is what explains a divergence the similarity bar alone would have cleared: in the example above the node scores 96%, comfortably above the 0.90 threshold, and is still the root cause.
+
 ## Arguments
 
 | Argument | Required | Description |

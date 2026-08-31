@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useRuns } from '../hooks/useRuns';
-import { useDiff } from '../hooks/useComparison';
+import { useDiff, useSemanticEstimate } from '../hooks/useComparison';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { PageShell } from '@/components/layout/PageShell';
@@ -13,6 +13,7 @@ import {
 import { ArrowRight, AlertCircle } from 'lucide-react';
 import { ArtifactDiff } from '@/components/common/ArtifactDiff';
 import { FieldChanges } from '@/components/common/FieldChanges';
+import { SemanticConfirm } from '@/components/common/SemanticConfirm';
 import { cn } from '@/lib/utils';
 import { statusColors } from '@/lib/design-tokens';
 import type { NodeDiff } from '../hooks/useComparison';
@@ -48,6 +49,9 @@ export default function DiffPage() {
   }, []);
   const [expandedDiffs, setExpandedDiffs] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<DiffFilter>('all');
+  const [semantic, setSemantic] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const estimate = useSemanticEstimate('diff');
 
   const filterCounts = useMemo(() => {
     if (!diff.data) return { all: 0, changed: 0, failed: 0, cost_delta: 0 };
@@ -76,9 +80,19 @@ export default function DiffPage() {
   }, [diff.data, filter]);
 
   const handleCompare = () => {
-    if (runA && runB) {
-      diff.mutate({ run_a: runA, run_b: runB });
+    if (!runA || !runB) return;
+    if (semantic) {
+      // Never run the judge before the user has seen what it costs.
+      setConfirmOpen(true);
+      estimate.mutate({ run_a: runA, run_b: runB });
+      return;
     }
+    diff.mutate({ run_a: runA, run_b: runB });
+  };
+
+  const runSemanticDiff = () => {
+    setConfirmOpen(false);
+    diff.mutate({ run_a: runA, run_b: runB, semantic: true });
   };
 
   const toggleDiff = (nodeId: string) => {
@@ -152,7 +166,63 @@ export default function DiffPage() {
               {diff.isPending ? 'Comparing...' : 'Compare'}
             </Button>
           </div>
+
+          {/* Opt-in and cost-confirmed: this is the one control here that
+              spends the user's tokens. */}
+          <label className="flex items-center gap-2 mt-3 text-xs text-[#80808a] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={semantic}
+              onChange={(e) => setSemantic(e.target.checked)}
+              className="accent-amber-500"
+              data-testid="diff-semantic-toggle"
+            />
+            <span>
+              Semantic — tell a reworded answer from a changed one
+              <span className="text-[#4a4a52]"> (uses your tokens)</span>
+            </span>
+          </label>
         </div>
+
+        <SemanticConfirm
+          open={confirmOpen}
+          estimate={estimate.data ?? null}
+          loading={estimate.isPending}
+          onConfirm={runSemanticDiff}
+          onCancel={() => setConfirmOpen(false)}
+        />
+
+        {diff.data?.semantic && diff.data.semantic.length > 0 && (
+          <div
+            data-testid="diff-semantic-results"
+            className="bg-[#131316] border border-[#252528] rounded-card p-4"
+          >
+            <h3 className="text-sm font-semibold text-[#f0f0f0] mb-3">
+              Semantic analysis
+            </h3>
+            <div className="space-y-2">
+              {diff.data.semantic.map((v) => (
+                <div key={v.node_id} className="text-xs">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-mono text-[#f0f0f0]">{v.node_id}</span>
+                    <span className={v.meaningful ? 'text-amber-400' : 'text-[#4a4a52]'}>
+                      {v.meaningful ? '⚠' : '·'} {v.summary}
+                    </span>
+                  </div>
+                  <ul className="ml-4 mt-1 space-y-0.5">
+                    {v.questions
+                      .filter((q) => q.changed)
+                      .map((q) => (
+                        <li key={q.key} className="text-[#80808a]">
+                          {q.key}: changed ({q.confidence}) — {q.reason}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Error */}
         {diff.isError && (

@@ -43,6 +43,62 @@ class BisectRequest(BaseModel):
     good_run: str
     bad_run: str
     threshold: float = Field(default=0.9, ge=0.0, le=1.0)
+    # Opt-in: a judge decides text nodes instead of `threshold`, and it spends
+    # the caller's tokens. The UI is expected to show /bisect/estimate first and
+    # get an explicit confirmation — the browser must not be a way around the
+    # cost prompt the CLI enforces.
+    semantic: bool = False
+    semantic_model: str | None = None
+
+
+class EstimateRequest(BaseModel):
+    """Request body for a pre-flight semantic-analysis cost estimate."""
+
+    good_run: str
+    bad_run: str
+    semantic_model: str | None = None
+
+
+def _estimate_payload(pairs: list[tuple[str, str, str]], model: str) -> dict[str, Any]:
+    """Shape a CostEstimate for the API, shared by the bisect and diff routes."""
+    from binex.trace.semantic_judge import estimate_cost
+
+    est = estimate_cost(pairs, model)
+    return {
+        "calls": est.calls,
+        "prompt_tokens": est.prompt_tokens,
+        "completion_tokens": est.completion_tokens,
+        "total_tokens": est.total_tokens,
+        # None when the model has no published pricing — render as "unknown".
+        "cost": est.cost,
+        "model": model,
+        "nodes": [node_id for node_id, _a, _b in pairs],
+    }
+
+
+@router.post("/estimate")
+async def estimate_semantic(body: EstimateRequest) -> JSONResponse:
+    """How much a semantic bisect of these two runs would cost.
+
+    An upper bound: the walk stops at the first meaningful divergence, so fewer
+    calls than quoted is the normal case. Structured content is absent from the
+    count — it is compared field-wise, exactly and for free.
+    """
+    from binex.eval.judge import resolve_judge_model
+    from binex.trace.bisect import semantic_candidates
+
+    exec_store, art_store = _get_stores()
+    try:
+        try:
+            pairs = await semantic_candidates(
+                exec_store, art_store, body.good_run, body.bad_run,
+            )
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=404)
+        model = resolve_judge_model(body.semantic_model)
+        return JSONResponse(_estimate_payload(pairs, model))
+    finally:
+        await exec_store.close()
 
 
 @router.post("")
@@ -63,10 +119,18 @@ async def bisect_runs(body: BisectRequest) -> JSONResponse:
 
         from binex.trace.bisect import bisect_report
 
+        judge = None
+        if body.semantic:
+            from binex.eval.judge import resolve_judge_model
+            from binex.trace.semantic_judge import make_semantic_judge
+
+            judge = make_semantic_judge(resolve_judge_model(body.semantic_model))
+
         try:
             report = await bisect_report(
                 exec_store, art_store,
                 body.good_run, body.bad_run, body.threshold,
+                semantic_judge=judge,
             )
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=404)
