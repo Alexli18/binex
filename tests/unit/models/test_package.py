@@ -1,5 +1,6 @@
 """Smoke tests for binex package."""
 
+import re
 import tomllib
 from pathlib import Path
 
@@ -9,12 +10,31 @@ import binex
 
 _PYPROJECT = Path(__file__).resolve().parents[3] / "pyproject.toml"
 
+# X.Y.Z, optionally with a PEP 440 pre/post/dev suffix. Release-candidate builds
+# are a normal part of publishing (a prerelease goes to TestPyPI first), so the
+# check has to accept `0.8.0rc1` — an earlier "three all-digit parts" assertion
+# rejected exactly the versions a release dry-run needs.
+_VERSION_RE = re.compile(r"^\d+\.\d+\.\d+(?:(?:a|b|rc)\d+)?(?:\.post\d+)?(?:\.dev\d+)?$")
+
 
 def test_version():
-    # Check version is a valid semver string, not a specific value
-    parts = binex.__version__.split(".")
-    assert len(parts) == 3, f"Expected semver, got {binex.__version__}"
-    assert all(p.isdigit() for p in parts), f"Non-numeric version parts: {binex.__version__}"
+    assert _VERSION_RE.match(binex.__version__), (
+        f"Not a valid release version: {binex.__version__!r}"
+    )
+
+
+@pytest.mark.parametrize(
+    "version", ["0.8.0", "1.0.0", "0.8.0rc1", "0.8.0a2", "0.8.0b1", "1.2.3.post1"],
+)
+def test_version_pattern_accepts_valid_releases(version: str):
+    assert _VERSION_RE.match(version)
+
+
+@pytest.mark.parametrize(
+    "version", ["0.8", "0.8.0.1", "v0.8.0", "0.8.0-rc1", "0.8.x", "", "rc1"],
+)
+def test_version_pattern_rejects_invalid(version: str):
+    assert not _VERSION_RE.match(version)
 
 
 @pytest.mark.skipif(not _PYPROJECT.is_file(), reason="not running from a source checkout")
