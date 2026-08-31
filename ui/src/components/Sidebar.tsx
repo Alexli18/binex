@@ -233,7 +233,7 @@ export default function Sidebar() {
           fontSize: 9,
           color: "#4a4a52",
         }}>
-          v0.7.1 · MIT
+          v0.8.0 · MIT
         </div>
       )}
     </aside>
