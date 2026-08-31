@@ -1,0 +1,3289 @@
+<!DOCTYPE html><html lang="en" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Debuggable runtime for AI agent pipelines">
+      
+      
+      
+        <link rel="canonical" href="https://alexli18.github.io/binex/docs/features/tools-mcp/">
+      
+      
+        <link rel="prev" href="../../import/">
+      
+      
+        <link rel="next" href="../cao-adapter/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Tools &amp; MCP - Binex</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tools-mcp-integration" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Binex" class="md-header__button md-logo" aria-label="Binex" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7h-2.81c-.45-.8-1.07-1.5-1.82-2L16 3.41 14.59 2l-2.17 2.17a6 6 0 0 0-2.83 0L7.41 2 6 3.41 7.62 5c-.75.5-1.36 1.21-1.81 2H3v2h2.09c-.06.33-.09.66-.09 1v1H3v2h2v1c0 .34.03.67.09 1H3v2h2.81A6 6 0 0 0 13 19.65V19c0-2.54 1.61-4.8 4-5.65V13h2v-2h-2v-1c0-.34-.03-.67-.09-1H19zm-6 8H9v-2h4zm0-4H9V9h4zm4.75 11.16-2.75-3L16.16 18l1.59 1.59L21.34 16l1.16 1.41z"></path></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Binex
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tools &amp; MCP
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom" aria-hidden="true" type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Alexli18/binex" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    Alexli18/binex
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Binex" class="md-nav__button md-logo" aria-label="Binex" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7h-2.81c-.45-.8-1.07-1.5-1.82-2L16 3.41 14.59 2l-2.17 2.17a6 6 0 0 0-2.83 0L7.41 2 6 3.41 7.62 5c-.75.5-1.36 1.21-1.81 2H3v2h2.09c-.06.33-.09.66-.09 1v1H3v2h2v1c0 .34.03.67.09 1H3v2h2.81A6 6 0 0 0 13 19.65V19c0-2.54 1.61-4.8 4-5.65V13h2v-2h-2v-1c0-.34-.03-.67-.09-1H19zm-6 8H9v-2h4zm0-4H9V9h4zm4.75 11.16-2.75-3L16.16 18l1.59 1.59L21.34 16l1.16 1.41z"></path></svg>
+
+    </a>
+    Binex
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Alexli18/binex" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    Alexli18/binex
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs LangGraph / CrewAI / AutoGen
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5">
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/debugging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debugging &amp; Observability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6">
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/lineage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lineage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7">
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/run/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/debug/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    debug
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    trace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/replay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    replay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/resume/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    resume
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/diff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    diff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/freeze/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    freeze
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    dev
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/doctor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    doctor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/validate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    validate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/scaffold/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    scaffold
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/cost/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/clean/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    clean
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/explore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    explore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/diagnose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    diagnose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/bisect/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bisect
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gateway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ui
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/scheduler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    scheduler
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8">
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stores
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked="">
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observer-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observer Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../binary-artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binary Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workspace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workspace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../foreach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dynamic Fan-out (foreach)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval &amp; Assertions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../import/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import from OTel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools &amp; MCP
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools &amp; MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#tool-uri-schemes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tool URI Schemes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-tools-to-workflow-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Tools to Workflow Nodes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#built-in-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in Tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Built-in Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calculator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calculator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dice_roll" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dice_roll
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fetch_url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fetch_url
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http_request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        http_request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web_search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        web_search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read_file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        read_file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write_file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shell_command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shell_command
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json_parse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        json_parse
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#random_choice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        random_choice
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-python-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Python Tools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcp-server-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Server Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MCP Server Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stdio-transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stdio Transport
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#httpsse-transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP/SSE Transport
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcpserverconfig-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        McpServerConfig Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-mcp-tools-are-resolved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How MCP Tools Are Resolved
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inline-tool-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inline Tool Definitions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cao-adapter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CAO Adapter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs LangSmith / Langfuse / n8n
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10">
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/format/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../multi-provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Provider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11">
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/otel-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OTel Span Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/loop-container-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Loop Container UI Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#tool-uri-schemes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tool URI Schemes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-tools-to-workflow-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Tools to Workflow Nodes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#built-in-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in Tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Built-in Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calculator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calculator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dice_roll" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dice_roll
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fetch_url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fetch_url
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http_request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        http_request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web_search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        web_search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read_file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        read_file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write_file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shell_command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shell_command
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json_parse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        json_parse
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#random_choice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        random_choice
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-python-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Python Tools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcp-server-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Server Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MCP Server Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stdio-transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stdio Transport
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#httpsse-transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP/SSE Transport
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcpserverconfig-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        McpServerConfig Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-mcp-tools-are-resolved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How MCP Tools Are Resolved
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inline-tool-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inline Tool Definitions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="tools-mcp-integration">Tools &amp; MCP Integration</h1>
+<p>Binex supports tool calling in LLM-powered workflow nodes. Tools give agents the ability to perform actions — run calculations, fetch URLs, read files, execute shell commands, or call external services via the Model Context Protocol (MCP).</p>
+<p>Tools are declared per-node in workflow YAML and resolved at execution time. The LLM adapter converts tool definitions to OpenAI-compatible function schemas and handles tool call responses automatically.</p>
+<h2 id="tool-uri-schemes">Tool URI Schemes</h2>
+<p>Binex uses URI schemes to identify tool sources:</p>
+<table>
+<thead>
+<tr>
+<th>Scheme</th>
+<th>Format</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>builtin://</code></td>
+<td><code>builtin://calculator</code></td>
+<td>One of 10 built-in tools shipped with Binex</td>
+</tr>
+<tr>
+<td><code>python://</code></td>
+<td><code>python://mymodule.my_func</code></td>
+<td>User-defined Python function (loaded from workflow directory)</td>
+</tr>
+<tr>
+<td><code>mcp://</code></td>
+<td><code>mcp://server_name</code></td>
+<td>All tools from an MCP server declared in <code>mcp_servers:</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="adding-tools-to-workflow-nodes">Adding Tools to Workflow Nodes</h2>
+<p>Add a <code>tools:</code> list to any <code>llm://</code> node:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tool-demo</span>
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">researcher</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o"</span>
+<span class="w">    </span><span class="nt">system_prompt</span><span class="p">:</span><span class="w"> </span><span class="s">"Research</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">topic</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">provide</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">summary</span><span class="nv"> </span><span class="s">with</span><span class="nv"> </span><span class="s">calculations."</span>
+<span class="w">    </span><span class="nt">tools</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"builtin://fetch_url"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"builtin://calculator"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">summary</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>You can mix URI schemes in a single node:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">tools</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"builtin://read_file"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"python://helpers.extract_data"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"mcp://my_server"</span>
+</code></pre></div>
+<h2 id="built-in-tools">Built-in Tools</h2>
+<p>All 10 built-in tools are available via <code>builtin://name</code>. They are registered at import time and require no additional configuration.</p>
+<h3 id="calculator">calculator</h3>
+<p>Evaluate a mathematical expression safely. Supports <code>math</code> module functions (<code>sin</code>, <code>cos</code>, <code>sqrt</code>, <code>log</code>, etc.), <code>abs</code>, <code>round</code>, <code>min</code>, <code>max</code>.</p>
+<ul>
+<li><strong>Parameters</strong>: <code>expression</code> (string, required)</li>
+<li><strong>Example</strong>: <code>"sqrt(144) + 2 * pi"</code> returns <code>"15.283185307179586"</code></li>
+<li><strong>Safety</strong>: Uses restricted <code>eval</code> with <code>{"__builtins__": {}}</code> — only math functions are exposed.</li>
+</ul>
+<h3 id="dice_roll">dice_roll</h3>
+<p>Roll dice using D&amp;D notation (<code>NdM</code> or <code>NdM+K</code>).</p>
+<ul>
+<li><strong>Parameters</strong>: <code>notation</code> (string, required)</li>
+<li><strong>Example</strong>: <code>"2d6+3"</code> returns <code>"2d6+3: [4, 2]+3 = 9"</code></li>
+<li><strong>Limits</strong>: 1-100 dice, 2-1000 sides.</li>
+</ul>
+<h3 id="fetch_url">fetch_url</h3>
+<p>Fetch contents of a URL via HTTP GET (async).</p>
+<ul>
+<li><strong>Parameters</strong>: <code>url</code> (string, required)</li>
+<li><strong>Limits</strong>: 30s timeout, response truncated at 50KB. Follows redirects.</li>
+</ul>
+<h3 id="http_request">http_request</h3>
+<p>Make an HTTP request with a configurable method (async).</p>
+<ul>
+<li><strong>Parameters</strong>: <code>url</code> (string, required), <code>method</code> (string, default <code>"GET"</code>), <code>body</code> (string, default <code>""</code>)</li>
+<li><strong>Methods</strong>: GET, POST, PUT, DELETE, PATCH.</li>
+<li><strong>Limits</strong>: 30s timeout, response truncated at 50KB.</li>
+</ul>
+<h3 id="web_search">web_search</h3>
+<p>Search the web using DuckDuckGo and return results.</p>
+<ul>
+<li><strong>Parameters</strong>: <code>query</code> (string, required)</li>
+<li><strong>Limits</strong>: 15s timeout, response truncated at 50KB.</li>
+</ul>
+<h3 id="read_file">read_file</h3>
+<p>Read file contents from the workflow working directory.</p>
+<ul>
+<li><strong>Parameters</strong>: <code>path</code> (string, required)</li>
+<li><strong>Restrictions</strong>: Relative paths only. Rejects <code>..</code> and absolute paths. Path must resolve within the current working directory.</li>
+</ul>
+<h3 id="write_file">write_file</h3>
+<p>Write content to a file in the workflow working directory.</p>
+<ul>
+<li><strong>Parameters</strong>: <code>path</code> (string, required), <code>content</code> (string, required)</li>
+<li><strong>Restrictions</strong>: Relative paths only. Rejects <code>..</code> and absolute paths. Maximum file size 10MB. Creates parent directories automatically.</li>
+</ul>
+<h3 id="shell_command">shell_command</h3>
+<p>Execute a shell command with safety constraints.</p>
+<ul>
+<li><strong>Parameters</strong>: <code>command</code> (string, required)</li>
+<li><strong>Restrictions</strong>: 30-second timeout. Output truncated at 10KB. Runs via <code>subprocess.run(shell=True)</code> in the current working directory.</li>
+</ul>
+<h3 id="json_parse">json_parse</h3>
+<p>Parse a JSON string and optionally extract specific fields.</p>
+<ul>
+<li><strong>Parameters</strong>: <code>json_string</code> (string, required), <code>fields</code> (string, default <code>""</code> — comma-separated field names)</li>
+<li><strong>Example</strong>: <code>json_parse('{"a": 1, "b": 2}', "a")</code> returns <code>{"a": 1}</code></li>
+</ul>
+<h3 id="random_choice">random_choice</h3>
+<p>Pick a random item from a comma-separated list.</p>
+<ul>
+<li><strong>Parameters</strong>: <code>options</code> (string, required)</li>
+<li><strong>Example</strong>: <code>"red, green, blue"</code> returns one of the three.</li>
+</ul>
+<h2 id="custom-python-tools">Custom Python Tools</h2>
+<p>Define a tool as a Python function and reference it via <code>python://module.function</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># tools.py (in your workflow directory)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">tool</span>
+
+<span class="nd">@tool</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Convert temperature from Celsius to Fahrenheit"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">celsius_to_fahrenheit</span><span class="p">(</span><span class="n">celsius</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">celsius</span> <span class="o">*</span> <span class="mi">9</span> <span class="o">/</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">32</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">converter</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o"</span>
+<span class="w">    </span><span class="nt">tools</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"python://tools.celsius_to_fahrenheit"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">result</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>The <code>@tool</code> decorator is optional but recommended — it lets you set a custom <code>name</code>, <code>description</code>, and <code>parameter_descriptions</code>. Without it, Binex infers the schema from the function signature, type hints, and docstring.</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@tool</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"temp_convert"</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">"Convert Celsius to Fahrenheit"</span><span class="p">,</span>
+    <span class="n">parameter_descriptions</span><span class="o">=</span><span class="p">{</span><span class="s2">"celsius"</span><span class="p">:</span> <span class="s2">"Temperature in degrees Celsius"</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">celsius_to_fahrenheit</span><span class="p">(</span><span class="n">celsius</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">celsius</span> <span class="o">*</span> <span class="mi">9</span> <span class="o">/</span> <span class="mi">5</span> <span class="o">+</span> <span class="mi">32</span><span class="p">)</span>
+</code></pre></div>
+<p>Async functions are supported — Binex detects <code>async def</code> and awaits them automatically.</p>
+<h2 id="mcp-server-configuration">MCP Server Configuration</h2>
+<p>The <a href="https://modelcontextprotocol.io/">Model Context Protocol (MCP)</a> lets Binex connect to external tool servers. Declare MCP servers at the workflow level under <code>mcp_servers:</code>, then reference them in node <code>tools:</code> via <code>mcp://server_name</code>.</p>
+<h3 id="stdio-transport">Stdio Transport</h3>
+<p>For MCP servers that run as a subprocess:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">mcp_servers</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">filesystem</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">"npx"</span>
+<span class="w">    </span><span class="nt">args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"-y"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"@modelcontextprotocol/server-filesystem"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"/tmp/workspace"</span><span class="p p-Indicator">]</span>
+
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">file_worker</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o"</span>
+<span class="w">    </span><span class="nt">tools</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"mcp://filesystem"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">result</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h3 id="httpsse-transport">HTTP/SSE Transport</h3>
+<p>For MCP servers accessible via HTTP:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">mcp_servers</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">remote_tools</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:3000/sse"</span>
+
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">worker</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o"</span>
+<span class="w">    </span><span class="nt">tools</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"mcp://remote_tools"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">result</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h3 id="mcpserverconfig-fields"><code>McpServerConfig</code> Fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>command</code></td>
+<td>string or null</td>
+<td><code>null</code></td>
+<td>Executable command for stdio transport (e.g. <code>"npx"</code>, <code>"python"</code>)</td>
+</tr>
+<tr>
+<td><code>args</code></td>
+<td>list of strings</td>
+<td><code>[]</code></td>
+<td>Arguments passed to the command</td>
+</tr>
+<tr>
+<td><code>env</code></td>
+<td>dict</td>
+<td><code>{}</code></td>
+<td>Environment variables for the subprocess</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>string or null</td>
+<td><code>null</code></td>
+<td>URL for HTTP/SSE transport</td>
+</tr>
+</tbody>
+</table>
+<p>Exactly one of <code>command</code> or <code>url</code> must be provided — not both.</p>
+<h3 id="how-mcp-tools-are-resolved">How MCP Tools Are Resolved</h3>
+<p>MCP tools use lazy resolution:</p>
+<ol>
+<li>At workflow load time, <code>mcp://server_name</code> creates a placeholder <code>ToolDefinition</code> with <code>_mcp_server</code> set.</li>
+<li>At node execution time, the LLM adapter calls <code>McpClientManager.get_tools(server_name)</code> which connects to the MCP server (if not already connected) and fetches the tool list.</li>
+<li>Tool names are namespaced as <code>{server_name}__{tool_name}</code> to avoid collisions between servers or with built-in tools.</li>
+<li>After the workflow completes, <code>McpClientManager.close_all()</code> shuts down all connections.</li>
+</ol>
+<p>Connection timeout is 30 seconds per server.</p>
+<h2 id="inline-tool-definitions">Inline Tool Definitions</h2>
+<p>You can define tools inline in YAML without any Python code. These become schema-only tools — the LLM sees them and can call them, but they have no executable handler (useful for prompt engineering or when tool execution is handled externally):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">tools</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"lookup_user"</span>
+<span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Look</span><span class="nv"> </span><span class="s">up</span><span class="nv"> </span><span class="s">user</span><span class="nv"> </span><span class="s">information</span><span class="nv"> </span><span class="s">by</span><span class="nv"> </span><span class="s">ID"</span>
+<span class="w">    </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">user_id</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"The</span><span class="nv"> </span><span class="s">user</span><span class="nv"> </span><span class="s">ID</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">look</span><span class="nv"> </span><span class="s">up"</span>
+</code></pre></div>
+<h2 id="security-notes">Security Notes</h2>
+<ul>
+<li><strong>read_file / write_file</strong>: Reject path traversal (<code>..</code>) and absolute paths. All paths must resolve within the current working directory.</li>
+<li><strong>write_file</strong>: Maximum content size is 10MB.</li>
+<li><strong>shell_command</strong>: Runs with <code>shell=True</code> (intentional for workflow automation). Has a 30-second timeout and 10KB output limit.</li>
+<li><strong>calculator</strong>: Uses restricted <code>eval</code> with empty <code>__builtins__</code> — only math functions are exposed.</li>
+<li><strong>fetch_url / http_request / web_search</strong>: No SSRF protection (by design, same as A2A adapter).</li>
+<li><strong>MCP servers</strong>: Binex does not sandbox MCP server processes. Only connect to trusted servers.</li>
+</ul>
+<h2 id="full-example">Full Example</h2>
+<p>A workflow that uses all three tool sources:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">research-with-tools</span>
+<span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Research</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">topic</span><span class="nv"> </span><span class="s">using</span><span class="nv"> </span><span class="s">built-in,</span><span class="nv"> </span><span class="s">custom,</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">MCP</span><span class="nv"> </span><span class="s">tools"</span>
+
+<span class="nt">mcp_servers</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">github</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">"npx"</span>
+<span class="w">    </span><span class="nt">args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"-y"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"@modelcontextprotocol/server-github"</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">env</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">GITHUB_TOKEN</span><span class="p">:</span><span class="w"> </span><span class="s">"${user.github_token}"</span>
+
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">researcher</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://claude-sonnet-4-20250514"</span>
+<span class="w">    </span><span class="nt">system_prompt</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">      </span><span class="no">Research the given topic. Use web search for general info,</span>
+<span class="w">      </span><span class="no">fetch specific URLs for details, and check GitHub for code examples.</span>
+<span class="w">    </span><span class="nt">tools</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"builtin://web_search"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"builtin://fetch_url"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"builtin://json_parse"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"mcp://github"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">research</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="nt">writer</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o"</span>
+<span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">researcher</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">inputs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">research</span><span class="p">:</span><span class="w"> </span><span class="s">"${researcher.research}"</span>
+<span class="w">    </span><span class="nt">system_prompt</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">      </span><span class="no">Write a report based on the research. Save it to report.md.</span>
+<span class="w">    </span><span class="nt">tools</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"builtin://write_file"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"python://helpers.format_markdown"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">report</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>Run it:</p>
+<div class="highlight"><pre><span></span><code>binex<span class="w"> </span>run<span class="w"> </span>research-with-tools.yaml<span class="w"> </span>--var<span class="w"> </span><span class="nv">github_token</span><span class="o">=</span>ghp_xxx
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "navigation.top", "header.autohide"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>

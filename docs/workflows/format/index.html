@@ -1,0 +1,4182 @@
+<!DOCTYPE html><html lang="en" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Debuggable runtime for AI agent pipelines">
+      
+      
+      
+        <link rel="canonical" href="https://alexli18.github.io/binex/docs/workflows/format/">
+      
+      
+        <link rel="prev" href="../../comparisons/">
+      
+      
+        <link rel="next" href="../examples/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Format - Binex</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#workflow-yaml-format" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Binex" class="md-header__button md-logo" aria-label="Binex" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7h-2.81c-.45-.8-1.07-1.5-1.82-2L16 3.41 14.59 2l-2.17 2.17a6 6 0 0 0-2.83 0L7.41 2 6 3.41 7.62 5c-.75.5-1.36 1.21-1.81 2H3v2h2.09c-.06.33-.09.66-.09 1v1H3v2h2v1c0 .34.03.67.09 1H3v2h2.81A6 6 0 0 0 13 19.65V19c0-2.54 1.61-4.8 4-5.65V13h2v-2h-2v-1c0-.34-.03-.67-.09-1H19zm-6 8H9v-2h4zm0-4H9V9h4zm4.75 11.16-2.75-3L16.16 18l1.59 1.59L21.34 16l1.16 1.41z"></path></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Binex
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Format
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom" aria-hidden="true" type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Alexli18/binex" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    Alexli18/binex
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Binex" class="md-nav__button md-logo" aria-label="Binex" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7h-2.81c-.45-.8-1.07-1.5-1.82-2L16 3.41 14.59 2l-2.17 2.17a6 6 0 0 0-2.83 0L7.41 2 6 3.41 7.62 5c-.75.5-1.36 1.21-1.81 2H3v2h2.09c-.06.33-.09.66-.09 1v1H3v2h2v1c0 .34.03.67.09 1H3v2h2.81A6 6 0 0 0 13 19.65V19c0-2.54 1.61-4.8 4-5.65V13h2v-2h-2v-1c0-.34-.03-.67-.09-1H19zm-6 8H9v-2h4zm0-4H9V9h4zm4.75 11.16-2.75-3L16.16 18l1.59 1.59L21.34 16l1.16 1.41z"></path></svg>
+
+    </a>
+    Binex
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Alexli18/binex" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    Alexli18/binex
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs LangGraph / CrewAI / AutoGen
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5">
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/debugging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debugging &amp; Observability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6">
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/lineage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lineage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7">
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/run/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/debug/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    debug
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    trace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/replay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    replay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/resume/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    resume
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/diff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    diff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/freeze/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    freeze
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    dev
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/doctor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    doctor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/validate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    validate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/scaffold/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    scaffold
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/cost/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/clean/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    clean
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/explore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    explore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/diagnose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    diagnose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/bisect/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bisect
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gateway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ui
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/scheduler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    scheduler
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8">
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stores
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9">
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/observer-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observer Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/binary-artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binary Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/workspace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workspace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/foreach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dynamic Fan-out (foreach)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval &amp; Assertions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../import/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import from OTel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/tools-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools &amp; MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/cao-adapter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CAO Adapter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs LangSmith / Langfuse / n8n
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" checked="">
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#root-workflowspec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Root — WorkflowSpec
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#node-nodespec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node — NodeSpec
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Node — NodeSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config-keys-llm-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config keys (LLM adapter)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-system-prompt-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External System Prompt — file://
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conditional-execution-when" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditional Execution — when
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#defaults-defaultsspec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Defaults — DefaultsSpec
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retry-retrypolicy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retry — RetryPolicy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#budget-budgetconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Budget — BudgetConfig
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Budget — BudgetConfig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#budget-policies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Budget Policies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#declaring-cost-non-llm-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declaring Cost (non-LLM nodes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#long-running-nodes-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Long-Running Nodes &amp; Progress
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-fallback-chains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model Fallback Chains
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#node-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node Caching
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#node-cost-hint-nodecosthint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node Cost Hint — NodeCostHint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-node-budget-nodebudget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-Node Budget — NodeBudget
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-schema-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Schema Validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auto-repair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Repair
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#routing-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routing Overrides
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#built-in-tools-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in tools (10)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcp-servers-mcpserverconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Servers — McpServerConfig
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schedule-cron-expression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schedule — Cron Expression
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variable-interpolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable Interpolation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#minimal-valid-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal Valid Workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Versioning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration framework
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../multi-provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Provider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11">
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/otel-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OTel Span Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/loop-container-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Loop Container UI Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#root-workflowspec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Root — WorkflowSpec
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#node-nodespec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node — NodeSpec
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Node — NodeSpec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config-keys-llm-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config keys (LLM adapter)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-system-prompt-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External System Prompt — file://
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conditional-execution-when" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditional Execution — when
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#defaults-defaultsspec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Defaults — DefaultsSpec
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retry-retrypolicy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retry — RetryPolicy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#budget-budgetconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Budget — BudgetConfig
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Budget — BudgetConfig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#budget-policies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Budget Policies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#declaring-cost-non-llm-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declaring Cost (non-LLM nodes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#long-running-nodes-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Long-Running Nodes &amp; Progress
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-fallback-chains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model Fallback Chains
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#node-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node Caching
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#node-cost-hint-nodecosthint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node Cost Hint — NodeCostHint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-node-budget-nodebudget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-Node Budget — NodeBudget
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-schema-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output Schema Validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auto-repair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Repair
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#routing-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routing Overrides
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#built-in-tools-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in tools (10)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcp-servers-mcpserverconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Servers — McpServerConfig
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schedule-cron-expression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schedule — Cron Expression
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variable-interpolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable Interpolation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#minimal-valid-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal Valid Workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Versioning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration framework
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="workflow-yaml-format">Workflow YAML Format</h1>
+<p>Complete schema reference for Binex workflow files.</p>
+<h2 id="root-workflowspec">Root — <code>WorkflowSpec</code></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>version</code></td>
+<td><code>int</code></td>
+<td>no</td>
+<td>Schema version (default: <code>1</code>, must be &gt;= 1). See <a href="#versioning">Versioning</a> below.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>Workflow name</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str</code></td>
+<td>no</td>
+<td>Workflow description (default: <code>""</code>)</td>
+</tr>
+<tr>
+<td><code>nodes</code></td>
+<td><code>dict[str, NodeSpec]</code></td>
+<td>yes</td>
+<td>Map of node_id to node definition</td>
+</tr>
+<tr>
+<td><code>defaults</code></td>
+<td><code>DefaultsSpec</code></td>
+<td>no</td>
+<td>Default settings applied to all nodes</td>
+</tr>
+<tr>
+<td><code>budget</code></td>
+<td><code>BudgetConfig</code></td>
+<td>no</td>
+<td>Budget constraints for the run (see below)</td>
+</tr>
+<tr>
+<td><code>webhook</code></td>
+<td><code>WebhookConfig</code></td>
+<td>no</td>
+<td>Webhook notification target (see below)</td>
+</tr>
+<tr>
+<td><code>schedule</code></td>
+<td><code>str</code></td>
+<td>no</td>
+<td>Cron expression (5-field) for scheduled execution</td>
+</tr>
+<tr>
+<td><code>concurrency</code></td>
+<td><code>int</code> or <code>dict[str, int]</code></td>
+<td>no</td>
+<td>Cap on concurrent node execution (see below)</td>
+</tr>
+<tr>
+<td><code>mcp_servers</code></td>
+<td><code>dict[str, McpServerConfig]</code></td>
+<td>no</td>
+<td>MCP server configurations (see below)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="node-nodespec">Node — <code>NodeSpec</code></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>str</code></td>
+<td>no</td>
+<td>Auto-set from the dict key</td>
+</tr>
+<tr>
+<td><code>agent</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>Agent URI — <code>local://</code>, <code>llm://</code>, <code>a2a://</code>, <code>human://</code>, <code>langchain://</code>, <code>crewai://</code>, <code>autogen://</code>, or custom plugin prefix</td>
+</tr>
+<tr>
+<td><code>system_prompt</code></td>
+<td><code>str</code></td>
+<td>no</td>
+<td>System prompt sent to the agent (supports <code>file://</code> prefix)</td>
+</tr>
+<tr>
+<td><code>inputs</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Input key-value pairs; supports variable interpolation</td>
+</tr>
+<tr>
+<td><code>outputs</code></td>
+<td><code>list[str]</code></td>
+<td>yes</td>
+<td>Artifact names this node produces</td>
+</tr>
+<tr>
+<td><code>depends_on</code></td>
+<td><code>list[str]</code></td>
+<td>no</td>
+<td>Node IDs that must complete before this node runs</td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Per-node config forwarded to the adapter (see below)</td>
+</tr>
+<tr>
+<td><code>retry_policy</code></td>
+<td><code>RetryPolicy</code></td>
+<td>no</td>
+<td>Override the default retry settings</td>
+</tr>
+<tr>
+<td><code>deadline_ms</code></td>
+<td><code>int</code></td>
+<td>no</td>
+<td>Hard total-duration timeout for this node</td>
+</tr>
+<tr>
+<td><code>heartbeat_timeout_ms</code></td>
+<td><code>int</code></td>
+<td>no</td>
+<td>Silence timeout for long nodes that report progress (see below)</td>
+</tr>
+<tr>
+<td><code>when</code></td>
+<td><code>str</code></td>
+<td>no</td>
+<td>Conditional execution expression (see below)</td>
+</tr>
+<tr>
+<td><code>cost</code></td>
+<td><code>NodeCostHint</code></td>
+<td>no</td>
+<td>Optional cost estimate for planning (see below)</td>
+</tr>
+<tr>
+<td><code>budget</code></td>
+<td><code>float</code> or <code>NodeBudget</code></td>
+<td>no</td>
+<td>Per-node budget limit (shorthand: <code>budget: 0.50</code>, full: <code>budget: { max_cost: 0.50 }</code>)</td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td><code>list[str]</code></td>
+<td>no</td>
+<td>Tool URIs available to this node (see <a href="#tools">Tools</a> below)</td>
+</tr>
+<tr>
+<td><code>output_schema</code></td>
+<td><code>dict</code></td>
+<td>no</td>
+<td>JSON Schema for validating node output. Failed validation triggers auto-retry</td>
+</tr>
+<tr>
+<td><code>fallbacks</code></td>
+<td><code>list[str]</code></td>
+<td>no</td>
+<td>Fallback models tried when the primary fails on an infrastructure error (see below)</td>
+</tr>
+<tr>
+<td><code>cache</code></td>
+<td><code>bool</code></td>
+<td>no</td>
+<td>Reuse this node's cached result when its inputs are unchanged (see below)</td>
+</tr>
+<tr>
+<td><code>routing</code></td>
+<td><code>dict</code></td>
+<td>no</td>
+<td>Per-node Gateway routing overrides (see below)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="config-keys-llm-adapter"><code>config</code> keys (LLM adapter)</h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Example</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>api_base</code></td>
+<td><code>"http://localhost:11434"</code></td>
+<td>LiteLLM API base URL</td>
+</tr>
+<tr>
+<td><code>api_key</code></td>
+<td><code>"sk-..."</code></td>
+<td>Provider API key</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td><code>0.7</code></td>
+<td>Sampling temperature</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td><code>4096</code></td>
+<td>Max tokens in completion</td>
+</tr>
+</tbody>
+</table>
+<p>All <code>config</code> values are forwarded to <code>litellm.acompletion()</code> when not <code>None</code>.</p>
+<h3 id="external-system-prompt-file">External System Prompt — <code>file://</code></h3>
+<p>The <code>system_prompt</code> field supports loading content from an external file using the <code>file://</code> prefix.
+Relative paths are resolved relative to the workflow YAML file's directory. Absolute paths are used as-is.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">researcher</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://openai/gpt-4"</span>
+<span class="w">    </span><span class="nt">system_prompt</span><span class="p">:</span><span class="w"> </span><span class="s">"file://prompts/researcher.md"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">findings</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>If the referenced file does not exist, workflow loading fails with a clear error message.</p>
+<h3 id="conditional-execution-when">Conditional Execution — <code>when</code></h3>
+<p>The <code>when</code> field enables conditional node execution based on upstream artifact values.
+A node with a <code>when</code> condition is <strong>skipped</strong> (not failed) if the condition evaluates to false.
+Skipped nodes count as resolved for downstream dependency purposes.</p>
+<p><strong>Operators:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Example</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>==</code></td>
+<td><code>${review.decision} == approved</code></td>
+<td>Run only if artifact content equals <code>"approved"</code></td>
+</tr>
+<tr>
+<td><code>!=</code></td>
+<td><code>${review.decision} != rejected</code></td>
+<td>Run only if artifact content does not equal <code>"rejected"</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example — approval gate with branching:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">publish</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"local://echo"</span>
+<span class="w">  </span><span class="nt">inputs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">final</span><span class="p">:</span><span class="w"> </span><span class="s">"${revise.content}"</span>
+<span class="w">  </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">result</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">human_review</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"${human_review.decision}</span><span class="nv"> </span><span class="s">==</span><span class="nv"> </span><span class="s">approved"</span>
+
+<span class="nt">discard</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"local://echo"</span>
+<span class="w">  </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">  </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">notice</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">human_review</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"${human_review.decision}</span><span class="nv"> </span><span class="s">==</span><span class="nv"> </span><span class="s">rejected"</span>
+</code></pre></div>
+<p>The <code>when</code> field is commonly used with <code>human://approve</code> nodes but works with any artifact value.</p>
+<h2 id="defaults-defaultsspec">Defaults — <code>DefaultsSpec</code></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>deadline_ms</code></td>
+<td><code>int</code></td>
+<td><code>120000</code></td>
+<td>Default deadline in milliseconds</td>
+</tr>
+<tr>
+<td><code>retry_policy</code></td>
+<td><code>RetryPolicy</code></td>
+<td>see below</td>
+<td>Default retry policy for all nodes</td>
+</tr>
+</tbody>
+</table>
+<h2 id="retry-retrypolicy">Retry — <code>RetryPolicy</code></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>max_retries</code></td>
+<td><code>int</code></td>
+<td><code>1</code></td>
+<td>Maximum retry attempts</td>
+</tr>
+<tr>
+<td><code>backoff</code></td>
+<td><code>"fixed"</code> or <code>"exponential"</code></td>
+<td><code>"exponential"</code></td>
+<td>Backoff strategy between retries</td>
+</tr>
+</tbody>
+</table>
+<h2 id="budget-budgetconfig">Budget — <code>BudgetConfig</code></h2>
+<p>Budget constraints limit the total cost of a workflow run. The orchestrator checks accumulated cost after each batch of nodes.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>max_cost</code></td>
+<td><code>float</code></td>
+<td>—</td>
+<td>Maximum allowed cost in the specified currency (must be &gt; 0)</td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td><code>str</code></td>
+<td><code>"USD"</code></td>
+<td>Currency code</td>
+</tr>
+<tr>
+<td><code>policy</code></td>
+<td><code>"stop"</code> or <code>"warn"</code></td>
+<td><code>"warn"</code></td>
+<td>What to do when budget is exceeded</td>
+</tr>
+</tbody>
+</table>
+<h3 id="budget-policies">Budget Policies</h3>
+<table>
+<thead>
+<tr>
+<th>Policy</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stop</code></td>
+<td>Skip all remaining nodes, set run status to <code>"over_budget"</code></td>
+</tr>
+<tr>
+<td><code>warn</code></td>
+<td>Log a warning to stderr, continue execution</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">budgeted-pipeline</span>
+<span class="nt">budget</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">max_cost</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span>
+<span class="w">  </span><span class="nt">policy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stop</span>
+
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">planner</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">plan</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">researcher</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://claude-sonnet-4-20250514"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">findings</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">planner</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">summarizer</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">summary</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">researcher</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>If the accumulated cost exceeds $5.00 after the researcher node, the summarizer is skipped and the run status is <code>"over_budget"</code>.</p>
+<p>See the <a href="../../cli/budget-guide/">Budget &amp; Cost Tracking Guide</a> for more examples and patterns.</p>
+<p>With <code>--json</code>, the run output includes budget information:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"over_budget"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"total_cost"</span><span class="p">:</span><span class="w"> </span><span class="mf">5.23</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"budget"</span><span class="p">:</span><span class="w"> </span><span class="mf">5.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"remaining_budget"</span><span class="p">:</span><span class="w"> </span><span class="mf">-0.23</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="declaring-cost-non-llm-nodes">Declaring Cost (non-LLM nodes)</h2>
+<p>Cost tracking isn't limited to LLM tokens. Cloud STT bills per minute, TTS per
+character, image generation per request. A <code>local://</code> / <code>python://</code> handler
+declares its own cost by accepting a <code>report_cost</code> parameter — the value flows
+into the same cost records, dashboard, and budgets as token cost (budgets
+operate on dollars, so enforcement is unchanged; only ingestion widens).</p>
+<div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">transcribe</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">report_cost</span><span class="p">):</span>
+    <span class="n">audio_seconds</span> <span class="o">=</span> <span class="mi">7200</span>
+    <span class="o">...</span>
+    <span class="n">report_cost</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">audio_seconds</span><span class="p">,</span> <span class="n">unit_price</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">)</span>  <span class="c1"># $0.72</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">artifact</span><span class="p">]</span>
+</code></pre></div>
+<p><code>report_cost</code> accepts an explicit <code>cost=</code> in dollars, or a <code>quantity</code> +
+<code>unit_price</code> (their product), with convenience unit keywords <code>seconds=</code>,
+<code>characters=</code>, <code>requests=</code>. Records carry <code>unit</code> (<code>tokens</code>/<code>seconds</code>/
+<code>characters</code>/<code>requests</code>/<code>custom</code>), <code>quantity</code>, <code>unit_price</code>, and <code>provenance</code>
+(<code>litellm</code>/<code>declared</code>/<code>manual</code>). <code>binex cost simulate</code> leaves non-token costs
+unchanged when swapping models (they don't scale with the model).</p>
+<h2 id="long-running-nodes-progress">Long-Running Nodes &amp; Progress</h2>
+<p>An LLM node streams tokens, so it's visibly alive. A <code>local://</code> node running
+Whisper on a two-hour track is silent for thirty minutes — and the default
+<code>deadline_ms</code> (120 s) kills it. A node that <strong>reports progress</strong> is alive, so the
+timeout can apply to <em>silence</em> rather than total duration.</p>
+<ul>
+<li><strong><code>heartbeat_timeout_ms</code></strong> — the node fails only if it produces no progress for
+  this long. <code>deadline_ms</code> still applies as an optional hard total-duration cap.</li>
+<li>A <code>local://</code> / <code>python://</code> handler opts in by accepting a <code>report_progress</code>
+  parameter and calling <code>report_progress(fraction, message)</code> — e.g.
+  <code>report_progress(0.4, "transcribing 48/120 min")</code>. Handlers that don't accept
+  it are unchanged.</li>
+<li>Subprocess / <code>a2a://</code> agents report via the binex-trace SDK: <code>trace.progress(fraction, message)</code>.</li>
+<li>Progress surfaces as a <code>node:progress</code> runtime event (per-node progress in the
+  Web UI) and is captured as a trace event.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># local handler</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">transcribe</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">report_progress</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">):</span>
+        <span class="o">...</span>
+        <span class="n">report_progress</span><span class="p">(</span><span class="n">i</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">),</span> <span class="sa">f</span><span class="s2">"transcribing </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">artifact</span><span class="p">]</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">transcribe</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"local://whisper"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">text</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">heartbeat_timeout_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">120000</span><span class="w">   </span><span class="c1"># fail only after 2 min of silence</span>
+<span class="w">    </span><span class="nt">deadline_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7200000</span><span class="w">           </span><span class="c1"># but never run longer than 2 h</span>
+</code></pre></div>
+<h2 id="model-fallback-chains">Model Fallback Chains</h2>
+<p>A 40-minute run shouldn't die because of a single <code>429</code> or a provider outage.
+<code>fallbacks</code> lists models to try, in order, when the primary fails:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">writer</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">draft</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">fallbacks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"anthropic/claude-sonnet-4-5"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"ollama/llama3.1"</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>Order: retry the current model per its backoff policy → move to the next model →
+its own retries. Fallback fires <strong>only</strong> on infrastructure/availability errors —
+rate limit (<code>429</code>), <code>5xx</code>, timeout, model-not-found, and auth (<code>401</code>, with a loud
+warning, since the next provider uses a different key). It never fires on a model
+that answered but poorly — that's <a href="#auto-repair">auto-repair</a>'s job.</p>
+<p><strong>Reproducibility</strong> (silent model swaps would break diff/bisect/eval):</p>
+<ul>
+<li>Each execution records both <code>requested_model</code> and <code>actual_model</code>.</li>
+<li>A <code>node:cache_hit</code>-style fallback event is emitted (<code>gpt-4o → claude: rate_limited</code>)
+  and stored on the artifact's <code>metadata.fallbacks</code>.</li>
+<li><code>binex run --no-fallback</code> disables the chain entirely, so a model benchmark
+  can't be silently contaminated. Also available via <code>BINEX_NO_FALLBACK=1</code>.</li>
+<li><code>binex validate</code> warns if a fallback has a smaller context window than the
+  primary, or lacks function-calling while the node declares tools.</li>
+</ul>
+<p>Streaming: if a stream dies mid-emission, the node restarts from scratch on the
+fallback model (no partial splicing).</p>
+<h2 id="node-caching">Node Caching</h2>
+<p>Editing the prompt of node 7 shouldn't force re-running (and re-paying for)
+nodes 1–6. With caching on, Binex reuses a node's stored result whenever nothing
+that affects its output has changed — like <code>make</code> for pipelines.</p>
+<p>The cache key is a content hash of the node's agent, resolved prompt, model
+parameters, tool set, and the content of its <strong>input artifacts</strong>. Change any of
+them and the node re-executes; leave them alone and it's served from cache at
+<code>$0</code>, in a distinct trace event pointing back to the source run.</p>
+<p>Caching is <strong>opt-in</strong>, because reusing a result isn't always safe (a
+temperature &gt; 0 model is intentionally nondeterministic; a <code>local://</code> script may
+have side effects). Two ways to enable it:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">transcribe</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"local://whisper"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">text</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">cache</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">          </span><span class="c1"># always cache this node</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>binex<span class="w"> </span>run<span class="w"> </span>pipeline.yaml<span class="w"> </span>--cache<span class="w">      </span><span class="c1"># iteration mode: cache every node this run</span>
+binex<span class="w"> </span>run<span class="w"> </span>pipeline.yaml<span class="w"> </span>--offline<span class="w">    </span><span class="c1"># run ONLY from cache; a miss fails the node</span>
+</code></pre></div>
+<p><code>--offline</code> (implies <code>--cache</code>) is the VCR-style mode: record once, then iterate
+on downstream logic for free and without network access. Clear the cache with
+<a href="../../cli/clean/"><code>binex clean cache</code></a>.</p>
+<h2 id="concurrency">Concurrency</h2>
+<p>By default the orchestrator would dispatch every ready node at once. A wide
+fan-out (e.g. a <code>scatter</code> pattern with 50 workers) then fires 50 simultaneous
+LLM calls and trips provider rate limits. <code>concurrency</code> caps how many nodes run
+at the same time.</p>
+<p><strong>Global cap (scalar):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wide-pipeline</span>
+<span class="nt">concurrency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span><span class="w">        </span><span class="c1"># at most 8 nodes in flight at once</span>
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+</code></pre></div>
+<p><strong>Per-provider caps (mapping):</strong> the <code>default</code> key is the global cap; every
+other key limits a single provider. A node holds a global slot <em>and</em> its
+provider slot, so a local Ollama (one GPU) and a hosted API can coexist:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">concurrency</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span><span class="w">          </span><span class="c1"># global cap (falls back to BINEX_MAX_CONCURRENCY, then 8)</span>
+<span class="w">  </span><span class="nt">openai</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w">           </span><span class="c1"># at most 5 concurrent openai calls</span>
+<span class="w">  </span><span class="nt">ollama</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">           </span><span class="c1"># serialize the local model</span>
+</code></pre></div>
+<p>The provider is derived from the agent URI: <code>llm://openai/gpt-4o</code> → <code>openai</code>,
+<code>llm://ollama/llama3</code> → <code>ollama</code>, and non-LLM agents fall back to their scheme
+(<code>local://</code> → <code>local</code>, <code>a2a://</code> → <code>a2a</code>).</p>
+<p><strong>Precedence:</strong> the workflow <code>concurrency</code> field overrides the
+<code>BINEX_MAX_CONCURRENCY</code> environment variable, which overrides the default of
+<code>8</code>. All limits must be <code>&gt;= 1</code>.</p>
+<h2 id="node-cost-hint-nodecosthint">Node Cost Hint — <code>NodeCostHint</code></h2>
+<p>Optional cost estimate for planning purposes. Does not affect execution — purely informational.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>estimate</code></td>
+<td><code>float</code></td>
+<td><code>0.0</code></td>
+<td>Estimated cost for this node (must be &gt;= 0)</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">expensive_node</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">result</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">cost</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">estimate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.50</span>
+</code></pre></div>
+<h2 id="per-node-budget-nodebudget">Per-Node Budget — <code>NodeBudget</code></h2>
+<p>Individual nodes can have their own budget limits. The policy is inherited from the workflow-level <code>budget.policy</code> (default: <code>stop</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>max_cost</code></td>
+<td><code>float</code></td>
+<td>—</td>
+<td>Maximum allowed cost for this node (must be &gt; 0)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Shorthand:</strong> <code>budget: 0.50</code> is equivalent to <code>budget: { max_cost: 0.50 }</code>.</p>
+<p>When both workflow and node budgets are defined, the effective limit is <code>min(node_budget, remaining_workflow_budget)</code>.</p>
+<p><strong>Pre-check before retry:</strong> If a node has a budget and fails, the orchestrator checks remaining budget before each retry attempt. With <code>policy: stop</code>, the retry is skipped if budget is exhausted. With <code>policy: warn</code>, the user is prompted via <code>click.confirm()</code>.</p>
+<p><strong>Post-check after execution:</strong> After each execution, if the node's accumulated cost exceeds its budget, the policy determines behavior: <code>stop</code> discards the result and marks the node failed; <code>warn</code> keeps the result and logs a warning.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per-node-budget</span>
+<span class="nt">budget</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">max_cost</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.00</span>
+<span class="w">  </span><span class="nt">policy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stop</span>
+
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">planner</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o-mini"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">plan</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">budget</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.50</span><span class="w">           </span><span class="c1"># shorthand</span>
+
+<span class="w">  </span><span class="nt">researcher</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">findings</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">planner</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">budget</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">max_cost</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.00</span><span class="w">       </span><span class="c1"># full form</span>
+
+<span class="w">  </span><span class="nt">summarizer</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://gpt-4o"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">summary</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">researcher</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">budget</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.00</span>
+</code></pre></div>
+<p>If the planner costs $0.60 (exceeding its $0.50 limit), it is marked as failed and dependent nodes do not run.</p>
+<h2 id="output-schema-validation">Output Schema Validation</h2>
+<p>Nodes can define a JSON Schema to validate their output. If the output fails validation and the node has retries remaining, Binex automatically retries the node.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>output_schema</code></td>
+<td><code>dict</code></td>
+<td><code>None</code></td>
+<td>Standard JSON Schema object</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">extractor</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://openai/gpt-4o"</span>
+<span class="w">    </span><span class="nt">system_prompt</span><span class="p">:</span><span class="w"> </span><span class="s">"Extract</span><span class="nv"> </span><span class="s">structured</span><span class="nv"> </span><span class="s">data.</span><span class="nv"> </span><span class="s">Return</span><span class="nv"> </span><span class="s">valid</span><span class="nv"> </span><span class="s">JSON."</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">result</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">output_schema</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">      </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">title</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">        </span><span class="nt">score</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">number</span>
+<span class="w">          </span><span class="nt">minimum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">          </span><span class="nt">maximum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">      </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">title</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">score</span>
+<span class="w">    </span><span class="nt">retry_policy</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">max_retries</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</code></pre></div>
+<p>If the LLM returns output that doesn't match the schema (e.g., missing <code>title</code> field or <code>score</code> out of range), the node is retried automatically. After all retries are exhausted, the node fails with a validation error.</p>
+<p>The validator handles both JSON string output (parsed first) and dict output (validated directly).</p>
+<h2 id="auto-repair">Auto-Repair</h2>
+<p>Blindly re-running a node on invalid output usually makes the model repeat the
+same mistake — and you pay twice. When a node has an <code>output_schema</code>, Binex
+applies a repair ladder, cheapest first:</p>
+<ol>
+<li><strong>Deterministic repair (0 tokens, always on).</strong> Most "invalid JSON" is just a
+   markdown code fence around the payload, prose before/after it, or a trailing
+   comma. Binex strips the fence, extracts the first balanced JSON value, and
+   re-parses — before any model call. Applies to every agent type, and the
+   cleaned JSON replaces the artifact content so downstream nodes get valid data.</li>
+<li><strong>Native structured output.</strong> For <code>llm://</code> nodes whose model supports it,
+   Binex passes the schema into the completion call (<code>response_format</code>), so
+   malformed output mostly never happens. Detected per-model; silently skipped
+   when unsupported.</li>
+<li><strong>Feedback loop (<code>repair.max_attempts</code>).</strong> If output is still invalid, Binex
+   appends the model's answer plus the validation errors to the conversation and
+   re-asks up to <code>max_attempts</code> times. <code>local://</code> and <code>a2a://</code> nodes keep
+   fail-fast semantics — there's no model to ask.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">extract</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://openai/gpt-4o-mini"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">result</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">output_schema</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> type</span><span class="p">:</span><span class="w"> </span><span class="nv">object</span><span class="p p-Indicator">,</span><span class="nt"> required</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">title</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">fallbacks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"openai/gpt-4o"</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">repair</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">max_attempts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">      </span><span class="c1"># feedback-loop attempts; deterministic repair is always on</span>
+<span class="w">      </span><span class="nt">escalate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">       </span><span class="c1"># on repair exhaustion, retry the ladder on the next fallback model</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>repair.max_attempts</code></td>
+<td><code>int</code></td>
+<td><code>0</code></td>
+<td>LLM feedback-loop attempts on schema-invalid output</td>
+</tr>
+<tr>
+<td><code>repair.escalate</code></td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td>On repair exhaustion, promote to the next <a href="#model-fallback-chains">fallback</a> model and retry the ladder</td>
+</tr>
+</tbody>
+</table>
+<p>Every repair attempt's tokens are counted in the run cost. The produced
+artifact records <code>metadata.repair_attempts</code> and which ladder step succeeded; on
+exhaustion the node fails with the validation errors.</p>
+<p><strong>Escalation (<code>repair.escalate</code>).</strong> When the feedback loop is exhausted, that's
+a signal the model can't handle the schema — not a transient error. With
+<code>escalate: true</code> and a <a href="#model-fallback-chains">fallback chain</a>, Binex promotes
+to the next model and restarts the repair ladder there (trace event
+<code>escalated: schema_repair_exhausted</code>, distinct from a transport-error fallback).
+This turns repair + fallback into an automatic cost optimizer: route everything
+through a cheap model and let the strong model catch only the hard tail.
+<code>--no-fallback</code> disables escalation too.</p>
+<h2 id="routing-overrides">Routing Overrides</h2>
+<p>When a Gateway is configured (either embedded via <code>gateway.yaml</code> or standalone via <code>--gateway</code>), individual nodes can override the default routing behavior using the <code>routing</code> field:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">critical_search</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"a2a://research"</span>
+<span class="w">    </span><span class="nt">routing</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">prefer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lowest_latency</span>
+<span class="w">      </span><span class="nt">timeout_ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10000</span>
+<span class="w">      </span><span class="nt">retry_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">      </span><span class="nt">failover</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>prefer</code></td>
+<td><code>str</code></td>
+<td><code>"highest_priority"</code></td>
+<td>Selection strategy (<code>highest_priority</code>, <code>lowest_latency</code>, <code>round_robin</code>)</td>
+</tr>
+<tr>
+<td><code>timeout_ms</code></td>
+<td><code>int</code></td>
+<td><code>null</code></td>
+<td>Override request timeout for this node</td>
+</tr>
+<tr>
+<td><code>retry_count</code></td>
+<td><code>int</code></td>
+<td><code>null</code></td>
+<td>Override retry count for this node</td>
+</tr>
+<tr>
+<td><code>failover</code></td>
+<td><code>bool</code></td>
+<td><code>null</code></td>
+<td>Override failover setting for this node</td>
+</tr>
+</tbody>
+</table>
+<p>Routing overrides only apply when a Gateway is configured. Without a Gateway, the <code>routing</code> field is ignored.</p>
+<h2 id="tools">Tools</h2>
+<p>Nodes can declare tools that are made available to the LLM during execution. Three URI schemes are supported:</p>
+<table>
+<thead>
+<tr>
+<th>Scheme</th>
+<th>Example</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>builtin://</code></td>
+<td><code>builtin://web_search</code></td>
+<td>One of 10 built-in tools</td>
+</tr>
+<tr>
+<td><code>mcp://</code></td>
+<td><code>mcp://my-server</code></td>
+<td>All tools from a configured MCP server</td>
+</tr>
+<tr>
+<td><code>python://</code></td>
+<td><code>python://my_module.my_func</code></td>
+<td>Custom Python function decorated with <code>@tool</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="built-in-tools-10">Built-in tools (10)</h3>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Tools</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Data</strong></td>
+<td><code>calculator</code>, <code>json_parse</code>, <code>random_choice</code>, <code>dice_roll</code></td>
+</tr>
+<tr>
+<td><strong>Web</strong></td>
+<td><code>fetch_url</code>, <code>http_request</code>, <code>web_search</code></td>
+</tr>
+<tr>
+<td><strong>Files</strong></td>
+<td><code>read_file</code>, <code>write_file</code></td>
+</tr>
+<tr>
+<td><strong>System</strong></td>
+<td><code>shell_command</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">researcher</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://openai/gpt-4o"</span>
+<span class="w">    </span><span class="nt">system_prompt</span><span class="p">:</span><span class="w"> </span><span class="s">"Research</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">topic</span><span class="nv"> </span><span class="s">using</span><span class="nv"> </span><span class="s">web</span><span class="nv"> </span><span class="s">search"</span>
+<span class="w">    </span><span class="nt">tools</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"builtin://web_search"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"builtin://fetch_url"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"builtin://calculator"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">findings</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h2 id="mcp-servers-mcpserverconfig">MCP Servers — <code>McpServerConfig</code></h2>
+<p>MCP (Model Context Protocol) servers provide additional tools to LLM nodes. Configure them at the workflow level, then reference them in node <code>tools</code> lists.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>command</code></td>
+<td><code>str</code></td>
+<td>stdio only</td>
+<td>Command to launch the MCP server</td>
+</tr>
+<tr>
+<td><code>args</code></td>
+<td><code>list[str]</code></td>
+<td>no</td>
+<td>Arguments for the command</td>
+</tr>
+<tr>
+<td><code>env</code></td>
+<td><code>dict[str, str]</code></td>
+<td>no</td>
+<td>Environment variables</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td><code>str</code></td>
+<td>HTTP only</td>
+<td>URL of a running MCP server</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example — stdio transport:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">mcp_servers</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">file-search</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">npx</span>
+<span class="w">    </span><span class="nt">args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"-y"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"@anthropic/mcp-file-search"</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">code-tools</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
+<span class="w">    </span><span class="nt">args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"-m"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"my_mcp_server"</span><span class="p p-Indicator">]</span>
+
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">coder</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://anthropic/claude-sonnet-4-20250514"</span>
+<span class="w">    </span><span class="nt">tools</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"mcp://file-search"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"mcp://code-tools"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"builtin://shell_command"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">code</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p><strong>Example — HTTP transport:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">mcp_servers</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">remote-api</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:3000/mcp"</span>
+</code></pre></div>
+<h2 id="schedule-cron-expression">Schedule — Cron Expression</h2>
+<p>The <code>schedule</code> field accepts a standard 5-field cron expression. Workflows with a <code>schedule</code> are automatically discovered and executed by <code>binex scheduler start</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hourly-report</span>
+<span class="nt">schedule</span><span class="p">:</span><span class="w"> </span><span class="s">"0</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*"</span>
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">reporter</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"llm://openai/gpt-4o-mini"</span>
+<span class="w">    </span><span class="nt">system_prompt</span><span class="p">:</span><span class="w"> </span><span class="s">"Generate</span><span class="nv"> </span><span class="s">hourly</span><span class="nv"> </span><span class="s">status</span><span class="nv"> </span><span class="s">report"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">report</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h2 id="variable-interpolation">Variable Interpolation</h2>
+<p>Two variable scopes are available inside <code>inputs</code> values:</p>
+<table>
+<thead>
+<tr>
+<th>Syntax</th>
+<th>Resolved</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>${user.&lt;key&gt;}</code></td>
+<td>Load time</td>
+<td>Substituted from <code>--var</code> CLI arguments</td>
+</tr>
+<tr>
+<td><code>${&lt;node_id&gt;.&lt;output&gt;}</code></td>
+<td>Runtime</td>
+<td>References an artifact produced by another node</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">inputs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">query</span><span class="p">:</span><span class="w"> </span><span class="s">"${user.query}"</span><span class="w">              </span><span class="c1"># --var query="LLM agents"</span>
+<span class="w">  </span><span class="nt">plan</span><span class="p">:</span><span class="w"> </span><span class="s">"${planner.execution_plan}"</span><span class="w">   </span><span class="c1"># artifact from the planner node</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Use <code>${planner.plan}</code> (node ID + output name), <strong>not</strong> <code>${node.planner.plan}</code>. The <code>node.</code> prefix is not supported.</p>
+</div>
+<h2 id="minimal-valid-workflow">Minimal Valid Workflow</h2>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minimal</span>
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">only_node</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"local://echo"</span>
+<span class="w">    </span><span class="nt">system_prompt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ping</span>
+<span class="w">    </span><span class="nt">inputs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">msg</span><span class="p">:</span><span class="w"> </span><span class="s">"hello"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">response</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<p>No <code>defaults</code>, <code>description</code>, <code>depends_on</code>, or <code>config</code> required.</p>
+<h2 id="versioning">Versioning</h2>
+<p>Workflow files support schema versioning via the <code>version</code> field. This enables future schema changes with automatic migration.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-workflow</span>
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">step1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="s">"local://echo"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">result</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h3 id="behavior">Behavior</h3>
+<ul>
+<li><strong>Missing <code>version</code> field</strong>: Defaults to version 1 (backward compatible with all existing workflows). A warning is logged.</li>
+<li><strong><code>version: 1</code></strong>: Current version — no migration needed.</li>
+<li><strong><code>version &gt; CURRENT_VERSION</code></strong>: Raises <code>UnsupportedVersionError</code> at load time. Upgrade Binex to use newer workflows.</li>
+</ul>
+<h3 id="migration-framework">Migration framework</h3>
+<p>When Binex upgrades its schema version, a migration chain transforms older workflow dicts step by step (v1 → v2 → ... → current). Migrations run in-memory at load time — the original YAML file is never modified.</p>
+<h3 id="workflow-snapshots">Workflow snapshots</h3>
+<p>Every <code>binex run</code> stores a normalized, SHA256-deduplicated snapshot of the workflow definition in SQLite. This lets you:</p>
+<ul>
+<li>Inspect the exact workflow used in any past run via <code>binex debug &lt;run-id&gt;</code></li>
+<li>Compare workflows between runs via <code>binex workflow diff &lt;run1&gt; &lt;run2&gt;</code></li>
+<li>Reproduce runs even if the original YAML file has changed</li>
+</ul>
+<p>Check the workflow version of any file:</p>
+<div class="highlight"><pre><span></span><code>binex<span class="w"> </span>workflow<span class="w"> </span>version<span class="w"> </span>examples/simple.yaml
+
+<span class="c1">## Webhook — `WebhookConfig`</span>
+
+<span class="p">|</span><span class="w"> </span>Field<span class="w"> </span><span class="p">|</span><span class="w"> </span>Type<span class="w"> </span><span class="p">|</span><span class="w"> </span>Required<span class="w"> </span><span class="p">|</span><span class="w"> </span>Description<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span>-------<span class="p">|</span>------<span class="p">|</span>----------<span class="p">|</span>-------------<span class="p">|</span>
+<span class="p">|</span><span class="w"> </span><span class="sb">`</span>url<span class="sb">`</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="sb">`</span>str<span class="sb">`</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>yes<span class="w"> </span><span class="p">|</span><span class="w"> </span>Webhook<span class="w"> </span>endpoint<span class="w"> </span>URL<span class="w"> </span><span class="p">|</span>
+
+Webhook<span class="w"> </span>notifications<span class="w"> </span>are<span class="w"> </span>sent<span class="w"> </span>on<span class="w"> </span>run<span class="w"> </span>completion,<span class="w"> </span>failure,<span class="w"> </span>or<span class="w"> </span>budget<span class="w"> </span>exceeded.<span class="w"> </span>Can<span class="w"> </span>also<span class="w"> </span>be<span class="w"> </span><span class="nb">set</span><span class="w"> </span>via<span class="w"> </span><span class="sb">`</span>BINEX_WEBHOOK_URL<span class="sb">`</span><span class="w"> </span>environment<span class="w"> </span>variable.
+
+<span class="sb">```</span>yaml
+name:<span class="w"> </span>notified-pipeline
+webhook:
+<span class="w">  </span>url:<span class="w"> </span><span class="s2">"https://hooks.example.com/binex"</span>
+nodes:
+<span class="w">  </span>step1:
+<span class="w">    </span>agent:<span class="w"> </span><span class="s2">"local://echo"</span>
+<span class="w">    </span>outputs:<span class="w"> </span><span class="o">[</span>result<span class="o">]</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "navigation.top", "header.autohide"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>

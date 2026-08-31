@@ -1,0 +1,3105 @@
+<!DOCTYPE html><html lang="en" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Debuggable runtime for AI agent pipelines">
+      
+      
+      
+        <link rel="canonical" href="https://alexli18.github.io/binex/docs/dev/otel-mapping/">
+      
+      
+        <link rel="prev" href="../../contributing/testing/">
+      
+      
+        <link rel="next" href="../loop-container-design/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>OTel Span Mapping - Binex</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#otel-binex-span-mapping" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Binex" class="md-header__button md-logo" aria-label="Binex" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7h-2.81c-.45-.8-1.07-1.5-1.82-2L16 3.41 14.59 2l-2.17 2.17a6 6 0 0 0-2.83 0L7.41 2 6 3.41 7.62 5c-.75.5-1.36 1.21-1.81 2H3v2h2.09c-.06.33-.09.66-.09 1v1H3v2h2v1c0 .34.03.67.09 1H3v2h2.81A6 6 0 0 0 13 19.65V19c0-2.54 1.61-4.8 4-5.65V13h2v-2h-2v-1c0-.34-.03-.67-.09-1H19zm-6 8H9v-2h4zm0-4H9V9h4zm4.75 11.16-2.75-3L16.16 18l1.59 1.59L21.34 16l1.16 1.41z"></path></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Binex
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              OTel Span Mapping
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom" aria-hidden="true" type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Alexli18/binex" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    Alexli18/binex
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Binex" class="md-nav__button md-logo" aria-label="Binex" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7h-2.81c-.45-.8-1.07-1.5-1.82-2L16 3.41 14.59 2l-2.17 2.17a6 6 0 0 0-2.83 0L7.41 2 6 3.41 7.62 5c-.75.5-1.36 1.21-1.81 2H3v2h2.09c-.06.33-.09.66-.09 1v1H3v2h2v1c0 .34.03.67.09 1H3v2h2.81A6 6 0 0 0 13 19.65V19c0-2.54 1.61-4.8 4-5.65V13h2v-2h-2v-1c0-.34-.03-.67-.09-1H19zm-6 8H9v-2h4zm0-4H9V9h4zm4.75 11.16-2.75-3L16.16 18l1.59 1.59L21.34 16l1.16 1.41z"></path></svg>
+
+    </a>
+    Binex
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Alexli18/binex" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    Alexli18/binex
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs LangGraph / CrewAI / AutoGen
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5">
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/debugging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debugging &amp; Observability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6">
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/lineage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lineage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7">
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/run/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/debug/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    debug
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    trace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/replay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    replay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/resume/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    resume
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/diff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    diff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/freeze/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    freeze
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    dev
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/doctor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    doctor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/validate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    validate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/scaffold/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    scaffold
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/cost/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/clean/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    clean
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/explore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    explore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/diagnose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    diagnose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/bisect/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bisect
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gateway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ui
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/scheduler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    scheduler
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8">
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stores
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9">
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/observer-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observer Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/binary-artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binary Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/workspace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workspace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/foreach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dynamic Fan-out (foreach)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval &amp; Assertions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../import/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import from OTel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/tools-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools &amp; MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/cao-adapter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CAO Adapter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs LangSmith / Langfuse / n8n
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10">
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/format/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../multi-provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Provider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked="">
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OTel Span Mapping
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OTel Span Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#1-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-trace-runsummary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Trace → RunSummary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-span-executionrecord" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Span → ExecutionRecord
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-node-id-sanitization-and-deduplication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Node-ID Sanitization and Deduplication
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-llm-span-attributes-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. LLM Span Attributes → Artifacts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. LLM Span Attributes → Artifacts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-openinference-conventions-llm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 OpenInference Conventions (llm.*)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-openllmetry-conventions-gen_ai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 OpenLLMetry Conventions (gen_ai.*)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-artifact-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Artifact Shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-cost-costrecord" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Cost → CostRecord
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-dag-derivation-from-parentspanid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. DAG Derivation from parentSpanId
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-orphan-spans-and-multi-root-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Orphan Spans and Multi-Root Handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-source-otel-import-feature-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. source = "otel-import" Feature Gate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-collector-buffering-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Collector Buffering State Machine
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../loop-container-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Loop Container UI Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#1-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-trace-runsummary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Trace → RunSummary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-span-executionrecord" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Span → ExecutionRecord
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-node-id-sanitization-and-deduplication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Node-ID Sanitization and Deduplication
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-llm-span-attributes-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. LLM Span Attributes → Artifacts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. LLM Span Attributes → Artifacts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-openinference-conventions-llm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 OpenInference Conventions (llm.*)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-openllmetry-conventions-gen_ai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 OpenLLMetry Conventions (gen_ai.*)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-artifact-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Artifact Shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-cost-costrecord" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Cost → CostRecord
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-dag-derivation-from-parentspanid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. DAG Derivation from parentSpanId
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-orphan-spans-and-multi-root-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Orphan Spans and Multi-Root Handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-source-otel-import-feature-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. source = "otel-import" Feature Gate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-collector-buffering-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Collector Buffering State Machine
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="otel-binex-span-mapping">OTel → Binex Span Mapping</h1>
+<p><strong>Branch</strong>: <code>020-eval-mcp-otel</code><br>
+<strong>Purpose</strong>: Defines exactly how OTLP trace data maps onto Binex's native entities (<code>RunSummary</code>, <code>ExecutionRecord</code>, <code>Artifact</code>, <code>CostRecord</code>) for <code>binex import otel</code> and the live collector.</p>
+<hr>
+<h2 id="1-overview">1. Overview</h2>
+<div class="highlight"><pre><span></span><code>OTLP ExportTraceServiceRequest
+  └── resourceSpans[]
+        ├── resource.attributes  (service.name, ...)
+        └── scopeSpans[]
+              ├── scope.name      (instrumentation library name)
+              └── spans[]         → ExecutionRecord + Artifact + CostRecord
+</code></pre></div>
+<p>One <strong>trace</strong> (unique <code>traceId</code>) becomes one <strong><code>RunSummary</code></strong>.<br>
+One <strong>span</strong> becomes one <strong><code>ExecutionRecord</code></strong>, plus optional <code>Artifact</code>s/<code>CostRecord</code> when AI semantic convention attributes are present.</p>
+<hr>
+<h2 id="2-trace-runsummary">2. Trace → RunSummary</h2>
+<table>
+<thead>
+<tr>
+<th>OTLP field</th>
+<th>Binex field</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>traceId</code></td>
+<td><code>run_id = "otel-" + traceId[:12]</code></td>
+<td>12-char hex prefix, prefixed to avoid collisions with native <code>run_*</code> IDs</td>
+</tr>
+<tr>
+<td>root span name or <code>resource.attributes["service.name"]</code></td>
+<td><code>workflow_name</code></td>
+<td>Root span name preferred; <code>service.name</code> fallback; <code>"unknown"</code> as last resort</td>
+</tr>
+<tr>
+<td>min(span.startTimeUnixNano)</td>
+<td><code>started_at</code></td>
+<td>Earliest span start, UTC</td>
+</tr>
+<tr>
+<td>max(span.endTimeUnixNano)</td>
+<td><code>completed_at</code></td>
+<td>Latest span end, UTC</td>
+</tr>
+<tr>
+<td>span status codes (all spans)</td>
+<td><code>status</code></td>
+<td><code>"completed"</code> if all <code>STATUS_CODE_OK</code> or <code>STATUS_CODE_UNSET</code>; <code>"failed"</code> if any <code>STATUS_CODE_ERROR</code>; <code>"partial"</code> if collector timed out</td>
+</tr>
+<tr>
+<td>(fixed)</td>
+<td><code>source = "otel-import"</code></td>
+<td>Always set; used for feature gating</td>
+</tr>
+<tr>
+<td><code>len(spans)</code></td>
+<td><code>total_nodes</code></td>
+<td>One node per span</td>
+</tr>
+<tr>
+<td>count of non-error spans</td>
+<td><code>completed_nodes</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>count of <code>STATUS_CODE_ERROR</code> spans</td>
+<td><code>failed_nodes</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="3-span-executionrecord">3. Span → ExecutionRecord</h2>
+<table>
+<thead>
+<tr>
+<th>OTLP field</th>
+<th>Binex field</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code> (sanitized)</td>
+<td><code>task_id</code></td>
+<td>See §4 for sanitization and deduplication</td>
+</tr>
+<tr>
+<td><code>parentSpanId</code> → parent span's <code>task_id</code></td>
+<td><code>parent_task_id</code></td>
+<td><code>None</code> for root spans</td>
+</tr>
+<tr>
+<td><code>"otel://" + scope.name</code></td>
+<td><code>agent_id</code></td>
+<td>e.g. <code>otel://opentelemetry.instrumentation.langchain</code></td>
+</tr>
+<tr>
+<td><code>(endTimeUnixNano - startTimeUnixNano) / 1_000_000</code></td>
+<td><code>latency_ms</code></td>
+<td>Integer milliseconds</td>
+</tr>
+<tr>
+<td>ISO-8601 UTC from <code>startTimeUnixNano</code></td>
+<td><code>timestamp</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>run_id</code></td>
+<td><code>run_id</code></td>
+<td>From parent RunSummary</td>
+</tr>
+<tr>
+<td>span status</td>
+<td><code>status</code></td>
+<td><code>TaskStatus.COMPLETED</code> or <code>TaskStatus.FAILED</code></td>
+</tr>
+<tr>
+<td><code>status.message</code> if ERROR</td>
+<td><code>error</code></td>
+<td>Error detail string</td>
+</tr>
+<tr>
+<td>(fixed)</td>
+<td><code>trace_id = "otel-" + traceId</code></td>
+<td>For SSE/lineage consistency</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="4-node-id-sanitization-and-deduplication">4. Node-ID Sanitization and Deduplication</h2>
+<p>Span names are often human-readable but can contain characters invalid in node IDs (spaces, slashes, angle brackets, etc.).</p>
+<p><strong>Sanitization rules</strong> (applied in order):</p>
+<ol>
+<li>Convert to lower-case.</li>
+<li>Replace sequences of <code>[^a-z0-9_\-]</code> with <code>_</code>.</li>
+<li>Strip leading/trailing underscores.</li>
+<li>Truncate to 64 characters.</li>
+<li>If empty after truncation, use <code>span_&lt;index&gt;</code>.</li>
+</ol>
+<p><strong>Deduplication</strong>: within a single trace, when two or more spans produce the same sanitized name, suffix the second occurrence with <code>-2</code>, the third with <code>-3</code>, etc.:</p>
+<div class="highlight"><pre><span></span><code>"ChatOpenAI" → "chatopenai"
+"ChatOpenAI" → "chatopenai-2"   (second span with same name)
+</code></pre></div>
+<p>The mapping from <code>spanId</code> → <code>task_id</code> is built during a first pass over all spans before any <code>ExecutionRecord</code> is created, so <code>parent_task_id</code> references use the final deduplicated names.</p>
+<hr>
+<h2 id="5-llm-span-attributes-artifacts">5. LLM Span Attributes → Artifacts</h2>
+<p>Artifacts are only created when the span carries recognized AI semantic convention attributes.  Plain spans (web calls, DB queries, etc.) produce only an <code>ExecutionRecord</code>.</p>
+<h3 id="51-openinference-conventions-llm">5.1 OpenInference Conventions (<code>llm.*</code>)</h3>
+<p>Used by LangChain, LlamaIndex, and Arize Phoenix instrumentation.</p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Artifact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>llm.input_messages</code> (JSON array)</td>
+<td>Input artifact, <code>type="prompt"</code></td>
+</tr>
+<tr>
+<td><code>llm.output_messages</code> (JSON array)</td>
+<td>Output artifact, <code>type="llm_output"</code></td>
+</tr>
+<tr>
+<td><code>llm.model_name</code></td>
+<td>Stored on <code>CostRecord.model</code></td>
+</tr>
+<tr>
+<td><code>llm.token_count.prompt</code></td>
+<td>Prompt token count for cost calc</td>
+</tr>
+<tr>
+<td><code>llm.token_count.completion</code></td>
+<td>Completion token count for cost calc</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-openllmetry-conventions-gen_ai">5.2 OpenLLMetry Conventions (<code>gen_ai.*</code>)</h3>
+<p>Used by Traceloop and OpenLLMetry instrumentation.</p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Artifact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gen_ai.prompt</code> (string or JSON)</td>
+<td>Input artifact, <code>type="prompt"</code></td>
+</tr>
+<tr>
+<td><code>gen_ai.completion</code> (string or JSON)</td>
+<td>Output artifact, <code>type="llm_output"</code></td>
+</tr>
+<tr>
+<td><code>gen_ai.request.model</code></td>
+<td>Stored on <code>CostRecord.model</code></td>
+</tr>
+<tr>
+<td><code>gen_ai.usage.prompt_tokens</code></td>
+<td>Prompt token count</td>
+</tr>
+<tr>
+<td><code>gen_ai.usage.completion_tokens</code></td>
+<td>Completion token count</td>
+</tr>
+</tbody>
+</table>
+<p>Both conventions are checked; OpenInference takes precedence when both are present.</p>
+<h3 id="53-artifact-shape">5.3 Artifact Shape</h3>
+<div class="highlight"><pre><span></span><code><span class="n">Artifact</span><span class="p">(</span>
+    <span class="nb">id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="s1">'input'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'output'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="s2">"prompt"</span> <span class="o">|</span> <span class="s2">"llm_output"</span><span class="p">,</span>
+    <span class="n">content</span><span class="o">=&lt;</span><span class="n">string</span> <span class="ow">or</span> <span class="nb">dict</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">lineage</span><span class="o">=</span><span class="n">Lineage</span><span class="p">(</span>
+        <span class="n">run_id</span><span class="o">=</span><span class="n">run_id</span><span class="p">,</span>
+        <span class="n">produced_by</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span>
+        <span class="n">derived_from</span><span class="o">=</span><span class="p">[</span><span class="n">parent_span_task_id</span> <span class="o">+</span> <span class="s2">"_output"</span><span class="p">]</span>  <span class="c1"># when parent exists</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+</code></pre></div>
+<p><code>derived_from</code> is set to the parent span's output artifact ID when the parent also had an output artifact — this reconstructs the DAG lineage chain.</p>
+<hr>
+<h2 id="6-cost-costrecord">6. Cost → CostRecord</h2>
+<p>Cost is computed with a best-effort cascade:</p>
+<ol>
+<li><strong>Explicit span attribute</strong>: <code>llm.token_count.total_cost</code> or <code>gen_ai.usage.total_cost</code> → use directly.</li>
+<li><strong>Token counts + model</strong>: pass to <code>litellm.completion_cost(model, prompt_tokens, completion_tokens)</code>.  If litellm does not recognise the model, this returns 0 and the source is set accordingly.</li>
+<li><strong>No attributes</strong>: no <code>CostRecord</code> is created for this span.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="n">CostRecord</span><span class="p">(</span>
+    <span class="n">run_id</span><span class="o">=</span><span class="n">run_id</span><span class="p">,</span>
+    <span class="n">node_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
+    <span class="n">cost</span><span class="o">=</span><span class="n">computed_cost</span><span class="p">,</span>
+    <span class="n">source</span><span class="o">=</span><span class="s2">"otel-import"</span> <span class="o">|</span> <span class="s2">"llm_tokens_unavailable"</span><span class="p">,</span>
+    <span class="n">prompt_tokens</span><span class="o">=...</span><span class="p">,</span>
+    <span class="n">completion_tokens</span><span class="o">=...</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p><code>source="llm_tokens_unavailable"</code> follows the pattern established in the native cost tracker when <code>litellm.completion_cost()</code> cannot determine a price.</p>
+<hr>
+<h2 id="7-dag-derivation-from-parentspanid">7. DAG Derivation from parentSpanId</h2>
+<p>The parent–child relationship between spans directly encodes the DAG:</p>
+<div class="highlight"><pre><span></span><code>root span (parentSpanId absent / all-zeros)
+  ├── child A (parentSpanId = root.spanId)
+  │     └── grandchild A1
+  └── child B
+</code></pre></div>
+<p>This maps to:</p>
+<div class="highlight"><pre><span></span><code>ExecutionRecord(task_id="root", parent_task_id=None)
+ExecutionRecord(task_id="child_a", parent_task_id="root")
+ExecutionRecord(task_id="grandchild_a1", parent_task_id="child_a")
+ExecutionRecord(task_id="child_b", parent_task_id="root")
+</code></pre></div>
+<p><code>parent_task_id</code> is already defined on <code>ExecutionRecord</code> (added in 018-loop-container) and is used by the lineage viewer.</p>
+<hr>
+<h2 id="8-orphan-spans-and-multi-root-handling">8. Orphan Spans and Multi-Root Handling</h2>
+<p>Real traces sometimes contain spans whose <code>parentSpanId</code> does not appear in the trace (orphans), or multiple spans with no parent (multi-root).</p>
+<p><strong>Strategy</strong>:</p>
+<ul>
+<li><strong>Orphans</strong>: attached as top-level nodes (<code>parent_task_id=None</code>). A non-fatal warning is added to the import result: <code>"Orphan spans attached as roots: [&lt;task_ids&gt;]"</code>.</li>
+<li><strong>Multiple roots</strong>: all root spans are kept. The <code>workflow_name</code> is taken from the <em>first</em> root span (by start time) or <code>service.name</code>. A warning is emitted: <code>"Multiple root spans detected: [&lt;task_ids&gt;]"</code>.</li>
+<li><strong>Empty spans list</strong>: the trace is skipped; a warning is emitted.</li>
+</ul>
+<p>Warnings are collected in a <code>list[str]</code> and returned alongside the <code>RunSummary</code> by the converter so callers (CLI, collector) can surface them.</p>
+<hr>
+<h2 id="9-source-otel-import-feature-gate">9. source = "otel-import" Feature Gate</h2>
+<p>Any <code>RunSummary</code> with <code>source="otel-import"</code> is blocked from:</p>
+<ul>
+<li><code>binex replay</code> (CLI exit 2, message: <em>"Run '<id>' was imported from an external trace and cannot be replayed."</id></em>)</li>
+<li><code>binex bisect</code> (CLI exit 2 for either run being imported)</li>
+<li><code>POST /api/v1/replay</code> (HTTP 422)</li>
+<li><code>POST /api/v1/bisect</code> (HTTP 422)</li>
+<li><code>mcp replay_node</code> tool (returns <code>{"error": ..., "code": "unsupported"}</code>)</li>
+</ul>
+<p><strong>Not blocked</strong>: <code>binex debug</code>, <code>binex trace</code>, <code>binex diagnose</code>, <code>binex diff</code>, <code>binex artifacts</code>, the Web UI RunDetail/Trace/Lineage views.  These operate purely on stored records and artifacts and work identically for imported runs.</p>
+<p>The shared helper is <code>ensure_replayable(run: RunSummary) -&gt; None</code> (raises <code>ImportedRunError</code>) located in <code>src/binex/runtime/replay.py</code>.</p>
+<hr>
+<h2 id="10-collector-buffering-state-machine">10. Collector Buffering State Machine</h2>
+<div class="highlight"><pre><span></span><code>Span arrives via POST /v1/traces
+  → add to TraceBuffer[trace_id]
+  → start/reset quiet timer (10 s default)
+
+Quiet timer fires AND root span present
+  → finalize: run converter → write to stores → run visible in UI
+
+Hard timeout (300 s) fires regardless
+  → finalize with status="partial" + warning logged
+</code></pre></div>
+<p>Each <code>TraceBuffer</code> tracks:
+- <code>spans: list[dict]</code> — raw span dicts
+- <code>root_seen: bool</code> — whether any span with no parent has been received
+- <code>resource: dict</code> — merged resource attributes
+- <code>last_activity: float</code> — wall-clock time of last span receipt</p>
+<p>The converter is the same function as for file import (<code>importers/otel.py</code>) — no duplication.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "navigation.top", "header.autohide"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>

@@ -1,0 +1,3342 @@
+<!DOCTYPE html><html lang="en" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Debuggable runtime for AI agent pipelines">
+      
+      
+      
+        <link rel="canonical" href="https://alexli18.github.io/binex/docs/contributing/testing/">
+      
+      
+        <link rel="prev" href="../development/">
+      
+      
+        <link rel="next" href="../../dev/otel-mapping/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Testing - Binex</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#testing" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Binex" class="md-header__button md-logo" aria-label="Binex" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7h-2.81c-.45-.8-1.07-1.5-1.82-2L16 3.41 14.59 2l-2.17 2.17a6 6 0 0 0-2.83 0L7.41 2 6 3.41 7.62 5c-.75.5-1.36 1.21-1.81 2H3v2h2.09c-.06.33-.09.66-.09 1v1H3v2h2v1c0 .34.03.67.09 1H3v2h2.81A6 6 0 0 0 13 19.65V19c0-2.54 1.61-4.8 4-5.65V13h2v-2h-2v-1c0-.34-.03-.67-.09-1H19zm-6 8H9v-2h4zm0-4H9V9h4zm4.75 11.16-2.75-3L16.16 18l1.59 1.59L21.34 16l1.16 1.41z"></path></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Binex
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Testing
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom" aria-hidden="true" type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Alexli18/binex" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    Alexli18/binex
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Binex" class="md-nav__button md-logo" aria-label="Binex" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7h-2.81c-.45-.8-1.07-1.5-1.82-2L16 3.41 14.59 2l-2.17 2.17a6 6 0 0 0-2.83 0L7.41 2 6 3.41 7.62 5c-.75.5-1.36 1.21-1.81 2H3v2h2.09c-.06.33-.09.66-.09 1v1H3v2h2v1c0 .34.03.67.09 1H3v2h2.81A6 6 0 0 0 13 19.65V19c0-2.54 1.61-4.8 4-5.65V13h2v-2h-2v-1c0-.34-.03-.67-.09-1H19zm-6 8H9v-2h4zm0-4H9V9h4zm4.75 11.16-2.75-3L16.16 18l1.59 1.59L21.34 16l1.16 1.41z"></path></svg>
+
+    </a>
+    Binex
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Alexli18/binex" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    Alexli18/binex
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../demo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs LangGraph / CrewAI / AutoGen
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5">
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/debugging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debugging &amp; Observability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6">
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/lineage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lineage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7">
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/run/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/debug/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    debug
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    trace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/replay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    replay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/resume/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    resume
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/diff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    diff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/freeze/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    freeze
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    dev
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/doctor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    doctor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/validate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    validate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/scaffold/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    scaffold
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/cost/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/clean/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    clean
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/explore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    explore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/diagnose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    diagnose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/bisect/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bisect
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gateway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ui
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/scheduler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    scheduler
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8">
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stores
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9">
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/observer-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observer Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/binary-artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binary Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/workspace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workspace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/foreach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dynamic Fan-out (foreach)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval &amp; Assertions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../import/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import from OTel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/tools-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools &amp; MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/cao-adapter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CAO Adapter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs LangSmith / Langfuse / n8n
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10">
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/format/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../multi-provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Provider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked="">
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-tests-vitest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend tests (vitest)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Organization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Organization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qa-test-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        QA Test Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#e2e-tests-playwright" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E2E Tests (Playwright)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="E2E Tests (Playwright)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisite-a-running-ui-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisite: a running UI server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-a-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging a failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-objects-testse2e_playwrightpages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Page objects (tests/e2e_playwright/pages/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arrange-act-assert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arrange-Act-Assert
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#async-test-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Async Test Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shared-fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mocking-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mocking Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mocking Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cli-store-patching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Store Patching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in-memory-stores-for-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In-Memory Stores for Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#litellm-mocking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LiteLLM Mocking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-test-adapters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Test Adapters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-yaml-workflow-files-in-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing YAML Workflow Files in Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Coverage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conscious-testing-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conscious Testing Boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/otel-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OTel Span Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev/loop-container-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Loop Container UI Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../blog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend-tests-vitest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend tests (vitest)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Organization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test Organization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qa-test-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        QA Test Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#e2e-tests-playwright" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E2E Tests (Playwright)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="E2E Tests (Playwright)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisite-a-running-ui-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisite: a running UI server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-a-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging a failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-objects-testse2e_playwrightpages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Page objects (tests/e2e_playwright/pages/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arrange-act-assert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arrange-Act-Assert
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#async-test-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Async Test Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shared-fixtures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared Fixtures
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mocking-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mocking Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mocking Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cli-store-patching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Store Patching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in-memory-stores-for-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In-Memory Stores for Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#litellm-mocking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LiteLLM Mocking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-test-adapters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Test Adapters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-yaml-workflow-files-in-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing YAML Workflow Files in Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Coverage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conscious-testing-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conscious Testing Boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="testing">Testing</h1>
+<h2 id="running-tests">Running Tests</h2>
+<p>Run the full suite:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/
+</code></pre></div>
+<p>The Python suite collects <strong>3315 tests</strong> across 260 test files. 53 of them are marked <code>e2e</code> and deselected by default (<code>addopts = "-m 'not e2e'"</code>); see <a href="#e2e-tests-playwright">E2E Tests</a>.</p>
+<h2 id="frontend-tests-vitest">Frontend tests (vitest)</h2>
+<p>The React app has its own unit suite — 175 tests across 27 files — plus a type check:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>ui
+npm<span class="w"> </span>ci
+npx<span class="w"> </span>tsc<span class="w"> </span>--noEmit<span class="w">    </span><span class="c1"># type errors are failures too</span>
+npx<span class="w"> </span>vitest<span class="w"> </span>run
+</code></pre></div>
+<p>Both run in CI (the <code>frontend</code> job in <code>ci.yml</code>, Node 20). They were not wired into CI until 2026-08 — a broken <code>reactflow</code> mock had been failing on <code>master</code> unnoticed for that reason. If you add a frontend test, check it runs here before pushing.</p>
+<div class="admonition tip">
+<p class="admonition-title">Mock reactflow partially, never exhaustively</p>
+<p><code>reactflow</code> needs browser APIs jsdom lacks, so its components have to be stubbed — but an exhaustive hand-written mock breaks the moment a component imports one more export. Use <code>vi.mock('reactflow', async (importOriginal) =&gt; ({ ...await importOriginal(), /* stubs */ }))</code> and override only the components that touch the DOM or the zustand store (<code>ReactFlow</code>, <code>ReactFlowProvider</code>, <code>Background</code>, <code>Controls</code>, <code>MiniMap</code>). Enums like <code>MarkerType</code> and <code>BackgroundVariant</code> then stay real. See <code>ui/src/components/editor/EditorCanvas.test.tsx</code>.</p>
+</div>
+<p>Run a specific test file:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/qa/test_qa_phase4_core.py
+</code></pre></div>
+<p>Run tests matching a keyword:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-k<span class="w"> </span><span class="s2">"test_hello"</span>
+</code></pre></div>
+<p>Run with verbose output:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-v
+</code></pre></div>
+<h2 id="test-organization">Test Organization</h2>
+<div class="highlight"><pre><span></span><code>tests/
+├── conftest.py                     # Shared fixtures (sample workflows)
+├── unit/                           # Unit tests (~75 files, ~860 tests)
+│   ├── test_models_*.py            # Pydantic model validation
+│   ├── test_cli_*.py               # CLI command tests
+│   ├── test_dag.py                 # DAG construction and traversal
+│   ├── test_scheduler.py           # Scheduler logic (dependency resolution)
+│   ├── test_dispatcher.py          # Dispatcher and adapter routing
+│   ├── test_qa_*.py                # QA regression tests (see below)
+│   └── ...
+└── integration/
+    └── test_orchestrator.py        # End-to-end orchestrator tests
+</code></pre></div>
+<h3 id="qa-test-files">QA Test Files</h3>
+<p>QA tests follow a structured plan and are organized by phase:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Focus</th>
+<th>Tests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_qa_models.py</code></td>
+<td>Pydantic models, validation</td>
+<td>~20</td>
+</tr>
+<tr>
+<td><code>test_qa_stores.py</code></td>
+<td>Sqlite and filesystem stores</td>
+<td>~20</td>
+</tr>
+<tr>
+<td><code>test_qa_dag_scheduler.py</code></td>
+<td>DAG and scheduler</td>
+<td>~15</td>
+</tr>
+<tr>
+<td><code>test_qa_adapters_runtime.py</code></td>
+<td>Adapters, dispatcher</td>
+<td>~15</td>
+</tr>
+<tr>
+<td><code>test_qa_cli_workflow.py</code></td>
+<td>CLI + workflow loading</td>
+<td>~15</td>
+</tr>
+<tr>
+<td><code>test_qa_trace_registry.py</code></td>
+<td>Trace, registry</td>
+<td>~15</td>
+</tr>
+<tr>
+<td><code>test_qa_replay.py</code></td>
+<td>Replay command</td>
+<td>~10</td>
+</tr>
+<tr>
+<td><code>test_qa_phase2.py</code></td>
+<td>Agents, settings</td>
+<td>22</td>
+</tr>
+<tr>
+<td><code>test_qa_phase3_cli.py</code></td>
+<td>CLI DX commands</td>
+<td>22</td>
+</tr>
+<tr>
+<td><code>test_qa_phase4_core.py</code></td>
+<td>Runtime, stores, adapters</td>
+<td>27</td>
+</tr>
+<tr>
+<td><code>test_qa_phase5a_security.py</code></td>
+<td>Security, E2E</td>
+<td>22</td>
+</tr>
+<tr>
+<td><code>test_qa_phase5b_remaining.py</code></td>
+<td>Registry, trace, workflow, models</td>
+<td>21</td>
+</tr>
+</tbody>
+</table>
+<h2 id="e2e-tests-playwright">E2E Tests (Playwright)</h2>
+<p>Browser tests live in <code>tests/e2e_playwright/</code> and are marked <code>e2e</code>.</p>
+<h3 id="prerequisite-a-running-ui-server">Prerequisite: a running UI server</h3>
+<p>E2E tests expect the web UI on <code>http://localhost:8420</code>:</p>
+<div class="highlight"><pre><span></span><code>./scripts/build-ui.sh<span class="w">                  </span><span class="c1"># build the frontend (once, or after frontend changes)</span>
+binex<span class="w"> </span>ui<span class="w"> </span>--port<span class="w"> </span><span class="m">8420</span><span class="w"> </span>--no-browser<span class="w">      </span><span class="c1"># start the server</span>
+</code></pre></div>
+<h3 id="running">Running</h3>
+<div class="highlight"><pre><span></span><code>pytest<span class="w"> </span>-m<span class="w"> </span>e2e<span class="w">            </span><span class="c1"># all e2e tests</span>
+pytest<span class="w"> </span>-m<span class="w"> </span>e2e<span class="w"> </span>-n<span class="w"> </span>auto<span class="w">    </span><span class="c1"># in parallel (pytest-xdist)</span>
+</code></pre></div>
+<p>Plain <code>pytest tests/</code> does <strong>not</strong> run them: <code>pyproject.toml</code> sets <code>addopts = "-m 'not e2e'"</code>, so the marker is excluded by default. Passing <code>-m e2e</code> on the command line overrides it.</p>
+<h3 id="debugging-a-failure">Debugging a failure</h3>
+<p>Collect artifacts on failure (screenshots, video, trace go to <code>test-results/</code>):</p>
+<div class="highlight"><pre><span></span><code>pytest<span class="w"> </span>-m<span class="w"> </span>e2e<span class="w"> </span>--screenshot<span class="o">=</span>only-on-failure<span class="w"> </span>--video<span class="o">=</span>retain-on-failure<span class="w"> </span>--tracing<span class="o">=</span>retain-on-failure
+playwright<span class="w"> </span>show-trace<span class="w"> </span>test-results/&lt;test-dir&gt;/trace.zip
+</code></pre></div>
+<p>In CI the same artifacts are uploaded as <code>playwright-artifacts</code> on failure — download the zip and open the trace locally with <code>show-trace</code>.</p>
+<p>Other useful modes:</p>
+<div class="highlight"><pre><span></span><code>pytest<span class="w"> </span>-m<span class="w"> </span>e2e<span class="w"> </span>-k<span class="w"> </span>test_name<span class="w"> </span>--headed<span class="w">    </span><span class="c1"># watch the browser</span>
+<span class="nv">PWDEBUG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pytest<span class="w"> </span>-m<span class="w"> </span>e2e<span class="w"> </span>-k<span class="w"> </span>test_name<span class="w">   </span><span class="c1"># Playwright Inspector, step-by-step</span>
+</code></pre></div>
+<h3 id="page-objects-testse2e_playwrightpages">Page objects (<code>tests/e2e_playwright/pages/</code>)</h3>
+<ul>
+<li><code>sidebar.py</code> — <code>Sidebar</code> + <code>SidebarLink</code>/<code>SidebarGroup</code> enums</li>
+<li><code>export_page.py</code> — <code>ExportPage</code> + <code>ExportFormat</code> enum</li>
+</ul>
+<p>Fixtures <code>sidebar</code> and <code>export_page</code> are provided by <code>tests/e2e_playwright/conftest.py</code>. Three POM rules:</p>
+<ol>
+<li>Selectors (<code>get_by_test_id</code>, roles) live only in page objects — no raw selectors in tests.</li>
+<li>Page objects expose actions and <code>Locator</code>s, never assertions — checks belong in tests.</li>
+<li>Use enums instead of strings for finite sets (sidebar links, export formats).</li>
+</ol>
+<p><code>conftest.py</code> also injects <code>TOUR_DISMISSED_STATE</code> as <code>storage_state</code> so the onboarding tour never overlays elements under test.</p>
+<h3 id="arrange-act-assert">Arrange-Act-Assert</h3>
+<p>Tests follow the Arrange-Act-Assert structure: set up state, perform the
+action under test, verify the outcome. The three phases are separated by
+a blank line — no comments needed; the whitespace <em>is</em> the annotation.
+<code>test_export.py</code> is the reference example.</p>
+<h2 id="async-test-configuration">Async Test Configuration</h2>
+<p>All async tests are auto-detected. The <code>pyproject.toml</code> sets:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[tool.pytest.ini_options]</span>
+<span class="n">testpaths</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"tests"</span><span class="p">]</span>
+<span class="n">asyncio_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"auto"</span>
+</code></pre></div>
+<p>This means you do <strong>not</strong> need the <code>@pytest.mark.asyncio</code> decorator. Simply define your test as <code>async def</code> and pytest-asyncio handles the rest:</p>
+<div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_orchestrator_runs_two_nodes</span><span class="p">():</span>
+    <span class="n">orch</span> <span class="o">=</span> <span class="n">Orchestrator</span><span class="p">(</span>
+        <span class="n">artifact_store</span><span class="o">=</span><span class="n">InMemoryArtifactStore</span><span class="p">(),</span>
+        <span class="n">execution_store</span><span class="o">=</span><span class="n">InMemoryExecutionStore</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="c1"># ... register adapters, run workflow</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="k">await</span> <span class="n">orch</span><span class="o">.</span><span class="n">run_workflow</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">summary</span><span class="o">.</span><span class="n">completed_nodes</span> <span class="o">==</span> <span class="mi">2</span>
+</code></pre></div>
+<h2 id="shared-fixtures">Shared Fixtures</h2>
+<p>Defined in <code>tests/conftest.py</code>:</p>
+<ul>
+<li><strong><code>sample_workflow_dict()</code></strong> — Minimal 2-node workflow (producer -&gt; consumer) with local echo agents</li>
+<li><strong><code>sample_research_workflow_dict()</code></strong> — 5-node research pipeline (planner -&gt; 2 researchers -&gt; validator -&gt; summarizer)</li>
+</ul>
+<p>Usage:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">test_workflow_parsing</span><span class="p">(</span><span class="n">sample_workflow_dict</span><span class="p">):</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">WorkflowSpec</span><span class="p">(</span><span class="o">**</span><span class="n">sample_workflow_dict</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+    <span class="k">assert</span> <span class="s2">"producer"</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">nodes</span>
+</code></pre></div>
+<h2 id="mocking-patterns">Mocking Patterns</h2>
+<h3 id="cli-store-patching">CLI Store Patching</h3>
+<p>CLI commands use a <code>_get_stores()</code> helper that returns real sqlite + filesystem stores by default. <strong>Always patch this in tests</strong> to avoid hitting disk:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">click.testing</span><span class="w"> </span><span class="kn">import</span> <span class="n">CliRunner</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">unittest.mock</span><span class="w"> </span><span class="kn">import</span> <span class="n">patch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.cli.hello</span><span class="w"> </span><span class="kn">import</span> <span class="n">hello_cmd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.stores.backends.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">InMemoryExecutionStore</span><span class="p">,</span> <span class="n">InMemoryArtifactStore</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_hello_command</span><span class="p">():</span>
+    <span class="n">stores</span> <span class="o">=</span> <span class="n">InMemoryExecutionStore</span><span class="p">(),</span> <span class="n">InMemoryArtifactStore</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s2">"binex.cli.hello._get_stores"</span><span class="p">,</span> <span class="n">return_value</span><span class="o">=</span><span class="n">stores</span><span class="p">):</span>
+        <span class="n">runner</span> <span class="o">=</span> <span class="n">CliRunner</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">hello_cmd</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">exit_code</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">assert</span> <span class="s2">"Hello from Binex!"</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span>
+</code></pre></div>
+<p>The patch target follows the pattern <code>binex.cli.&lt;module&gt;._get_stores</code>, where <code>&lt;module&gt;</code> matches the command file (e.g., <code>run</code>, <code>debug</code>, <code>hello</code>, <code>trace</code>, <code>replay</code>).</p>
+<h3 id="in-memory-stores-for-unit-tests">In-Memory Stores for Unit Tests</h3>
+<p>For non-CLI tests, use the in-memory store implementations directly:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">binex.stores.backends.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">InMemoryExecutionStore</span><span class="p">,</span> <span class="n">InMemoryArtifactStore</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_store_roundtrip</span><span class="p">():</span>
+    <span class="n">store</span> <span class="o">=</span> <span class="n">InMemoryExecutionStore</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">execution_record</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">get_run</span><span class="p">(</span><span class="n">run_id</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+</code></pre></div>
+<h3 id="litellm-mocking">LiteLLM Mocking</h3>
+<p>Mock <code>litellm.acompletion</code> when testing LLM-backed nodes:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">unittest.mock</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncMock</span><span class="p">,</span> <span class="n">patch</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_llm_adapter</span><span class="p">():</span>
+    <span class="n">mock_response</span> <span class="o">=</span> <span class="n">AsyncMock</span><span class="p">()</span>
+    <span class="n">mock_response</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="p">[</span><span class="n">AsyncMock</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">AsyncMock</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">"result"</span><span class="p">))]</span>
+
+    <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s2">"litellm.acompletion"</span><span class="p">,</span> <span class="n">new_callable</span><span class="o">=</span><span class="n">AsyncMock</span><span class="p">,</span> <span class="n">return_value</span><span class="o">=</span><span class="n">mock_response</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">adapter</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">trace_id</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">content</span> <span class="o">==</span> <span class="s2">"result"</span>
+</code></pre></div>
+<h3 id="custom-test-adapters">Custom Test Adapters</h3>
+<p>For orchestrator tests, create simple adapter classes instead of mocking:</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EchoAdapter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Returns an artifact containing the node_id as content."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fail</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_content</span> <span class="o">=</span> <span class="n">content</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fail</span> <span class="o">=</span> <span class="n">fail</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">call_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">input_artifacts</span><span class="p">,</span> <span class="n">trace_id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">call_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fail</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Node </span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">node_id</span><span class="si">}</span><span class="s2"> failed"</span><span class="p">)</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_content</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"result_from_</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">node_id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">Artifact</span><span class="p">(</span>
+                <span class="nb">id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"art_</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">run_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">node_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">run_id</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">run_id</span><span class="p">,</span>
+                <span class="nb">type</span><span class="o">=</span><span class="s2">"result"</span><span class="p">,</span>
+                <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span>
+                <span class="n">lineage</span><span class="o">=</span><span class="n">Lineage</span><span class="p">(</span>
+                    <span class="n">produced_by</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">node_id</span><span class="p">,</span>
+                    <span class="n">derived_from</span><span class="o">=</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">input_artifacts</span><span class="p">],</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">health</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">AgentHealth</span><span class="o">.</span><span class="n">ALIVE</span>
+</code></pre></div>
+<p>This pattern is used extensively in <code>test_qa_phase4_core.py</code> for testing orchestrator flows, retry logic, and DAG execution order.</p>
+<h3 id="writing-yaml-workflow-files-in-tests">Writing YAML Workflow Files in Tests</h3>
+<p>Use <code>tmp_path</code> and <code>textwrap.dedent</code> to create temporary workflow files:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">textwrap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_yaml</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="n">wf</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">"wf.yaml"</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">textwrap</span><span class="o">.</span><span class="n">dedent</span><span class="p">(</span><span class="n">content</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">wf</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_run_command</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">):</span>
+    <span class="n">wf</span> <span class="o">=</span> <span class="n">_write_yaml</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="s2">"""</span><span class="se">\</span>
+<span class="s2">        name: test</span>
+<span class="s2">        nodes:</span>
+<span class="s2">          node1:</span>
+<span class="s2">            agent: "local://echo"</span>
+<span class="s2">            system_prompt: do_stuff</span>
+<span class="s2">            outputs: [result]</span>
+<span class="s2">    """</span><span class="p">)</span>
+    <span class="c1"># ... invoke CLI with str(wf)</span>
+</code></pre></div>
+<h2 id="linting">Linting</h2>
+<p>Run ruff to check for style and import issues:</p>
+<div class="highlight"><pre><span></span><code>ruff<span class="w"> </span>check<span class="w"> </span>src/
+</code></pre></div>
+<p>The project uses these ruff rules: <code>E</code> (pycodestyle errors), <code>F</code> (pyflakes), <code>I</code> (isort), <code>N</code> (naming), <code>W</code> (warnings), <code>UP</code> (pyupgrade). Line length is 99 characters.</p>
+<h2 id="code-coverage">Code Coverage</h2>
+<p>To run tests with coverage:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>src/binex<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+</code></pre></div>
+<p>The unit + integration suite currently covers ~82% of <code>src/binex</code> (measured
+2026-08, <code>--cov=binex</code> over <code>tests/unit tests/integration</code>). Not every
+uncovered line is a gap — see the next section.</p>
+<h2 id="conscious-testing-boundaries">Conscious Testing Boundaries</h2>
+<p>Some zeros and low percentages in the coverage report are decisions, not
+neglect. The guiding rule: <strong>the boundary runs through the terminal, not
+through the file</strong> — pure logic inside a boundary module is extracted into a
+function and unit-tested; only the genuinely interactive or environment-bound
+layer stays untested. If you touch one of these modules and find separable
+logic, pull it out and test it rather than widening the boundary.</p>
+<p><strong>Interactive TUI screens</strong> — covered by manual QA scenarios plus smoke runs,
+not unit tests. A unit test over a mocked <code>click.getchar()</code> loop asserts the
+mock, not the terminal, and gives false confidence:</p>
+<ul>
+<li><code>cli/explore_ui.py</code>, <code>cli/explore_actions.py</code>, <code>cli/explore_replay.py</code>,
+  and the interactive loops of <code>cli/explore.py</code> (the <code>binex explore</code> dashboard)</li>
+<li><code>cli/start_ui.py</code> and the prompt chains in <code>cli/start_constructor.py</code> /
+  <code>cli/start_config.py</code> (the <code>binex start</code> wizard) — their computable steps
+  are already covered via scaffold/template tests</li>
+<li>the live-render wrapper in <code>cli/run_progress.py</code> (rich <code>Live</code> table)</li>
+<li>the <code>_render_*</code> functions of <code>trace/diff_rich.py</code> (its pure helpers —
+  delta formatting, error-change detection, row building — are unit-tested)</li>
+<li>rich panel styling in <code>cli/trace.py</code> (the event-grouping logic is tested)</li>
+</ul>
+<p><strong>Launchers and entry points</strong> — wrappers whose only behavior is starting
+something else; a test would assert "the wrapper calls the library":</p>
+<ul>
+<li><code>cli/collect.py</code> (uvicorn launcher for the OTel collector)</li>
+<li><code>mcp_server/server.py::run_server()</code> (stdio transport is FastMCP's code,
+  exercised only by a real MCP client; tool registration and delegation ARE
+  unit-tested)</li>
+<li><code>binex/__main__.py</code> (two-line delegation to <code>cli.main</code>)</li>
+<li><code>scheduler/engine.py::start()</code> (signal handlers + sleep loop; <code>_tick</code>,
+  rescan/skip logic and <code>_run_workflow</code> are unit-tested)</li>
+</ul>
+<p><strong>Transport-only branches</strong> — reachable only through a real network client:</p>
+<ul>
+<li>the <code>CancelledError</code> branch of the SSE generator in <code>ui/api/events.py</code>
+  (client disconnect)</li>
+</ul>
+<p><strong>Environment-gated paths</strong> — dead in the default test environment because an
+optional dependency is absent; not dead in the matrix:</p>
+<ul>
+<li><code>telemetry.py</code> OTel emission paths (require the <code>telemetry</code> extra)</li>
+<li>protobuf decode paths in <code>importers/collector.py</code> (require
+  <code>opentelemetry-proto</code>; the 415 gate is tested)</li>
+<li><code>observe_crewai.py</code> attribution paths — covered by the dedicated
+  <code>observe-crewai</code> CI job that installs <code>crewai</code>; only a local-environment
+  boundary</li>
+</ul>
+<p>Anything not listed here is expected to be tested; a new zero in the coverage
+report is either a bug in the test setup or a candidate for this list — with
+its one-sentence justification written down, not silently accepted.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "navigation.top", "header.autohide"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>
