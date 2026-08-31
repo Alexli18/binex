@@ -53,6 +53,14 @@ This is the first feature where Binex spends *your* tokens, so it is never autom
 - The judge model is configurable; point `--semantic-model` at a local Ollama model for a fully no-cloud run (cost shown as free).
 - A judge error or unparseable reply **fails safe** — the aspect is conservatively reported as *changed*, never silently collapsed.
 
+### In the Web UI
+
+The Compare page has a **Semantic** checkbox with the same guarantee: ticking it does not start anything. The page first calls `POST /api/v1/diff/estimate`, shows the judge calls, model, token count and dollar cost in a dialog, and runs only on an explicit **Run analysis**. Cancelling costs nothing. The browser is not a way around the confirmation the CLI enforces.
+
+Verdicts appear above the node table, one line per node — `⚠ meaningful change: facts` or `· cosmetic only`, with the changed questions and their confidence beneath.
+
+The Bisect page has the same checkbox and dialog (`POST /api/v1/bisect/estimate`); see [`binex bisect --semantic`](bisect.md#--semantic--let-a-model-decide-text-nodes).
+
 ```
 $ binex diff run_a run_b --semantic
 Semantic analysis: 2 judge call(s) on 'gpt-4o-mini', ~1400 tokens, estimated cost ~$0.0006.
