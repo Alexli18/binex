@@ -59,7 +59,7 @@ The Compare page has a **Semantic** checkbox with the same guarantee: ticking it
 
 Verdicts appear above the node table, one line per node — `⚠ meaningful change: facts` or `· cosmetic only`, with the changed questions and their confidence beneath.
 
-The Bisect page has the same checkbox and dialog (`POST /api/v1/bisect/estimate`); see [`binex bisect --semantic`](bisect.md#--semantic--let-a-model-decide-text-nodes).
+The Bisect page has the same checkbox and dialog (`POST /api/v1/bisect/estimate`); see [`binex bisect --semantic`](bisect.md#-semantic-let-a-model-decide-text-nodes).
 
 ```
 $ binex diff run_a run_b --semantic

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import json
-import re
 from typing import Any
 
+from binex.eval import checks
 from binex.eval.models import AssertResult, EvalAssert, EvalCase
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
@@ -50,15 +50,13 @@ async def _get_content_for_node(
     record = record_by_node.get(node_id)
     if record is None:
         return None
-    import json as _json
     parts: list[str] = []
     for art_id in record.output_artifact_refs:
         art = await art_store.get(art_id)
         if art is not None:
-            content = art.content
-            if isinstance(content, dict):
-                content = _json.dumps(content)
-            parts.append(content or "")
+            # Shared renderer: a check must see the same text here as it would
+            # as a per-node assertion.
+            parts.append(checks.stringify(art.content))
     return "\n".join(parts) if parts else ""
 
 
@@ -97,7 +95,7 @@ async def _evaluate_one(
 
     try:
         if t == "contains":
-            ok = assert_def.value in combined  # type: ignore[operator]
+            ok = checks.check_contains(combined, assert_def.value)  # type: ignore[arg-type]
             return AssertResult(
                 assert_index=idx, type=t,
                 status="passed" if ok else "failed",
@@ -105,7 +103,7 @@ async def _evaluate_one(
             )
 
         if t == "not_contains":
-            ok = assert_def.value not in combined  # type: ignore[operator]
+            ok = checks.check_not_contains(combined, assert_def.value)  # type: ignore[arg-type]
             return AssertResult(
                 assert_index=idx, type=t,
                 status="passed" if ok else "failed",
@@ -116,7 +114,7 @@ async def _evaluate_one(
             )
 
         if t == "regex":
-            ok = bool(re.search(assert_def.pattern, combined))  # type: ignore[arg-type]
+            ok = checks.check_regex(combined, assert_def.pattern)  # type: ignore[arg-type]
             return AssertResult(
                 assert_index=idx, type=t,
                 status="passed" if ok else "failed",

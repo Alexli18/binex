@@ -89,8 +89,7 @@ nav:
     - Binary Artifacts: features/binary-artifacts.md
     - Workspace: features/workspace.md
     - Dynamic Fan-out (foreach): features/foreach.md
-    - Assertions & Golden Runs: features/eval.md
-    - Eval Suites: eval.md
+    - Eval & Assertions: eval.md
     - MCP Server: mcp-server.md
     - Import from OTel: import.md
     - Tools & MCP: features/tools-mcp.md

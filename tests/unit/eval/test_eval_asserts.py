@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from binex.eval.asserts import evaluate_asserts
 from binex.eval.models import EvalAssert, EvalCase
+from binex.eval.suite_asserts import evaluate_asserts
 from binex.models.artifact import Artifact, Lineage
 from binex.models.execution import ExecutionRecord, RunSummary
 from binex.models.task import TaskStatus
@@ -256,7 +256,7 @@ async def test_llm_judge_error_on_bad_response(monkeypatch):
     async def _bad_completion(*args, **kwargs):
         raise RuntimeError("LLM unreachable")
 
-    import binex.eval.asserts as asserts_mod
+    import binex.eval.suite_asserts as asserts_mod
     monkeypatch.setattr(asserts_mod, "_call_llm_judge", _bad_completion)
 
     case = EvalCase(
@@ -277,7 +277,7 @@ async def test_llm_judge_pass(monkeypatch):
     async def _good_completion(content: str, prompt: str, model: str) -> dict:
         return {"pass": True, "reason": "looks good"}
 
-    import binex.eval.asserts as asserts_mod
+    import binex.eval.suite_asserts as asserts_mod
     monkeypatch.setattr(asserts_mod, "_call_llm_judge", _good_completion)
 
     case = EvalCase(
@@ -296,7 +296,7 @@ async def test_llm_judge_fail(monkeypatch):
     async def _fail_completion(content: str, prompt: str, model: str) -> dict:
         return {"pass": False, "reason": "does not cite sources"}
 
-    import binex.eval.asserts as asserts_mod
+    import binex.eval.suite_asserts as asserts_mod
     monkeypatch.setattr(asserts_mod, "_call_llm_judge", _fail_completion)
 
     case = EvalCase(

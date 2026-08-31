@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from binex.eval.assertions import evaluate_assertions, summarize_failures
 from binex.eval.judge import parse_verdict, resolve_judge_model
+from binex.eval.node_assertions import evaluate_assertions, summarize_failures
 from binex.models.assertion import Assertion
 
 

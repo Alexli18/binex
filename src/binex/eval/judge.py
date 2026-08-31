@@ -2,7 +2,7 @@
 
 A thin, dependency-light judge: given a rubric and a node's output, ask a model
 to answer PASS or FAIL with a one-line reason. Isolated from
-:mod:`binex.eval.assertions` (which stays pure) and injected as a ``JudgeFn``.
+:mod:`binex.eval.node_assertions` (which stays pure) and injected as a ``JudgeFn``.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import os
 
-from binex.eval.assertions import JudgeFn
+from binex.eval.node_assertions import JudgeFn
 from binex.models.assertion import Assertion
 
 logger = logging.getLogger(__name__)

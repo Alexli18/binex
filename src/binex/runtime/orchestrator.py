@@ -800,8 +800,8 @@ class Orchestrator:
         """Evaluate a node's declared assertions. Returns an error message if any
         fail (so the caller can fail the node), or None when all pass.
         """
-        from binex.eval.assertions import evaluate_assertions, summarize_failures
         from binex.eval.judge import make_judge
+        from binex.eval.node_assertions import evaluate_assertions, summarize_failures
 
         content = output_artifacts[0].content if output_artifacts else ""
         latency_ms = now_ms() - start_ms

@@ -274,6 +274,18 @@ async def _baselines_async(eval_suite: Any, json_out: bool, exec_store: Any) -> 
 # ---------------------------------------------------------------------------
 
 
+
+async def _resolve_baseline_ref(ref: str) -> str:
+    """Resolve a --baseline value, which may name a blessed suite baseline."""
+    from binex.eval.baselines import resolve_baseline
+
+    exec_store, _ = _get_stores()
+    try:
+        return await resolve_baseline(ref, exec_store)
+    finally:
+        await exec_store.close()
+
+
 @eval_group.command("golden", epilog="""\b
 Examples:
   binex eval golden workflow.yaml                        Run + enforce node assertions
@@ -284,7 +296,8 @@ Examples:
 @click.argument("workflow_file", type=click.Path(exists=True))
 @click.option("--var", multiple=True, help="Variable substitution key=value")
 @click.option("--baseline", default=None,
-              help="Run ID of a golden run to diff against")
+              help="Golden run to diff against: a run ID, or SUITE:CASE naming "
+                   "a baseline blessed with `binex eval bless`")
 @click.option("--min-similarity", type=float, default=1.0, show_default=True,
               help="Content similarity floor vs baseline (1.0 = must be identical)")
 @click.option("--max-latency-delta-ms", type=float, default=None,
@@ -293,8 +306,8 @@ Examples:
               help="Fail if total cost grows by more than this")
 @click.option("--gateway", "gateway_url", default=None,
               help="A2A Gateway URL for routing a2a:// agents")
-@click.option("--json-output", "--json", "json_out", is_flag=True,
-              help="Output the report as JSON")
+@click.option("--json", "--json-output", "json_out", is_flag=True,
+              help="Output as JSON")
 def eval_golden(
     workflow_file: str,
     var: tuple[str, ...],
@@ -309,6 +322,7 @@ def eval_golden(
     import json
 
     from binex.cli.run import _parse_vars
+    from binex.eval.baselines import BaselineNotFoundError
     from binex.eval.golden import EvalError, EvalThresholds, run_eval
 
     user_vars = _parse_vars(var)
@@ -317,6 +331,15 @@ def eval_golden(
         max_latency_delta_ms=max_latency_delta_ms,
         max_cost_delta=max_cost_delta,
     )
+
+    if baseline is not None:
+        # A blessed suite baseline and a golden run are the same thing; accept
+        # either way of naming one.
+        try:
+            baseline = asyncio.run(_resolve_baseline_ref(baseline))
+        except BaselineNotFoundError as exc:
+            click.echo(f"Error: {exc}", err=True)
+            sys.exit(2)
 
     try:
         report = asyncio.run(run_eval(
