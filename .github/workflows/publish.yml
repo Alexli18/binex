@@ -29,16 +29,31 @@ jobs:
           pip install build twine
           python -m build
 
+      # An absent token reaches twine as an empty password and comes back as a
+      # bare "403 Forbidden" after a successful build — which reads like a
+      # rejected upload, not a missing secret. TEST_PYPI_API_TOKEN had in fact
+      # never been set: every previous release was a full release, so this step
+      # had never run and looked functional. Check first and say so.
       - name: Publish to TestPyPI (pre-release)
         if: github.event.release.prerelease
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        run: twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+        run: |
+          if [ -z "$TWINE_PASSWORD" ]; then
+            echo "::error::TEST_PYPI_API_TOKEN is not set for the 'binex-prod' environment. Add it under Settings → Environments → binex-prod, or publish a full release instead of a pre-release."
+            exit 1
+          fi
+          twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
       - name: Publish to PyPI
         if: "!github.event.release.prerelease"
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: twine upload dist/*
+        run: |
+          if [ -z "$TWINE_PASSWORD" ]; then
+            echo "::error::PYPI_API_TOKEN is not set for the 'binex-prod' environment. Add it under Settings → Environments → binex-prod."
+            exit 1
+          fi
+          twine upload dist/*
