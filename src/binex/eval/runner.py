@@ -7,7 +7,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from binex.adapters.scripted_input import ScriptedInputAdapter
-from binex.eval.asserts import evaluate_asserts
 from binex.eval.compare import compare_case
 from binex.eval.models import (
     EvalCase,
@@ -15,6 +14,7 @@ from binex.eval.models import (
     EvalResult,
     EvalSuite,
 )
+from binex.eval.suite_asserts import evaluate_asserts
 from binex.stores.artifact_store import ArtifactStore
 from binex.stores.execution_store import ExecutionStore
 from binex.workflow_spec.loader import load_workflow

@@ -8,10 +8,10 @@ stays free of network/model concerns and fully unit-testable.
 
 from __future__ import annotations
 
-import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
+from binex.eval import checks
 from binex.models.assertion import Assertion
 
 # (assertion, content) -> (passed, reason). The judge reads the rubric from
@@ -33,18 +33,22 @@ class AssertionOutcome:
 
 
 def _check_content(a: Assertion, content: str) -> str | None:
-    """Return a failure detail for content checks, or None if all pass."""
-    if a.contains is not None and a.contains not in content:
+    """Return a failure detail for content checks, or None if all pass.
+
+    The comparisons come from :mod:`binex.eval.checks`, shared with suite
+    asserts, so `contains` means the same thing in both places.
+    """
+    if a.contains is not None and not checks.check_contains(content, a.contains):
         return f"output does not contain {a.contains!r}"
-    if a.lacks is not None and a.lacks in content:
+    if a.lacks is not None and not checks.check_not_contains(content, a.lacks):
         return f"output contains forbidden {a.lacks!r}"
-    if a.matches is not None and re.search(a.matches, content) is None:
+    if a.matches is not None and not checks.check_regex(content, a.matches):
         return f"output does not match /{a.matches}/"
-    if a.equals is not None and content != a.equals:
+    if a.equals is not None and not checks.check_equals(content, a.equals):
         return f"output does not equal {a.equals!r}"
-    if a.min_length is not None and len(content) < a.min_length:
+    if a.min_length is not None and not checks.check_min_length(content, a.min_length):
         return f"output length {len(content)} < min_length {a.min_length}"
-    if a.max_length is not None and len(content) > a.max_length:
+    if a.max_length is not None and not checks.check_max_length(content, a.max_length):
         return f"output length {len(content)} > max_length {a.max_length}"
     return None
 
@@ -59,12 +63,13 @@ def _check_metrics(a: Assertion, cost: float, latency_ms: int) -> str | None:
 
 
 def _stringify(content: object) -> str:
-    """Normalize a node's output artifact content to text for content checks."""
-    if isinstance(content, str):
-        return content
-    if content is None:
-        return ""
-    return str(content)
+    """Normalize a node's output artifact content to text for content checks.
+
+    Delegates to the shared renderer — this used to be `str(content)`, which
+    produced single-quoted, unparseable output and made an identically-written
+    check disagree with the same check in an eval suite.
+    """
+    return checks.stringify(content)
 
 
 async def evaluate_assertions(

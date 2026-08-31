@@ -219,7 +219,7 @@ CAO providers are subscription-based — per-token cost is not available. Cost v
 ## Known Limitations
 
 - **Output capped at 200 lines**: CAO uses tmux with `TMUX_HISTORY_LINES=200`. Very long agent outputs may be truncated in `cao_raw_output`.
-- **Handoff only**: CAO's `assign` and `send_message` are not exposed — use Binex DAG parallelism instead (see [Parallel Workers](#parallel-workers) below).
+- **Handoff only**: CAO's `assign` and `send_message` are not exposed — use Binex DAG parallelism instead (see [Parallel Workers](#parallel-workers-recommended-pattern) below).
 - **No authentication**: CAO server access is unauthenticated in v1.
 - **No nested CAO**: A CAO node cannot invoke another CAO node.
 - **Local server only**: Binex does not start or manage the `cao-server` process.
