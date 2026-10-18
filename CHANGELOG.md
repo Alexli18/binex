@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Upgrade notes
+
+- **Node assertions now see artifact content as JSON, not `str()`.** Node assertions (`assertions:` on a node) and eval suite asserts used to stringify a structured artifact differently — `str(dict)` versus `json.dumps` — so the same `contains:` check could pass in one and fail in the other. Both now use JSON, the form shown in artifact files and `--json`. A node assertion written against the single-quoted Python form (`contains: "'decision'"`) must switch to double quotes (`contains: '"decision"'`). Checks on bare values (`contains: approved`) are unaffected. (#138)
+
+### Features
+
+- **`binex eval golden --baseline SUITE:CASE`** — a blessed eval baseline can be used as the golden run directly instead of looking up and pasting its run id; an unblessed case exits 2 naming the `bless` command that fixes it. `--json` is accepted on `golden` too (`--json-output` stays as an alias). (#138)
+
+### Chore
+
+- **One check engine for both eval entry points** — `eval/checks.py` holds `contains`/`not_contains`/`regex`/`equals` and the stringification for node assertions and suite asserts alike; `asserts.py`/`assertions.py` are renamed `suite_asserts.py`/`node_assertions.py`. The two YAML schemas stay distinct for now. The eval docs are merged into one page. (#119, #138)
+
 ## v0.8.1
 
 *2026-10-18 — semantic analysis reaches the Web UI, and Scaffold stops losing work. No behaviour changes: everything new is opt-in.*
