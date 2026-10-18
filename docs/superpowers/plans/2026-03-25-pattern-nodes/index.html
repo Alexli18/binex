@@ -1,0 +1,3353 @@
+<!DOCTYPE html><html lang="en" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Debuggable runtime for AI agent pipelines">
+      
+      
+      
+        <link rel="canonical" href="https://alexli18.github.io/binex/docs/superpowers/plans/2026-03-25-pattern-nodes/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Pattern Nodes Implementation Plan - Binex</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <link href="../../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#pattern-nodes-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Binex" class="md-header__button md-logo" aria-label="Binex" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7h-2.81c-.45-.8-1.07-1.5-1.82-2L16 3.41 14.59 2l-2.17 2.17a6 6 0 0 0-2.83 0L7.41 2 6 3.41 7.62 5c-.75.5-1.36 1.21-1.81 2H3v2h2.09c-.06.33-.09.66-.09 1v1H3v2h2v1c0 .34.03.67.09 1H3v2h2.81A6 6 0 0 0 13 19.65V19c0-2.54 1.61-4.8 4-5.65V13h2v-2h-2v-1c0-.34-.03-.67-.09-1H19zm-6 8H9v-2h4zm0-4H9V9h4zm4.75 11.16-2.75-3L16.16 18l1.59 1.59L21.34 16l1.16 1.41z"></path></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Binex
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Pattern Nodes Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom" aria-hidden="true" type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Alexli18/binex" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    Alexli18/binex
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Binex" class="md-nav__button md-logo" aria-label="Binex" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 7h-2.81c-.45-.8-1.07-1.5-1.82-2L16 3.41 14.59 2l-2.17 2.17a6 6 0 0 0-2.83 0L7.41 2 6 3.41 7.62 5c-.75.5-1.36 1.21-1.81 2H3v2h2.09c-.06.33-.09.66-.09 1v1H3v2h2v1c0 .34.03.67.09 1H3v2h2.81A6 6 0 0 0 13 19.65V19c0-2.54 1.61-4.8 4-5.65V13h2v-2h-2v-1c0-.34-.03-.67-.09-1H19zm-6 8H9v-2h4zm0-4H9V9h4zm4.75 11.16-2.75-3L16.16 18l1.59 1.59L21.34 16l1.16 1.41z"></path></svg>
+
+    </a>
+    Binex
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Alexli18/binex" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    Alexli18/binex
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../demo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs LangGraph / CrewAI / AutoGen
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5">
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/debugging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debugging &amp; Observability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6">
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../concepts/agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../concepts/workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../concepts/artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../concepts/execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../concepts/lineage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lineage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7">
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/run/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/debug/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    debug
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    trace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/replay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    replay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/resume/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    resume
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/diff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    diff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/freeze/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    freeze
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    dev
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/doctor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    doctor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/validate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    validate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/scaffold/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    scaffold
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/cost/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cost
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/clean/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    clean
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/explore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    explore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/diagnose/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    diagnose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/bisect/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bisect
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/gateway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    gateway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ui
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/scheduler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    scheduler
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8">
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stores
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/telemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9">
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../features/observer-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observer Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../features/binary-artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Binary Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../features/workspace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workspace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../features/foreach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dynamic Fan-out (foreach)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval &amp; Assertions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../import/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import from OTel
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../features/tools-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools &amp; MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../features/cao-adapter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CAO Adapter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs LangSmith / Langfuse / n8n
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10">
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../workflows/format/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../workflows/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../workflows/cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../multi-provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Provider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11">
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev/otel-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OTel Span Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dev/loop-container-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Loop Container UI Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../blog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#file-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Structure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-files-python-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New files (Python backend):
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-files-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New files (tests):
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-files-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New files (frontend):
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modified-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modified files:
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-1-pattern-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 1: Pattern Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-2-pattern-template-interface-critic-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 2: Pattern Template Interface + Critic Template
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-3-remaining-8-pattern-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 3: Remaining 8 Pattern Templates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-4-patternexpander-yaml-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 4: PatternExpander + YAML Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-5-example-yaml-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 5: Example YAML Workflows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-6-frontend-pattern-palette" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 6: Frontend — Pattern Palette
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-7-frontend-pattern-group-collapseexpand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 7: Frontend — Pattern Group (Collapse/Expand)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-8-frontend-pattern-config-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 8: Frontend — Pattern Config Panel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-9-final-integration-full-test-suite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 9: Final Integration + Full Test Suite
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="pattern-nodes-implementation-plan">Pattern Nodes Implementation Plan</h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Add 9 pattern macro-nodes (Critic, Debate, Best-of-N, Reflexion, Scatter, FSM, Constitutional, Chain-of-Verification, Plan-Execute) that expand into sub-DAGs at YAML parse time, with collapsible UI groups.</p>
+<p><strong>Architecture:</strong> PatternExpander reads <code>pattern:</code> fields in YAML, generates real NodeSpec + edges, merges into WorkflowSpec before DAG construction. UI shows collapsed/expanded groups. No new runtime primitives — patterns use existing LLM nodes, edges, and back_edges.</p>
+<p><strong>Tech Stack:</strong> Python 3.11 (Pydantic v2, pytest), React 18 + TypeScript (ReactFlow, Tailwind)</p>
+<p><strong>Spec:</strong> <code>docs/superpowers/specs/2026-03-25-pattern-nodes-design.md</code></p>
+<hr>
+<h2 id="file-structure">File Structure</h2>
+<h3 id="new-files-python-backend">New files (Python backend):</h3>
+<ul>
+<li><code>src/binex/patterns/__init__.py</code> — exports <code>expand_patterns()</code></li>
+<li><code>src/binex/patterns/expander.py</code> — PatternExpander: reads pattern specs, produces NodeSpecs + edges</li>
+<li><code>src/binex/patterns/models.py</code> — PatternSpec, StepConfig Pydantic models</li>
+<li><code>src/binex/patterns/templates/__init__.py</code> — registry of all pattern templates</li>
+<li><code>src/binex/patterns/templates/critic.py</code> — Critic template</li>
+<li><code>src/binex/patterns/templates/debate.py</code> — Debate template</li>
+<li><code>src/binex/patterns/templates/best_of_n.py</code> — Best-of-N template</li>
+<li><code>src/binex/patterns/templates/reflexion.py</code> — Reflexion template</li>
+<li><code>src/binex/patterns/templates/scatter.py</code> — Scatter template</li>
+<li><code>src/binex/patterns/templates/fsm.py</code> — FSM template</li>
+<li><code>src/binex/patterns/templates/constitutional.py</code> — Constitutional template</li>
+<li><code>src/binex/patterns/templates/chain_of_verification.py</code> — Chain-of-Verification template</li>
+<li><code>src/binex/patterns/templates/plan_execute.py</code> — Plan-Execute template</li>
+</ul>
+<h3 id="new-files-tests">New files (tests):</h3>
+<ul>
+<li><code>tests/unit/test_pattern_models.py</code> — PatternSpec/StepConfig validation</li>
+<li><code>tests/unit/test_pattern_expander.py</code> — expansion logic for all 9 patterns</li>
+<li><code>tests/unit/test_pattern_integration.py</code> — end-to-end: YAML → expand → DAG → validate</li>
+<li><code>examples/patterns/critic.yaml</code> — example workflow using critic pattern</li>
+<li><code>examples/patterns/debate.yaml</code> — example workflow using debate pattern</li>
+</ul>
+<h3 id="new-files-frontend">New files (frontend):</h3>
+<ul>
+<li><code>ui/src/components/dag/PatternGroup.tsx</code> — collapsible pattern group container</li>
+<li><code>ui/src/components/editor/PatternConfig.tsx</code> — pattern-specific settings panel</li>
+</ul>
+<h3 id="modified-files">Modified files:</h3>
+<ul>
+<li><code>src/binex/workflow_spec/loader.py</code> — call <code>expand_patterns()</code> before DAG construction</li>
+<li><code>src/binex/models/workflow.py</code> — add <code>pattern</code> field to NodeSpec, add <code>group</code> metadata field</li>
+<li><code>ui/src/components/editor/NodePalette.tsx</code> — add 9 pattern entries</li>
+<li><code>ui/src/lib/yaml-to-graph.ts</code> — detect pattern nodes, generate group metadata</li>
+<li><code>ui/src/components/editor/EditableNode.tsx</code> — render PatternConfig for pattern nodes</li>
+</ul>
+<hr>
+<h3 id="task-1-pattern-models">Task 1: Pattern Models</h3>
+<p><strong>Files:</strong>
+- Create: <code>src/binex/patterns/__init__.py</code>
+- Create: <code>src/binex/patterns/models.py</code>
+- Test: <code>tests/unit/test_pattern_models.py</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Write tests for PatternSpec model</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># tests/unit/test_pattern_models.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.patterns.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PatternSpec</span><span class="p">,</span> <span class="n">StepConfig</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TestStepConfig</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_minimal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">StepConfig</span><span class="p">(</span><span class="n">prompt</span><span class="o">=</span><span class="s2">"Do the thing"</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">prompt</span> <span class="o">==</span> <span class="s2">"Do the thing"</span>
+        <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_with_model_override</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">StepConfig</span><span class="p">(</span><span class="n">prompt</span><span class="o">=</span><span class="s2">"Draft it"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">"llm://claude-haiku-4-5"</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="s2">"llm://claude-haiku-4-5"</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TestPatternSpec</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_critic_minimal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">PatternSpec</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"researcher"</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">"critic"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">"llm://claude-sonnet-4-6"</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">p</span><span class="o">.</span><span class="n">pattern</span> <span class="o">==</span> <span class="s2">"critic"</span>
+        <span class="k">assert</span> <span class="n">p</span><span class="o">.</span><span class="n">config</span> <span class="o">==</span> <span class="p">{}</span>
+        <span class="k">assert</span> <span class="n">p</span><span class="o">.</span><span class="n">steps</span> <span class="o">==</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_critic_with_steps</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">PatternSpec</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="s2">"researcher"</span><span class="p">,</span>
+            <span class="n">pattern</span><span class="o">=</span><span class="s2">"critic"</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="s2">"llm://claude-sonnet-4-6"</span><span class="p">,</span>
+            <span class="n">system_prompt</span><span class="o">=</span><span class="s2">"Research X"</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">"rounds"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+            <span class="n">steps</span><span class="o">=</span><span class="p">{</span><span class="s2">"draft"</span><span class="p">:</span> <span class="n">StepConfig</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"llm://claude-haiku-4-5"</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="s2">"Write draft"</span><span class="p">)},</span>
+        <span class="p">)</span>
+        <span class="k">assert</span> <span class="n">p</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">"rounds"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="k">assert</span> <span class="n">p</span><span class="o">.</span><span class="n">steps</span><span class="p">[</span><span class="s2">"draft"</span><span class="p">]</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="s2">"llm://claude-haiku-4-5"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_unknown_pattern_rejected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="s2">"Unknown pattern"</span><span class="p">):</span>
+            <span class="n">PatternSpec</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">"nonexistent"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">"llm://m"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_debate_requires_agents_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">PatternSpec</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"d"</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">"debate"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">"llm://m"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">"agents"</span><span class="p">:</span> <span class="mi">3</span><span class="p">})</span>
+        <span class="k">assert</span> <span class="n">p</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">"agents"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run tests — verify they fail</strong></li>
+</ul>
+<p>Run: <code>cd /home/jetson/.openclaw/workspace/binex &amp;&amp; python -m pytest tests/unit/test_pattern_models.py -v</code>
+Expected: ImportError (module doesn't exist)</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement PatternSpec and StepConfig</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># src/binex/patterns/__init__.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.patterns.expander</span><span class="w"> </span><span class="kn">import</span> <span class="n">expand_patterns</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"expand_patterns"</span><span class="p">]</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># src/binex/patterns/models.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">field_validator</span>
+
+<span class="n">VALID_PATTERNS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span>
+    <span class="s2">"critic"</span><span class="p">,</span> <span class="s2">"debate"</span><span class="p">,</span> <span class="s2">"best_of_n"</span><span class="p">,</span> <span class="s2">"reflexion"</span><span class="p">,</span> <span class="s2">"scatter"</span><span class="p">,</span>
+    <span class="s2">"fsm"</span><span class="p">,</span> <span class="s2">"constitutional"</span><span class="p">,</span> <span class="s2">"chain_of_verification"</span><span class="p">,</span> <span class="s2">"plan_execute"</span><span class="p">,</span>
+<span class="p">})</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StepConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PatternSpec</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">steps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">StepConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">depends_on</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">budget</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"pattern"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_pattern</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_PATTERNS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown pattern: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">. Valid: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">VALID_PATTERNS</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run tests — verify they pass</strong></li>
+</ul>
+<p>Run: <code>python -m pytest tests/unit/test_pattern_models.py -v</code>
+Expected: All pass</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>src/binex/patterns/<span class="w"> </span>tests/unit/test_pattern_models.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(patterns): add PatternSpec and StepConfig models"</span>
+</code></pre></div>
+<hr>
+<h3 id="task-2-pattern-template-interface-critic-template">Task 2: Pattern Template Interface + Critic Template</h3>
+<p><strong>Files:</strong>
+- Create: <code>src/binex/patterns/templates/__init__.py</code>
+- Create: <code>src/binex/patterns/templates/critic.py</code>
+- Test: <code>tests/unit/test_pattern_expander.py</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Write tests for Critic expansion</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># tests/unit/test_pattern_expander.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.patterns.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PatternSpec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.patterns.templates.critic</span><span class="w"> </span><span class="kn">import</span> <span class="n">expand_critic</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TestCriticExpansion</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_basic_expansion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">PatternSpec</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"r"</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">"critic"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">"llm://claude-sonnet-4-6"</span><span class="p">)</span>
+        <span class="n">nodes</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">back_edges</span> <span class="o">=</span> <span class="n">expand_critic</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">}</span>
+        <span class="k">assert</span> <span class="n">ids</span> <span class="o">==</span> <span class="p">{</span><span class="s2">"r.draft"</span><span class="p">,</span> <span class="s2">"r.critique"</span><span class="p">,</span> <span class="s2">"r.refine"</span><span class="p">}</span>
+
+        <span class="c1"># All nodes use the default model</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">n</span><span class="o">.</span><span class="n">agent</span> <span class="o">==</span> <span class="s2">"llm://claude-sonnet-4-6"</span>
+
+        <span class="c1"># Edges: draft -&gt; critique -&gt; refine</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="s2">"r.draft"</span><span class="p">,</span> <span class="s2">"r.critique"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">edges</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="s2">"r.critique"</span><span class="p">,</span> <span class="s2">"r.refine"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">edges</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_step_model_override</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">PatternSpec</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="s2">"r"</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">"critic"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">"llm://claude-sonnet-4-6"</span><span class="p">,</span>
+            <span class="n">steps</span><span class="o">=</span><span class="p">{</span><span class="s2">"draft"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"model"</span><span class="p">:</span> <span class="s2">"llm://claude-haiku-4-5"</span><span class="p">,</span> <span class="s2">"prompt"</span><span class="p">:</span> <span class="s2">"Quick draft"</span><span class="p">}},</span>
+        <span class="p">)</span>
+        <span class="n">nodes</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">back_edges</span> <span class="o">=</span> <span class="n">expand_critic</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">draft</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">"r.draft"</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">draft</span><span class="o">.</span><span class="n">agent</span> <span class="o">==</span> <span class="s2">"llm://claude-haiku-4-5"</span>
+        <span class="k">assert</span> <span class="s2">"Quick draft"</span> <span class="ow">in</span> <span class="n">draft</span><span class="o">.</span><span class="n">system_prompt</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_rounds_create_back_edge</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">PatternSpec</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"r"</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">"critic"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">"llm://m"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">"rounds"</span><span class="p">:</span> <span class="mi">3</span><span class="p">})</span>
+        <span class="n">nodes</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">back_edges</span> <span class="o">=</span> <span class="n">expand_critic</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">back_edges</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="n">be</span> <span class="o">=</span> <span class="n">back_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="n">be</span><span class="p">[</span><span class="s2">"node_id"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"r.refine"</span>
+        <span class="k">assert</span> <span class="n">be</span><span class="p">[</span><span class="s2">"target"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"r.draft"</span>
+        <span class="k">assert</span> <span class="n">be</span><span class="p">[</span><span class="s2">"max_iterations"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_group_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">PatternSpec</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"r"</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">"critic"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">"llm://m"</span><span class="p">)</span>
+        <span class="n">nodes</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">expand_critic</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">n</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"_pattern_group"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"r"</span>
+            <span class="k">assert</span> <span class="n">n</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"_pattern_type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"critic"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_external_depends_wired_to_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">PatternSpec</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"r"</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">"critic"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">"llm://m"</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"upstream"</span><span class="p">])</span>
+        <span class="n">nodes</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">expand_critic</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">draft</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">"r.draft"</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="s2">"upstream"</span> <span class="ow">in</span> <span class="n">draft</span><span class="o">.</span><span class="n">depends_on</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run tests — verify they fail</strong></li>
+</ul>
+<p>Run: <code>python -m pytest tests/unit/test_pattern_expander.py::TestCriticExpansion -v</code>
+Expected: ImportError</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement template interface and Critic template</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># src/binex/patterns/templates/__init__.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.patterns.templates.critic</span><span class="w"> </span><span class="kn">import</span> <span class="n">expand_critic</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">binex.patterns.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PatternSpec</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">binex.models.workflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">NodeSpec</span><span class="p">,</span> <span class="n">BackEdge</span>
+
+<span class="n">ExpandResult</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="s2">"NodeSpec"</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span>
+
+<span class="n">TEMPLATE_REGISTRY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"critic"</span><span class="p">:</span> <span class="n">expand_critic</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">expand_pattern</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="s2">"PatternSpec"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExpandResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Expand a pattern spec into nodes, edges, and back_edges."""</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">TEMPLATE_REGISTRY</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">pattern</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No template for pattern: </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">pattern</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># src/binex/patterns/templates/critic.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.models.workflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">NodeSpec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.patterns.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PatternSpec</span>
+
+<span class="n">DEFAULT_PROMPTS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"draft"</span><span class="p">:</span> <span class="s2">"Based on the input, produce a thorough draft."</span><span class="p">,</span>
+    <span class="s2">"critique"</span><span class="p">:</span> <span class="s2">"Review the draft. List specific weaknesses, gaps, and errors."</span><span class="p">,</span>
+    <span class="s2">"refine"</span><span class="p">:</span> <span class="s2">"Revise the draft addressing each critique point."</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">expand_critic</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">PatternSpec</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Expand critic pattern into draft → critique → refine nodes."""</span>
+    <span class="n">rounds</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"rounds"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">group_meta</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"_pattern_group"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"_pattern_type"</span><span class="p">:</span> <span class="s2">"critic"</span><span class="p">}</span>
+
+    <span class="k">for</span> <span class="n">step_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"draft"</span><span class="p">,</span> <span class="s2">"critique"</span><span class="p">,</span> <span class="s2">"refine"</span><span class="p">):</span>
+        <span class="n">step_cfg</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">steps</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">step_name</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="p">(</span><span class="n">step_cfg</span><span class="o">.</span><span class="n">model</span> <span class="k">if</span> <span class="n">step_cfg</span> <span class="ow">and</span> <span class="n">step_cfg</span><span class="o">.</span><span class="n">model</span> <span class="k">else</span> <span class="n">spec</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">prompt_parts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">:</span>
+            <span class="n">prompt_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">system_prompt</span><span class="p">)</span>
+        <span class="n">step_prompt</span> <span class="o">=</span> <span class="n">step_cfg</span><span class="o">.</span><span class="n">prompt</span> <span class="k">if</span> <span class="n">step_cfg</span> <span class="ow">and</span> <span class="n">step_cfg</span><span class="o">.</span><span class="n">prompt</span> <span class="k">else</span> <span class="n">DEFAULT_PROMPTS</span><span class="p">[</span><span class="n">step_name</span><span class="p">]</span>
+        <span class="n">prompt_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">step_prompt</span><span class="p">)</span>
+
+        <span class="n">node</span> <span class="o">=</span> <span class="n">NodeSpec</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">agent</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">system_prompt</span><span class="o">=</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">prompt_parts</span><span class="p">),</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">inputs</span> <span class="k">if</span> <span class="n">step_name</span> <span class="o">==</span> <span class="s2">"draft"</span> <span class="k">else</span> <span class="p">{},</span>
+            <span class="n">outputs</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">outputs</span> <span class="k">if</span> <span class="n">step_name</span> <span class="o">==</span> <span class="s2">"refine"</span> <span class="k">else</span> <span class="p">[</span><span class="s2">"result"</span><span class="p">],</span>
+            <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">group_meta</span><span class="p">},</span>
+            <span class="n">budget</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">budget</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="c1"># Wire depends_on</span>
+    <span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">depends_on</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">depends_on</span><span class="p">)</span>  <span class="c1"># draft inherits external deps</span>
+    <span class="n">nodes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">depends_on</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">.draft"</span><span class="p">]</span>
+    <span class="n">nodes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">depends_on</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">.critique"</span><span class="p">]</span>
+
+    <span class="c1"># Edges</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">.draft"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">.critique"</span><span class="p">),</span>
+        <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">.critique"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">.refine"</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Back-edge for multiple rounds</span>
+    <span class="n">back_edges</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">rounds</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">back_edges</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+            <span class="s2">"node_id"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">.refine"</span><span class="p">,</span>
+            <span class="s2">"target"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">.draft"</span><span class="p">,</span>
+            <span class="s2">"max_iterations"</span><span class="p">:</span> <span class="n">rounds</span><span class="p">,</span>
+            <span class="s2">"when"</span><span class="p">:</span> <span class="s2">"true"</span><span class="p">,</span>
+        <span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">back_edges</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run tests — verify they pass</strong></li>
+</ul>
+<p>Run: <code>python -m pytest tests/unit/test_pattern_expander.py::TestCriticExpansion -v</code>
+Expected: All pass</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>src/binex/patterns/templates/<span class="w"> </span>tests/unit/test_pattern_expander.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(patterns): critic template — draft→critique→refine expansion"</span>
+</code></pre></div>
+<hr>
+<h3 id="task-3-remaining-8-pattern-templates">Task 3: Remaining 8 Pattern Templates</h3>
+<p><strong>Files:</strong>
+- Create: <code>src/binex/patterns/templates/debate.py</code>
+- Create: <code>src/binex/patterns/templates/best_of_n.py</code>
+- Create: <code>src/binex/patterns/templates/reflexion.py</code>
+- Create: <code>src/binex/patterns/templates/scatter.py</code>
+- Create: <code>src/binex/patterns/templates/fsm.py</code>
+- Create: <code>src/binex/patterns/templates/constitutional.py</code>
+- Create: <code>src/binex/patterns/templates/chain_of_verification.py</code>
+- Create: <code>src/binex/patterns/templates/plan_execute.py</code>
+- Modify: <code>src/binex/patterns/templates/__init__.py</code> — register all templates
+- Test: <code>tests/unit/test_pattern_expander.py</code> — add test classes per template</p>
+<p>Each template follows the same interface as Critic: <code>expand_&lt;name&gt;(spec) -&gt; (nodes, edges, back_edges)</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Implement all 8 templates</strong></li>
+</ul>
+<p>Each template generates nodes + edges per the spec:
+- <strong>Debate:</strong> agent_1..agent_N (parallel, no deps between them) → collector → judge. Back-edge judge → agents for rounds &gt; 1.
+- <strong>Best-of-N:</strong> variant_1..variant_N (parallel) → judge. No back-edge.
+- <strong>Reflexion:</strong> actor → reflector. Back-edge reflector → actor with <code>when: ${reflector.result} != DONE</code>, max_iterations from config.
+- <strong>Scatter:</strong> mapper → worker_1..worker_N (parallel, depend on mapper) → reducer. N = config.max_workers (default 10). Workers get when-conditions for dynamic activation.
+- <strong>FSM:</strong> state nodes per config.states. Back-edges between states with when-conditions matching routing keys.
+- <strong>Constitutional:</strong> generate → critique_principles → revise. Single pass, no back-edge.
+- <strong>Chain-of-Verification:</strong> generate → extract_claims → verify_each → revise. Single pass.
+- <strong>Plan-Execute:</strong> planner → executor → verifier. Back-edge verifier → planner with max_iterations=3.</p>
+<ul>
+<li>[ ] <strong>Step 2: Write tests for each template</strong></li>
+</ul>
+<p>One test class per template in <code>tests/unit/test_pattern_expander.py</code>. Each tests:
+- Correct node count and IDs
+- Correct edge wiring
+- Default prompts present
+- Model overrides work
+- Back-edges present when expected
+- Group metadata on all nodes</p>
+<ul>
+<li>[ ] <strong>Step 3: Register all templates in <code>__init__.py</code></strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">TEMPLATE_REGISTRY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"critic"</span><span class="p">:</span> <span class="n">expand_critic</span><span class="p">,</span>
+    <span class="s2">"debate"</span><span class="p">:</span> <span class="n">expand_debate</span><span class="p">,</span>
+    <span class="s2">"best_of_n"</span><span class="p">:</span> <span class="n">expand_best_of_n</span><span class="p">,</span>
+    <span class="s2">"reflexion"</span><span class="p">:</span> <span class="n">expand_reflexion</span><span class="p">,</span>
+    <span class="s2">"scatter"</span><span class="p">:</span> <span class="n">expand_scatter</span><span class="p">,</span>
+    <span class="s2">"fsm"</span><span class="p">:</span> <span class="n">expand_fsm</span><span class="p">,</span>
+    <span class="s2">"constitutional"</span><span class="p">:</span> <span class="n">expand_constitutional</span><span class="p">,</span>
+    <span class="s2">"chain_of_verification"</span><span class="p">:</span> <span class="n">expand_chain_of_verification</span><span class="p">,</span>
+    <span class="s2">"plan_execute"</span><span class="p">:</span> <span class="n">expand_plan_execute</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run all expander tests</strong></li>
+</ul>
+<p>Run: <code>python -m pytest tests/unit/test_pattern_expander.py -v</code>
+Expected: All pass</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>src/binex/patterns/templates/<span class="w"> </span>tests/unit/test_pattern_expander.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(patterns): all 9 pattern templates implemented"</span>
+</code></pre></div>
+<hr>
+<h3 id="task-4-patternexpander-yaml-integration">Task 4: PatternExpander + YAML Integration</h3>
+<p><strong>Files:</strong>
+- Create: <code>src/binex/patterns/expander.py</code>
+- Modify: <code>src/binex/models/workflow.py</code> — add <code>pattern</code> field to NodeSpec
+- Modify: <code>src/binex/workflow_spec/loader.py</code> — call expand_patterns() before DAG
+- Test: <code>tests/unit/test_pattern_integration.py</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Write integration tests</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># tests/unit/test_pattern_integration.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.workflow_spec.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_workflow_from_string</span>
+
+<span class="n">CRITIC_YAML</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">name: test-critic</span>
+<span class="s2">nodes:</span>
+<span class="s2">  researcher:</span>
+<span class="s2">    pattern: critic</span>
+<span class="s2">    model: llm://claude-sonnet-4-6</span>
+<span class="s2">    system_prompt: "Research AI safety"</span>
+<span class="s2">    config:</span>
+<span class="s2">      rounds: 2</span>
+<span class="s2">  writer:</span>
+<span class="s2">    agent: llm://claude-sonnet-4-6</span>
+<span class="s2">    depends_on: [researcher]</span>
+<span class="s2">    system_prompt: "Write article from research"</span>
+<span class="s2">"""</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TestPatternYAMLIntegration</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_critic_expands_in_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">load_workflow_from_string</span><span class="p">(</span><span class="n">CRITIC_YAML</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"yaml"</span><span class="p">)</span>
+        <span class="c1"># Pattern node replaced by 3 sub-nodes</span>
+        <span class="k">assert</span> <span class="s2">"researcher"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="k">assert</span> <span class="s2">"researcher.draft"</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="k">assert</span> <span class="s2">"researcher.critique"</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="k">assert</span> <span class="s2">"researcher.refine"</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="c1"># Writer depends on exit node</span>
+        <span class="k">assert</span> <span class="s2">"researcher.refine"</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="s2">"writer"</span><span class="p">]</span><span class="o">.</span><span class="n">depends_on</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_dag_builds_after_expansion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">binex.graph.dag</span><span class="w"> </span><span class="kn">import</span> <span class="n">DAG</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">load_workflow_from_string</span><span class="p">(</span><span class="n">CRITIC_YAML</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"yaml"</span><span class="p">)</span>
+        <span class="n">dag</span> <span class="o">=</span> <span class="n">DAG</span><span class="o">.</span><span class="n">from_workflow</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">dag</span><span class="o">.</span><span class="n">topological_order</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">order</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"researcher.draft"</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">order</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"researcher.critique"</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">order</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"researcher.critique"</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">order</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"researcher.refine"</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">order</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"researcher.refine"</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">order</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"writer"</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run tests — verify they fail</strong></li>
+</ul>
+<p>Run: <code>python -m pytest tests/unit/test_pattern_integration.py -v</code>
+Expected: FAIL (pattern: key not recognized)</p>
+<ul>
+<li>[ ] <strong>Step 3: Add <code>pattern</code> field to NodeSpec</strong></li>
+</ul>
+<p>Modify <code>src/binex/models/workflow.py</code> — add to NodeSpec class:
+</p><div class="highlight"><pre><span></span><code><span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div><p></p>
+<ul>
+<li>[ ] <strong>Step 4: Implement PatternExpander</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># src/binex/patterns/expander.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.models.workflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkflowSpec</span><span class="p">,</span> <span class="n">NodeSpec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.patterns.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PatternSpec</span><span class="p">,</span> <span class="n">StepConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">binex.patterns.templates</span><span class="w"> </span><span class="kn">import</span> <span class="n">expand_pattern</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">expand_patterns</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">WorkflowSpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WorkflowSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Find pattern nodes in spec, expand them into sub-DAG nodes."""</span>
+    <span class="n">expanded_nodes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NodeSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">extra_edges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">pattern_exits</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># pattern_id -&gt; exit_node_id</span>
+    <span class="n">pattern_entries</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># pattern_id -&gt; entry_node_id</span>
+
+    <span class="c1"># Separate pattern nodes from regular nodes</span>
+    <span class="n">regular_nodes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NodeSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">pattern</span><span class="p">:</span>
+            <span class="n">pspec</span> <span class="o">=</span> <span class="n">PatternSpec</span><span class="p">(</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">node_id</span><span class="p">,</span>
+                <span class="n">pattern</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">agent</span> <span class="ow">or</span> <span class="n">node</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+                <span class="n">system_prompt</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">system_prompt</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">config</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)},</span>
+                <span class="n">steps</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">StepConfig</span><span class="p">(</span><span class="o">**</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span>
+                       <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"steps"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+                <span class="n">depends_on</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">depends_on</span> <span class="ow">or</span> <span class="p">[],</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">inputs</span> <span class="ow">or</span> <span class="p">{},</span>
+                <span class="n">outputs</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">outputs</span> <span class="ow">or</span> <span class="p">[],</span>
+                <span class="n">budget</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">budget</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">nodes</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">back_edges</span> <span class="o">=</span> <span class="n">expand_pattern</span><span class="p">(</span><span class="n">pspec</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+                <span class="n">expanded_nodes</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
+            <span class="n">extra_edges</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+
+            <span class="c1"># Track entry/exit for rewiring</span>
+            <span class="n">pattern_entries</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+            <span class="n">pattern_exits</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
+
+            <span class="c1"># Apply back_edges to expanded nodes</span>
+            <span class="k">for</span> <span class="n">be</span> <span class="ow">in</span> <span class="n">back_edges</span><span class="p">:</span>
+                <span class="n">target_node</span> <span class="o">=</span> <span class="n">expanded_nodes</span><span class="p">[</span><span class="n">be</span><span class="p">[</span><span class="s2">"node_id"</span><span class="p">]]</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">binex.models.workflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">BackEdge</span>
+                <span class="n">target_node</span><span class="o">.</span><span class="n">back_edge</span> <span class="o">=</span> <span class="n">BackEdge</span><span class="p">(</span>
+                    <span class="n">target</span><span class="o">=</span><span class="n">be</span><span class="p">[</span><span class="s2">"target"</span><span class="p">],</span>
+                    <span class="n">when</span><span class="o">=</span><span class="n">be</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"when"</span><span class="p">,</span> <span class="s2">"true"</span><span class="p">),</span>
+                    <span class="n">max_iterations</span><span class="o">=</span><span class="n">be</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_iterations"</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">regular_nodes</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">expanded_nodes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">spec</span>  <span class="c1"># No patterns, return unchanged</span>
+
+    <span class="c1"># Rewire depends_on: any node depending on a pattern ID -&gt; depend on exit node</span>
+    <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">regular_nodes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">depends_on</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">pattern_exits</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="n">dep</span><span class="p">)</span> <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">depends_on</span> <span class="ow">or</span> <span class="p">[])</span>
+        <span class="p">]</span>
+
+    <span class="c1"># Merge all nodes</span>
+    <span class="n">all_nodes</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">regular_nodes</span><span class="p">,</span> <span class="o">**</span><span class="n">expanded_nodes</span><span class="p">}</span>
+
+    <span class="c1"># Apply extra edges as depends_on</span>
+    <span class="k">for</span> <span class="n">src</span><span class="p">,</span> <span class="n">tgt</span> <span class="ow">in</span> <span class="n">extra_edges</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">tgt</span> <span class="ow">in</span> <span class="n">all_nodes</span> <span class="ow">and</span> <span class="n">src</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">all_nodes</span><span class="p">[</span><span class="n">tgt</span><span class="p">]</span><span class="o">.</span><span class="n">depends_on</span> <span class="ow">or</span> <span class="p">[]):</span>
+            <span class="k">if</span> <span class="n">all_nodes</span><span class="p">[</span><span class="n">tgt</span><span class="p">]</span><span class="o">.</span><span class="n">depends_on</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">all_nodes</span><span class="p">[</span><span class="n">tgt</span><span class="p">]</span><span class="o">.</span><span class="n">depends_on</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">all_nodes</span><span class="p">[</span><span class="n">tgt</span><span class="p">]</span><span class="o">.</span><span class="n">depends_on</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">WorkflowSpec</span><span class="p">(</span>
+        <span class="n">version</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+        <span class="n">nodes</span><span class="o">=</span><span class="n">all_nodes</span><span class="p">,</span>
+        <span class="n">defaults</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">defaults</span><span class="p">,</span>
+        <span class="n">budget</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">budget</span><span class="p">,</span>
+        <span class="n">webhook</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">webhook</span><span class="p">,</span>
+        <span class="n">mcp_servers</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">mcp_servers</span><span class="p">,</span>
+        <span class="n">schedule</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">schedule</span><span class="p">,</span>
+        <span class="n">source_path</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 5: Wire into YAML loader</strong></li>
+</ul>
+<p>Modify <code>src/binex/workflow_spec/loader.py</code> — in <code>load_workflow_from_string()</code>, after constructing WorkflowSpec and before returning:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">binex.patterns</span><span class="w"> </span><span class="kn">import</span> <span class="n">expand_patterns</span>
+<span class="n">spec</span> <span class="o">=</span> <span class="n">expand_patterns</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 6: Run integration tests</strong></li>
+</ul>
+<p>Run: <code>python -m pytest tests/unit/test_pattern_integration.py -v</code>
+Expected: All pass</p>
+<ul>
+<li>[ ] <strong>Step 7: Run full test suite</strong></li>
+</ul>
+<p>Run: <code>python -m pytest tests/unit/ -v</code>
+Expected: All existing tests still pass</p>
+<ul>
+<li>[ ] <strong>Step 8: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>src/binex/patterns/expander.py<span class="w"> </span>src/binex/models/workflow.py<span class="w"> </span>src/binex/workflow_spec/loader.py<span class="w"> </span>tests/unit/test_pattern_integration.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(patterns): PatternExpander + YAML integration — patterns expand into sub-DAGs"</span>
+</code></pre></div>
+<hr>
+<h3 id="task-5-example-yaml-workflows">Task 5: Example YAML Workflows</h3>
+<p><strong>Files:</strong>
+- Create: <code>examples/patterns/critic.yaml</code>
+- Create: <code>examples/patterns/debate.yaml</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Write example critic workflow</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># examples/patterns/critic.yaml</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">research-with-critic</span>
+<span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Research a topic using the Critic pattern for iterative refinement</span>
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">researcher</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">critic</span>
+<span class="w">    </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">llm://claude-sonnet-4-6</span>
+<span class="w">    </span><span class="nt">system_prompt</span><span class="p">:</span><span class="w"> </span><span class="s">"You</span><span class="nv"> </span><span class="s">are</span><span class="nv"> </span><span class="s">an</span><span class="nv"> </span><span class="s">AI</span><span class="nv"> </span><span class="s">safety</span><span class="nv"> </span><span class="s">researcher."</span>
+<span class="w">    </span><span class="nt">config</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">rounds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">      </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">draft</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">llm://claude-haiku-4-5</span>
+<span class="w">          </span><span class="nt">prompt</span><span class="p">:</span><span class="w"> </span><span class="s">"Write</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">research</span><span class="nv"> </span><span class="s">summary</span><span class="nv"> </span><span class="s">on</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">given</span><span class="nv"> </span><span class="s">topic"</span>
+<span class="w">        </span><span class="nt">critique</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">prompt</span><span class="p">:</span><span class="w"> </span><span class="s">"Identify</span><span class="nv"> </span><span class="s">factual</span><span class="nv"> </span><span class="s">errors,</span><span class="nv"> </span><span class="s">logical</span><span class="nv"> </span><span class="s">gaps,</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">missing</span><span class="nv"> </span><span class="s">perspectives"</span>
+<span class="w">        </span><span class="nt">refine</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">prompt</span><span class="p">:</span><span class="w"> </span><span class="s">"Produce</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">final</span><span class="nv"> </span><span class="s">version</span><span class="nv"> </span><span class="s">addressing</span><span class="nv"> </span><span class="s">all</span><span class="nv"> </span><span class="s">critique</span><span class="nv"> </span><span class="s">points"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">report</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="nt">publisher</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">llm://claude-sonnet-4-6</span>
+<span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">researcher</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">system_prompt</span><span class="p">:</span><span class="w"> </span><span class="s">"Format</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">research</span><span class="nv"> </span><span class="s">report</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">publication"</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">article</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Write example debate workflow</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># examples/patterns/debate.yaml</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">policy-debate</span>
+<span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Three AI agents debate a policy question, judge synthesizes</span>
+<span class="nt">nodes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">debaters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">debate</span>
+<span class="w">    </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">llm://claude-sonnet-4-6</span>
+<span class="w">    </span><span class="nt">system_prompt</span><span class="p">:</span><span class="w"> </span><span class="s">"Debate</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">given</span><span class="nv"> </span><span class="s">policy</span><span class="nv"> </span><span class="s">question"</span>
+<span class="w">    </span><span class="nt">config</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">agents</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">      </span><span class="nt">rounds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">verdict</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 3: Verify examples load and expand</strong></li>
+</ul>
+<p>Run: <code>python -c "from binex.workflow_spec import load_workflow; s=load_workflow('examples/patterns/critic.yaml'); print([n for n in s.nodes])"</code>
+Expected: <code>['researcher.draft', 'researcher.critique', 'researcher.refine', 'publisher']</code></p>
+<ul>
+<li>[ ] <strong>Step 4: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>examples/patterns/
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"docs(patterns): example workflows for critic and debate patterns"</span>
+</code></pre></div>
+<hr>
+<h3 id="task-6-frontend-pattern-palette">Task 6: Frontend — Pattern Palette</h3>
+<p><strong>Files:</strong>
+- Modify: <code>ui/src/components/editor/NodePalette.tsx</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Add pattern node types to NODE_TYPES</strong></li>
+</ul>
+<p>Add a new <code>PATTERN_TYPES</code> array with 9 entries, category <code>'PATTERNS'</code>:
+- critic: label "Critic", icon Repeat, color '#ec4899'
+- debate: label "Debate", icon Users, color '#ec4899'
+- best_of_n: label "Best of N", icon Trophy, color '#ec4899'
+- reflexion: label "Reflexion", icon RefreshCw, color '#ec4899'
+- scatter: label "Scatter", icon GitBranch, color '#ec4899'
+- fsm: label "State Machine", icon Workflow, color '#ec4899'
+- constitutional: label "Constitutional", icon Scale, color '#ec4899'
+- chain_of_verification: label "Verify Chain", icon CheckCheck, color '#ec4899'
+- plan_execute: label "Plan &amp; Execute", icon ListChecks, color '#ec4899'</p>
+<p>Each uses <code>agentPrefix: 'pattern://'</code> and <code>defaultAgent: 'pattern://&lt;name&gt;'</code>.</p>
+<p>Add a "Patterns" section in the palette UI below existing categories.</p>
+<ul>
+<li>[ ] <strong>Step 2: Verify palette renders</strong></li>
+</ul>
+<p>Run dev server, check that 9 new pattern items appear in the sidebar palette.</p>
+<ul>
+<li>[ ] <strong>Step 3: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>ui/src/components/editor/NodePalette.tsx
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(ui): add 9 pattern types to node palette"</span>
+</code></pre></div>
+<hr>
+<h3 id="task-7-frontend-pattern-group-collapseexpand">Task 7: Frontend — Pattern Group (Collapse/Expand)</h3>
+<p><strong>Files:</strong>
+- Create: <code>ui/src/components/dag/PatternGroup.tsx</code>
+- Modify: <code>ui/src/lib/yaml-to-graph.ts</code> — detect <code>_pattern_group</code> metadata
+- Modify: <code>ui/src/components/dag/CustomNode.tsx</code> — render group container</p>
+<ul>
+<li>[ ] <strong>Step 1: Create PatternGroup component</strong></li>
+</ul>
+<p>A React component that:
+- Receives group ID, pattern type, and child node IDs
+- Renders a dashed-border container around child nodes
+- Has a header with pattern icon + name + collapse/expand toggle
+- When collapsed: hides children, shows single compact node with input/output handles
+- When expanded: shows children inside container</p>
+<ul>
+<li>[ ] <strong>Step 2: Update yaml-to-graph.ts</strong></li>
+</ul>
+<p>In <code>parseWorkflowYaml()</code>, detect nodes with <code>config._pattern_group</code>. Group them by group ID. Generate <code>PatternGroup</code> metadata alongside regular nodes.</p>
+<ul>
+<li>[ ] <strong>Step 3: Update CustomNode.tsx</strong></li>
+</ul>
+<p>When rendering a node that belongs to a pattern group, wrap it in PatternGroup context. Handle collapse state.</p>
+<ul>
+<li>[ ] <strong>Step 4: Verify in browser</strong></li>
+</ul>
+<p>Load critic.yaml example. Verify:
+- Pattern appears as collapsed group initially
+- Click expand → shows draft, critique, refine nodes inside container
+- Click collapse → back to single block
+- Edges from upstream/downstream connect to group boundary</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>ui/src/components/dag/PatternGroup.tsx<span class="w"> </span>ui/src/lib/yaml-to-graph.ts<span class="w"> </span>ui/src/components/dag/CustomNode.tsx
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(ui): collapsible pattern group in DAG editor"</span>
+</code></pre></div>
+<hr>
+<h3 id="task-8-frontend-pattern-config-panel">Task 8: Frontend — Pattern Config Panel</h3>
+<p><strong>Files:</strong>
+- Create: <code>ui/src/components/editor/PatternConfig.tsx</code>
+- Modify: <code>ui/src/components/editor/EditableNode.tsx</code></p>
+<ul>
+<li>[ ] <strong>Step 1: Create PatternConfig component</strong></li>
+</ul>
+<p>Panel that shows when a collapsed pattern node is selected:
+- Pattern type (read-only badge)
+- Default model dropdown
+- Pattern-specific config (rounds input for critic, agents count for debate, etc.)
+- Per-step section: expandable accordion, each step has model dropdown + prompt textarea
+- "Expand to Sub-graph" button (converts pattern to individual nodes, one-way)</p>
+<ul>
+<li>[ ] <strong>Step 2: Wire into EditableNode</strong></li>
+</ul>
+<p>In <code>EditableNode.tsx</code>, detect <code>nodeType === 'pattern'</code> and render <code>&lt;PatternConfig&gt;</code> instead of standard LLM config.</p>
+<ul>
+<li>[ ] <strong>Step 3: Verify in browser</strong></li>
+</ul>
+<p>Click a collapsed pattern node. Verify config panel shows pattern-specific settings.</p>
+<ul>
+<li>[ ] <strong>Step 4: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>ui/src/components/editor/PatternConfig.tsx<span class="w"> </span>ui/src/components/editor/EditableNode.tsx
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(ui): pattern config panel with per-step overrides"</span>
+</code></pre></div>
+<hr>
+<h3 id="task-9-final-integration-full-test-suite">Task 9: Final Integration + Full Test Suite</h3>
+<p><strong>Files:</strong>
+- Modify: various (fixes from integration testing)</p>
+<ul>
+<li>[ ] <strong>Step 1: Run full backend test suite</strong></li>
+</ul>
+<p>Run: <code>python -m pytest tests/ -v --tb=short</code>
+Expected: All pass including new pattern tests</p>
+<ul>
+<li>[ ] <strong>Step 2: Run ruff + mypy</strong></li>
+</ul>
+<p>Run: <code>ruff check src/binex/patterns/</code> and <code>mypy src/binex/patterns/</code>
+Expected: 0 errors</p>
+<ul>
+<li>[ ] <strong>Step 3: Run TypeScript checks</strong></li>
+</ul>
+<p>Run: <code>cd ui &amp;&amp; npx tsc --noEmit</code>
+Expected: 0 errors</p>
+<ul>
+<li>[ ] <strong>Step 4: Test end-to-end: load critic.yaml → execute → verify artifacts</strong></li>
+</ul>
+<p>Run a critic workflow locally and verify:
+- 3 LLM calls happen (draft, critique, refine)
+- Cost tracking shows per-step costs
+- Trace shows 3 spans grouped under pattern
+- Output artifact from refine step is accessible</p>
+<ul>
+<li>[ ] <strong>Step 5: Final commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>-A
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(patterns): complete pattern nodes — 9 patterns, UI groups, config panel"</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "navigation.top", "header.autohide"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>
