@@ -1,6 +1,6 @@
 """Binex — debuggable runtime for A2A agents."""
 
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 
 
 def __getattr__(name: str) -> object:
