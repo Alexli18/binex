@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v0.8.1
+
+*2026-10-18 — semantic analysis reaches the Web UI, and Scaffold stops losing work. No behaviour changes: everything new is opt-in.*
+
+### Features
+
+- **UI: semantic analysis on the Compare and Bisect pages** — `diff --semantic` and `bisect --semantic` were CLI-only, because they spend the user's tokens and the CLI enforces that with an estimate and a confirmation before any call. Both pages now have a **Semantic** checkbox (off by default) that keeps the same guarantee: ticking it fetches a pre-flight estimate — calls, tokens, cost, model, the nodes that would be judged — and nothing runs until the user confirms. An unpriced model shows the cost as unknown, never as free. New endpoints `POST /api/v1/diff/estimate` and `POST /api/v1/bisect/estimate` reuse the CLI's own estimator, so the browser quotes the same number; `DiffRequest`/`BisectRequest` gain optional `semantic`/`semantic_model` (default off — existing requests behave exactly as before). The verdict JSON is now produced by one shared `verdicts_to_json`, so `diff --semantic --json` and the API cannot drift apart; its shape is unchanged. (#137)
+
+### Bug Fixes
+
+- **Scaffold → Open in Editor no longer discards the generated workflow** — when workflow files existed on disk, the editor's "open the first workflow when nothing is selected" rule fired as soon as the list arrived, replacing the just-generated workflow with an unrelated file and greying out Save. The editor now auto-opens a file only when it has nothing to show. The intermittently failing `test_editor_save_as_modal` E2E test was this defect, not flakiness. (#139)
+
+### Chore
+
+- **Release tooling** — the package version test accepts PEP 440 pre-releases (`0.8.1rc1`), which a TestPyPI dry-run needs; the publish workflow checks for its token up front and fails with a named error instead of a bare 403. (#136)
+
 ## v0.8.0
 
 *2026-08-31 — four months of work: the debugging toolkit gets its regression half.*
